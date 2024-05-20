@@ -1,6 +1,7 @@
 ---
 title: "Services"
 collection: consulting
+permalink: /consulting/services
 ---
 
-Here is an edit to the first document that at first was about teaching
+Here I describe my consulting services.

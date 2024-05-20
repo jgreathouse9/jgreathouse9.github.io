@@ -10,7 +10,7 @@ I'm Jared Amani Greathouse. I'm a PHD Candidate Georgia State.
 
 <details>
     
-  <summary>Check out my vita!.</summary>
+  <summary>Check out my vita!</summary>
 
 <embed src="{{ site.baseurl }}/files/VitaWeb.pdf" width="600" height="700" type='application/pdf'>.
 

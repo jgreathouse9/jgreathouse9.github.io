@@ -6,7 +6,7 @@ redirect_from:
   - /about.html
 ---
 
-I'm Jared Amani Greathouse. I'm a PHD Candidate at Georgia State and the Georgia Institute of Technology, where I am fortunate to be advised by [Jason Coupet](https://aysps.gsu.edu/profile/jason-coupet/). I'm a public policy student. [I work](https://github.com/jgreathouse9/mlsynth) in econometrics, causal inference, and statistics (see my link to my under-development "Machine Learning Synthetic Control" Python code for causal impact estimation).
+I'm Jared Amani Greathouse. I'm a PHD Candidate at Georgia State and the Georgia Institute of Technology, where I am fortunate to be advised by [Jason Coupet](https://aysps.gsu.edu/profile/jason-coupet/). I'm a public policy student. I work in econometrics, causal inference, and statistics (check out my under-development "Machine Learning Synthetic Control" [Python](https://github.com/jgreathouse9/mlsynth) code for causal impact estimation).
 
 <details>
     

@@ -10,7 +10,7 @@ Hi😊 I'm Jared Amani Greathouse. I earned my B.A and M.A. (2019, 2021) in poli
 
 I am an econometrician who specializes in treatment effect estimation, particularly with (but not limited to) synthetic controls and difference-in-differences.
 
-Check out my under-development "**mlsynth**" [Python](https://github.com/jgreathouse9/mlsynth) code. It implements various artificial counterfactual estimators in a user friendly, streamlined manner. I am [also](https://www.statalist.org/forums/member/51320-jared-greathouse) an active contributor to the Statalist forum.
+Check out my under-development "**mlsynth**" [Python](https://github.com/jgreathouse9/mlsynth) code. It implements various artificial counterfactual estimators in a user friendly, streamlined manner. I am [also](https://www.statalist.org/forums/member/51320-jared-greathouse) an active contributor to the Statalist forum. [Here's my vita](http://jgreathouse9.github.io/files/VitaWeb.pdf).
 
 <details>
     

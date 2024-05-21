@@ -4,7 +4,8 @@ permalink: /consulting/
 author_profile: true
 ---
 
-# Data Management/Cleaning
+
+# Data Management
 
 In research, data must be cleaned before it may be analyzed. However, sometimes this task is more daunting than it appears at first. Often, multiple merges, reshapings, and validation checks must be done to ensure a dataset is ready for analysis. Particularly in an era where data are unstructured (found on webpages, and must be scraped from the internet), efficient, reproducible data management is critical to the success of a project before any analysis is done. If you need to clean data for a project and need a streamlined, efficient way of doing so, **[contact me](j.greathouse3@student.gsu.edu)** and we can discuss the details.
 

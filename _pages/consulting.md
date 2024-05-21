@@ -1,4 +1,5 @@
 ---
+title: Services Offered
 layout: archive
 permalink: /consulting/
 author_profile: true

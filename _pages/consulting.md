@@ -1,7 +1,7 @@
 ---
 title: Services Offered
 layout: archive
-permalink: /consulting/
+permalink: /consultingg/
 author_profile: true
 ---
 

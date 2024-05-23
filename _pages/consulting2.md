@@ -5,7 +5,7 @@ permalink: /consulting/
 author_profile: true
 ---
 
-Learn more about the services I offer!
+Learn more about the services I offer below!
 
 <select id="serviceSelect">
   <option value="" selected disabled>Select a Service</option>
@@ -14,6 +14,12 @@ Learn more about the services I offer!
 </select>
 
 <div id="content"></div>
+
+<style>
+  #content {
+    text-align: justify;
+  }
+</style>
 
 <script>
 document.getElementById('serviceSelect').addEventListener('change', function() {

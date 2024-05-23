@@ -8,6 +8,7 @@ author_profile: true
 Click the buttons below to learn more about the services I offer!
 
 <select id="serviceSelect">
+  <option value="" selected disabled>Select a Service</option>
   <option value="option1">Data Management</option>
   <option value="option2">Program Evaluation</option>
 </select>

@@ -5,6 +5,41 @@ permalink: /consulting/
 author_profile: true
 ---
 
+<div id="London" class="tabcontent">
+  <h1>London</h1>
+  <p>London is the capital city of England.</p>
+</div>
+
+<button class="tablink" onclick="openCity('London', this, 'red')" id="defaultOpen">London</button>
+
+.tablink {
+  background-color: #555;
+  color: white;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 17px;
+  width: 25%;
+}
+
+/* Change background color of buttons on hover */
+.tablink:hover {
+  background-color: #777;
+}
+
+/* Set default styles for tab content */
+.tabcontent {
+  color: white;
+  display: none;
+  padding: 50px;
+  text-align: center;
+}
+
+/* Style each tab content individually */
+#London {background-color:red;}
+
 
 # Data Management
 

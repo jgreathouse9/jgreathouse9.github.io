@@ -5,6 +5,8 @@ permalink: /consulting/
 author_profile: true
 ---
 
+Click the buttons below to learn more about the services I offer!
+
 <input type="radio" name="option" value="option1"> Data Management
 <input type="radio" name="option" value="option2"> Program Evaluation
 

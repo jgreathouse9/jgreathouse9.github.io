@@ -5,7 +5,7 @@ permalink: /consulting/
 author_profile: true
 ---
 
-Click the buttons below to learn more about the services I offer!
+Learn more about the services I offer!
 
 <select id="serviceSelect">
   <option value="" selected disabled>Select a Service</option>

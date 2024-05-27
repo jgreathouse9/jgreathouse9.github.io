@@ -1,5 +1,5 @@
 ---
-permalink: /talks/
+permalink: /teaching/
 ---
 
-[Here is the syllabus for PMAP 4041](http://jgreathouse9.github.io/files/Econometrics-for-Policy-Analysis (1)-pages.pdf) (Intro to Econometrics for Policy Analysts)
+[Here](https://jgreathouse9.github.io/GSUmetricspolicy/) is my book "Econometrics for Policy Analysis". It contains the syllabus and lecture notes for Georgia State University's PMAP 4041 "Policy Data Analysis" course.

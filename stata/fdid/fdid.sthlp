@@ -42,7 +42,7 @@
 for settings where we have one treated unit and multiple control units.
 It uses an iterative forward selection algorithm to select the optimal
 control group. After selecting the optimal control group, {cmd:fdid} calculates the treatment effect
-along with confidence intervals. Note that the dependent variable must be a numeric, 
+along with confidence intervals. Note that the dependent variable must be numeric, 
 non-missing and non-constant. The {opt tr:eated} variable must be a dummy
 variable equal to one when the unit is treated, else 0.
 {cmd: fdid} requires the data to be {cmd: xtset} and balanced.

@@ -11,7 +11,7 @@
 {title:Forward Difference in Differences}
 
 {phang}
-{bf:fdid} {hline 2} Estimates the Forward Difference-in-Differences method. 
+{bf:fdid} {hline 2} Estimates Forward Difference-in-Differences. 
 
 
 {marker syntax}{...}
@@ -42,8 +42,10 @@
 for settings where we have one treated unit and multiple control units.
 It uses an iterative forward selection algorithm to select the optimal
 control group. After selecting the optimal control group, {cmd:fdid} calculates the treatment effect
-along with confidence intervals. Note that the dependent variable must be a numeric, non-missing and non-constant.
-The {opt tr:eated} variable must be a dummy variable equal to one when the unit is treated, else 0. {cmd: fdid} requires the data to be {cmd: xtset} and balanced.
+along with confidence intervals. Note that the dependent variable must be a numeric, 
+non-missing and non-constant. The {opt tr:eated} variable must be a dummy
+variable equal to one when the unit is treated, else 0.
+{cmd: fdid} requires the data to be {cmd: xtset} and balanced.
 
 
 {marker options}{...}

@@ -18,8 +18,8 @@ set more off
 
 * 1. Purpose
 
-** Programs Augmented DD from 
-** Li and den Blute : https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4137460
+** Programs Forward DD from 
+** Li : https://doi.org/10.1287/mksc.2022.0212 
 
 * 2. Program
 
@@ -296,7 +296,7 @@ loc npp = r(N)
 		su `unit' if `treated' ==1, mean
 		
 		loc clab: label (`unit') `treated_unit'
-		gl adidtreat_lab: disp "`clab'"
+		loc adidtreat_lab: disp "`clab'"
 		
 		
 		qui: levelsof `unit' if `treated' == 0 & `time' > `interdate', l(labs)
@@ -324,7 +324,7 @@ loc npp = r(N)
 		exit 489
 		}
 		di as res "{hline}"
-		di "{txt}{p 15 50 0} Treated Unit: {res}$adidtreat_lab {p_end}"
+		di "{txt}{p 15 50 0} Treated Unit: {res}`adidtreat_lab' {p_end}"
 		di as res "{hline}"
 		di as txt ""
 		di "{txt}{p 15 30 0} Control Units: {res}`dp_num' total donor pool units{p_end}"

@@ -446,7 +446,7 @@ tempname max_r2
 
 
 // Forward Selection Algorithm ...
-
+di as text ""
 di "Performing Initial Selection..."
 
 qui while ("`predictors'" != "") {
@@ -553,7 +553,7 @@ local best_model = ""
 
 
 * Loop through each variable in the list
-
+di as text ""
 di "Finding optimal DID model..."
 
 qui foreach x of loc U {
@@ -600,6 +600,7 @@ qui foreach x of loc U {
 		local best_model = "`varlist'"
 	}
 } // end of Forward Selection
+di as text ""
 di "Done!"
 qui drop ymean cf tss rss
 
@@ -619,7 +620,7 @@ constraint define 1 ymean = 1
 
 * Run the constrained regression
 qui cnsreg `treated_unit' ymean if `time' < `interdate', constraints(1)
-
+loc RMSE = e(rmse)
 
 qui predict cf
 
@@ -656,7 +657,7 @@ if "`outlab'"=="" {
 }
 	
 
-twoway (connected `treated_unit' `time', connect(direct)) (connected cf `time', lpat(--)), ///
+twoway (connected `treated_unit' `time', connect(direct) msymbol(smdiamond)) (connected cf `time', lpat(--) msymbol(smsquare)), ///
 yti(`treatst' `outlab') ///
 legend(order(1 "Observed" 2 "FDID") pos(12)) ///
 xli(`interdate', lcol(gs6) lpat(--)) `gr1opts'
@@ -716,9 +717,10 @@ scalar CILB = scalar(ATT)-invnormal(0.975)* scalar(v) / sqrt(scalar(`t2'))
 
 scalar CIUB = scalar(ATT)+invnormal(0.975)* scalar(v) / sqrt(scalar(`t2'))
 
+loc rmseround: di %9.5f `RMSE'
 
-matrix my_matrix = (scalar(ATT), scalar(CILB), scalar(CIUB), scalar(r2))
-matrix colnames my_matrix = ATT LB UB R2
+matrix my_matrix = (scalar(ATT), scalar(CILB), scalar(CIUB), scalar(r2), `rmseround')
+matrix colnames my_matrix = ATT LB UB R2 RMSE
 
 matrix rownames my_matrix = Statistics
 
@@ -729,16 +731,16 @@ keep `time' `treated_unit' cf te
 frame drop dfcopy
 frame drop reshaped
 
+di as txt "{hline}"
 local tabletitle "Forward Difference-in-Differences"
 local tablefootnote "Refer to Li (2024) for theoretical derivations."
 
 di as text "`tabletitle'" 
-di as text ""
-di as text "{hline 13}{c TT}{hline 63}"
-di as text %12s abbrev("`outcome'",12) " {c |}     ATT     {c |}     [95% Conf. Interval]     {c |} R-Square     " 
-di as text "{hline 13}{c +}{hline 63}"
-di as text %12s abbrev("`treatment'",12) " {c |} " as result %9.5f scalar(ATT) "    " %9.5f scalar(CILB) "   " %9.5f scalar(CIUB)  "         "         %9.5f scalar(r2)
-di as text "{hline 13}{c BT}{hline 63}"
+di as text "{hline 13}{c TT}{hline 77}"
+di as text %12s abbrev("`outcome'",12) " {c |}    ATT     Std. Error   [95% Conf. Interval]      R-Square     "     "RMSE"
+di as text "{hline 13}{c +}{hline 77}"
+di as text %12s abbrev("`treatment'",12) " {c |} " as result %9.5f scalar(ATT) " " %9.5f scalar(v) "    " %9.5f scalar(CILB) "   " %9.5f scalar(CIUB)  "     "%9.5f scalar(r2) "   "    %9.5f          `RMSE'
+di as text "{hline 13}{c BT}{hline 77}"
 di as text "FDID selects `controls' as the optimal donors."
 di as text "`tablefootnote'"
 

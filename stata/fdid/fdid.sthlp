@@ -82,7 +82,8 @@ can be displayed by typing {cmd: ereturn list} after
 {p 8 8 2}
 {cmd: e(ATTs):}{p_end}
 {p 10 10 2}
-A matrix that contains the ATT, the upper and lower bounds of the 95% Confidence Interval for the ATT, and the R-squared statistic for the pre-intervention period.
+A matrix that contains the ATT, standard error, and the upper and lower bounds of the 95% Confidence Interval.
+It also has the R-squared and Root-Mean-Squared Error statistics for the pre-intervention period.
 
 {p 8 8 2}
 {cmd: e(selected) :}{p_end}

@@ -12,5 +12,5 @@ Check out my under-development "```mlsynth```" [Python](https://github.com/jgrea
 
 ## News
 
-- As of 7/12/2024, I've [created](https://www.statalist.org/forums/forum/general-stata-discussion/general/1758604-introducing-the-forward-did-command?p=1758635#post1758635) the ```fdid``` command for Stata. The link contains the instructions to install the help file, the ado file, as well as two example datasets to get you started using it. Note that it is still under development.
+- As of 7/12/2024, I've created the ```fdid``` command for Stata, implementing the Forward DID method in Stata. You may install it as well as its respective datasets like ```net install fdid, from("https://raw.githubusercontent.com/jgreathouse9/FDIDTutorial/main") replace```. Note that it is still under development.
 - As of 5/24/2024, I've [updated](https://github.com/jgreathouse9/mlsynth/blob/main/Vignettes/RPCA/RPCAVignette.md) ```mlsynth``` to include the tutorial for [Robust PCA SCM](https://arxiv.org/abs/2108.12542).

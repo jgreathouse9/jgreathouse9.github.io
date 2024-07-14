@@ -11,7 +11,7 @@
 {title:Forward Difference in Differences}
 
 {phang}
-{bf:fdid} {hline 2} Estimates Forward Difference-in-Differences. 
+{bf:fdid} {hline 2} Estimates the Forward Difference-in-Differences method. 
 
 
 {marker syntax}{...}
@@ -42,10 +42,8 @@
 for settings where we have one treated unit and multiple control units.
 It uses an iterative forward selection algorithm to select the optimal
 control group. After selecting the optimal control group, {cmd:fdid} calculates the treatment effect
-along with confidence intervals. Note that the dependent variable must be numeric, 
-non-missing and non-constant. The {opt tr:eated} variable must be a dummy
-variable equal to one when the unit is treated, else 0.
-{cmd: fdid} requires the data to be {cmd: xtset} and balanced.
+along with confidence intervals. Note that the dependent variable must be a numeric, non-missing and non-constant.
+The {opt tr:eated} variable must be a dummy variable equal to one when the unit is treated, else 0. {cmd: fdid} requires the data to be {cmd: xtset} and balanced.
 
 
 {marker options}{...}
@@ -82,8 +80,7 @@ can be displayed by typing {cmd: ereturn list} after
 {p 8 8 2}
 {cmd: e(ATTs):}{p_end}
 {p 10 10 2}
-A matrix that contains the ATT, standard error, and the upper and lower bounds of the 95% Confidence Interval.
-It also has the R-squared and Root-Mean-Squared Error statistics for the pre-intervention period.
+A matrix that contains the ATT, the upper and lower bounds of the 95% Confidence Interval for the ATT, and the R-squared statistic for the pre-intervention period.
 
 {p 8 8 2}
 {cmd: e(selected) :}{p_end}

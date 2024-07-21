@@ -3,7 +3,7 @@ title: "fdid"
 collection: publications
 permalink: /publication/2009-10-01-paper-title-number-1
 excerpt: 'Implements the forward DID estimator'
-date: 7-21-2024
+date: 2009-10-01
 paperurl: 'https://github.com/jgreathouse9/FDIDTutorial/blob/main/StataVignette.md'
 ---
 

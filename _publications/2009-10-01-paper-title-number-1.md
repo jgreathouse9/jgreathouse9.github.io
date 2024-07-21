@@ -1,7 +1,7 @@
 ---
 title: "fdid"
 collection: publications
-permalink: /publication/2009-10-01-paper-title-number-1
+permalink: /publication/fdid
 excerpt: 'Implements the forward DID estimator'
 date: 2009-10-01
 paperurl: 'https://github.com/jgreathouse9/FDIDTutorial/blob/main/StataVignette.md'

@@ -14,3 +14,7 @@ author_profile: true
 
 
 The Stata [vignette](https://github.com/jgreathouse9/FDIDTutorial/blob/main/StataVignette.md) for this command may be found here. It replicates the results of [Li (2024)](https://doi.org/10.1287/mksc.2022.0212) who uses [HCW (2012)](https://doi.org/10.1002/jae.1230) as an example. The paper describing the Stata command is forthcoming, and is joint work with Jason Coupet and Eric Sevigny.
+
+# MLSYNTH
+
+My under-development "```mlsynth```" [Python](https://github.com/jgreathouse9/mlsynth) library. It implements various artificial counterfactual estimators for panel data.

@@ -12,5 +12,8 @@ If causal inference is your thing, check out [the software I develop](https://jg
 
 ## News
 
+- As of September 27th, my draft for the Forward DID method is avaliable. [Here](https://github.com/jgreathouse9/jgreathouse9.github.io/blob/master/_publications/FDIDSJ.pdf){target="_blank"} is the link to read it. Note that it is has not been submitted for review yet. Any comments or feedback would be appreciated.
+
+
 - As of 7/12/2024, I've [created](https://github.com/jgreathouse9/FDIDTutorial/blob/main/StataVignette.md) the ```fdid``` command for Stata, implementing the Forward DID method in Stata. I link to the vignette where users may see how the syntax works.
 - As of 5/24/2024, I've [updated](https://github.com/jgreathouse9/mlsynth/blob/main/Vignettes/RPCA/RPCAVignette.md) ```mlsynth``` to include the tutorial for [Robust PCA SCM](https://arxiv.org/abs/2108.12542).

@@ -13,7 +13,7 @@ author_profile: true
 </details>
 
 
-The Stata [vignette](https://github.com/jgreathouse9/FDIDTutorial/blob/main/StataVignette.md) for this command may be found here. It replicates the results of [Li (2024)](https://doi.org/10.1287/mksc.2022.0212) who uses [HCW (2012)](https://doi.org/10.1002/jae.1230) as an example. The paper describing the Stata command is forthcoming, and is joint work with Jason Coupet and Eric Sevigny.
+The Stata [vignette](https://github.com/jgreathouse9/FDIDTutorial/blob/main/StataVignette.md) for this command may be found here. It replicates the results of [Li (2024)](https://doi.org/10.1287/mksc.2022.0212) who uses [HCW (2012)](https://doi.org/10.1002/jae.1230) as an example. [The paper]((http://jgreathouse9.github.io/publications/FDIDSJ.pdf)) describing the Stata command is joint work with [Jason Coupet](https://aysps.gsu.edu/profile/jason-coupet/) and [Eric Sevigny](https://aysps.gsu.edu/profile/eric-sevigny/).
 
 # MLSYNTH
 

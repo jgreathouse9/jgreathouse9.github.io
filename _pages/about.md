@@ -10,12 +10,7 @@ Hi😊 I'm Jared Amani Greathouse. Currently, I'm a public policy PHD candidate 
 
  I am an econometrician specializing in causal inference, *particularly* with the synthetic control method and difference-in-differences.  If causal inference is your thing, check out [the software I develop](https://jgreathouse9.github.io/software/) for Stata and Python. I am [also](https://www.statalist.org/forums/member/51320-jared-greathouse) an active contributor to the Statalist forum. [Here's my vita](http://jgreathouse9.github.io/files/VitaWeb.pdf). If you'd like to talk with me about my work, my consulting services, or anything else that's of interest, you may always reach out to me!
 
- # Contact
-
 * **Email**: <span>`jgreathouse3[`</span><span style="color:red">`at`</span><span>`]student[`</span><span style="color:red">`dot`</span><span>`]gsu[`</span><span style="color:red">`dot`</span><span>`]edu`</span>
-
-
-
 
 ## News
 

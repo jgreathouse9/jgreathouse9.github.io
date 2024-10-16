@@ -5,4 +5,7 @@ permalink: /research/
 author_profile: true 
 ---
 
-1. Ziwei Mei and Zhentao Shi (2024). "[On LASSO for High Dimensional Predictive Regression](https://www.sciencedirect.com/science/article/pii/S0304407624001556)'',  ***Journal of Econometrics***, *242*(2), 105809. [[arXiv](https://arxiv.org/abs/2212.07052)]
+## Working Papers
+
+1. Greathouse, Jared (2024). "[Control Group Selection in High Dimensions: A Narrow Replication Using Panel Data Approach and Difference-in-Differences](https://jgreathouse9.github.io/publications/Replication_of_Shi_2023.pdf)
+2. Greathouse, Jared, [Coupet, Jason](https://aysps.gsu.edu/profile/jason-coupet/), and [Sevigny, Eric](https://aysps.gsu.edu/profile/eric-sevigny/) (2024). "[Greed is Good: Estimating Forward Difference-in-Differences in Stata](https://jgreathouse9.github.io/publications/FDIDSJ.pdf)

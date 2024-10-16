@@ -5,6 +5,8 @@ permalink: /research/
 author_profile: true 
 ---
 
+# Research
+
 ## Published Papers
 
 1. Sevigny, Eric L., Jared Greathouse, and Danye N. Medhin. "[Health, safety, and socioeconomic impacts of cannabis liberalization laws: An evidence and gap map.](https://doi.org/10.1002/cl2.1362)" _Campbell Systematic Reviews_ 19, no. 4 (2023): e1362

@@ -1,6 +1,6 @@
 ---
 title: "Papers by Year"
-permalink: /research/papersbyyear/
+permalink: /research/papers-by-year/
 ---
 
 # 2024

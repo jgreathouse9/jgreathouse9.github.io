@@ -10,8 +10,11 @@ Learn more about the services I offer below!
 <div id="container">
   <div id="sideMenu">
     <ul>
+      <li><a href="#" id="faq">FAQ</a></li>
       <li><a href="#" id="dataManagement">Data Management</a></li>
       <li><a href="#" id="programEvaluation">Program Evaluation</a></li>
+      <li><a href="#" id="processAutomation">Process Automation</a></li>
+      <li><a href="#" id="webScraping">Web Scraping</a></li>
     </ul>
   </div>
   <div id="content">
@@ -56,32 +59,75 @@ Learn more about the services I offer below!
 </style>
 
 <script>
-  document.getElementById('dataManagement').addEventListener('click', function() {
+  // FAQ Section
+  document.getElementById('faq').addEventListener('click', function () {
     const contentDiv = document.getElementById('content');
     contentDiv.innerHTML = `
-      In research, data must be cleaned before it may be analyzed. However, sometimes this task is more daunting than it appears at first. 
-      Often, multiple merges, reshapings, and validation checks must be done to ensure a dataset is ready for analysis. Particularly in an 
-      era where data are unstructured (found on webpages, and must be scraped from the internet), efficient, reproducible data management is 
-      critical to the success of a project before any analysis is done. If you need to clean data for a project and need a streamlined, 
-      efficient way of doing so, <a href="mailto:j.greathouse3@student.gsu.edu">contact me</a> and we can discuss the details.
+      <h2>Frequently Asked Questions (FAQ)</h2>
+      <ul>
+        <li><strong>What services count as "consulting" versus "not consulting"?</strong> 
+          Any large-scale project (i.e., a paper) that I am expected to contribute meaningfully to yet will not be given authorship counts as consulting. For example, if you need to clean and debug a large do file in Stata or implement some synthetic control method, this goes beyond simply talking since I'm expected to make meaningful contributions to the code of the research process. </li>
+        <li><strong>Are there differential fees?</strong> 
+          Yes, fees depend on who is asking. PHD/grad students have one set of fees and professionals (i.e., professors and people in industry) have s separate tier.</li>
+        <li><strong>Are there expedited fees?</strong> 
+          Projects where results are expected within one week from the initial consultation are classified as expedited. Expidited fees are the standard hourly fee plus half, no exceptions.</li>
+        <li><strong>Is the first consultation free?</strong> 
+          Yes, the first 30-minute consultation is free to discuss your project and goals.</li>
+      </ul>
     `;
   });
 
-  document.getElementById('programEvaluation').addEventListener('click', function() {
+  // Data Management Section
+  document.getElementById('dataManagement').addEventListener('click', function () {
     const contentDiv = document.getElementById('content');
     contentDiv.innerHTML = `
-      Frequently, researchers need to know if some intervention (say, a tax, an anti-tobacco policy, an abortion ban, or some new 
-      marketing strategy) had some effect on outcomes that we care about. However, policy is never self-justifying; it must be 
-      studied and evaluated to see if it actually *achieves* the aims it is meant to achieve. In fact, this goes beyond public 
-      policy: sometimes, the interventions we care about (<a href="https://static1.squarespace.com/static/5e0fdcef27e0945c43fab131/t/61eb4615e7feef09dcbe7d29/1642808862058/The+Economic+Impact+of+Migrants+from+Hurricane+Maria.pdf">say</a>, 
-      how hurricanes affect economic outcomes) are natural events, more or less, and we wish to understand how these interventions influence 
-      outcomes. The gold standard to do this is typically conducting a randomized controlled trial, but this is rarely possible in real life 
-      for a host of reasons. Furthermore, we know that simple regression analysis, *even when we adjust for a host of covariates*, rarely 
-      provides good causal evidence for real-life treatment effect estimation. Instead, proper program evaluation demands a mixture of domain 
-      expertise and judicious application of modern econometric methods. I have experience in causal inference and have packaged numerous 
-      such methods in <a href="https://github.com/jgreathouse9/mlsynth">Python</a> and <a href="https://ideas.repec.org/c/boc/bocode/s459107.html">Stata</a>. 
-      If you wish to implement a program evaluation using rigorous and objective methods, <a href="mailto:j.greathouse3@student.gsu.edu">contact me</a> today 
-      for a free consultation so we can discuss your needs.
+      <h2>Data Management</h2>
+      <p>
+        In research, data must be cleaned before it may be analyzed. However, sometimes this task is more daunting than it appears at first. 
+        Often, multiple merges, reshapings, and validation checks must be done to ensure a dataset is ready for analysis. Particularly in an 
+        era where data are unstructured (found on webpages, and must be scraped from the internet), efficient, reproducible data management is 
+        critical to the success of a project before any analysis is done. If you need to clean data for a project and need a streamlined, 
+        efficient way of doing so, <a href="mailto:j.greathouse3@student.gsu.edu">contact me</a> and we can discuss the details.
+      </p>
+    `;
+  });
+
+  // Program Evaluation Section
+  document.getElementById('programEvaluation').addEventListener('click', function () {
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = `
+      <h2>Program Evaluation</h2>
+      <p>
+        Frequently, researchers need to know if some intervention (say, a tax, an anti-tobacco policy, an abortion ban, or some new 
+        marketing strategy) had some effect on outcomes that we care about. However, policy is never self-justifying; it must be 
+        studied and evaluated to see if it actually achieves the aims it is meant to achieve. 
+        If you wish to implement a program evaluation using rigorous and objective methods, 
+        <a href="mailto:j.greathouse3@student.gsu.edu">contact me</a> today for a free consultation so we can discuss your needs.
+      </p>
+    `;
+  });
+
+  // Process Automation Section
+  document.getElementById('processAutomation').addEventListener('click', function () {
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = `
+      <h2>Process Automation</h2>
+      <p>
+        Automation of workflows saves time, reduces errors, and ensures that tasks once required to be done by people can be done automatically. Whether you need to automate data collection from a web source, the cleaning of manually updated datasets, file organization, or reporting, I can help streamline your processes with GitHub Actions. 
+        <a href="mailto:j.greathouse3@student.gsu.edu">Reach out to discuss</a> how automation can help your business or your research purposes.
+      </p>
+    `;
+  });
+
+  // Web Scraping Section
+  document.getElementById('webScraping').addEventListener('click', function () {
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = `
+      <h2>Web Scraping</h2>
+      <p>
+        Extracting data from the web allows you to harness valuable information for research. However, this requires specialized tools and can be tedious if done by hand. I specialize in developing efficient, scalable scraping solutions using Python and GitHub Actions to gather the data you need from websites, APIs, and other online sources. 
+        <a href="mailto:j.greathouse3@student.gsu.edu">Contact me</a> to learn more about how I can help with your web scraping needs.
+      </p>
     `;
   });
 </script>

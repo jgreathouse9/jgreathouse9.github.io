@@ -62,12 +62,19 @@ Learn more about the services I offer below!
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('faq').addEventListener('click', function () {
-      const contentDiv = document.getElementById('content');
-      contentDiv.innerHTML = `
-        <h2>FAQ</h2>
-        <p>Here you can find answers to frequently asked questions about my services.</p>
-      `;
-    });
+  const contentDiv = document.getElementById('content');
+  contentDiv.innerHTML = `
+    <h2>FAQ</h2>
+    <p>Here you can find answers to frequently asked questions about my services.</p>
+    <ul>
+      <li><strong>What services do you offer?</strong> I offer services in Data Management, Program Evaluation, Web Scraping, and Process Automation.</li>
+      <li><strong>How can I contact you?</strong> You can reach out via email at <a href="mailto:j.greathouse3@student.gsu.edu">j.greathouse3@student.gsu.edu</a>.</li>
+      <li><strong>What tools do you use for web scraping?</strong> I primarily use Python with Selenium and BeautifulSoup for building web scraping solutions.</li>
+      <li><strong>Do you provide automation services?</strong> Yes, I help automate processes like data extraction, reporting, and notifications using Python and task schedulers.</li>
+    </ul>
+  `;
+});
+
 
     document.getElementById('dataManagement').addEventListener('click', function () {
       const contentDiv = document.getElementById('content');

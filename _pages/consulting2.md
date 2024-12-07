@@ -67,13 +67,18 @@ Learn more about the services I offer below!
     <h2>FAQ</h2>
     <p>Here you can find answers to frequently asked questions about my services.</p>
     <ul>
-      <li><strong>What services do you offer?</strong> I offer services in Data Management, Program Evaluation, Web Scraping, and Process Automation.</li>
-      <li><strong>How can I contact you?</strong> You can reach out via email at <a href="mailto:j.greathouse3@student.gsu.edu">j.greathouse3@student.gsu.edu</a>.</li>
-      <li><strong>What tools do you use for web scraping?</strong> I primarily use Python with Selenium and BeautifulSoup for building web scraping solutions.</li>
-      <li><strong>Do you provide automation services?</strong> Yes, I help automate processes like data extraction, reporting, and notifications using Python and task schedulers.</li>
+      <li><strong>What services count as "consulting" versus "not consulting"?</strong>
+        Any large-scale project (i.e., a paper) that I am expected to contribute meaningfully to yet will not be given authorship counts as consulting. For example, if you need to clean and debug a large do file in Stata or implement some synthetic control method, this goes beyond simply talking since I'm expected to make meaningful contributions to the code of the research process.</li>
+      <li><strong>Are there differential fees?</strong>
+        Yes, fees depend on who is asking. PhD/grad students have one set of fees and professionals (i.e., professors and people in industry) have a separate tier.</li>
+      <li><strong>Are there expedited fees?</strong>
+        Projects where results are expected within one week from the initial consultation are classified as expedited. Expedited fees are the standard hourly fee plus half, no exceptions.</li>
+      <li><strong>Is the first consultation free?</strong>
+        Yes, the first 30-minute consultation is free to discuss your project and goals.</li>
     </ul>
   `;
 });
+
 
 
     document.getElementById('dataManagement').addEventListener('click', function () {

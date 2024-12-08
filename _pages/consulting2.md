@@ -68,13 +68,13 @@ Learn more about the services I offer below!
     <p>Here you can find answers to frequently asked questions about my services.</p>
     <ul>
       <li><strong>What services count as "consulting" versus "not consulting"?</strong>
-        Any large-scale project (i.e., a paper) that I am 1) expected to contribute meaningfully to yet 2) will not be given authorship counts as consulting. For example, if you need to clean and debug a large do file in Stata or implement some synthetic control method, this goes beyond simply talking since I'm expected to make meaningful contributions to the code of the research process.</li>
+        Any large-scale project (i.e., a paper) that I am 1) expected to contribute meaningfully to yet 2) will not be given authorship for/intellectual property rights over counts as consulting. For example, if you need to clean and debug a large do file in Stata for some analysis or implement some monthly web scraping method, this counts since I'm expected to make meaningful contributions to the code and flow of the research process.</li>
       <li><strong>Are there differential fees?</strong>
-        Yes, fees depend on who is asking. PhD/grad students have one set of fees and professionals (i.e., professors and people in the industry) have a separate tier.</li>
+        Fees depend on who is reaching out to me. PHD/grad students have one set of fees. Professionals (i.e., professors and people in the industry) and businesses have a separate set of fees.</li>
       <li><strong>Are there expedited fees?</strong>
-        Projects where results are expected within one week from the initial consultation are classified as expedited. Expedited fees are the standard hourly fee plus half, <strong>no exceptions</strong>.</li>
+        Yes. Projects where results are expected within one week from the initial consultation are classified as expedited. Expedited billing is time and a half, <strong>no exceptions</strong>.</li>
       <li><strong>Is the first consultation free?</strong>
-        Yes, the first 30-minute consultation is free.</li>
+        Yes, the first 30-minute consultation is free. In your introduction email to me, simply reach out and tell me what you would like for me to work on in enough detail, and when we first meet we will discuss the finer points. </li>
     </ul>
   `;
 });

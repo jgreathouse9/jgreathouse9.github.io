@@ -3,7 +3,12 @@
 
 ![pages-build-deployment](https://github.com/academicpages/academicpages.github.io/actions/workflows/pages/pages-build-deployment/badge.svg)
 
-Academic Pages is a Github Pages template for academic websites.
+Eval: Put this in a word document. 12 point, times new roman. Email to Aevero. Then, he will email to me.
+
+1.	What did Jared do that you did not want him to do? What did you wish he did, that he did not do?
+2.	Did you feel comfortable asking Jared questions when you did not understand something? If not, why did you not feel comfortable, and what should he do to improve upon this?
+3.	Were due dates for assignments spaced out, and were the courses’ expectations articulated and set, reasonably?
+4.	What are your general comments about the course? Do you think you’ve learned something you did not know previously?
 
 
 # Getting Started

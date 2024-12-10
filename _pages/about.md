@@ -12,10 +12,12 @@ Hi😊 I'm Jared Amani Greathouse. Currently, I'm a public policy PHD candidate 
 
 * **Email**: <span>`jgreathouse3[`</span><span style="color:red">`at`</span><span>`]student[`</span><span style="color:red">`dot`</span><span>`]gsu[`</span><span style="color:red">`dot`</span><span>`]edu`</span>
 
-Here is a plot generated via Github Actions, something we may automate for data collection:
+<details>
+  <summary>Here is a plot generated via Github Actions, something we may automate for data collection:</summary>
 
 
 ![Visa Spending Plot](https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/master/Python/Scrapers/Visa/VisaSpending.png)
+</details>
 
 ## News
 

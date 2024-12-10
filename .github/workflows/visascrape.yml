@@ -1,4 +1,4 @@
-name: Visa Plot
+name: Visa Spending Data Plot
 
 on:
   schedule:
@@ -51,11 +51,12 @@ jobs:
         git add -A  # This will stage all changes, including updates to the plot
 
         # Check if there are any changes to commit
-        if [[ $(git diff --cached --exit-code) ]]; then
-          echo "No changes to commit."
-        else
+        git diff --cached --exit-code || echo "Changes detected"  # Ignore non-zero exit code
+        if [[ -n $(git diff --cached) ]]; then
           git commit -m "Add Visa spending plot"
           git push origin master
+        else
+          echo "No changes to commit, skipping commit."
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub Actions

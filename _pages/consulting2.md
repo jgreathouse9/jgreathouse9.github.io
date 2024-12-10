@@ -131,9 +131,9 @@ document.getElementById('processAutomation').addEventListener('click', function 
       to grab real-time data, automation ensures that human labor can be devoted to something more worthwhile. If you want to 
       streamline your data operations, <a href="mailto:j.greathouse3@student.gsu.edu">reach out</a> and we can discuss your needs in detail.
     </p>
-    <h3>Example: Visa Spending Data Automation</h3>
-    <p>This is an example of an automated process for scraping and visualizing Visa spending data:</p>
-    <img src="/path/to/your/plot/VisaSpending.png" alt="Visa Spending Plot" />
+    <h3>Consumer Spending</h3>
+    <p>This is an example:</p>
+    <img src="https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/master/Python/Scrapers/Visa/VisaSpending.png" alt="Visa Spending Plot" />
   `;
 });
 

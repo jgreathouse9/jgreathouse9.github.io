@@ -121,18 +121,22 @@ Learn more about the services I offer below!
       `;
     });
 
-    document.getElementById('processAutomation').addEventListener('click', function () {
-      const contentDiv = document.getElementById('content');
-      contentDiv.innerHTML = `
-        <h2>Process Automation</h2>
-        <p>
-          Automation is key to optimizing workflows and saving time on repetitive tasks. I can help you automate a wide variety of processes, 
-          from data extraction and cleaning to reporting and visualization of data. Whether it's setting up automated data pipelines or integrating APIs 
-          to grab real-time data, automation ensures that human labor can be devoted to something more worthwhile. If you want to 
-          streamline your data operations, <a href="mailto:j.greathouse3@student.gsu.edu">reach out</a> and we can discuss your needs in detail.
-        </p>
-      `;
-    });
+document.getElementById('processAutomation').addEventListener('click', function () {
+  const contentDiv = document.getElementById('content');
+  contentDiv.innerHTML = `
+    <h2>Process Automation</h2>
+    <p>
+      Automation is key to optimizing workflows and saving time on repetitive tasks. I can help you automate a wide variety of processes, 
+      from data extraction and cleaning to reporting and visualization of data. Whether it's setting up automated data pipelines or integrating APIs 
+      to grab real-time data, automation ensures that human labor can be devoted to something more worthwhile. If you want to 
+      streamline your data operations, <a href="mailto:j.greathouse3@student.gsu.edu">reach out</a> and we can discuss your needs in detail.
+    </p>
+    <h3>Example: Visa Spending Data Automation</h3>
+    <p>This is an example of an automated process for scraping and visualizing Visa spending data:</p>
+    <img src="/path/to/your/plot/VisaSpending.png" alt="Visa Spending Plot" />
+  `;
+});
+
 
     document.getElementById('contact').addEventListener('click', function () {
       const contentDiv = document.getElementById('content');

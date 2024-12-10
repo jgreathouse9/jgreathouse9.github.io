@@ -92,6 +92,8 @@ def plot_data(df):
 
     # Plot the first column as x-axis and the last two columns as y-axis
 
+    plt.figure(figsize=(12, 6))
+
     plt.plot(
         df["Month-Year"],
         df[df.columns[-2]],

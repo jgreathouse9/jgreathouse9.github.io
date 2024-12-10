@@ -13,8 +13,8 @@ Hi😊 I'm Jared Amani Greathouse. Currently, I'm a public policy PHD candidate 
 * **Email**: <span>`jgreathouse3[`</span><span style="color:red">`at`</span><span>`]student[`</span><span style="color:red">`dot`</span><span>`]gsu[`</span><span style="color:red">`dot`</span><span>`]edu`</span>
 
 <details>
-  <summary>Here is a plot generated via GitHub Actions, something we may automate for data collection:</summary>
-  <img src="https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/master/Python/Scrapers/Visa/VisaSpending.png" alt="Visa Spending Plot" style="width:100%;max-width:600px;">
+  <summary>Here is a plot generated via GitHub Actions, a tool we may use to automate data collection/repetitive tasks:</summary>
+  <img src="https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/master/Python/Scrapers/Visa/VisaSpending.png" alt="Visa Spending Plot" style="width:100%;max-width:800px;">
 </details>
 
 

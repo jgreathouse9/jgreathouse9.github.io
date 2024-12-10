@@ -22,7 +22,7 @@ jared_theme = {
 matplotlib.rcParams.update(jared_theme)
 
 
-def load_and_process_data(url):
+def load_data(url):
     """
     Load and process the Excel file into a DataFrame.
 
@@ -79,7 +79,7 @@ def load_and_process_data(url):
     return df
 
 
-def plot_visa_data(df):
+def plot_data(df):
     """
     Plot the Visa consumer spending data.
 

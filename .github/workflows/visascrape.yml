@@ -1,12 +1,12 @@
-name: Visa Spending Data Plot
+name: Visa Plot
 
 on:
+  schedule:
+    - cron: '0 12 28-31 * *'
   push:
     branches:
       - master
   workflow_dispatch:
-  schedule:
-    - cron: '0 12 28-31 * *'
 
 jobs:
   plot_visa_spending:
@@ -30,12 +30,29 @@ jobs:
       run: |
         python Python/Scrapers/Visa/visamain.py
 
+    - name: Check if plot was generated
+      run: |
+        if [ -f Python/Scrapers/Visa/VisaSpending.png ]; then
+          echo "Visa spending plot exists."
+        else
+          echo "Visa spending plot was not generated." && exit 1
+        fi
+
     - name: Commit and push the Visa spending plot
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add Python/Scrapers/Visa/VisaSpending.png
-        git commit -m "Add Visa spending plot"
-        git push origin master  # Use 'master' instead of 'main'
+        
+        # Check for untracked files and only commit if plot exists
+        git status
+        
+        # Add and commit plot if it exists
+        if [ -f Python/Scrapers/Visa/VisaSpending.png ]; then
+          git add Python/Scrapers/Visa/VisaSpending.png
+          git commit -m "Add Visa spending plot"
+          git push origin master  # Use 'master' instead of 'main'
+        else
+          echo "No changes to commit."
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub Actions

@@ -2,7 +2,7 @@ name: Visa Plot
 
 on:
   schedule:
-    - cron: '0 12 28-31 * *'
+    - cron: '0 12 28-31 * *'  # Runs at 12pm EST on the last day of each month
   push:
     branches:
       - master
@@ -38,21 +38,24 @@ jobs:
           echo "Visa spending plot was not generated." && exit 1
         fi
 
+    - name: Remove __pycache__ directories
+      run: |
+        find . -type d -name "__pycache__" -exec rm -rf {} +
+
     - name: Commit and push the Visa spending plot
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         
-        # Check for untracked files and only commit if plot exists
-        git status
-        
-        # Add and commit plot if it exists
-        if [ -f Python/Scrapers/Visa/VisaSpending.png ]; then
-          git add Python/Scrapers/Visa/VisaSpending.png
-          git commit -m "Add Visa spending plot"
-          git push origin master  # Use 'master' instead of 'main'
-        else
+        # Ensure Git detects changes, even if the plot is unchanged
+        git add -A  # This will stage all changes, including updates to the plot
+
+        # Check if there are any changes to commit
+        if [[ $(git diff --cached --exit-code) ]]; then
           echo "No changes to commit."
+        else
+          git commit -m "Add Visa spending plot"
+          git push origin master
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub Actions

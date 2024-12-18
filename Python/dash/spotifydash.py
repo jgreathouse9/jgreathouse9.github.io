@@ -1,30 +1,11 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
-import matplotlib
 import plotly.graph_objects as go  # Import Plotly
 
 st.set_page_config(layout="wide", page_title="Artist Trends")
 
-# Define a custom theme for Matplotlib
 
-jared_theme = {
-    "axes.grid": True,
-    "grid.linestyle": "-",
-    "legend.framealpha": 1,
-    "legend.facecolor": "white",
-    "legend.shadow": True,
-    "legend.fontsize": 14,
-    "legend.title_fontsize": 16,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
-    "axes.labelsize": 16,
-    "axes.titlesize": 20,
-    "figure.dpi": 100,
-    "axes.facecolor": "white",
-}
-matplotlib.rcParams.update(jared_theme)
 
 # Load the dataset
 

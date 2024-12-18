@@ -4,6 +4,9 @@ import plotly.graph_objects as go  # Import Plotly
 
 st.set_page_config(layout="wide", page_title="Artist Trends")
 
+# Display a general message at the top
+st.markdown("# Here is some Spotify data I scraped together.")
+
 
 
 # Load the dataset

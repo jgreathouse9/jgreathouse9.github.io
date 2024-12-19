@@ -5,8 +5,7 @@ import plotly.graph_objects as go  # Import Plotly
 st.set_page_config(layout="wide", page_title="Artist Trends")
 
 # Display a general message at the top
-st.markdown("## I'm a music nerd, but especially for (neo)soul. I'm also a fan of the [COLORS](https://www.youtube.com/@COLORSxSTUDIOS) show on YouTube.
-In this spirit, I scraped some Spotify data of lots of artist who I like/are in generes I like and made an app of it.")
+st.markdown("## I'm a music nerd, but especially for (neo)soul. I'm also a fan of the [COLORS](https://www.youtube.com/@COLORSxSTUDIOS) show on YouTube. In this spirit, I scraped some Spotify data of lots of artist who I like/are in generes I like and made an app of it.")
 
 
 

@@ -17,7 +17,7 @@ Hi😊 I'm Jared Amani Greathouse. Currently, I'm a public policy PHD candidate 
   <img src="https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/master/Python/Scrapers/Visa/VisaSpending.png" alt="Visa Spending Plot" style="width:100%;max-width:800px;">
 </details>
 
-- [Here](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) is a dashboard os Spotify data I developed with [Streamlit](https://www.linkedin.com/pulse/easiest-way-build-streamlit-app-you-actually-want-trygve-karper/).
+- [Here](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) is a dashboard of scraped Spotify data I developed with [Streamlit](https://www.linkedin.com/pulse/easiest-way-build-streamlit-app-you-actually-want-trygve-karper/).
 
 
 ## News

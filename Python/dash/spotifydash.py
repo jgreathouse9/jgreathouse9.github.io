@@ -122,6 +122,14 @@ else:
     # Show the plot in Streamlit
     st.plotly_chart(fig)
 
-# Implementing the auto-refresh every 10 seconds
-time.sleep(10)  # Wait for 10 seconds before rerunning
-st.experimental_rerun()  # Trigger a rerun of the app
+# Use st.empty() to refresh periodically
+if 'counter' not in st.session_state:
+    st.session_state.counter = 0
+
+# Increment counter every time the script reruns
+st.session_state.counter += 1
+
+# Wait 10 seconds before rerunning the app (without blocking the main process)
+if st.session_state.counter % 2 == 0:
+    time.sleep(10)  # Simulate wait before rerun
+    st.experimental_rerun()  # Trigger a rerun of the app

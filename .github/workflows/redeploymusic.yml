@@ -1,0 +1,44 @@
+name: Deploy Spotify Dashboard
+
+on:
+  # Trigger the workflow when there are changes in the main branch or specifically in the data file
+  push:
+    branches:
+      - main  # Trigger on push to the main branch
+    paths:
+      - "Spotify/Merged_Spotify_Data.csv"  # Trigger only when the data file changes
+
+  pull_request:
+    branches:
+      - main  # Trigger on pull request to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Runs on the latest Ubuntu version
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3  # Checks out the repository code
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4  # Sets up Python
+      with:
+        python-version: 3.9  # Specify the version of Python you want to use
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r Python/dash/requirements_dash.txt  # Installs the dependencies from requirements_dash.txt
+    
+    - name: Run Streamlit app
+      run: |
+        nohup streamlit run Python/dash/spotifydash.py &  # Run the Streamlit app in the background
+        sleep 10  # Wait for the app to start before confirming
+        curl -I http://localhost:8501  # Verify that the app is up by hitting the local URL
+    
+    - name: Trigger redeployment using Peter Evans dispatch
+      uses: peter-evans/dispatch@v2
+      with:
+        repository: 'jgreathouse9/jgreathouse9.github.io'  # The repo to trigger the redeployment in
+        event-type: 'redeploy'  # Custom event name for redeployment
+        token: ${{ secrets.GITHUB_TOKEN }}  # Use the default GitHub token for authorization

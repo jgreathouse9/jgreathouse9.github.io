@@ -6,7 +6,9 @@ import time  # Import time for the timer functionality
 st.set_page_config(layout="wide", page_title="Artist Trends")
 
 # Display a general message at the top
-st.markdown("## I'm a music nerd. Especially for (neo)soul and alt-R/B music. I'm also a fan of the [COLORS](https://www.youtube.com/@COLORSxSTUDIOS) show on YouTube. In this spirit, I scraped some Spotify data of lots of my favorite neo-soul artists who I like or who are in other genres I like and made an app of it.")
+st.markdown(
+    "## I'm a music nerd. Especially for (neo)soul and alt-R/B music. I'm also a fan of the [COLORS](https://www.youtube.com/@COLORSxSTUDIOS) show on YouTube. In this spirit, I scraped some Spotify data of lots of my favorite neo-soul artists who I like or who are in other genres I like and made an app of it."
+)
 
 # Load the dataset
 @st.cache_data
@@ -20,6 +22,7 @@ def load_data():
     )
 
     return data
+
 
 data = load_data()
 
@@ -37,12 +40,15 @@ metric = st.sidebar.radio(
 )
 
 # Date Range Selector in the sidebar
-start_date, end_date = st.sidebar.date_input(
-    "Select date range",
-    [data["Date"].min().date(), data["Date"].max().date()],
+st.sidebar.header("Date Range Selection")
+date_slider = st.sidebar.slider(
+    "Select date range:",
     min_value=data["Date"].min().date(),
     max_value=data["Date"].max().date(),
+    value=(data["Date"].min().date(), data["Date"].max().date()),
+    format="YYYY-MM-DD",
 )
+start_date, end_date = date_slider  # Unpack selected dates
 
 # Filter the data based on the selected artist and date range
 filtered_data = data[
@@ -55,11 +61,12 @@ filtered_data = data[
 show_vertical_line = st.sidebar.checkbox("Show vertical reference line?", value=False)
 vertical_line_date = None
 if show_vertical_line:
-    vertical_line_date = st.sidebar.date_input(
+    vertical_line_date = st.sidebar.slider(
         "Select date for vertical reference line",
         min_value=data["Date"].min().date(),
         max_value=data["Date"].max().date(),
         value=data["Date"].min().date(),
+        format="YYYY-MM-DD",
     )
 
 # Check if any data is available after filtering

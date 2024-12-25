@@ -2,11 +2,8 @@ name: Visa Spending Data Plot
 
 on:
   schedule:
-    - cron: '0 12 16 * *'  # Runs at 12pm EST on the last day of each month
-  push:
-    branches:
-      - master
-  workflow_dispatch:
+    - cron: '0 12 16 * *'  # Runs at 12pm EST on the 16th of every month
+  workflow_dispatch:  # Allow manual triggering if needed
 
 jobs:
   plot_visa_spending:
@@ -46,14 +43,13 @@ jobs:
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        
-        # Ensure Git detects changes, even if the plot is unchanged
-        git add -A  # This will stage all changes, including updates to the plot
 
-        # Check if there are any changes to commit
-        git diff --cached --exit-code || echo "Changes detected"  # Ignore non-zero exit code
+        # Ensure Git detects changes
+        git add -A
+
+        # Commit with an explicit message
         if [[ -n $(git diff --cached) ]]; then
-          git commit -m "Add Visa spending plot"
+          git commit -m "Update Visa spending data: $(date -u)"
           git push origin master
         else
           echo "No changes to commit, skipping commit."

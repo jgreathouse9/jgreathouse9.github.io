@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go  # Import Plotly
-
+#.
 st.set_page_config(layout="wide", page_title="Artist Trends")
 
 # Display a general message at the top

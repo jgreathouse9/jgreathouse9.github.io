@@ -124,7 +124,7 @@ else:
 
 # Use st.empty() to refresh periodically
 if 'counter' not in st.session_state:
-    st.session_state.counter = 0
+    st.session_state.counter = 0  # Initialize counter if it doesn't exist
 
 # Increment counter every time the script reruns
 st.session_state.counter += 1
@@ -132,4 +132,4 @@ st.session_state.counter += 1
 # Wait 10 seconds before rerunning the app (without blocking the main process)
 if st.session_state.counter % 2 == 0:
     time.sleep(10)  # Simulate wait before rerun
-    st.experimental_rerun()  # Trigger a rerun of the app
+    st.rerun()  # Trigger a rerun of the app

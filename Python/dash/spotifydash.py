@@ -1,7 +1,8 @@
 import pandas as pd
+import requests
 import streamlit as st
 import plotly.graph_objects as go
-import time  # Import time for the timer functionality
+import time
 
 st.set_page_config(layout="wide", page_title="Artist Trends")
 
@@ -10,24 +11,38 @@ st.markdown(
     "## I'm a music nerd. Especially for (neo)soul and alt-R/B music. I'm also a fan of the [COLORS](https://www.youtube.com/@COLORSxSTUDIOS) show on YouTube. In this spirit, I scraped some Spotify data of lots of my favorite neo-soul artists who I like or who are in other genres I like and made an app of it."
 )
 
-# Load the dataset
+# Get the last modified SHA of the CSV file from GitHub
+def get_csv_version():
+    url = (
+        r"https://api.github.com/repos/jgreathouse9/jgreathouse9.github.io/commits"
+        r"?path=Spotify/Merged_Spotify_Data.csv&page=1&per_page=1"
+    )
+    response = requests.get(url)
+    if response.status_code == 200:
+        commit_data = response.json()
+        return commit_data[0]["sha"]  # Use the latest commit SHA as the version key
+    else:
+        st.error("Unable to fetch file version. Using default cache key.")
+        return "default_version"
+
+# Load the dataset with caching
 @st.cache_data
-def load_data():
+def load_data(version):
     file_path = r"https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Spotify/Merged_Spotify_Data.csv"
     data = pd.read_csv(file_path)
-
-    # Strip time portion and convert to datetime
     data["Date"] = pd.to_datetime(
         data["Date"].str.split(" ").str[0], format="%Y-%m-%d", errors="coerce"
     )
-
     return data
 
+# Fetch CSV version key
+csv_version = get_csv_version()
 
-data = load_data()
+# Load data
+data = load_data(version=csv_version)
 
 # Artist Selection in the sidebar
-artist_list = sorted(data["Artist"].unique())  # Sort the artist list alphabetically
+artist_list = sorted(data["Artist"].unique())
 default_artist = "Tyla" if "Tyla" in artist_list else artist_list[0]
 selected_artists = st.sidebar.multiselect(
     "Choose artists", artist_list, default=[default_artist]
@@ -48,7 +63,7 @@ date_slider = st.sidebar.slider(
     value=(data["Date"].min().date(), data["Date"].max().date()),
     format="YYYY-MM-DD",
 )
-start_date, end_date = date_slider  # Unpack selected dates
+start_date, end_date = date_slider
 
 # Filter the data based on the selected artist and date range
 filtered_data = data[
@@ -130,7 +145,7 @@ else:
     st.plotly_chart(fig)
 
 # Use st.empty() to refresh periodically
-if 'counter' not in st.session_state:
+if "counter" not in st.session_state:
     st.session_state.counter = 0  # Initialize counter if it doesn't exist
 
 # Increment counter every time the script reruns

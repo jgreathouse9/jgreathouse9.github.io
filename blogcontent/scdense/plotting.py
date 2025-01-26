@@ -113,7 +113,8 @@ def main():
 
     axes[1].legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig("/blogcontent/scdense/spotapp.png")
+    plt.close()
 
 
 if __name__ == "__main__":

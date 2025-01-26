@@ -117,6 +117,26 @@ spotify_config = {
 spotify_model = PDA(spotify_config)
 ARCO_results = spotify_model.fit()
 
+required_data = {
+    "ATT": ARCO_results["Effects"]["ATT"],
+    "Standard Error": ARCO_results["Inference"]["standard_error"],
+    "t-stat": ARCO_results["Inference"]["t_stat"],
+    "Confidence Interval": ARCO_results["Inference"]["confidence_interval"],
+    "RMSE (T0)": ARCO_results["Fit"]["T0 RMSE"],
+    "R-Squared": ARCO_results["Fit"]["R-Squared"]
+}
+
+# Convert the filtered data into a DataFrame
+table_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
+
+# Display the DataFrame as a markdown table
+markdown_table = table_df.to_markdown(index=False)
+
+# Print the markdown table
+print(markdown_table)
+
+
+
 # Define the filename and extension
 save_2 = {
     "filename": "AppleTyla",  # New filename
@@ -152,3 +172,27 @@ apple_config = {
 
 apple_model = PDA(apple_config)
 apple_results = apple_model.fit()
+
+
+# Extracting only the required values: ATT, SE, t-stat, CI, RMSE, R-squared
+required_data = {
+    "ATT": apple_results["Effects"]["ATT"],
+    "Standard Error": apple_results["Inference"]["standard_error"],
+    "t-stat": apple_results["Inference"]["t_stat"],
+    "Confidence Interval": apple_results["Inference"]["confidence_interval"],
+    "RMSE (T0)": apple_results["Fit"]["T0 RMSE"],
+    "R-Squared": apple_results["Fit"]["R-Squared"]
+}
+
+# Convert the filtered data into a DataFrame
+appletable_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
+
+# Display the DataFrame as a markdown table
+applemarkdown_table = appletable_df.to_markdown(index=False)
+
+# Print the markdown table
+print(applemarkdown_table)
+
+
+
+

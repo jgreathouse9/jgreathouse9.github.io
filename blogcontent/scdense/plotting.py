@@ -117,7 +117,9 @@ def main():
 
     axes[1].legend()
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'spotapp.png'))
+    file_path = os.path.join(output_dir, 'spotapp.png')
+    plt.savefig(file_path)
+    print(f"Figure saved to {file_path}")
     plt.close()
 
 

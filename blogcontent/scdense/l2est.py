@@ -147,7 +147,7 @@ save_2 = {
 
 # Apple Music Data
 apple_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Apple%20Music/AppleMusic.csv"
-apple_date_range = ['2022-01-01', '2024-12-31']
+apple_date_range = ['2022-01-01', '2024-06-01']
 apple_df = preprocess_data(
     url=apple_url,
     date_range=apple_date_range,

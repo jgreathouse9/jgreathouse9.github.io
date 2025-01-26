@@ -117,8 +117,6 @@ spotify_config = {
 spotify_model = PDA(spotify_config)
 ARCO_results = spotify_model.fit()
 
-plt.clf()
-
 # Define the filename and extension
 save_2 = {
     "filename": "AppleTyla",  # New filename

@@ -31,11 +31,22 @@ jobs:
     - name: Run plotting script
       run: python blogcontent/scdense/plotting.py
 
-    # Move generated plot to target directory
-    - name: Move figure to target directory
+    # Move generated plot to target directory and list files
+    - name: Move figure to target directory and list existing files
       run: |
+        # List files in the blogcontent/scdense directory before moving the plot
+        echo "Listing files in the blogcontent/scdense directory before move:"
+        ls -l blogcontent/scdense
+
+        # Create the target directory if it doesn't exist
         mkdir -p blogcontent/scdense/figures
-        mv /blogcontent/scdense/spotapp.png blogcontent/scdense/figures/spottapp.png
+
+        # Move the plot to the target directory
+        mv blogcontent/scdense/spotapp.png blogcontent/scdense/figures/spottapp.png
+
+        # List files in the target directory after move
+        echo "Listing files in the blogcontent/scdense/figures directory after move:"
+        ls -l blogcontent/scdense/figures
 
     # Commit and push changes
     - name: Commit and push updated figures

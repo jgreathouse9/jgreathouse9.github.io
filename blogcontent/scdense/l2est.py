@@ -123,6 +123,7 @@ save_2 = {
     "directory": save_directory,  # Save in the specified directory
 }
 
+
 # Apple Music Data
 apple_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Apple%20Music/AppleMusic.csv"
 apple_date_range = ['2022-01-01', '2024-12-31']

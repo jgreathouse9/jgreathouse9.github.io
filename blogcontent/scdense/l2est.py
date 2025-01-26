@@ -2,6 +2,7 @@ import pandas as pd
 from mlsynth.mlsynth import PDA
 import matplotlib
 import os
+import matplotlib.pyplot as plt
 
 def set_theme():
     theme = {
@@ -115,6 +116,8 @@ spotify_config = {
 
 spotify_model = PDA(spotify_config)
 ARCO_results = spotify_model.fit()
+
+plt.clf()
 
 # Define the filename and extension
 save_2 = {

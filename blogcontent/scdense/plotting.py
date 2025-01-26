@@ -120,15 +120,16 @@ def main():
 
     # Define the save path
     save_path = os.path.join(output_dir, 'spotapp.png')
-
+    
     # Debug: Check if the path exists before saving
-    print(f"Saving figure to {save_path}")
-
+    print(f"Saving figure to: {os.path.abspath(save_path)}")  # Print full absolute path
+    
     # Save the plot
     plt.savefig(save_path)
-
+    
     # Confirm that the file was saved
-    print(f"Figure saved to {save_path}")  # Print the path of the saved figure
+    print(f"Figure saved to: {os.path.abspath(save_path)}")  # Print the full absolute path of the saved figure
+
     plt.close()
 
 

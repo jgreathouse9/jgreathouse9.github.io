@@ -99,8 +99,8 @@ def main():
     )
     apple_prepped = dataprep(apple_df, 'Artist', 'Date', apple_outcome, 'Water')
 
-    # Ensure the output directory exists in the working directory
-    output_dir = './blogcontent/scdense/'
+    # Ensure the directory exists
+    output_dir = '/blogcontent/scdense/figures/'
     os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     # Create two-plot figure
@@ -117,10 +117,20 @@ def main():
 
     axes[1].legend()
     plt.tight_layout()
-    file_path = os.path.join(output_dir, 'spotapp.png')
-    plt.savefig(file_path)
-    print(f"Figure saved to {file_path}")
+
+    # Define the save path
+    save_path = os.path.join(output_dir, 'spotapp.png')
+
+    # Debug: Check if the path exists before saving
+    print(f"Saving figure to {save_path}")
+
+    # Save the plot
+    plt.savefig(save_path)
+
+    # Confirm that the file was saved
+    print(f"Figure saved to {save_path}")  # Print the path of the saved figure
     plt.close()
+
 
 
 if __name__ == "__main__":

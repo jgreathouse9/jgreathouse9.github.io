@@ -3,7 +3,7 @@ name: Blog Python Code
 on:
   push:
     paths:
-      - "blogcontent/**"
+      - "**"  # Trigger on push to any file in the repository
   workflow_dispatch:
 
 jobs:
@@ -50,7 +50,11 @@ jobs:
         echo "Listing files in the blogcontent/scdense/figures directory after move:"
         ls -l blogcontent/scdense/figures
 
-    # Commit and push changes
+    # Run the l2est.py script
+    - name: Run l2est.py
+      run: python blogcontent/scdense/l2est.py
+
+    # Commit and push updated figures
     - name: Commit and push updated figures
       run: |
         git config --global user.name "github-actions[bot]"

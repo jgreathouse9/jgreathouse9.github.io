@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 from mlsynth.mlsynth import dataprep
+import os
 
 
 # Set up theme for Matplotlib
@@ -99,6 +100,10 @@ def main():
     )
     apple_prepped = dataprep(apple_df, 'Artist', 'Date', apple_outcome, 'Water')
 
+    # Ensure the directory exists
+    output_dir = '/blogcontent/scdense/'
+    os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
     # Create two-plot figure
     fig, axes = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
     plot_donors_and_treated(
@@ -113,7 +118,7 @@ def main():
 
     axes[1].legend()
     plt.tight_layout()
-    plt.savefig("/blogcontent/scdense/spotapp.png")
+    plt.savefig(os.path.join(output_dir, 'spotapp.png'))
     plt.close()
 
 

@@ -99,8 +99,8 @@ def main():
     )
     apple_prepped = dataprep(apple_df, 'Artist', 'Date', apple_outcome, 'Water')
 
-    # Ensure the directory exists
-    output_dir = '/blogcontent/scdense/'
+    # Ensure the output directory exists in the working directory
+    output_dir = './output/scdense/'
     os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     # Create two-plot figure

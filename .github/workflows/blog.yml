@@ -52,20 +52,26 @@ jobs:
         echo "Listing files in the blogcontent/scdense/figures directory after move:"
         ls -l blogcontent/scdense/figures
 
-    # Commit and push updated figures
+    # Check if there are any changes to commit
+    - name: Check for changes to commit
+      run: |
+        git status
+        git diff --exit-code || echo "There are changes to commit."
+
+    # Commit and push updated figures if there are changes
     - name: Commit and push updated figures
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # Add untracked files to Git
-        git add blogcontent/scdense/figures/AppleTyla.png
-        git add blogcontent/scdense/figures/SpotifyTyla.png
-        
-        # Commit the changes
-        git commit -m "Update generated figures: AppleTyla.png, SpotifyTyla.png"
-        
+        # Add untracked files to Git (if they exist)
+        git add blogcontent/scdense/figures/AppleTyla.png || echo "No changes to AppleTyla.png"
+        git add blogcontent/scdense/figures/SpotifyTyla.png || echo "No changes to SpotifyTyla.png"
+
+        # Commit the changes only if there are any new files
+        git commit -m "Update generated figures: AppleTyla.png, SpotifyTyla.png" || echo "No changes to commit"
+
         # Push the commit
-        git push
+        git push || echo "No changes to push"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

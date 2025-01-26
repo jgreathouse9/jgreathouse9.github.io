@@ -1,6 +1,8 @@
 import pandas as pd
 from mlsynth.mlsynth import PDA
 import matplotlib
+import os
+
 def set_theme():
     theme = {
         "axes.grid": True,

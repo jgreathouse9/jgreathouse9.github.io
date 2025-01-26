@@ -110,7 +110,7 @@ spotify_config = {
     "treated_color": "black",
     "display_graphs": True,
     "method": "l2",
-    "save": save1
+    "save": save_1
 }
 
 spotify_model = PDA(spotify_config)
@@ -145,7 +145,7 @@ apple_config = {
     "treated_color": "black",
     "display_graphs": True,
     "method": "l2",
-    "save": save2
+    "save": save_2
 }
 
 apple_model = PDA(apple_config)

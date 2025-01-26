@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from mlsynth.mlsynth import dataprep
 import os
 
-
 # Set up theme for Matplotlib
 def set_theme():
     theme = {

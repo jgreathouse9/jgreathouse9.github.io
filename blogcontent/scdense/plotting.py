@@ -21,7 +21,7 @@ def set_theme():
         "axes.titlesize": 20,
         "figure.dpi": 100,
         "axes.facecolor": "white",
-        "figure.figsize": (10, 5.5),
+        "figure.figsize": (10, 5),
     }
     matplotlib.rcParams.update(theme)
 

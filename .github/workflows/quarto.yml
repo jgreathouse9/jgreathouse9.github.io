@@ -1,4 +1,4 @@
-name: Quarto Render with Index
+name: Quarto Render with Back Home Link
 
 on:
   push:
@@ -34,6 +34,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
+
+    - name: Add "Back Home" link to all .qmd files
+      run: |
+        for file in qdocs/*.qmd; do
+          if ! grep -q "Back Home" "$file"; then
+            echo "Adding Back Home link to $file..."
+            sed -i '1i[Back Home](https://jgreathouse9.github.io/qdocs/index.html)\n' "$file"
+          fi
+        done
 
     - name: Generate index.qmd
       run: |
@@ -73,4 +82,4 @@ jobs:
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         git add . 
-        git diff --cached --exit-code || (git commit -m "Render Quarto site with index page" && git push)
+        git diff --cached --exit-code || (git commit -m "Render Quarto site with Back Home link" && git push)

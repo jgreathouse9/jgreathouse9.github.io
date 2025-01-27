@@ -345,20 +345,59 @@ The table below summarizes our results.
 
 Here is the same plot with the Apple data, where the outcome is Playlist Count:
 
-![AppleResults](https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/blogcontent/scdense/figures/AppleTyla.png)
+
+```{python}
+#| echo: false
+#| fig-align: center
+# Apple Music Data
+
+apple_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Apple%20Music/AppleMusic.csv"
+apple_date_range = ['2022-01-01', '2024-06-01']
+apple_df = preprocess_data(
+    url=apple_url,
+    date_range=apple_date_range,
+    column_name='Playlists',
+    treat_artist='Tyla',
+    reference_date='2023-08-17'
+)
+appleoutcome = 'Playlists'
+
+apple_config = {
+    "df": apple_df,
+    "treat": "Water",
+    "time": "Date",
+    "outcome": "Playlists",
+    "unitid": "Artist",
+    "counterfactual_color": "red",
+    "treated_color": "black",
+    "display_graphs": True,
+    "method": "l2",
+    "save": save_2
+}
+
+apple_model = PDA(apple_config)
+apple_results = apple_model.fit()
 
 
-And the corresponding summary statistics
+# Extracting only the required values: ATT, SE, t-stat, CI, RMSE, R-squared
+required_data = {
+    "ATT": apple_results["Effects"]["ATT"],
+    "Standard Error": apple_results["Inference"]["standard_error"],
+    "t-stat": apple_results["Inference"]["t_stat"],
+    "Confidence Interval": apple_results["Inference"]["confidence_interval"],
+    "RMSE (T0)": apple_results["Fit"]["T0 RMSE"],
+    "R-Squared": apple_results["Fit"]["R-Squared"]
+}
 
+# Convert the filtered data into a DataFrame
+appletable_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
 
-| Metric              | Value                                                            |
-|:--------------------|:-----------------------------------------------------------------|
-| ATT                 | 410.101                                                          |
-| Standard Error      | 22.330680124153137                                               |
-| t-stat              | 312.2035227426551                                                |
-| Confidence Interval | (366.15, 454.05) |
-| RMSE (T0)           | 4.445                                                            |
-| R-Squared           | 0.981                                                            |
+# Display the DataFrame as a markdown table
+applemarkdown_table = appletable_df.to_markdown(index=False)
+
+# Print the markdown table
+print(applemarkdown_table)
+```
 
 
 This should surprise nobody, and the practical results speak for themselves. Going viral clearly contributed a lot to Tyla's success across both platforms, as the estimated counterfactuals spell out very plainly that her reach would be a lot flatter compared to what it in fact was/is. As we know from the above, every artist in the donor pool contributes to Tyla's synthetic control, and the $\ell_2$ relaxer will not run ito problems of multicollinearity as LASSO might in higher dimensions. This method can also be used with multiple treated units, but I haven't written this just yet. 

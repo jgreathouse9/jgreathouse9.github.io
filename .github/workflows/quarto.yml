@@ -35,9 +35,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install matplotlib numpy jupyter pyyaml  # Add other Python dependencies as needed
 
-    - name: Render Quarto File to _site (default output directory)
+    - name: Render all Quarto files
       run: |
-        quarto render qdocs/example.qmd  # Quarto handles the default output to _site/
+        # Find and render all .qmd files in the qdocs/ directory
+        for file in qdocs/*.qmd; do
+          echo "Rendering $file..."
+          quarto render "$file"  # Render each .qmd file
+        done
 
     - name: Check rendered output
       run: |

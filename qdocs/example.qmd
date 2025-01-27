@@ -1,32 +1,56 @@
----
-title: "Simple Plot"
-author: "Your Name"
-format: html
-execute:
-  echo: true
-  warning: false
-  results: hide
----
+name: Quarto Render
 
-## Plotting with Python
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - main
 
-This is a simple plot generated using Python.
+jobs:
+  render:
+    runs-on: ubuntu-latest
 
-```{python}
-import matplotlib.pyplot as plt
-import numpy as np
+    permissions:
+      contents: write  # Ensures the workflow can push changes
 
-# Create some data
-x = np.linspace(0, 10, 100)
-y = np.sin(x)
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
 
-# Plot the data
-plt.plot(x, y)
-plt.title('Sine Wave')
-plt.xlabel('x')
-plt.ylabel('sin(x)')
-plt.grid(True)
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.8'
 
-# Save the plot as an image
-#plt.savefig("plot.png")
-plt.show()
+    - name: Set up Quarto
+      uses: quarto-dev/quarto-actions/setup@v2
+      with:
+        version: "1.7.8"  # Specify the exact Quarto version
+
+    - name: Install required Python packages
+      run: |
+        python -m pip install --upgrade pip
+        pip install matplotlib numpy  # Add other Python dependencies as needed
+
+    - name: Render Quarto Files to _sites
+      run: |
+        quarto render qdocs/example.qmd --output _sites/  # Ensure proper directory output
+
+    - name: Check rendered output
+      run: |
+        ls -l _sites/  # List contents of the _sites directory to check if the files are there
+
+    - name: Commit rendered output
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        if [ -d "_sites" ]; then
+          git add _sites/*  # Add all files in _sites
+          git commit -m "Render Quarto site"
+          git push
+        else
+          echo "No rendered files to commit."
+        fi

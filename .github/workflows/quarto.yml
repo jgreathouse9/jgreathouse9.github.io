@@ -1,4 +1,4 @@
-name: Quarto Render
+name: Quarto Render with Index
 
 on:
   push:
@@ -35,6 +35,27 @@ jobs:
         python -m pip install --upgrade pip
         pip install matplotlib numpy jupyter pyyaml  # Add other Python dependencies as needed
 
+    - name: Generate index.qmd
+      run: |
+        echo "---" > qdocs/index.qmd
+        echo "title: Blog Index" >> qdocs/index.qmd
+        echo "format: html" >> qdocs/index.qmd
+        echo "---" >> qdocs/index.qmd
+        echo "" >> qdocs/index.qmd
+        echo "# Blog Posts" >> qdocs/index.qmd
+        echo "" >> qdocs/index.qmd
+
+        # Loop through all qmd files and add links to the index page
+        for file in qdocs/*.qmd; do
+          if [[ $file != "qdocs/index.qmd" ]]; then
+            # Extract the title from the YAML metadata
+            title=$(grep "^title:" "$file" | cut -d ":" -f2- | xargs)
+            # Generate the link (replace .qmd with .html for output)
+            link=$(basename "$file" .qmd).html
+            echo "1. [$title]($link)" >> qdocs/index.qmd
+          fi
+        done
+
     - name: Render all Quarto files
       run: |
         # Find and render all .qmd files in the qdocs/ directory
@@ -52,4 +73,4 @@ jobs:
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         git add .  # Add all files, not just _site
-        git diff --cached --exit-code || (git commit -m "Render Quarto site" && git push)
+        git diff --cached --exit-code || (git commit -m "Render Quarto site with index page" && git push)

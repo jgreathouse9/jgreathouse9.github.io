@@ -35,16 +35,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install matplotlib numpy  # Add other Python dependencies as needed
 
-    - name: Render Quarto Files in qdocs
+    - name: Render Quarto File to sites
       run: |
-        quarto render qdocs/example.qmd
+        quarto render qdocs/example.qmd --output sites  # Set the output directory to _sites
+
+    - name: Check rendered output
+      run: |
+        ls -l _sites/  # List contents of the _sites directory to check if the files are there
 
     - name: Commit rendered output
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        if [ -d "_site" ]; then
-          git add _site/*
+        if [ -d "_sites" ]; then
+          git add _sites/*  # Add files from _sites
           git commit -m "Render Quarto site"
           git push
         else

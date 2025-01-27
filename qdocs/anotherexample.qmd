@@ -13,3 +13,97 @@ This post goes over an extended empirical example. To see the simple and fast wa
 Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$ be the time unit indices for our outcomes, $y_{it}$. Let $i = 1$ represent the treated unit, and let the remaining units, $N_0$ in total, form the control group, which remains untreated. The key challenge of causal inference is that we only have factual outcomes, which are defined as $y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0$, where $d_{it}$ is an indicator for whether the unit is treated ($d_{it} = 1$) or untreated ($d_{it} = 0$). An intervention occurs after time $T_{0}$, such that set $\mathcal{T}\_{1} = \\{1, 2, \ldots, T_0\\}$ corresponds to the pre-treatment period, and set $\mathcal{T}\_{2} = \\{T_0 + 1, \ldots, T\\}$ corresponds to the post-treatment period. Denote $\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.$ The objective is to estimate the counterfactual $y_{1t}^0$ for the post-treatment period, or the values we would see if the treatment did not happen.
 
 The original SCM proposes to  use least-squares regression to estimate the weights, $\mathbf{w} \in \mathbb{I}^{N_0}$ subject to $\lVert \mathbf{w} \rVert_1 = 1$. Here, the Individual columns of the donor pool matrix, denoted like $\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}$, are our independent variables which are multiplied by their respective weights and then added (in matrix math we'd call this the dot product). Naturally, the pre-treatment outcome vector of our treated unit, $\mathbf{y}_1 \in \mathbb{R}^{1 \times T}$, is the dependent variable. A good synthetic control satisfies $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$, or good pre-treatment fit with respect to the treated unit vector.
+
+## $\ell_2$ Relaxation
+
+The $\ell_2$ relaxation estimates the model $\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}$, where $\boldsymbol{\alpha}$ is some unconstrained intercept we estimate after solving for the weights. The main innovation with $\ell_2$ relaxation is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. Here is the optimization:
+
+$$
+
+\begin{split}
+\begin{aligned}
+&\min_{\mathbf{w}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \quad \forall t \in \mathcal{T}_{1}, \quad \text{subject to } \|\mathbf{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau \\
+&\mathbf{\eta} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1 \quad \mathbf{\eta} \in \mathbb{R}^{N_0 \times 1}, \\
+&\mathbf{\Sigma} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0, \quad \mathbf{\Sigma} \in \mathbb{R}^{N_0 \times N_0}.
+\end{aligned}
+\end{split}
+
+$$
+
+
+Underneath the scary matrix algebra, we have two terms to focus on here (technically three if we count the tuning parameter): _eta_ ($\boldsymbol{\eta}$) and _sigma_ ($\boldsymbol{\Sigma}$). The first term simply is [a projection](https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C) which measures the relation between treated unit and each of the control units. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. The latter is the same, except for the control group, capturing how similar the control units are to each other. The optimization itself just finds the values of beta that bound the infinity norm (or, the maximum absolute value) of the difference between these two, such that the difference is below some constant, _tau_ $\tau$. As for the weights themselves, they are shrank towards zero, but never actually equal 0. The weights may be any real number.
+
+Critical to this process is the selection of tau. In the original paper, the authors do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. Then, the next step is to estimate the regression model run the optimization and calculate out-of-sample validation predictions up until time point $T_0$. We then check the RMSE of the validation error across all these values of *tau* and select the value of with the lowest validation RMSE. A lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (_trust me_). The way ``mlsynth`` does this, however, is by splitting the pre-treatment period in half, but the performance is pretty close to what Zhentao and Yishu do for their empirical example (see [the code](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) at the documentation).
+
+$\ell_2$ relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or $\ell_2$-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let's apply this to two real-life empirical examples, shall we?
+
+# Implementing $\ell_2$ relaxation in ``mlsynth``.
+
+In order to get these results, you need Python (3.8 or greater) and ``mlsynth``, which you may install from the Github repo.
+
+    $ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+
+I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal infernece, not because they will all go on to be grad students or policy researchers, but because the causal mindset is _such an important part_ of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by [playing music](https://genius.com/Tyla-shake-ah-lyrics). The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla's song "Water", [the one](https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1) that went viral in 2023, which everybody knew about when I asked.
+
+I used this to transition into the lecture for the day. "Oftentimes," I began, "we are concerned about the impact of specific events or interventions. As we've discussed, the DID method does this on a parallel trends assumption, or that absent the intevention, the trends of the treated group would, on average, move the same as the control group. But what do we do if this breaks down? What if we cannot  get parallel trends to hold, for some reason? All semester, we've discussed academic examples, but I want to show you how this may look in a semi-real life setting. So the question we wish to answer here is "How would Tyla's musical success have looked absent her going viral?" Maybe she would've made it big anyways, but how can we tell?"
+
+## Plotting Our Data
+
+> **Note:**  
+These data are freely available from my Github and can be viewed at [a dashboard](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.
+
+Before we get into the fancy estimation though, let's just plot our data. These daily data come from [Songstats](https://songstats.com/welcome), a platform which keeps data on Spotify and Apple (and lots of other sources) music/interaction trends. For example, here is Tyla's [Apple performance](https://songstats.com/artist/7ln14gwj/tyla?source=apple_music) and the same for [Spotify](https://songstats.com/artist/7ln14gwj/tyla?source=spotify). For Spotify, the metric is "Playlist Reach" which Songstats defines as
+
+> The combined follower number of all Spotify playlists with 200+ followers your music is currently on.
+
+I keep the data from Janaury 1 2023 to June 1 2024. There are 59 donors in the Spotify data, after we drop artists with unbalanced panel/missing data. For Apple, our metric is "Playlists", which Songstats defines as
+
+> The total number of distinct playlists your music has ever been on.
+
+These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.## $\ell_2$ Relaxation
+
+The $\ell_2$ relaxation estimates the model $\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}$, where $\boldsymbol{\alpha}$ is some unconstrained intercept we estimate after solving for the weights. The main innovation with $\ell_2$ relaxation is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. Here is the optimization:
+
+$$
+
+\begin{split}
+\begin{aligned}
+&\min_{\mathbf{w}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \quad \forall t \in \mathcal{T}_{1}, \quad \text{subject to } \|\mathbf{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau \\
+&\mathbf{\eta} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1 \quad \mathbf{\eta} \in \mathbb{R}^{N_0 \times 1}, \\
+&\mathbf{\Sigma} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0, \quad \mathbf{\Sigma} \in \mathbb{R}^{N_0 \times N_0}.
+\end{aligned}
+\end{split}
+
+$$
+
+
+Underneath the scary matrix algebra, we have two terms to focus on here (technically three if we count the tuning parameter): _eta_ ($\boldsymbol{\eta}$) and _sigma_ ($\boldsymbol{\Sigma}$). The first term simply is [a projection](https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C) which measures the relation between treated unit and each of the control units. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. The latter is the same, except for the control group, capturing how similar the control units are to each other. The optimization itself just finds the values of beta that bound the infinity norm (or, the maximum absolute value) of the difference between these two, such that the difference is below some constant, _tau_ $\tau$. As for the weights themselves, they are shrank towards zero, but never actually equal 0. The weights may be any real number.
+
+Critical to this process is the selection of tau. In the original paper, the authors do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. Then, the next step is to estimate the regression model run the optimization and calculate out-of-sample validation predictions up until time point $T_0$. We then check the RMSE of the validation error across all these values of *tau* and select the value of with the lowest validation RMSE. A lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (_trust me_). The way ``mlsynth`` does this, however, is by splitting the pre-treatment period in half, but the performance is pretty close to what Zhentao and Yishu do for their empirical example (see [the code](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) at the documentation).
+
+$\ell_2$ relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or $\ell_2$-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let's apply this to two real-life empirical examples, shall we?
+
+# Implementing $\ell_2$ relaxation in ``mlsynth``.
+
+In order to get these results, you need Python (3.8 or greater) and ``mlsynth``, which you may install from the Github repo.
+
+    $ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+
+I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal infernece, not because they will all go on to be grad students or policy researchers, but because the causal mindset is _such an important part_ of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by [playing music](https://genius.com/Tyla-shake-ah-lyrics). The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla's song "Water", [the one](https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1) that went viral in 2023, which everybody knew about when I asked.
+
+I used this to transition into the lecture for the day. "Oftentimes," I began, "we are concerned about the impact of specific events or interventions. As we've discussed, the DID method does this on a parallel trends assumption, or that absent the intevention, the trends of the treated group would, on average, move the same as the control group. But what do we do if this breaks down? What if we cannot  get parallel trends to hold, for some reason? All semester, we've discussed academic examples, but I want to show you how this may look in a semi-real life setting. So the question we wish to answer here is "How would Tyla's musical success have looked absent her going viral?" Maybe she would've made it big anyways, but how can we tell?"
+
+## Plotting Our Data
+
+> **Note:**  
+These data are freely available from my Github and can be viewed at [a dashboard](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.
+
+Before we get into the fancy estimation though, let's just plot our data. These daily data come from [Songstats](https://songstats.com/welcome), a platform which keeps data on Spotify and Apple (and lots of other sources) music/interaction trends. For example, here is Tyla's [Apple performance](https://songstats.com/artist/7ln14gwj/tyla?source=apple_music) and the same for [Spotify](https://songstats.com/artist/7ln14gwj/tyla?source=spotify). For Spotify, the metric is "Playlist Reach" which Songstats defines as
+
+> The combined follower number of all Spotify playlists with 200+ followers your music is currently on.
+
+I keep the data from Janaury 1 2023 to June 1 2024. There are 59 donors in the Spotify data, after we drop artists with unbalanced panel/missing data. For Apple, our metric is "Playlists", which Songstats defines as
+
+> The total number of distinct playlists your music has ever been on.
+
+These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.

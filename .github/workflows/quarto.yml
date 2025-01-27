@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
   pull_request:
     branches:
       - main
@@ -11,32 +12,32 @@ on:
 jobs:
   render:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # Ensures the workflow can push changes
+
     steps:
     - name: Checkout the repository
-      uses: actions/checkout@v2
-    
+      uses: actions/checkout@v3
+
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
         python-version: '3.8'
 
-    - name: Install Quarto
-      run: |
-        # Install dependencies
-        sudo apt-get update
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:quarto/quarto
-        sudo apt-get update
-        sudo apt-get install -y quarto
+    - name: Set up Quarto
+      uses: quarto-dev/quarto-actions/setup@v2
+      with:
+        version: latest
 
     - name: Install required Python packages
       run: |
         python -m pip install --upgrade pip
-        pip install matplotlib numpy
+        pip install matplotlib numpy  # Add other Python dependencies as needed
 
     - name: Render Quarto File
       run: |
-        quarto render qdocs/example.qmd
+        quarto render qdocs/example.qmd  # Adjust this path if needed
 
     - name: Commit rendered output
       run: |

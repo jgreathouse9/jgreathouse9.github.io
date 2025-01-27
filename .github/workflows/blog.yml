@@ -1,74 +1,77 @@
-name: Blog Code
+name: Blog Python Code
 
 on:
   push:
-    branches:
-      - master
-      - main
-  pull_request:
-    branches:
-      - main
+    paths:
+      - "**"  # Trigger on push to any file in the repository
+  workflow_dispatch:
 
 jobs:
-  render:
+  blog-python-code:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write  # Ensures the workflow can push changes
-
     steps:
-    - name: Checkout the repository
+    # Checkout repository
+    - name: Checkout repository
       uses: actions/checkout@v3
 
+    # Set up Python
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
+        python-version: 3.9
 
-    - name: Set up Quarto
-      uses: quarto-dev/quarto-actions/setup@v2
-      with:
-        version: "1.7.8"  # Specify the exact Quarto version
-
-    - name: Install required Python packages
+    # Install dependencies
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r qdocs/requirements.txt
+        pip install -r blogcontent/scdense/requirements.txt
 
-    - name: Generate index.qmd
+    # Run the plotting script
+    - name: Run plotting script
+      run: python blogcontent/scdense/plotting.py
+
+    # Run the l2est.py script
+    - name: Run l2est.py
+      run: python blogcontent/scdense/l2est.py
+
+    # Move generated plot to target directory and list files
+    - name: Move figure to target directory and list existing files
       run: |
-        echo "---" > qdocs/index.qmd
-        echo "title: Blog" >> qdocs/index.qmd
-        echo "format: html" >> qdocs/index.qmd
-        echo "---" >> qdocs/index.qmd
-        echo "" >> qdocs/index.qmd
-        echo "# Posts" >> qdocs/index.qmd
-        echo "Here are my blog posts that cover econometrics, machine-learning, and other data science topics." >> qdocs/index.qmd
-        echo "" >> qdocs/index.qmd
+        # List files in the blogcontent/scdense directory before moving the plot
+        echo "Listing files in the blogcontent/scdense directory before move:"
+        ls -l blogcontent/scdense
 
-        # Loop through all qmd files and add links to the index page
-        for file in qdocs/*.qmd; do
-          if [[ $file != "qdocs/index.qmd" ]]; then
-            title=$(grep "^title:" "$file" | cut -d ":" -f2- | xargs)
-            link=$(basename "$file" .qmd).html
-            echo "1. [$title]($link)" >> qdocs/index.qmd
-          fi
-        done
+        # Create the target directory if it doesn't exist
+        mkdir -p blogcontent/scdense/figures
 
-    - name: Render all Quarto files
+        # Move the plot files to the target directory
+        mv blogcontent/scdense/spotapp.png blogcontent/scdense/figures/spottapp.png
+
+        # List files in the target directory after move
+        echo "Listing files in the blogcontent/scdense/figures directory after move:"
+        ls -l blogcontent/scdense/figures
+
+    # Check if there are any changes to commit
+    - name: Check for changes to commit
       run: |
-        for file in qdocs/*.qmd; do
-          echo "Rendering $file..."
-          quarto render "$file"
-        done
+        git status
+        git diff --exit-code || echo "There are changes to commit."
 
-    - name: Check rendered output
+    # Commit and push updated figures if there are changes
+    - name: Commit and push updated figures
       run: |
-        ls -l _site/
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Add untracked files to Git (if they exist)
+        git add blogcontent/scdense/figures/AppleTyla.png || echo "No changes to AppleTyla.png"
+        git add blogcontent/scdense/figures/SpotifyTyla.png || echo "No changes to SpotifyTyla.png"
 
-    - name: Commit rendered output
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        git add .
-        git diff --cached --exit-code || (git commit -m "Render Quarto site with index page" && git push)
+        # Commit the changes only if there are any new files
+        git commit -m "Update generated figures: AppleTyla.png, SpotifyTyla.png" || echo "No changes to commit"
+
+        # Push the commit
+        git push || echo "No changes to push"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

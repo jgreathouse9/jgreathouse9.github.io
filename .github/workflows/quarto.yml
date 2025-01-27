@@ -1,4 +1,4 @@
-name: Blog Code
+name: Quarto Render with Index
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
     - name: Install required Python packages
       run: |
         python -m pip install --upgrade pip
-        pip install matplotlib numpy jupyter pyyaml  # Add other Python dependencies as needed
+        pip install -r qdocs/requirements.txt
 
     - name: Generate index.qmd
       run: |
@@ -49,9 +49,7 @@ jobs:
         # Loop through all qmd files and add links to the index page
         for file in qdocs/*.qmd; do
           if [[ $file != "qdocs/index.qmd" ]]; then
-            # Extract the title from the YAML metadata
             title=$(grep "^title:" "$file" | cut -d ":" -f2- | xargs)
-            # Generate the link (replace .qmd with .html for output)
             link=$(basename "$file" .qmd).html
             echo "1. [$title]($link)" >> qdocs/index.qmd
           fi
@@ -59,31 +57,18 @@ jobs:
 
     - name: Render all Quarto files
       run: |
-        # Find and render all .qmd files in the qdocs/ directory
         for file in qdocs/*.qmd; do
           echo "Rendering $file..."
-          quarto render "$file"  # Render each .qmd file
+          quarto render "$file"
         done
 
-    - name: Stash uncommitted changes before pulling
+    - name: Check rendered output
       run: |
-        git add .
-        git stash
-
-    - name: Pull latest changes
-      run: |
-        git pull --rebase origin master
-
-    - name: Reapply stashed changes
-      run: |
-        git stash pop || echo "No changes to reapply."
+        ls -l _site/
 
     - name: Commit rendered output
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add .  # Add all files, not just _site
-        git diff --cached --exit-code || (
-          git commit -m "Render Quarto site with index page" &&
-          git push
-        )
+        git add .
+        git diff --cached --exit-code || (git commit -m "Render Quarto site with index page" && git push)

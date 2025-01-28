@@ -215,12 +215,11 @@ where <span class="math inline">\(w_i\)</span> represents the weight assigned fo
 <p>The <span class="math inline">\(\ell_2\)</span> relaxation estimates the model <span class="math inline">\(\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}\)</span>, where <span class="math inline">\(\boldsymbol{\alpha}\)</span> is some unconstrained intercept we estimate after solving for the weights. The main innovation with <span class="math inline">\(\ell_2\)</span> relaxation is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. Here is the optimization:</p>
 <span class="math display">\[\begin{split}
 \begin{aligned}
-&amp;\min_{\mathbf{w}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \quad \forall t \in \mathcal{T}_{1}, \quad \text{subject to } \|\mathbf{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau \\
-&amp;\mathbf{\eta} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1 \quad \mathbf{\eta} \in \mathbb{R}^{N_0 \times 1}, \\
-&amp;\mathbf{\Sigma} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0, \quad \mathbf{\Sigma} \in \mathbb{R}^{N_0 \times N_0}.
+&amp;\min_{\mathbf{w}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \quad \forall t \in \mathcal{T}_{1}, \\
+&amp;\text{subject to } \|\mathbf{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau
 \end{aligned}
 \end{split}\]</span>
-<p>Underneath the scary matrix algebra, we have two terms to focus on here (technically three if we count the tuning parameter): <em>eta</em> (<span class="math inline">\(\boldsymbol{\eta}\)</span>) and <em>sigma</em> (<span class="math inline">\(\boldsymbol{\Sigma}\)</span>). The first term simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. The latter is the same, except for the control group, capturing how similar the control units are to each other. The optimization itself just finds the values of beta that bound the infinity norm (or, the maximum absolute value) of the difference between these two, such that the difference is below some constant, <em>tau</em> <span class="math inline">\(\tau\)</span>. As for the weights themselves, they are shrank towards zero, but never actually equal 0. The weights may be any real number.</p>
+<p>Underneath the scary matrix algebra, we have two terms to focus on here: <em>eta</em> (<span class="math inline">\(\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1\)</span>) and <em>sigma</em> (<span class="math inline">\(\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0\)</span>). The first term simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. The latter is the same, except for the control group, capturing how similar the control units are to each other. The optimization itself just finds the values of beta that bound the infinity norm (or, the maximum absolute value) of the difference between these two, such that the difference is below some constant, <em>tau</em> <span class="math inline">\(\tau\)</span>. As for the weights themselves, they are shrank towards zero, but never actually equal 0. The weights may be any real number.</p>
 <p>Critical to this process is the selection of tau. In the original paper, the authors do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. Then, the next step is to estimate the regression model run the optimization and calculate out-of-sample validation predictions up until time point <span class="math inline">\(T_0\)</span>. We then check the RMSE of the validation error across all these values of <em>tau</em> and select the value of with the lowest validation RMSE. A lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (<em>trust me</em>). The way <code>mlsynth</code> does this, however, is by splitting the pre-treatment period in half, but the performance is pretty close to what Zhentao and Yishu do for their empirical example (see <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the code</a> at the documentation).</p>
 <p><span class="math inline">\(\ell_2\)</span> relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or <span class="math inline">\(\ell_2\)</span>-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let’s apply this to two real-life empirical examples, shall we?</p>
 </section>
@@ -245,7 +244,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="4faabd15" class="cell" data-execution_count="1">
+<div id="888148e5" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -259,7 +258,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="e0e9ca70" class="cell" data-execution_count="2">
+<div id="4138e578" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -289,7 +288,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="835ab8a3" class="cell" data-execution_count="3">
+<div id="b2f190bb" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

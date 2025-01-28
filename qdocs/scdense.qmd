@@ -32,17 +32,18 @@ The key challenge of causal inference is that we only observe the factual/realiz
 $$
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
 $$
-Outcomes in this framework are a function of treatment status, $d_{it} \in \{0, 1\}$. While $d_{it} = 1$, a unit is treated and while $d_{it} = 0$ a unit is untreated. Thus, $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes $y_{1t}^0$. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector $\mathbf{w}$ is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome
-
+Outcomes in this framework are a function of treatment status, $d_{it} \in \{0, 1\}$. While $d_{it} = 1$, a unit is treated and while $d_{it} = 0$ a unit is untreated. Thus, $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes $y_{1t}^0$. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector
 $$
-\mathbf{w} \coloneqq \begin{bmatrix} w_2 & w_3 & \cdots & w_{N_0+1} \end{bmatrix}^\top, \quad \text{where } w_i \: \forall \: i \in \{2, 3, \dots, N_0+1\}.
-$$  
-where $w_i$ represents the weight assigned for control unit $i$. SCM solves for $\mathbf{w}$ via the optimization:  
+\mathbf{w} \coloneqq \begin{bmatrix} w_2 & w_3 & \cdots & w_{N_0+1} \end{bmatrix}^\top, \quad \text{where } w_i \: \forall \: i \in \mathcal{N}_0.
+$$ 
+is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome
+ 
+SCM solves for $\mathbf{w}$ via the optimization:  
 $$
 \underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2, \quad \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
 $$  
 
-Here, $\mathbf{w}^\top \mathbf{Y}_0$ represents the predictions, which constrain the weights to the convex hull, disallowing extrapolation of any form. The objective of SCM is to achieve a good pre-treatment fit, such that $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$. [Speaking](https://doi.org/10.3982/QE1596) [generally](https://doi.org/10.1080/01621459.2021.1965613), the better pre-treatment fit we have, the better the out-of-sample predictions will be for the synthetic control.
+Here, $\mathbf{w}^\top \mathbf{Y}_0$ represents the dot product of predictions, also known as a weighted average. The constraint of the convex hull disallows extrapolation of any form. SCMs are predicated on good pretreatment fit, such that $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$. [Speaking](https://doi.org/10.3982/QE1596) [generally](https://doi.org/10.1080/01621459.2021.1965613), the better pre-treatment fit we have over a long time series, the better the out-of-sample predictions will be for the synthetic control.
 
 #  $\ell_2$-PDA
 

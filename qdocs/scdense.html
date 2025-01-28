@@ -256,19 +256,19 @@ The key challenge of causal inference is that we only observe the factual/realiz
 <span class="math display">\[
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
 \]</span> Outcomes in this framework are a function of treatment status, <span class="math inline">\(d_{it} \in \{0, 1\}\)</span>. While <span class="math inline">\(d_{it} = 1\)</span>, a unit is treated and while <span class="math inline">\(d_{it} = 0\)</span> a unit is untreated. Thus, <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span>. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector <span class="math display">\[
-\mathbf{w} \coloneqq \begin{bmatrix} w_2 &amp; w_3 &amp; \cdots &amp; w_{N_0+1} \end{bmatrix}^\top, \quad \text{where } w_i \: \forall \: i \in \mathcal{N}_0.
+\mathbf{w} \coloneqq \begin{bmatrix} w_2 &amp; w_3 &amp; \cdots &amp; w_{N_0+1} \end{bmatrix}^\top, \: \text{where } w_i \: \forall \: i \in \mathcal{N}_0.
 \]</span> is assigned across the <span class="math inline">\(N_0\)</span> control units to approximate the treated unit’s pre-intervention outcome. SCM solves for <span class="math inline">\(\mathbf{w}\)</span> via the optimization:<br>
 <span class="math display">\[
-\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2,  \: \forall t \in \mathcal{T}_{1}, \: \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
+\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2,  \: \forall \: t \in \mathcal{T}_{1}, \: \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
 \]</span></p>
 <p>Here, <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0\)</span> represents the dot product of predictions, also known as a weighted average. The constraint of the convex hull disallows extrapolation of any form. SCMs are predicated on good pretreatment fit, such that <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>. <a href="https://doi.org/10.3982/QE1596">Speaking</a> <a href="https://doi.org/10.1080/01621459.2021.1965613">generally</a>, the better pre-treatment fit we have over a long time series, the better the out-of-sample predictions will be for the synthetic control.</p>
 </section>
 <section id="ell_2-pda" class="level1">
 <h1><span class="math inline">\(\ell_2\)</span>-PDA</h1>
-<p><span class="math inline">\(\ell_2\)</span>-PDA estimates the model <span class="math inline">\(\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}\)</span>, where <span class="math inline">\(\boldsymbol{\alpha}\)</span> is some unconstrained intercept we estimate after solving for the weights. The intercept is simply the average time-based difference between the treated unit and the control group (as with normal regression, it is what we would get if all our weights were 0). The main innovation with <span class="math inline">\(\ell_2\)</span>-PDA is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. <span class="math inline">\(\ell_2\)</span>-PDA, unlike standard SCM, allows for extrapolation outside the convex hull. As for the weights themselves, they are shrank towards zero, but never actually equal 0, and may be any real number. Here is the optimization for <span class="math inline">\(\ell_2\)</span>-PDA:</p>
+<p><span class="math inline">\(\ell_2\)</span>-PDA estimates the model <span class="math inline">\(\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}\)</span>, where <span class="math inline">\(\boldsymbol{\alpha}\)</span> is some unconstrained intercept we estimate after solving for the weights. The intercept is simply the average time-based difference between the treated unit and the control group (as with normal regression, it is what we would get if all our weights were 0). The main innovation with <span class="math inline">\(\ell_2\)</span>-PDA is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. <span class="math inline">\(\ell_2\)</span>-PDA, unlike standard SCM, allows for extrapolation outside the convex hull. Here is the optimization for <span class="math inline">\(\ell_2\)</span>-PDA:</p>
 <span class="math display">\[\begin{split}
 \begin{aligned}
-&amp;\underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \: \forall t \in \mathcal{T}_{1}, \: \text{subject to } \|\boldsymbol{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau
+&amp;\underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \: \forall t \: \in \mathcal{T}_{1}, \: \text{subject to } \|\boldsymbol{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau
 \end{aligned}
 \end{split}\]</span>
 <p>I was puzzled by this optimization at first, but it turns our that we have two terms to focus on here. The first is <em>eta</em>, computed like <span class="math inline">\(\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1\)</span>, and the second is <em>Sigma</em>, computed like <span class="math inline">\(\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0\)</span>. <span class="math inline">\(\boldsymbol{\eta}\)</span> simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units over the pre-treatment period. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. <span class="math inline">\(\boldsymbol{\Sigma}\)</span> is what we call a <a href="https://www.youtube.com/watch?v=nokLWUK9dwM">Gram matrix</a>. This term captures how similar the control units are to each other over the pre-treatment period. The optimization seeks to use the donor-to-donor relationships to reconstruct the values of the treated unit in the pre-intervention period. While <span class="math inline">\(\ell_2\)</span>-PDA extrapolates, its bias is bounded over the infinity norm (or, the maximum absolute value) of the difference between these two constructs. Effectively, we are bounding the error to be no greater than some nonnegative constant. This constant is what we call <em>tau</em>, <span class="math inline">\(\tau\)</span>.</p>
@@ -314,7 +314,7 @@ Note
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="992261a4" class="cell" data-execution_count="1">
+<div id="0f631e77" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -328,7 +328,7 @@ Note
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate <span class="math inline">\(\ell_2\)</span>-PDA, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="9862fcb9" class="cell" data-execution_count="2">
+<div id="fc51c416" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -354,7 +354,7 @@ Note
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="1a46fe3f" class="cell" data-execution_count="3">
+<div id="ee6a3841" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

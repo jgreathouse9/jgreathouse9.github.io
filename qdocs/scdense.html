@@ -186,10 +186,25 @@ This post goes over an extended empirical example. To see the simple and fast wa
 </blockquote>
 <section id="a-review-of-synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="a-review-of-synthetic-controls">A Review of Synthetic Controls</h2>
-<p>Let ( t ) and ( i ), where ( = {1, 2, 3, } ), denote indices for time periods and units, respectively. Each outcome is denoted by ( y_{it} ), where ( y_{it} ) is the observed outcome for unit ( i ) at time ( t ). The treated unit is indexed as ( i = 1 ), while the remaining ( N_0 ) units (( i = 2, , N_0 + 1 )) form the control group. The key challenge of causal inference is that for each unit ( i ) and time ( t ), we only observe the factual outcome, expressed as:<br>
-[ y_{it} = y_{it}^1 d_{it} + (1 - d_{it})y_{it}^0, ] where ( y_{it}^1 ) is the potential outcome under treatment, ( y_{it}^0 ) is the potential outcome under no treatment, and ( d_{it} {0, 1} ) is an indicator for treatment (( d_{it} = 1 ) if treated, ( d_{it} = 0 ) if untreated).</p>
-<p>An intervention occurs after time <span class="math inline">\(T_{0}\)</span>, such that set <span class="math inline">\(\mathcal{T}_{1} = \{1, 2, \ldots, T_0\}\)</span> corresponds to the pre-treatment period, and set <span class="math inline">\(\mathcal{T}_{2} = \{T_0 + 1, \ldots, T\}\)</span> corresponds to the post-treatment period. Denote <span class="math inline">\(\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.\)</span> The objective is to estimate the counterfactual <span class="math inline">\(y_{1t}^0\)</span> for the post-treatment period, or the values we would see if the treatment did not happen.</p>
-<p>The original SCM proposes to use least-squares regression to estimate the weights, <span class="math inline">\(\mathbf{w} \in \mathbb{I}^{N_0}\)</span> subject to <span class="math inline">\(\lVert \mathbf{w} \rVert_1 = 1\)</span>. Here, the Individual columns of the donor pool matrix, denoted like <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}\)</span>, are our independent variables which are multiplied by their respective weights and then added (in matrix math we’d call this the dot product). Naturally, the pre-treatment outcome vector of our treated unit, <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{1 \times T}\)</span>, is the dependent variable. A good synthetic control satisfies <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>, or good pre-treatment fit with respect to the treated unit vector.</p>
+<p>Let $ t $ and $ i $, where $ = {1, 2, 3, } $, represent the indices for time periods and units, respectively. Each outcome is denoted by $ y_{it} $, where $ y_{it} $ is the observed outcome for unit $ i $ at time $ t $. The treated unit is indexed as $ i = 1 $, while the remaining $ N_0 $ units ($ i = 2, , N_0 + 1 $) form the control group. The key challenge of causal inference is that for each unit $ i $ and time $ t <span class="math inline">\(, we only observe the factual outcome, expressed as:\)</span>$ y_{it} = y_{it}^1 d_{it} + (1 - d_{it})y_{it}^0, $$ where $ y_{it}^1 $ is the potential outcome under treatment, $ y_{it}^0 $ is the potential outcome under no treatment, and $ d_{it} {0, 1} $ is an indicator for treatment ($ d_{it} = 1 $ if treated, $ d_{it} = 0 $ if untreated).</p>
+<p>The pre-treatment period consists of time points $ _1 = {1, 2, , T_0} $, while the post-treatment period is given by $ <em>2 = {T_0 + 1, , T} $. The objective is to estimate the counterfactual outcomes $ y</em>{1t}^0 $ for the treated unit during the post-treatment period ($ t _2 $).</p>
+The outcome vector for the treated unit is given by $ _1 =
+<span class="math display">\[\begin{bmatrix} y_{11} &amp; y_{12} &amp; \cdots &amp; y_{1T} \end{bmatrix}\]</span>
+<p><sup></sup>T $, where each entry corresponds to the outcome of the treated unit at time $ t $. The donor pool matrix, representing the outcomes of the $ N_0 $ control units over all time periods, is defined as<br>
+<span class="math display">\[
+\mathbf{Y}_0 = \begin{bmatrix}
+    y_{21} &amp; y_{22} &amp; \cdots &amp; y_{2T} \\
+    y_{31} &amp; y_{32} &amp; \cdots &amp; y_{3T} \\
+    \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+    y_{(N_0+1)1} &amp; y_{(N_0+1)2} &amp; \cdots &amp; y_{(N_0+1)T}
+  \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
+\]</span><br>
+The weight vector $ ^{N_0} $, where $ := { w : 0 w } $, assigns non-negative weights to each of the $ N_0 $ control units.</p>
+<p>The original SCM estimates the weights $ $ by solving the following optimization problem:<br>
+<span class="math display">\[
+\operatorname{argmin}_{\mathbf{w} \in \mathbb{I}^{N_0}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2, \quad \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
+\]</span><br>
+In this formulation, $ _1 $ is the pre-treatment outcome vector for the treated unit, and $ ^_0 $ represents the synthetic control, a weighted combination of control unit outcomes. The constraint $ _1 = 1 $ ensures that the weights sum to one. The objective is to achieve a good pre-treatment fit, such that $ ^_0 <em>1 $, while using the synthetic control to estimate $ y</em>{1t}^0 $ during the post-treatment period.</p>
 </section>
 <section id="ell_2-relaxation" class="level2">
 <h2 class="anchored" data-anchor-id="ell_2-relaxation"><span class="math inline">\(\ell_2\)</span> Relaxation</h2>
@@ -226,7 +241,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="b71ba0ea" class="cell" data-execution_count="1">
+<div id="f8f6dbf4" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -240,7 +255,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="264ab019" class="cell" data-execution_count="2">
+<div id="92409d30" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -270,7 +285,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="e6926f42" class="cell" data-execution_count="3">
+<div id="0adfd087" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

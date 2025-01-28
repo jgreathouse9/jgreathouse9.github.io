@@ -180,10 +180,19 @@ window.Quarto = {
 
 
 <p>Plenty of posts have been done in the last decade on <a href="https://doi.org/10.1198/jasa.2009.ap08746">the synthetic control method</a> and related approaches; folks from <a href="https://medium.com/data-science-at-microsoft/causal-inference-using-synthetic-controls-d96a890c83a7">Microsoft</a>, <a href="https://towardsdatascience.com/how-to-do-causal-inference-using-synthetic-controls-ab435e0228f1">Databricks</a>, <a href="https://youtu.be/j5DoJV5S2Ao?si=RWUYFjFEWpvkl8x1">Uber</a>, <a href="https://towardsdatascience.com/causal-inference-with-synthetic-control-in-python-4a79ee636325">Amazon</a>, <a href="https://netflixtechblog.com/round-2-a-survey-of-causal-inference-applications-at-netflix-fd78328ee0bb">Netflix</a>, <a href="https://andrewpwheeler.com/2019/12/06/using-regularization-to-generate-synthetic-controls-and-conformal-prediction-for-significance-tests/">Gainwell Technologies</a>, and <a href="https://rudrendupaul.medium.com/causal-inference-part-7-synthetic-control-methods-a-powerful-technique-for-inferring-causality-in-3ec5dbe26038">else</a><a href="https://henamsingla.medium.com/synthetic-control-method-a-z-d28099c56edb">where</a> have gone over it, detailing different aspects of the method. Many (not of course <a href="https://peerunreviewed.blogspot.com/2019/11/a-short-tutorial-on-robust-synthetic.html">not all</a>) of these go over the standard SCM. Broadly, the original SCM tends to favor, under certain technical conditions, a sparse set of control units being the underlying weights that reconstruct the factor loadings/observed values of the treated unit, pre-intervention. And while sparsity, or the true coefficient vector being 0, has appealing properties (such as our ability to interpret the synthetic control), <a href="https://ceistorvergata.it/public/files/RFCS/Giannone_illusion4-2.pdf">in some cases</a> the sparsity notion is just wrong. The <span class="math inline">\(\ell_2\)</span> panel data approach is an econometric methodology developed by <a href="https://zhentaoshi.github.io/">Zhentao Shi</a> and <a href="https://ishwang1.github.io/">Yishu Wang</a>. The method accommodates sparse or dense data generation processes; here, a dense DGP is when the true vector of coefficients is mostly not zero. In this post, I demonstrate <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the <span class="math inline">\(\ell_2\)</span> panel data approach</a> as implemented in my library <code>mlsynth</code>. The Python code for these results may be found <a href="https://github.com/jgreathouse9/jgreathouse9.github.io/edit/master/qdocs/scdense.qmd">here</a>.</p>
-<blockquote class="blockquote">
-<p><strong>Note:</strong><br>
-This post goes over an extended empirical example. To see the simple and fast way to use this method, you can go to <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">my Python documentation</a> from my package <code>mlsynth</code>.</p>
-</blockquote>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This post goes over an extended empirical example. To see the simple and fast way to use this method, you can go to <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">my Python documentation</a> from my package <code>mlsynth</code>.</p>
+</div>
+</div>
 <section id="a-review-of-synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="a-review-of-synthetic-controls">A Review of Synthetic Controls</h2>
 <p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. Furthermore, let <span class="math inline">\(\mathbb{N}\)</span> be the set of natural numbers and <span class="math inline">\(\mathbb{I}\)</span> the unit interval, where<br>
@@ -198,22 +207,21 @@ This post goes over an extended empirical example. To see the simple and fast wa
     y_{(N_0+1)1} &amp; y_{(N_0+1)2} &amp; \cdots &amp; y_{(N_0+1)T}
   \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
 \]</span><br>
-The key challenge of causal inference is that for each unit, we only observe the factual outcome, expressed as:<br>
+The key challenge of causal inference is that we only observe the factual/realized outcome, expressed as:<br>
 <span class="math display">\[
-y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0,
-\]</span> where <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment, and <span class="math inline">\(d_{it} \in \{0, 1\}\)</span> is an indicator for treatment (where <span class="math inline">\(d_{it} = 1\)</span> if treated, <span class="math inline">\(d_{it} = 0\)</span> if untreated). The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span> for the treated unit during the post-treatment period, <span class="math inline">\(t \in \mathcal{T}_2\)</span>. SCMs and panel data approaches are weighting based estimators, where some weight vector <span class="math inline">\(\mathbf{w}\)</span> is assigned across the <span class="math inline">\(N_0\)</span> control units</p>
+y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
+\]</span> Outcomes in this framework are a function of treatment status, <span class="math inline">\(d_{it} \in \{0, 1\}\)</span> While <span class="math inline">\(d_{it} = 1\)</span>, a unit is treated and while <span class="math inline">\(d_{it} = 0\)</span> a unit is untreated. Thus, <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span>. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector <span class="math inline">\(\mathbf{w}\)</span> is assigned across the <span class="math inline">\(N_0\)</span> control units to approximate the treated unit’s pre-intervention outcome</p>
 <p><span class="math display">\[
 \mathbf{w} = \begin{bmatrix} w_2 &amp; w_2 &amp; \cdots &amp; w_{N_0+1} \end{bmatrix}^\top,
 \]</span><br>
-where <span class="math inline">\(w_i\)</span> represents the weight assigned for control unit <span class="math inline">\(i\)</span>.</p>
-<p>SCM estimates the weights <span class="math inline">\(\mathbf{w}\)</span> by solving the following optimization problem:<br>
+where <span class="math inline">\(w_i\)</span> represents the weight assigned for control unit <span class="math inline">\(i\)</span>. SCM estimates the weights <span class="math inline">\(\mathbf{w}\)</span> by solving the following optimization problem:<br>
 <span class="math display">\[
 \min_{\mathbf{w} \in \mathbb{I}^{N_0}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2, \quad \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
 \]</span></p>
-<p>Here, <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0\)</span> represents the predictions. The objective is to achieve a good pre-treatment fit, such that <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>. The better pre-treatment fit we have, the better our out-of-sample predictions will be.</p>
+<p>Here, <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0\)</span> represents the predictions, which constrain the weights to the convex hull, disallowing extrapolation of any form. The objective of SCM is to achieve a good pre-treatment fit, such that <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>. The better pre-treatment fit we have, the better our out-of-sample predictions will be for the synthetic control.</p>
 </section>
-<section id="ell_2-relaxation" class="level2">
-<h2 class="anchored" data-anchor-id="ell_2-relaxation"><span class="math inline">\(\ell_2\)</span> Relaxation</h2>
+<section id="ell_2-relaxation" class="level1">
+<h1><span class="math inline">\(\ell_2\)</span> Relaxation</h1>
 <p>The <span class="math inline">\(\ell_2\)</span> relaxation estimates the model <span class="math inline">\(\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}\)</span>, where <span class="math inline">\(\boldsymbol{\alpha}\)</span> is some unconstrained intercept we estimate after solving for the weights. The main innovation with <span class="math inline">\(\ell_2\)</span> relaxation is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. Here is the optimization:</p>
 <span class="math display">\[\begin{split}
 \begin{aligned}
@@ -225,8 +233,8 @@ where <span class="math inline">\(w_i\)</span> represents the weight assigned fo
 <p>Critical to this process is the selection of tau. In the original paper, the authors do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. Then, the next step is to estimate the regression model run the optimization and calculate out-of-sample validation predictions up until time point <span class="math inline">\(T_0\)</span>. We then check the RMSE of the validation error across all these values of <em>tau</em> and select the value of with the lowest validation RMSE. A lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (<em>trust me</em>). The way <code>mlsynth</code> does this, however, is by splitting the pre-treatment period in half, but the performance is pretty close to what Zhentao and Yishu do for their empirical example (see <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the code</a> at the documentation).</p>
 <p><span class="math inline">\(\ell_2\)</span> relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or <span class="math inline">\(\ell_2\)</span>-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let’s apply this to two real-life empirical examples, shall we?</p>
 </section>
-<section id="implementing-ell_2-relaxation-in-mlsynth." class="level2">
-<h2 class="anchored" data-anchor-id="implementing-ell_2-relaxation-in-mlsynth.">Implementing <span class="math inline">\(\ell_2\)</span> relaxation in <code>mlsynth</code>.</h2>
+<section id="implementing-ell_2-relaxation-in-mlsynth." class="level1">
+<h1>Implementing <span class="math inline">\(\ell_2\)</span> relaxation in <code>mlsynth</code>.</h1>
 <p>In order to get these results, you need Python (3.8 or greater) and <code>mlsynth</code>, which you may install from the Github repo.</p>
 <pre><code>$ pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
 <p>I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal infernece, not because they will all go on to be grad students or policy researchers, but because the causal mindset is <em>such an important part</em> of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by <a href="https://genius.com/Tyla-shake-ah-lyrics">playing music</a>. The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla’s song “Water”, <a href="https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1">the one</a> that went viral in 2023, which everybody knew about when I asked.</p>
@@ -246,7 +254,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="93cf7dc2" class="cell" data-execution_count="1">
+<div id="7b1ffd3f" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -260,7 +268,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="be7de019" class="cell" data-execution_count="2">
+<div id="dea758f9" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -290,7 +298,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="4f0448fb" class="cell" data-execution_count="3">
+<div id="ddba2045" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

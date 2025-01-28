@@ -177,7 +177,7 @@ window.Quarto = {
   <li><a href="#a-review-of-synthetic-controls" id="toc-a-review-of-synthetic-controls" class="nav-link active" data-scroll-target="#a-review-of-synthetic-controls">A Review of Synthetic Controls</a></li>
   <li><a href="#ell_2-pda" id="toc-ell_2-pda" class="nav-link" data-scroll-target="#ell_2-pda"><span class="math inline">\(\ell_2\)</span>-PDA</a>
   <ul class="collapse">
-  <li><a href="#selecting-tau" id="toc-selecting-tau" class="nav-link" data-scroll-target="#selecting-tau">Selecting tau</a></li>
+  <li><a href="#selecting-tau" id="toc-selecting-tau" class="nav-link" data-scroll-target="#selecting-tau">Selecting <span class="math inline">\(\tau\)</span></a></li>
   </ul></li>
   <li><a href="#implementing-ell_2-pda-in-mlsynth." id="toc-implementing-ell_2-pda-in-mlsynth." class="nav-link" data-scroll-target="#implementing-ell_2-pda-in-mlsynth.">Implementing <span class="math inline">\(\ell_2\)</span>-PDA in <code>mlsynth</code>.</a>
   <ul class="collapse">
@@ -271,9 +271,9 @@ y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
 &amp;\underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \: \forall t \: \in \mathcal{T}_{1}, \: \text{subject to } \|\boldsymbol{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau
 \end{aligned}
 \end{split}\]</span>
-<p>I was puzzled by this optimization at first, but it turns our that we have two terms to focus on here. The first is <em>eta</em>, computed like <span class="math inline">\(\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1\)</span>, and the second is <em>Sigma</em>, computed like <span class="math inline">\(\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0\)</span>. <span class="math inline">\(\boldsymbol{\eta}\)</span> simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units over the pre-treatment period. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. <span class="math inline">\(\boldsymbol{\Sigma}\)</span> is what we call a <a href="https://www.youtube.com/watch?v=nokLWUK9dwM">Gram matrix</a>. This term captures how similar the control units are to each other over the pre-treatment period. The optimization seeks to use the donor-to-donor relationships to reconstruct the values of the treated unit in the pre-intervention period. While <span class="math inline">\(\ell_2\)</span>-PDA extrapolates, its bias is bounded over the infinity norm (or, the maximum absolute value) of the difference between these two constructs. Effectively, we are bounding the error to be no greater than some nonnegative constant. This constant is what we call <em>tau</em>, <span class="math inline">\(\tau\)</span>.</p>
+<p>For our purposes, three terms matter. The first is <em>eta</em>, computed like <span class="math inline">\(\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1\)</span>, the second is <em>Sigma</em>, computed like <span class="math inline">\(\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0\)</span>, and the final one is <em>tau</em>, <span class="math inline">\(\tau\)</span>. <span class="math inline">\(\boldsymbol{\eta}\)</span> simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units over the pre-treatment period. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. <span class="math inline">\(\boldsymbol{\Sigma}\)</span> is what we call a <a href="https://www.youtube.com/watch?v=nokLWUK9dwM">Gram matrix</a>. This term captures how similar the control units are to each other over the pre-treatment period. The optimization seeks to use the donor-to-donor relationships to reconstruct the values of the treated unit in the pre-intervention period. While <span class="math inline">\(\ell_2\)</span>-PDA extrapolates, its bias is bounded over the infinity norm (or, the maximum absolute value) of the difference between these two constructs. Effectively, we are bounding the error to be no greater than some nonnegative constant. This constant is our third term, and I discuss how I tune it in the next section.</p>
 <section id="selecting-tau" class="level2">
-<h2 class="anchored" data-anchor-id="selecting-tau">Selecting tau</h2>
+<h2 class="anchored" data-anchor-id="selecting-tau">Selecting <span class="math inline">\(\tau\)</span></h2>
 Critical to <span class="math inline">\(\ell_2\)</span>-PDA is the selection of tau. The reason for this is because 0 lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (<em>trust me</em>) of the pre-treatment data. The way <code>mlsynth</code> tunes tau is by cross-validation. <code>mlsynth</code> invokes a log-space over the interval <span class="math inline">\(\tau \in \left[ 10^{-4}, \tau_{\text{init}} \right]\)</span>, where <span class="math inline">\(\tau_{\text{init}} = \|\boldsymbol{\eta}\|_\infty\)</span>. We begin by dividing the pre-treatment period into a training and validation period, <span class="math inline">\(\mathcal{T}_1 = \mathcal{T}_1^{\text{train}} \cup \mathcal{T}_1^{\text{val}}, \quad
 \mathcal{T}_1^{\text{train}} \cap \mathcal{T}_1^{\text{val}} = \emptyset.\)</span> Let the final training period be <span class="math inline">\(k = \left\lfloor \frac{T_1}{2} \right\rfloor\)</span>, or the halfway point of the pre-treatment time series, such that <span class="math inline">\(\mathcal{T}_1^{\text{train}} = \{1, 2, \ldots, k\}, \quad
 \mathcal{T}_1^{\text{val}} = \{k+1, \ldots, T_0\}.\)</span> We then estimate the model for the training period, and estimate our predictions through the end of the validation period. The tau we select is
@@ -314,7 +314,7 @@ Note
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="0f631e77" class="cell" data-execution_count="1">
+<div id="b18c3cbc" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -328,7 +328,7 @@ Note
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate <span class="math inline">\(\ell_2\)</span>-PDA, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="fc51c416" class="cell" data-execution_count="2">
+<div id="a8ea6fc4" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -354,7 +354,7 @@ Note
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="ee6a3841" class="cell" data-execution_count="3">
+<div id="2d45cd8a" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

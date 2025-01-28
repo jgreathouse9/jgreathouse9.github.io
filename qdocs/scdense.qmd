@@ -11,15 +11,31 @@ This post goes over an extended empirical example. To see the simple and fast wa
 
 ## A Review of Synthetic Controls
 
-Let \( t \in \mathbb{N} \) and \( i \in \mathbb{N} \), where \( \mathbb{N} = \{1, 2, 3, \ldots\} \), denote indices for time periods and units, respectively. Each outcome is denoted by \( y_{it} \), where \( y_{it} \in \mathbb{R} \) is the observed outcome for unit \( i \) at time \( t \). The treated unit is indexed as \( i = 1 \), while the remaining \( N_0 \) units (\( i = 2, \ldots, N_0 + 1 \)) form the control group. The key challenge of causal inference is that for each unit \( i \) and time \( t \), we only observe the factual outcome, expressed as:  
-\[
+Let $ t \in \mathbb{N} $ and $ i \in \mathbb{N} $, where $ \mathbb{N} = \{1, 2, 3, \ldots\} $, represent the indices for time periods and units, respectively. Each outcome is denoted by $ y_{it} $, where $ y_{it} \in \mathbb{R} $ is the observed outcome for unit $ i $ at time $ t $. The treated unit is indexed as $ i = 1 $, while the remaining $ N_0 $ units ($ i = 2, \ldots, N_0 + 1 $) form the control group. The key challenge of causal inference is that for each unit $ i $ and time $ t $, we only observe the factual outcome, expressed as:  
+$$
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0,
-\]
-where \( y_{it}^1 \) is the potential outcome under treatment, \( y_{it}^0 \) is the potential outcome under no treatment, and \( d_{it} \in \{0, 1\} \) is an indicator for treatment (\( d_{it} = 1 \) if treated, \( d_{it} = 0 \) if untreated).
+$$
+where $ y_{it}^1 $ is the potential outcome under treatment, $ y_{it}^0 $ is the potential outcome under no treatment, and $ d_{it} \in \{0, 1\} $ is an indicator for treatment ($ d_{it} = 1 $ if treated, $ d_{it} = 0 $ if untreated).
 
-An intervention occurs after time $T_{0}$, such that set $\mathcal{T}_{1} = \{1, 2, \ldots, T_0\}$ corresponds to the pre-treatment period, and set $\mathcal{T}_{2} = \{T_0 + 1, \ldots, T\}$ corresponds to the post-treatment period. Denote $\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.$ The objective is to estimate the counterfactual $y_{1t}^0$ for the post-treatment period, or the values we would see if the treatment did not happen.
+The pre-treatment period consists of time points $ \mathcal{T}_1 = \{1, 2, \ldots, T_0\} $, while the post-treatment period is given by $ \mathcal{T}_2 = \{T_0 + 1, \ldots, T\} $. The objective is to estimate the counterfactual outcomes $ y_{1t}^0 $ for the treated unit during the post-treatment period ($ t \in \mathcal{T}_2 $).
 
-The original SCM proposes to  use least-squares regression to estimate the weights, $\mathbf{w} \in \mathbb{I}^{N_0}$ subject to $\lVert \mathbf{w} \rVert_1 = 1$. Here, the Individual columns of the donor pool matrix, denoted like $\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}$, are our independent variables which are multiplied by their respective weights and then added (in matrix math we'd call this the dot product). Naturally, the pre-treatment outcome vector of our treated unit, $\mathbf{y}_1 \in \mathbb{R}^{1 \times T}$, is the dependent variable. A good synthetic control satisfies $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$, or good pre-treatment fit with respect to the treated unit vector.
+The outcome vector for the treated unit is given by $ \mathbf{y}_1 = \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T $, where each entry corresponds to the outcome of the treated unit at time $ t $. The donor pool matrix, representing the outcomes of the $ N_0 $ control units over all time periods, is defined as  
+$$
+\mathbf{Y}_0 = \begin{bmatrix}
+    y_{21} & y_{22} & \cdots & y_{2T} \\
+    y_{31} & y_{32} & \cdots & y_{3T} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    y_{(N_0+1)1} & y_{(N_0+1)2} & \cdots & y_{(N_0+1)T}
+  \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
+$$  
+The weight vector $ \mathbf{w} \in \mathbb{I}^{N_0} $, where $ \mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \} $, assigns non-negative weights to each of the $ N_0 $ control units.
+
+The original SCM estimates the weights $ \mathbf{w} $ by solving the following optimization problem:  
+$$
+\operatorname{argmin}_{\mathbf{w} \in \mathbb{I}^{N_0}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2, \quad \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
+$$  
+In this formulation, $ \mathbf{y}_1 $ is the pre-treatment outcome vector for the treated unit, and $ \mathbf{w}^\top \mathbf{Y}_0 $ represents the synthetic control, a weighted combination of control unit outcomes. The constraint $ \lVert \mathbf{w} \rVert_1 = 1 $ ensures that the weights sum to one. The objective is to achieve a good pre-treatment fit, such that $ \mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1 $, while using the synthetic control to estimate $ y_{1t}^0 $ during the post-treatment period.
+
 
 ## $\ell_2$ Relaxation
 

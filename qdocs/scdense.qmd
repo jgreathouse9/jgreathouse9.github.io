@@ -15,13 +15,7 @@ Let $\mathbb{R}$ denote the set of real numbers. Furthermore, let $\mathbb{N}$ b
 $$
 \mathbb{N} \coloneqq \{1, 2, 3, \dots\}, \quad \mathbb{I} \coloneqq \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.
 $$
-Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$, represent the indices for $T$ time periods and  $N$ units. The pre-treatment period consists of consecutive time periods $\mathcal{T}_1 = \{1, 2, \ldots, T_0\}$, while the post-treatment period is given by $\mathcal{T}_2 = \{T_0 + 1, \ldots, T\}$. The treated unit is indexed by $i = 1$, while the remaining set of units, $\mathcal{N}_0 \coloneqq \{i = 2, \ldots, N_0 + 1\}$, forms the control group. Each outcome for all units is denoted by $y_{it}$. The key challenge of causal inference is that for each unit $i$ and time $t$, we only observe the factual outcome, expressed as:  
-$$
-y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0,
-$$
-where $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment, and $d_{it} \in \{0, 1\}$ is an indicator for treatment (where $d_{it} = 1$ if treated, $d_{it} = 0$ if untreated). The objective is to estimate the counterfactual outcomes $y_{1t}^0$ for the treated unit during the post-treatment period, $t \in \mathcal{T}_2$. 
-
-Denote the outcome vector for the treated unit as $\mathbf{y}_1 \coloneqq \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T$, where each entry corresponds to the outcome of the treated unit at time $t$. The donor pool matrix, similarly, is defined as  
+Let a caligraphic letter, say $\mathcal A$, denote a descrete set whose cardinality is $A=|\mathcal{A}|$. Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$, represent the indices for $T$ time periods and  $N$ units. The pre-treatment period consists of consecutive time periods $\mathcal{T}_1 = \{1, 2, \ldots, T_0\}$ (cardinality $T_1$), while the post-treatment period is given by $\mathcal{T}_2 = \{T_0 + 1, \ldots, T\}$ (cardinality $T_2$). The treated unit is indexed by $i = 1$, while the remaining set of units, $\mathcal{N}_0 \coloneqq \{2, \ldots, N_0 + 1\}$ (cardinality $N_0$), forms the control group. Each outcome for all units is denoted by $y_{it}$. Denote the outcome vector for the treated unit as $\mathbf{y}_1 \coloneqq \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T$, where each entry corresponds to the outcome of the treated unit at time $t$. The donor pool matrix, similarly, is defined as  
 $$
 \mathbf{Y}_0 = \begin{bmatrix}
     y_{21} & y_{22} & \cdots & y_{2T} \\
@@ -30,7 +24,11 @@ $$
     y_{(N_0+1)1} & y_{(N_0+1)2} & \cdots & y_{(N_0+1)T}
   \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
 $$  
-The weight vector $\mathbf{w}$ assigns weights to each of the $N_0$ control units
+The key challenge of causal inference is that for each unit, we only observe the factual outcome, expressed as:  
+$$
+y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0,
+$$
+where $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment, and $d_{it} \in \{0, 1\}$ is an indicator for treatment (where $d_{it} = 1$ if treated, $d_{it} = 0$ if untreated). The objective is to estimate the counterfactual outcomes $y_{1t}^0$ for the treated unit during the post-treatment period, $t \in \mathcal{T}_2$. SCMs and panel data approaches are weighting based estimators, where some weight vector $\mathbf{w}$ is assigned across the $N_0$ control units
 
 $$
 \mathbf{w} = \begin{bmatrix} w_2 & w_2 & \cdots & w_{N_0+1} \end{bmatrix}^\top,

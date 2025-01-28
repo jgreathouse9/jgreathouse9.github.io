@@ -40,7 +40,7 @@ $$
 
 Here, $\mathbf{w}^\top \mathbf{Y}_0$ represents the predictions, which constrain the weights to the convex hull, disallowing extrapolation of any form. The objective of SCM is to achieve a good pre-treatment fit, such that $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$. The better pre-treatment fit we have, the better our out-of-sample predictions will be for the synthetic control.
 
-## $\ell_2$ Relaxation
+# $\ell_2$ Relaxation
 
 The $\ell_2$ relaxation estimates the model $\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}$, where $\boldsymbol{\alpha}$ is some unconstrained intercept we estimate after solving for the weights. The main innovation with $\ell_2$ relaxation is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. Here is the optimization:
 
@@ -58,7 +58,7 @@ Critical to this process is the selection of tau. In the original paper, the aut
 
 $\ell_2$ relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or $\ell_2$-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let's apply this to two real-life empirical examples, shall we?
 
-## Implementing $\ell_2$ relaxation in ``mlsynth``.
+# Implementing $\ell_2$ relaxation in ``mlsynth``.
 
 In order to get these results, you need Python (3.8 or greater) and ``mlsynth``, which you may install from the Github repo.
 

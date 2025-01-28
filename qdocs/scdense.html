@@ -21,6 +21,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -210,7 +244,7 @@ Note
 The key challenge of causal inference is that we only observe the factual/realized outcome, expressed as:<br>
 <span class="math display">\[
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
-\]</span> Outcomes in this framework are a function of treatment status, <span class="math inline">\(d_{it} \in \{0, 1\}\)</span> While <span class="math inline">\(d_{it} = 1\)</span>, a unit is treated and while <span class="math inline">\(d_{it} = 0\)</span> a unit is untreated. Thus, <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span>. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector <span class="math inline">\(\mathbf{w}\)</span> is assigned across the <span class="math inline">\(N_0\)</span> control units to approximate the treated unit’s pre-intervention outcome</p>
+\]</span> Outcomes in this framework are a function of treatment status, <span class="math inline">\(d_{it} \in \{0, 1\}\)</span>. While <span class="math inline">\(d_{it} = 1\)</span>, a unit is treated and while <span class="math inline">\(d_{it} = 0\)</span> a unit is untreated. Thus, <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span>. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector <span class="math inline">\(\mathbf{w}\)</span> is assigned across the <span class="math inline">\(N_0\)</span> control units to approximate the treated unit’s pre-intervention outcome</p>
 <p><span class="math display">\[
 \mathbf{w} = \begin{bmatrix} w_2 &amp; w_2 &amp; \cdots &amp; w_{N_0+1} \end{bmatrix}^\top,
 \]</span><br>
@@ -235,16 +269,25 @@ where <span class="math inline">\(w_i\)</span> represents the weight assigned fo
 </section>
 <section id="implementing-ell_2-relaxation-in-mlsynth." class="level1">
 <h1>Implementing <span class="math inline">\(\ell_2\)</span> relaxation in <code>mlsynth</code>.</h1>
-<p>In order to get these results, you need Python (3.8 or greater) and <code>mlsynth</code>, which you may install from the Github repo.</p>
-<pre><code>$ pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
+<p>In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal infernece, not because they will all go on to be grad students or policy researchers, but because the causal mindset is <em>such an important part</em> of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by <a href="https://genius.com/Tyla-shake-ah-lyrics">playing music</a>. The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla’s song “Water”, <a href="https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1">the one</a> that went viral in 2023, which everybody knew about when I asked.</p>
 <p>I used this to transition into the lecture for the day. “Oftentimes,” I began, “we are concerned about the impact of specific events or interventions. As we’ve discussed, the DID method does this on a parallel trends assumption, or that absent the intevention, the trends of the treated group would, on average, move the same as the control group. But what do we do if this breaks down? What if we cannot get parallel trends to hold, for some reason? All semester, we’ve discussed academic examples, but I want to show you how this may look in a semi-real life setting. So the question we wish to answer here is”How would Tyla’s musical success have looked absent her going viral?” Maybe she would’ve made it big anyways, but how can we tell?”</p>
 <section id="plotting-our-data" class="level3">
 <h3 class="anchored" data-anchor-id="plotting-our-data">Plotting Our Data</h3>
-<blockquote class="blockquote">
-<p><strong>Note:</strong><br>
-These data are freely available from my Github and can be viewed at <a href="https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/">a dashboard</a> on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.</p>
-</blockquote>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>These data are freely available from my Github and can be viewed at <a href="https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/">a dashboard</a> on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.</p>
+</div>
+</div>
 <p>Before we get into the fancy estimation though, let’s just plot our data. These daily data come from <a href="https://songstats.com/welcome">Songstats</a>, a platform which keeps data on Spotify and Apple (and lots of other sources) music/interaction trends. For example, here is Tyla’s <a href="https://songstats.com/artist/7ln14gwj/tyla?source=apple_music">Apple performance</a> and the same for <a href="https://songstats.com/artist/7ln14gwj/tyla?source=spotify">Spotify</a>. For Spotify, the metric is “Playlist Reach” which Songstats defines as</p>
 <blockquote class="blockquote">
 <p>The combined follower number of all Spotify playlists with 200+ followers your music is currently on.</p>
@@ -254,7 +297,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="7b1ffd3f" class="cell" data-execution_count="1">
+<div id="bb93f5fd" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -268,7 +311,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="dea758f9" class="cell" data-execution_count="2">
+<div id="21e08b59" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -298,7 +341,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="ddba2045" class="cell" data-execution_count="3">
+<div id="950935a6" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

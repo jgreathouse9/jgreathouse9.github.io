@@ -186,7 +186,9 @@ This post goes over an extended empirical example. To see the simple and fast wa
 </blockquote>
 <section id="a-review-of-synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="a-review-of-synthetic-controls">A Review of Synthetic Controls</h2>
-<p>Let <span class="math inline">\(t \in \mathbb{N}\)</span> and <span class="math inline">\(i \in \mathbb{N}\)</span> be the time unit indices for our outcomes, <span class="math inline">\(y_{it}\)</span>. Let <span class="math inline">\(i = 1\)</span> represent the treated unit, and let the remaining units, <span class="math inline">\(N_0\)</span> in total, form the control group, which remains untreated. The key challenge of causal inference is that we only have factual outcomes, which are defined as <span class="math inline">\(y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0\)</span>, where <span class="math inline">\(d_{it}\)</span> is an indicator for whether the unit is treated (<span class="math inline">\(d_{it} = 1\)</span>) or untreated (<span class="math inline">\(d_{it} = 0\)</span>). An intervention occurs after time <span class="math inline">\(T_{0}\)</span>, such that set <span class="math inline">\(\mathcal{T}_{1} = \{1, 2, \ldots, T_0\}\)</span> corresponds to the pre-treatment period, and set <span class="math inline">\(\mathcal{T}_{2} = \{T_0 + 1, \ldots, T\}\)</span> corresponds to the post-treatment period. Denote <span class="math inline">\(\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.\)</span> The objective is to estimate the counterfactual <span class="math inline">\(y_{1t}^0\)</span> for the post-treatment period, or the values we would see if the treatment did not happen.</p>
+<p>Let ( t ) and ( i ), where ( = {1, 2, 3, } ), denote indices for time periods and units, respectively. Each outcome is denoted by ( y_{it} ), where ( y_{it} ) is the observed outcome for unit ( i ) at time ( t ). The treated unit is indexed as ( i = 1 ), while the remaining ( N_0 ) units (( i = 2, , N_0 + 1 )) form the control group. The key challenge of causal inference is that for each unit ( i ) and time ( t ), we only observe the factual outcome, expressed as:<br>
+[ y_{it} = y_{it}^1 d_{it} + (1 - d_{it})y_{it}^0, ] where ( y_{it}^1 ) is the potential outcome under treatment, ( y_{it}^0 ) is the potential outcome under no treatment, and ( d_{it} {0, 1} ) is an indicator for treatment (( d_{it} = 1 ) if treated, ( d_{it} = 0 ) if untreated).</p>
+<p>An intervention occurs after time <span class="math inline">\(T_{0}\)</span>, such that set <span class="math inline">\(\mathcal{T}_{1} = \{1, 2, \ldots, T_0\}\)</span> corresponds to the pre-treatment period, and set <span class="math inline">\(\mathcal{T}_{2} = \{T_0 + 1, \ldots, T\}\)</span> corresponds to the post-treatment period. Denote <span class="math inline">\(\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.\)</span> The objective is to estimate the counterfactual <span class="math inline">\(y_{1t}^0\)</span> for the post-treatment period, or the values we would see if the treatment did not happen.</p>
 <p>The original SCM proposes to use least-squares regression to estimate the weights, <span class="math inline">\(\mathbf{w} \in \mathbb{I}^{N_0}\)</span> subject to <span class="math inline">\(\lVert \mathbf{w} \rVert_1 = 1\)</span>. Here, the Individual columns of the donor pool matrix, denoted like <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}\)</span>, are our independent variables which are multiplied by their respective weights and then added (in matrix math we’d call this the dot product). Naturally, the pre-treatment outcome vector of our treated unit, <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{1 \times T}\)</span>, is the dependent variable. A good synthetic control satisfies <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>, or good pre-treatment fit with respect to the treated unit vector.</p>
 </section>
 <section id="ell_2-relaxation" class="level2">
@@ -224,7 +226,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="c9898793" class="cell" data-execution_count="1">
+<div id="b71ba0ea" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -238,7 +240,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="a6d8d57b" class="cell" data-execution_count="2">
+<div id="264ab019" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -268,7 +270,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="171cb490" class="cell" data-execution_count="3">
+<div id="e6926f42" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

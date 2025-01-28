@@ -28,7 +28,7 @@ The key challenge of causal inference is that we only observe the factual/realiz
 $$
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
 $$
-Outcomes in this framework are a function of treatment status, $d_{it} \in \{0, 1\}$ While $d_{it} = 1$, a unit is treated and while $d_{it} = 0$ a unit is untreated. Thus, $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes $y_{1t}^0$. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector $\mathbf{w}$ is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome
+Outcomes in this framework are a function of treatment status, $d_{it} \in \{0, 1\}$. While $d_{it} = 1$, a unit is treated and while $d_{it} = 0$ a unit is untreated. Thus, $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes $y_{1t}^0$. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector $\mathbf{w}$ is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome
 
 $$
 \mathbf{w} = \begin{bmatrix} w_2 & w_2 & \cdots & w_{N_0+1} \end{bmatrix}^\top,
@@ -60,9 +60,11 @@ $\ell_2$ relaxation offers a counterfactual prediction for dense settings. Often
 
 # Implementing $\ell_2$ relaxation in ``mlsynth``.
 
-In order to get these results, you need Python (3.8 or greater) and ``mlsynth``, which you may install from the Github repo.
+In order to get these results, you need Python (3.9 or greater) and ``mlsynth``, which you may install from the Github repo.
 
-    $ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
 
 I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal infernece, not because they will all go on to be grad students or policy researchers, but because the causal mindset is _such an important part_ of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by [playing music](https://genius.com/Tyla-shake-ah-lyrics). The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla's song "Water", [the one](https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1) that went viral in 2023, which everybody knew about when I asked.
 
@@ -70,8 +72,9 @@ I used this to transition into the lecture for the day. "Oftentimes," I began, "
 
 ### Plotting Our Data
 
-> **Note:**  
+::: {.callout-note}
 These data are freely available from my Github and can be viewed at [a dashboard](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.
+:::
 
 Before we get into the fancy estimation though, let's just plot our data. These daily data come from [Songstats](https://songstats.com/welcome), a platform which keeps data on Spotify and Apple (and lots of other sources) music/interaction trends. For example, here is Tyla's [Apple performance](https://songstats.com/artist/7ln14gwj/tyla?source=apple_music) and the same for [Spotify](https://songstats.com/artist/7ln14gwj/tyla?source=spotify). For Spotify, the metric is "Playlist Reach" which Songstats defines as
 

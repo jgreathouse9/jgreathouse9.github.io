@@ -255,15 +255,14 @@ Note
 The key challenge of causal inference is that we only observe the factual/realized outcome, expressed as:<br>
 <span class="math display">\[
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
-\]</span> Outcomes in this framework are a function of treatment status, <span class="math inline">\(d_{it} \in \{0, 1\}\)</span>. While <span class="math inline">\(d_{it} = 1\)</span>, a unit is treated and while <span class="math inline">\(d_{it} = 0\)</span> a unit is untreated. Thus, <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span>. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector <span class="math inline">\(\mathbf{w}\)</span> is assigned across the <span class="math inline">\(N_0\)</span> control units to approximate the treated unit’s pre-intervention outcome</p>
-<p><span class="math display">\[
-\mathbf{w} \coloneqq \begin{bmatrix} w_2 &amp; w_3 &amp; \cdots &amp; w_{N_0+1} \end{bmatrix}^\top, \quad \text{where } w_i \: \forall \: i \in \{2, 3, \dots, N_0+1\}.
-\]</span><br>
-where <span class="math inline">\(w_i\)</span> represents the weight assigned for control unit <span class="math inline">\(i\)</span>. SCM solves for <span class="math inline">\(\mathbf{w}\)</span> via the optimization:<br>
+\]</span> Outcomes in this framework are a function of treatment status, <span class="math inline">\(d_{it} \in \{0, 1\}\)</span>. While <span class="math inline">\(d_{it} = 1\)</span>, a unit is treated and while <span class="math inline">\(d_{it} = 0\)</span> a unit is untreated. Thus, <span class="math inline">\(y_{it}^1\)</span> is the potential outcome under treatment, <span class="math inline">\(y_{it}^0\)</span> is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes <span class="math inline">\(y_{1t}^0\)</span>. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector <span class="math display">\[
+\mathbf{w} \coloneqq \begin{bmatrix} w_2 &amp; w_3 &amp; \cdots &amp; w_{N_0+1} \end{bmatrix}^\top, \quad \text{where } w_i \: \forall \: i \in \mathcal{N}_0.
+\]</span> is assigned across the <span class="math inline">\(N_0\)</span> control units to approximate the treated unit’s pre-intervention outcome</p>
+<p>SCM solves for <span class="math inline">\(\mathbf{w}\)</span> via the optimization:<br>
 <span class="math display">\[
 \underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2, \quad \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
 \]</span></p>
-<p>Here, <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0\)</span> represents the predictions, which constrain the weights to the convex hull, disallowing extrapolation of any form. The objective of SCM is to achieve a good pre-treatment fit, such that <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>. <a href="https://doi.org/10.3982/QE1596">Speaking</a> <a href="https://doi.org/10.1080/01621459.2021.1965613">generally</a>, the better pre-treatment fit we have, the better the out-of-sample predictions will be for the synthetic control.</p>
+<p>Here, <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0\)</span> represents the dot product of predictions, also known as a weighted average. The constraint of the convex hull disallows extrapolation of any form. SCMs are predicated on good pretreatment fit, such that <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>. <a href="https://doi.org/10.3982/QE1596">Speaking</a> <a href="https://doi.org/10.1080/01621459.2021.1965613">generally</a>, the better pre-treatment fit we have over a long time series, the better the out-of-sample predictions will be for the synthetic control.</p>
 </section>
 <section id="ell_2-pda" class="level1">
 <h1><span class="math inline">\(\ell_2\)</span>-PDA</h1>
@@ -317,7 +316,7 @@ Note
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="92cdbdb3" class="cell" data-execution_count="1">
+<div id="8b1b132b" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -331,7 +330,7 @@ Note
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate <span class="math inline">\(\ell_2\)</span>-PDA, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="666b27b3" class="cell" data-execution_count="2">
+<div id="3775f968" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -357,7 +356,7 @@ Note
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="a278df44" class="cell" data-execution_count="3">
+<div id="0895c7e5" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

@@ -11,15 +11,15 @@ This post goes over an extended empirical example. To see the simple and fast wa
 
 ## A Review of Synthetic Controls
 
-Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$, where $\mathbb{N} = \{1, 2, 3, \ldots\}$, represent the indices for time periods and units, respectively. Each outcome is denoted by $y_{it}$, where $y_{it} \in \mathbb{R}$ is the observed outcome for unit $i$ at time $t$. The treated unit is indexed as $i = 1$, while the remaining set of units $\mathcal{N}_0 \coloneqq \{i = 2, \ldots, N_0 + 1$\}$ form the control group. The key challenge of causal inference is that for each unit $i$ and time $t$, we only observe the factual outcome, expressed as:  
+Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$, where $\mathbb{N} = \{1, 2, 3, \ldots\}$, represent the indices for time periods and units, respectively. Let $\mathbb{I} \coloneqq \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}$ be the unit interval. Each outcome is denoted by $y_{it}$, where $y_{it} \in \mathbb{R}$ is the observed outcome for unit $i$ at time $t$. The treated unit is indexed as $i = 1$, while the remaining set of units $\mathcal{N}_0 \coloneqq \{i = 2, \ldots, N_0 + 1$\}$ form the control group. The key challenge of causal inference is that for each unit $i$ and time $t$, we only observe the factual outcome, expressed as:  
 $$
 y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0,
 $$
 where $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment, and $d_{it} \in \{0, 1\}$ is an indicator for treatment (where $d_{it} = 1$ if treated, $d_{it} = 0$ if untreated).
 
-The pre-treatment period consists of time points $\mathcal{T}_1 = \{1, 2, \ldots, T_0\}$, while the post-treatment period is given by $\mathcal{T}_2 = \{T_0 + 1, \ldots, T\}$. The objective is to estimate the counterfactual outcomes $y_{1t}^0$ for the treated unit during the post-treatment period ($t \in \mathcal{T}_2$).
+The pre-treatment period consists of time points $\mathcal{T}_1 = \{1, 2, \ldots, T_0\}$, while the post-treatment period is given by $\mathcal{T}_2 = \{T_0 + 1, \ldots, T\}$. The objective is to estimate the counterfactual outcomes $y_{1t}^0$ for the treated unit during the post-treatment period, $t \in \mathcal{T}_2$.
 
-The outcome vector for the treated unit is given by $\mathbf{y}_1 = \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T$, where each entry corresponds to the outcome of the treated unit at time $t$. Let $\mathbf{y}_1$ be the outcome vector for the treated unit. The donor pool matrix, similarly, is defined as  
+Denote the outcome vector for the treated unit as $\mathbf{y}_1 \coloneqq \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T$, where each entry corresponds to the outcome of the treated unit at time $t$. The donor pool matrix, similarly, is defined as  
 $$
 \mathbf{Y}_0 = \begin{bmatrix}
     y_{21} & y_{22} & \cdots & y_{2T} \\
@@ -28,7 +28,12 @@ $$
     y_{(N_0+1)1} & y_{(N_0+1)2} & \cdots & y_{(N_0+1)T}
   \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
 $$  
-The weight vector $\mathbf{w} \in \mathbb{I}^{N_0}$, where $\mathbb{I} := \{w \in \mathbb{R} : 0 \leq w \leq 1\}$, assigns non-negative weights to each of the $N_0$ control units.
+The weight vector $\mathbf{w} \in \mathbb{I}^{N_0}$ assigns weights to each of the $N_0$ control units
+
+$$
+\mathbf{w} = \begin{bmatrix} w_1 & w_2 & \cdots & w_{N_0} \end{bmatrix}^\top,
+$$  
+where $w_i$ represents the weight assigned for control unit $i$.
 
 SCM estimates the weights $\mathbf{w}$ by solving the following optimization problem:  
 $$

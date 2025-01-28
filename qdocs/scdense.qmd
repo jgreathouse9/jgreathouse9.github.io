@@ -9,7 +9,7 @@ Plenty of posts have been done in the last decade on [the synthetic control meth
 > **Note:**  
 This post goes over an extended empirical example. To see the simple and fast way to use this method, you can go to [the Python documentation](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) of this method in my packiage ``mlsynth`` which is both slightly more technical and a lot shorter than I'll be here.
 
-# A Review of Synthetic Controls
+## A Review of Synthetic Controls
 
 Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$ be the time unit indices for our outcomes, $y_{it}$. Let $i = 1$ represent the treated unit, and let the remaining units, $N_0$ in total, form the control group, which remains untreated. The key challenge of causal inference is that we only have factual outcomes, which are defined as $y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0$, where $d_{it}$ is an indicator for whether the unit is treated ($d_{it} = 1$) or untreated ($d_{it} = 0$). An intervention occurs after time $T_{0}$, such that set $\mathcal{T}_{1} = \{1, 2, \ldots, T_0\}$ corresponds to the pre-treatment period, and set $\mathcal{T}_{2} = \{T_0 + 1, \ldots, T\}$ corresponds to the post-treatment period. Denote $\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.$ The objective is to estimate the counterfactual $y_{1t}^0$ for the post-treatment period, or the values we would see if the treatment did not happen.
 
@@ -34,7 +34,7 @@ Critical to this process is the selection of tau. In the original paper, the aut
 
 $\ell_2$ relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or $\ell_2$-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let's apply this to two real-life empirical examples, shall we?
 
-# Implementing $\ell_2$ relaxation in ``mlsynth``.
+## Implementing $\ell_2$ relaxation in ``mlsynth``.
 
 In order to get these results, you need Python (3.8 or greater) and ``mlsynth``, which you may install from the Github repo.
 
@@ -44,7 +44,7 @@ I taught Policy Data Analysis last semester at Georgia State. It was an undergra
 
 I used this to transition into the lecture for the day. "Oftentimes," I began, "we are concerned about the impact of specific events or interventions. As we've discussed, the DID method does this on a parallel trends assumption, or that absent the intevention, the trends of the treated group would, on average, move the same as the control group. But what do we do if this breaks down? What if we cannot  get parallel trends to hold, for some reason? All semester, we've discussed academic examples, but I want to show you how this may look in a semi-real life setting. So the question we wish to answer here is "How would Tyla's musical success have looked absent her going viral?" Maybe she would've made it big anyways, but how can we tell?"
 
-## Plotting Our Data
+### Plotting Our Data
 
 > **Note:**  
 These data are freely available from my Github and can be viewed at [a dashboard](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.

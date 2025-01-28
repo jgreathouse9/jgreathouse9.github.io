@@ -270,7 +270,7 @@ where <span class="math inline">\(w_i\)</span> represents the weight assigned fo
 &amp;\text{subject to } \|\boldsymbol{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau
 \end{aligned}
 \end{split}\]</span>
-<p>Do not be intimidated by the matrix algebra: we have two terms to focus on here. The first is <em>eta</em>, computed like <span class="math inline">\(\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1\)</span>, and the second is <em>Sigma</em>, computed like <span class="math inline">\(\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0\)</span>. <span class="math inline">\(\boldsymbol{\eta}\)</span> simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units over the pre-treatment period. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. <span class="math inline">\(\boldsymbol{\Sigma}\)</span> is what we call a <a href="https://www.youtube.com/watch?v=nokLWUK9dwM">Gram matrix</a>. This term captures how similar the control units are to each other over the pre-treatment period. The degree to which the model extrapolates is bounded over the infinity norm (or, the maximum absolute value) of the difference between these two. The error is bounded by some constant, <em>tau</em> <span class="math inline">\(\tau\)</span>.</p>
+<p>I was puzzled by this optimization at first, but it turns our that we have two terms to focus on here. The first is <em>eta</em>, computed like <span class="math inline">\(\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1\)</span>, and the second is <em>Sigma</em>, computed like <span class="math inline">\(\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0\)</span>. <span class="math inline">\(\boldsymbol{\eta}\)</span> simply is <a href="https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C">a projection</a> which measures the relation between treated unit and each of the control units over the pre-treatment period. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. <span class="math inline">\(\boldsymbol{\Sigma}\)</span> is what we call a <a href="https://www.youtube.com/watch?v=nokLWUK9dwM">Gram matrix</a>. This term captures how similar the control units are to each other over the pre-treatment period. The optimization seeks to use the donor-to-donor relationships to reconstruct the values of the treated unit in the pre-intervention period. While the <span class="math inline">\(\ell_2\)</span> relaxer extrapolates, its bias is bounded over the infinity norm (or, the maximum absolute value) of the difference between these two constructs. Effectively, we are bounding the error to be no greater than some nonnegative constant. This constant is what we call <em>tau</em>, <span class="math inline">\(\tau\)</span>.</p>
 <p>Critical to this process is the selection of tau. In the original paper, the authors do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. Then, the next step is to estimate the regression model run the optimization and calculate out-of-sample validation predictions up until time point <span class="math inline">\(T_0\)</span>. We then check the RMSE of the validation error across all these values of <em>tau</em> and select the value of with the lowest validation RMSE. A lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (<em>trust me</em>). The way <code>mlsynth</code> does this, however, is by splitting the pre-treatment period in half, but the performance is pretty close to what Zhentao and Yishu do for their empirical example (see <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the code</a> at the documentation).</p>
 <p><span class="math inline">\(\ell_2\)</span> relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or <span class="math inline">\(\ell_2\)</span>-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let’s apply this to two real-life empirical examples, shall we?</p>
 </section>
@@ -304,7 +304,7 @@ Note
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="fcb008e7" class="cell" data-execution_count="1">
+<div id="79657243" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -318,7 +318,7 @@ Note
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="5916f3e7" class="cell" data-execution_count="2">
+<div id="a2130087" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -348,7 +348,7 @@ Note
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="f43740e4" class="cell" data-execution_count="3">
+<div id="36127e46" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

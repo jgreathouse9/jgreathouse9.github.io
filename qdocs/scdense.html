@@ -138,17 +138,13 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#a-review-of-synthetic-controls" id="toc-a-review-of-synthetic-controls" class="nav-link active" data-scroll-target="#a-review-of-synthetic-controls">A Review of Synthetic Controls</a>
-  <ul class="collapse">
+  <li><a href="#a-review-of-synthetic-controls" id="toc-a-review-of-synthetic-controls" class="nav-link active" data-scroll-target="#a-review-of-synthetic-controls">A Review of Synthetic Controls</a></li>
   <li><a href="#ell_2-relaxation" id="toc-ell_2-relaxation" class="nav-link" data-scroll-target="#ell_2-relaxation"><span class="math inline">\(\ell_2\)</span> Relaxation</a></li>
-  </ul></li>
   <li><a href="#implementing-ell_2-relaxation-in-mlsynth." id="toc-implementing-ell_2-relaxation-in-mlsynth." class="nav-link" data-scroll-target="#implementing-ell_2-relaxation-in-mlsynth.">Implementing <span class="math inline">\(\ell_2\)</span> relaxation in <code>mlsynth</code>.</a>
   <ul class="collapse">
-  <li><a href="#plotting-our-data" id="toc-plotting-our-data" class="nav-link" data-scroll-target="#plotting-our-data">Plotting Our Data</a>
-  <ul class="collapse">
+  <li><a href="#plotting-our-data" id="toc-plotting-our-data" class="nav-link" data-scroll-target="#plotting-our-data">Plotting Our Data</a></li>
   <li><a href="#songstats-spotify" id="toc-songstats-spotify" class="nav-link" data-scroll-target="#songstats-spotify">Songstats Spotify</a></li>
   <li><a href="#songstats-apple" id="toc-songstats-apple" class="nav-link" data-scroll-target="#songstats-apple">Songstats Apple</a></li>
-  </ul></li>
   </ul></li>
   <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
   </ul>
@@ -187,10 +183,11 @@ window.Quarto = {
 <p><strong>Note:</strong><br>
 This post goes over an extended empirical example. To see the simple and fast way to use this method, you can go to <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the Python documentation</a> of this method in my packiage <code>mlsynth</code> which is both slightly more technical and a lot shorter than I’ll be here.</p>
 </blockquote>
-<section id="a-review-of-synthetic-controls" class="level1">
-<h1>A Review of Synthetic Controls</h1>
+<section id="a-review-of-synthetic-controls" class="level2">
+<h2 class="anchored" data-anchor-id="a-review-of-synthetic-controls">A Review of Synthetic Controls</h2>
 <p>Let <span class="math inline">\(t \in \mathbb{N}\)</span> and <span class="math inline">\(i \in \mathbb{N}\)</span> be the time unit indices for our outcomes, <span class="math inline">\(y_{it}\)</span>. Let <span class="math inline">\(i = 1\)</span> represent the treated unit, and let the remaining units, <span class="math inline">\(N_0\)</span> in total, form the control group, which remains untreated. The key challenge of causal inference is that we only have factual outcomes, which are defined as <span class="math inline">\(y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0\)</span>, where <span class="math inline">\(d_{it}\)</span> is an indicator for whether the unit is treated (<span class="math inline">\(d_{it} = 1\)</span>) or untreated (<span class="math inline">\(d_{it} = 0\)</span>). An intervention occurs after time <span class="math inline">\(T_{0}\)</span>, such that set <span class="math inline">\(\mathcal{T}_{1} = \{1, 2, \ldots, T_0\}\)</span> corresponds to the pre-treatment period, and set <span class="math inline">\(\mathcal{T}_{2} = \{T_0 + 1, \ldots, T\}\)</span> corresponds to the post-treatment period. Denote <span class="math inline">\(\mathbb{I} := \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.\)</span> The objective is to estimate the counterfactual <span class="math inline">\(y_{1t}^0\)</span> for the post-treatment period, or the values we would see if the treatment did not happen.</p>
 <p>The original SCM proposes to use least-squares regression to estimate the weights, <span class="math inline">\(\mathbf{w} \in \mathbb{I}^{N_0}\)</span> subject to <span class="math inline">\(\lVert \mathbf{w} \rVert_1 = 1\)</span>. Here, the Individual columns of the donor pool matrix, denoted like <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}\)</span>, are our independent variables which are multiplied by their respective weights and then added (in matrix math we’d call this the dot product). Naturally, the pre-treatment outcome vector of our treated unit, <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{1 \times T}\)</span>, is the dependent variable. A good synthetic control satisfies <span class="math inline">\(\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1\)</span>, or good pre-treatment fit with respect to the treated unit vector.</p>
+</section>
 <section id="ell_2-relaxation" class="level2">
 <h2 class="anchored" data-anchor-id="ell_2-relaxation"><span class="math inline">\(\ell_2\)</span> Relaxation</h2>
 <p>The <span class="math inline">\(\ell_2\)</span> relaxation estimates the model <span class="math inline">\(\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}\)</span>, where <span class="math inline">\(\boldsymbol{\alpha}\)</span> is some unconstrained intercept we estimate after solving for the weights. The main innovation with <span class="math inline">\(\ell_2\)</span> relaxation is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves. Here is the optimization:</p>
@@ -205,15 +202,14 @@ This post goes over an extended empirical example. To see the simple and fast wa
 <p>Critical to this process is the selection of tau. In the original paper, the authors do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. Then, the next step is to estimate the regression model run the optimization and calculate out-of-sample validation predictions up until time point <span class="math inline">\(T_0\)</span>. We then check the RMSE of the validation error across all these values of <em>tau</em> and select the value of with the lowest validation RMSE. A lower tau corresponds to an estimator closer to pure least squares, and too high a value of tau results in drastic underfitting (<em>trust me</em>). The way <code>mlsynth</code> does this, however, is by splitting the pre-treatment period in half, but the performance is pretty close to what Zhentao and Yishu do for their empirical example (see <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the code</a> at the documentation).</p>
 <p><span class="math inline">\(\ell_2\)</span> relaxation offers a counterfactual prediction for dense settings. Oftentimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors (our donor pool in this case), which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM generally struggle with this, whereas the Ridge or <span class="math inline">\(\ell_2\)</span>-relaxer accomodate multicollinearity as a feature. Okay, now with that out of the way, let’s apply this to two real-life empirical examples, shall we?</p>
 </section>
-</section>
-<section id="implementing-ell_2-relaxation-in-mlsynth." class="level1">
-<h1>Implementing <span class="math inline">\(\ell_2\)</span> relaxation in <code>mlsynth</code>.</h1>
+<section id="implementing-ell_2-relaxation-in-mlsynth." class="level2">
+<h2 class="anchored" data-anchor-id="implementing-ell_2-relaxation-in-mlsynth.">Implementing <span class="math inline">\(\ell_2\)</span> relaxation in <code>mlsynth</code>.</h2>
 <p>In order to get these results, you need Python (3.8 or greater) and <code>mlsynth</code>, which you may install from the Github repo.</p>
 <pre><code>$ pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
 <p>I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal infernece, not because they will all go on to be grad students or policy researchers, but because the causal mindset is <em>such an important part</em> of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by <a href="https://genius.com/Tyla-shake-ah-lyrics">playing music</a>. The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla’s song “Water”, <a href="https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1">the one</a> that went viral in 2023, which everybody knew about when I asked.</p>
 <p>I used this to transition into the lecture for the day. “Oftentimes,” I began, “we are concerned about the impact of specific events or interventions. As we’ve discussed, the DID method does this on a parallel trends assumption, or that absent the intevention, the trends of the treated group would, on average, move the same as the control group. But what do we do if this breaks down? What if we cannot get parallel trends to hold, for some reason? All semester, we’ve discussed academic examples, but I want to show you how this may look in a semi-real life setting. So the question we wish to answer here is”How would Tyla’s musical success have looked absent her going viral?” Maybe she would’ve made it big anyways, but how can we tell?”</p>
-<section id="plotting-our-data" class="level2">
-<h2 class="anchored" data-anchor-id="plotting-our-data">Plotting Our Data</h2>
+<section id="plotting-our-data" class="level3">
+<h3 class="anchored" data-anchor-id="plotting-our-data">Plotting Our Data</h3>
 <blockquote class="blockquote">
 <p><strong>Note:</strong><br>
 These data are freely available from my Github and can be viewed at <a href="https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/">a dashboard</a> on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.</p>
@@ -227,7 +223,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="875375ce" class="cell" data-execution_count="1">
+<div id="fe45a57a" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -237,10 +233,11 @@ These data are freely available from my Github and can be viewed at <a href="htt
 </div>
 </div>
 <p>I normalized all the metrics to 100 at August 17, 2023, a few days before the treatment <a href="https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1">occured</a> (Tyla performing in Kigali, Rwanda). Zhentao and Yishu recommend mean-standardization and then backing out the coefficients in the paper, but I haven’t programmed this for the <span class="math inline">\(\ell_2\)</span> PDA just yet. Either way, I think it helps us to see what’s going on in better detail when we normalize the outcome trends as we see here, since now we’re practically comparing everybody in terms of relative trends. The plot says that Tyla generally had less relative popularity compared to the donors for the majority of the time seies pre treatment. We can see both her metrics balloon in the post-intervention period. We can also see quite clearly that parallel trends with respect to the donor pool likely does not hold; the trend of the average of controls is quite flat relatve to Tyla’s.</p>
+</section>
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
 <p>I begin with the Spotify data. When we estimate the <span class="math inline">\(\ell_2\)</span> relaxer, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="8306354f" class="cell" data-execution_count="2">
+<div id="c860c740" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.10.16/x64/lib/python3.10/site-packages/cvxpy/problems/problem.py:1481: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
   warnings.warn(</code></pre>
@@ -270,7 +267,7 @@ These data are freely available from my Github and can be viewed at <a href="htt
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="8372cc71" class="cell" data-execution_count="3">
+<div id="add586a9" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -293,7 +290,6 @@ These data are freely available from my Github and can be viewed at <a href="htt
 </div>
 </div>
 <p>This is unsurprising, and the practical results speak for themselves. Going viral clearly contributed a lot to Tyla’s success across both platforms, as the estimated counterfactuals spell out very plainly that her reach would be a lot flatter compared to what it in fact was/is. As we know from the above, every artist in the donor pool contributes to Tyla’s synthetic control, and the <span class="math inline">\(\ell_2\)</span> relaxer will not run ito problems of multicollinearity as LASSO might in higher dimensions. This method can also be used with multiple treated units, but I haven’t written this just yet.</p>
-</section>
 </section>
 </section>
 <section id="caveats" class="level1">

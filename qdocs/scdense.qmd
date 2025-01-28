@@ -24,23 +24,21 @@ $$
     y_{(N_0+1)1} & y_{(N_0+1)2} & \cdots & y_{(N_0+1)T}
   \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
 $$  
-The key challenge of causal inference is that for each unit, we only observe the factual outcome, expressed as:  
+The key challenge of causal inference is that we only observe the factual/realized outcome, expressed as:  
 $$
-y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0,
+y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
 $$
-where $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment, and $d_{it} \in \{0, 1\}$ is an indicator for treatment (where $d_{it} = 1$ if treated, $d_{it} = 0$ if untreated). The objective is to estimate the counterfactual outcomes $y_{1t}^0$ for the treated unit during the post-treatment period, $t \in \mathcal{T}_2$. SCMs and panel data approaches are weighting based estimators, where some weight vector $\mathbf{w}$ is assigned across the $N_0$ control units
+Outcomes in this framework are a function of treatment status, $d_{it} \in \{0, 1\}$ While $d_{it} = 1$, a unit is treated and while $d_{it} = 0$ a unit is untreated. Thus, $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes $y_{1t}^0$. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector $\mathbf{w}$ is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome
 
 $$
 \mathbf{w} = \begin{bmatrix} w_2 & w_2 & \cdots & w_{N_0+1} \end{bmatrix}^\top,
 $$  
-where $w_i$ represents the weight assigned for control unit $i$.
-
-SCM estimates the weights $\mathbf{w}$ by solving the following optimization problem:  
+where $w_i$ represents the weight assigned for control unit $i$. SCM estimates the weights $\mathbf{w}$ by solving the following optimization problem:  
 $$
 \min_{\mathbf{w} \in \mathbb{I}^{N_0}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2, \quad \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
 $$  
 
-Here, $\mathbf{w}^\top \mathbf{Y}_0$ represents the predictions. The objective is to achieve a good pre-treatment fit, such that $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$. The better pre-treatment fit we have, the better our out-of-sample predictions will be.
+Here, $\mathbf{w}^\top \mathbf{Y}_0$ represents the predictions, which constrain the weights to the convex hull, disallowing extrapolation of any form. The objective of SCM is to achieve a good pre-treatment fit, such that $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$. The better pre-treatment fit we have, the better our out-of-sample predictions will be for the synthetic control.
 
 ## $\ell_2$ Relaxation
 

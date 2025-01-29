@@ -1,0 +1,248 @@
+---
+title: 'Data Science for Policy Analysts: A Simple Introduction to Web Scraping'
+date: 2025-01-29
+---
+
+In academia, lots of the datasets we tend to work with come in pretty csv files. And while that's great... oftentimes, in modern policy data science, the data we seek are unstructured in the sense that they do not come from a specific file such as a .csv file or Stata dataset. Such data must be web-scraped, or the process of gathering unstructured data, via reproducible script.
+
+This post simply seeks to present a simple use case of web-scraping in the setting the applied policy scientist might need for certain tasks. Say we wish to gather the price of gas from AAA, across each metro area in the nation. In the old days, we'd need to ask AAA and pay thousands of dollars for an extended time series... but now we don't need to, at least for this case. The reason is because we have Python, and we are able to leverage its basic features to collect these data via exploiting the publicly available information they provide us.
+
+## The Scrape
+
+Here is the code for scrape. These are the helpers that we get one function to call. This is the nitty-gritty that calls and collects the data of interest.
+
+```{python}
+
+#| echo: true
+#| eval: false
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+from dateutil.relativedelta import relativedelta
+
+
+def fetch_gas_prices(state_abbreviations):
+    """
+    Fetches and processes gas price data for multiple states and their respective cities.
+
+    This function scrapes the AAA Gas Prices website to collect gas prices for different fuel grades
+    (Regular, Mid-Grade, Premium, Diesel) in various cities within the specified states. The collected
+    data is then structured into a pandas DataFrame.
+
+    Parameters:
+    -----------
+    state_abbreviations : dict
+        A dictionary mapping state names to their respective abbreviations, e.g.,
+        {"California": "CA", "Texas": "TX"}.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A DataFrame containing gas prices with columns:
+        ['Date', 'State', 'City', 'Regular', 'Mid-Grade', 'Premium', 'Diesel']
+    """
+
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    }
+
+    today = pd.Timestamp.today()
+    time_mapping = {
+        "Current Avg.": lambda: today,
+        "Yesterday Avg.": lambda: today - pd.Timedelta(days=1),
+        "Week Ago Avg.": lambda: today - pd.Timedelta(weeks=1),
+        "Month Ago Avg.": lambda: today - relativedelta(months=1),
+        "Year Ago Avg.": lambda: today - relativedelta(years=1),
+    }
+
+    def extract_gas_prices(row, time_mapping, today, state, city_name):
+        """
+        Extracts and processes gas price data from a single row in the gas price table.
+
+        Parameters:
+        -----------
+        row : bs4.element.Tag
+            A BeautifulSoup object representing a table row (<tr>) containing gas prices.
+        time_mapping : dict
+            A dictionary mapping AAA's time labels (e.g., "Current Avg.") to corresponding dates.
+        today : pd.Timestamp
+            The current date, used as a fallback if no valid time label is found.
+        state : str
+            The full name of the state (e.g., "California").
+        city_name : str
+            The name of the city corresponding to the extracted gas prices.
+
+        Returns:
+        --------
+        list
+            A list containing extracted data in the format:
+            [date (str), state (str), city (str), regular (str), mid-grade (str), premium (str), diesel (str)]
+        """
+
+        cells = row.find_all("td")
+        date_text = cells[0].get_text(strip=True)
+
+        # Get the corresponding date using time_mapping, defaulting to today
+
+        date = time_mapping.get(date_text, lambda: today)().strftime("%Y-%d-%m")
+
+        # Extract prices, removing the dollar sign
+
+        prices = [cell.get_text(strip=True).replace("$", "") for cell in cells[1:]]
+
+        return [date, state, city_name] + prices
+
+    def process_city_data(city, time_mapping, today, state):
+        """
+        Extracts gas price data for a specific city by locating its corresponding table.
+
+        Parameters:
+        -----------
+        city : bs4.element.Tag
+            A BeautifulSoup object representing a city's heading element.
+        time_mapping : dict
+            A dictionary mapping time labels to actual date values.
+        today : pd.Timestamp
+            The current date used for fallback mapping.
+        state : str
+            The full name of the state.
+
+        Returns:
+        --------
+        list
+            A list of lists, where each inner list contains gas price data for a specific date in the format:
+            [date, state, city, regular, mid-grade, premium, diesel]
+        """
+
+        city_name = city.get_text(strip=True)
+        rows = city.find_next("table").select("tbody tr")
+
+        return [
+            extract_gas_prices(row, time_mapping, today, state, city_name)
+            for row in rows
+        ]
+
+    def process_states(state_abbreviations, headers, time_mapping, today):
+        """
+        Iterates through all states, sending requests to fetch and process gas price data.
+
+        Parameters:
+        -----------
+        state_abbreviations : dict
+            A dictionary mapping state names to their respective abbreviations.
+        headers : dict
+            HTTP request headers to mimic a real browser and avoid request blocking.
+        time_mapping : dict
+            A dictionary mapping AAA's date labels to actual date values.
+        today : pd.Timestamp
+            The current date used for fallback mapping.
+
+        Returns:
+        --------
+        list
+            A list of lists containing processed gas price data for all states in the format:
+            [date, state, city, regular, mid-grade, premium, diesel]
+        """
+
+        all_data = []
+        for state, abbreviation in state_abbreviations.items():
+            params = {"state": abbreviation}
+            response = requests.get(
+                "https://gasprices.aaa.com/", params=params, headers=headers
+            )
+
+            if response.status_code != 200:
+                print(
+                    f"Error fetching data for {state}. Status code: {response.status_code}"
+                )
+                continue
+            soup = BeautifulSoup(response.content, "html.parser")
+
+            # Extract city sections
+
+            cities = soup.select(".accordion-prices.metros-js > h3[data-title]")
+            all_data.extend(
+                [
+                    row_data
+                    for city in cities
+                    for row_data in process_city_data(city, time_mapping, today, state)
+                ]
+            )
+        return all_data
+
+    # Fetch and process data for all states
+
+    all_data = process_states(state_abbreviations, headers, time_mapping, today)
+
+    # Convert list of extracted data into a pandas DataFrame
+
+    all_data_df = pd.DataFrame(
+        all_data,
+        columns=["Date", "State", "City", "Regular", "Mid-Grade", "Premium", "Diesel"],
+    )
+
+    # Convert 'Date' to datetime format
+
+    all_data_df["Date"] = pd.to_datetime(all_data_df["Date"], format="%Y-%d-%m")
+
+    # Sort by 'State', 'City', and 'Date' for better organization
+
+    all_data_df = all_data_df.sort_values(by=["State", "City", "Date"]).reset_index(
+        drop=True
+    )
+
+    return all_data_df
+
+
+```
+
+To do this, we define AAA's website as the URL of interest, Then, we inspect the URL for each state. For Massachuesetts, we have
+https://gasprices.aaa.com/?state=MA. For Florida, we have https://gasprices.aaa.com/?state=FL. See the pattern? There's a common prefix, with the only thing changing being the suffix of State URLs. The master function is ```fetch_gas_prices```. This simply accepts a list of state abbreviations we shall query over. We define a common time mapping across all pages, and specify the current date.
+
+We then use Python's ```requests``` library to query each state (plenty of ways to do this step, by the way, but requests is the quickest). I then process each state with the ```process_states``` function. This accepts a list of states, headers, the common time mapping, and the current date. We then query each state, and clean the accordion-style tables that we see towards the bottom of the page. We clean them for each city/each metro area with the ```process_city_data``` function, and then append all of them into a single dataframe once each state if fully cleaned. In the end, we have the date, the prices of gas, the state, and the city all in one place.
+
+
+## The Call
+
+We may then call this whole script with a few lines of python code.
+
+```{python}
+
+#| echo: true
+#| eval: false
+
+import pandas as pd
+from datetime import datetime
+from cityutils import fetch_gas_prices
+import os
+
+# We just need the state abbreviations since
+# AAA indexes their states by the abbreviation.
+
+url = "https://raw.githubusercontent.com/jasonong/List-of-US-States/refs/heads/master/states.csv"
+
+# We read the csv into a df
+states_df = pd.read_csv(url)
+
+# Here is the main function that does the scrape.
+df = fetch_gas_prices(dict(zip(states_df['State'], states_df['Abbreviation'])))
+
+print(df)
+
+# Format the date for the filename
+date_str = datetime.now().strftime("%Y-%m-%d")
+
+# Ensure the output directory exists
+output_dir = "./City Scrape/Data"
+os.makedirs(output_dir, exist_ok=True)
+
+# Save the DataFrame as "/City Scrape/Data/City_{date}.csv"
+output_path = f"{output_dir}/City_{date_str}.csv"
+df.to_csv(output_path, index=False)
+
+```
+
+This pulls everything together in a single dataframe. Notice that this scrape gets us data from today, yesterday, last week, last month, and last year. Meaning, in theory, we have at least a year of data to collect, assuming we collected this data for a year. This of course is a simple case, and there will be future posts that demonstrate more applications of web-scraping and how policy scientists may use them. In particular, I will cover GitHub Actions in the future and how policy scientsts may use them to make their lives easier (both in terms of data collection anmd other tasks).
+

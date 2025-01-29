@@ -198,10 +198,11 @@ def fetch_gas_prices(state_abbreviations):
 
 ```
 
-To do this, we define AAA's website as the URL of interest, Then, we inspect the URL for each state. For Massachuesetts, we have
-https://gasprices.aaa.com/?state=MA. For Florida, we have https://gasprices.aaa.com/?state=FL. See the pattern? There's a common prefix, with the only thing changing being the suffix of State URLs. The master function is ```fetch_gas_prices```. This simply accepts a list of state abbreviations we shall query over. We define a common time mapping across all pages, and specify the current date.
+We first define AAA's website as the URL of interest, Then, we inspect the URL for each state where the actual data for each city/metro is located at. For Massachusetts, the URL is "https://gasprices.aaa.com/?state=MA". For Florida, the URL is "https://gasprices.aaa.com/?state=FL". See the pattern? There's a common prefix, with the only thing changing being the suffix of which is the abbreviation of the state.
 
-We then use Python's ```requests``` library to query each state (plenty of ways to do this step, by the way, but requests is the quickest). I then process each state with the ```process_states``` function. This accepts a list of states, headers, the common time mapping, and the current date. We then query each state, and clean the accordion-style tables that we see towards the bottom of the page. We clean them for each city/each metro area with the ```process_city_data``` function, and then append all of them into a single dataframe once each state if fully cleaned. In the end, we have the date, the prices of gas, the state, and the city all in one place.
+The master function is ```fetch_gas_prices```. This simply accepts a dictionary of state abbreviations (the value) paired with the key (the state name) we shall query over. We, within this function, define a common time mapping which AAA uses to stnadardize dates, and specify the current date.
+
+Next I use Python's ```requests``` library to query each state (plenty of ways to do this step, but requests is generally the quickest for simple and even fairly big jobs). I then process each state with the ```process_states``` function. This accepts a list of states, headers, the common time mapping, and the current date. We then query each state, and clean the accordion-style tables that we see towards the bottom of the page. We clean them for each city/each metro area with the ```process_city_data``` function. Then append all of them into a single dataframe for each state, moving on to the next state after we've axhausted all metros for that state. Finally we appened the state dataframes together, where we have the date, the prices of gas, the state, and the city name all in one place.
 
 
 ## The Call
@@ -229,8 +230,6 @@ states_df = pd.read_csv(url)
 # Here is the main function that does the scrape.
 df = fetch_gas_prices(dict(zip(states_df['State'], states_df['Abbreviation'])))
 
-print(df)
-
 # Format the date for the filename
 date_str = datetime.now().strftime("%Y-%m-%d")
 
@@ -244,5 +243,6 @@ df.to_csv(output_path, index=False)
 
 ```
 
-This pulls everything together in a single dataframe. Notice that this scrape gets us data from today, yesterday, last week, last month, and last year. Meaning, in theory, we have at least a year of data to collect, assuming we collected this data for a year. This of course is a simple case, and there will be future posts that demonstrate more applications of web-scraping and how policy scientists may use them. In particular, I will cover GitHub Actions in the future and how policy scientsts may use them to make their lives easier (both in terms of data collection anmd other tasks).
+This pulls everything together in a single dataframe ans saves it in a csv file. Notice that the data are collected from today, yesterday, last week, last month, and last year. Meaning, in theory, we have at least a year's worth of prior data to collect, assuming we collected this data for a year. 
 
+This a simple case of web scraping. I've done more complicated scrapes, such as scraping the prices of goods across every Whole Foods in the country across 5 different departments per store. The scale of the job and the size of the data is much bigger, but the principles are overall the same. In the future, I will write more posts that demonstrate different applications of web-scraping and how policy scientists may use them. In particular, I will cover how scraping can go hand in hand with GitHub Actions. In my experience so far as a PHD student, these two alone (scraping and Github Actions) has made my life as a researcher far easier than otherwise.

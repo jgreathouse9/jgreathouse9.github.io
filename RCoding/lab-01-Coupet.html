@@ -1,0 +1,669 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html><head></head><body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div>
+
+
+
+<h1 class="title toc-ignore">Lab 01 - Functions and Vectors</h1>
+<h4 class="author">Professor Almada - Solutions</h4>
+<h4 class="date">19 January, 2024</h4>
+
+</div>
+
+
+<p><br/></p>
+<div class="section level1">
+<h1>Source Data</h1>
+<p>The following report analyzes tax parcel data from Syracuse, New York
+(USA).</p>
+<p>View the “Data Dictionary” here: <a rel="noopener" href="http://data.syrgov.net/datasets/1b346804e1364a5eb85ccb53302e3c91_0"><strong>Syracuse
+City Tax Parcel Data</strong></a></p>
+<p><br/> <br/></p>
+</div>
+<div class="section level1">
+<h1>Importing the Data</h1>
+<p>The following code imports the Syracuse, NY tax parcel data using a
+URL.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb1-1"></a>url <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;https://raw.githubusercontent.com/DS4PS/Data&quot;</span>,</span>
+<span><a rel="noopener" href="#cb1-2"></a>              <span class="st">&quot;-Science-Class/master/DATA/syr_parcels.csv&quot;</span>)</span>
+<span><a rel="noopener" href="#cb1-3"></a></span>
+<span><a rel="noopener" href="#cb1-4"></a>dat <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url, </span>
+<span><a rel="noopener" href="#cb1-5"></a>                <span class="at">strings =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p><br/> <br/></p>
+</div>
+<div class="section level1">
+<h1>Previewing the Data</h1>
+<p>There are several exploratory functions to better understand our new
+dataset.</p>
+<p>We can inspect the first 5 rows of these data using function
+<code>head()</code>.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb2-1"></a><span class="fu">head</span>(dat, <span class="dv">5</span>)              <span class="co"># Preview a dataset with &#39;head()&#39;</span></span></code></pre></div>
+<div>
+
+</div>
+<p><br/></p>
+<div class="section level3">
+<h3>Listing All Variables</h3>
+<p>Functions <code>names()</code> or <code>colnames()</code> will print
+all variable names in a dataset.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb3-1"></a><span class="fu">names</span>(dat)                <span class="co"># List all variables with &#39;names()&#39;</span></span></code></pre></div>
+<pre><code>##  [1] &quot;tax_id&quot;       &quot;neighborhood&quot; &quot;stnum&quot;        &quot;stname&quot;       &quot;zip&quot;         
+##  [6] &quot;owner&quot;        &quot;frontfeet&quot;    &quot;depth&quot;        &quot;sqft&quot;         &quot;acres&quot;       
+## [11] &quot;yearbuilt&quot;    &quot;age&quot;          &quot;age_range&quot;    &quot;land_use&quot;     &quot;units&quot;       
+## [16] &quot;residential&quot;  &quot;rental&quot;       &quot;vacantbuil&quot;   &quot;assessedla&quot;   &quot;assessedva&quot;  
+## [21] &quot;tax.exempt&quot;   &quot;countytxbl&quot;   &quot;schooltxbl&quot;   &quot;citytaxabl&quot;   &quot;star&quot;        
+## [26] &quot;amtdelinqu&quot;   &quot;taxyrsdeli&quot;   &quot;totint&quot;       &quot;overduewater&quot;</code></pre>
+<p><br/></p>
+</div>
+<div class="section level3">
+<h3>Previewing Specific Variables</h3>
+<p>We can also inspect the values of a variable by extracting it with
+<code>$</code>.</p>
+<p>The extracted variable is called a “vector”.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb5-1"></a><span class="fu">head</span>(dat<span class="sc">$</span>owner, <span class="dv">10</span>)       <span class="co"># Preview a variable, or &quot;vector&quot;</span></span></code></pre></div>
+<pre><code>##  [1] &quot;CLARMIN BUILDERS ONON COR&quot; &quot;JOHNSTON LEE R&quot;           
+##  [3] &quot;CHRISTO CRAIG S&quot;           &quot;HAWKINS FARMS INC&quot;        
+##  [5] &quot;PETERS LYNNETTE&quot;           &quot;MITCHELL LOTAN G&quot;         
+##  [7] &quot;WHALEN GIOVANNA A&quot;         &quot;BERGH GARY D&quot;             
+##  [9] &quot;CITY OF SYRACUSE TD&quot;       &quot;DOUGHERTY ROBERT K JR&quot;</code></pre>
+<p><br/></p>
+</div>
+<div class="section level3">
+<h3>Listing Unique Values</h3>
+<p>Function <code>unique()</code> helps us determine what values exist
+in a variable.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb7-1"></a><span class="fu">unique</span>(dat<span class="sc">$</span>land_use)      <span class="co"># Print all possible values with &#39;unique()&#39;</span></span></code></pre></div>
+<pre><code>##  [1] &quot;Vacant Land&quot;        &quot;Single Family&quot;      &quot;Commercial&quot;        
+##  [4] &quot;Parking&quot;            &quot;Two Family&quot;         &quot;Three Family&quot;      
+##  [7] &quot;Apartment&quot;          &quot;Schools&quot;            &quot;Parks&quot;             
+## [10] &quot;Multiple Residence&quot; &quot;Cemetery&quot;           &quot;Religious&quot;         
+## [13] &quot;Recreation&quot;         &quot;Community Services&quot; &quot;Utilities&quot;         
+## [16] &quot;Industrial&quot;</code></pre>
+<p><br/></p>
+</div>
+<div class="section level3">
+<h3>Examining Data Structure</h3>
+<p>Function <code>str()</code> provides an overview of total rows and
+columns (dimensions), variable classes, and a preview of values.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb9-1"></a><span class="fu">str</span>(<span class="at">object =</span> dat,</span>
+<span><a rel="noopener" href="#cb9-2"></a>    <span class="at">vec.len =</span> <span class="dv">2</span>)          <span class="co"># Examine data structure with &#39;str()&#39;</span></span></code></pre></div>
+<pre><code>## &#39;data.frame&#39;:    41502 obs. of  29 variables:
+##  $ tax_id      : int  1393130501 1393130500 1437100600 1425100900 1425101000 ...
+##  $ neighborhood: chr  &quot;South Valley&quot; &quot;South Valley&quot; ...
+##  $ stnum       : chr  &quot;2655&quot; &quot;2635&quot; ...
+##  $ stname      : chr  &quot;VALLEY DR&quot; &quot;VALLEY DR&quot; ...
+##  $ zip         : chr  &quot;13215&quot; &quot;13120&quot; ...
+##  $ owner       : chr  &quot;CLARMIN BUILDERS ONON COR&quot; &quot;JOHNSTON LEE R&quot; ...
+##  $ frontfeet   : num  67.2 104.8 ...
+##  $ depth       : num  50 46.5 ...
+##  $ sqft        : num  2149 6370 ...
+##  $ acres       : num  0.0493 0.1462 ...
+##  $ yearbuilt   : int  NA 1925 1957 1958 1965 ...
+##  $ age         : int  NA 90 58 57 50 ...
+##  $ age_range   : chr  NA &quot;81-90&quot; ...
+##  $ land_use    : chr  &quot;Vacant Land&quot; &quot;Single Family&quot; ...
+##  $ units       : int  0 0 0 0 0 ...
+##  $ residential : logi  FALSE TRUE TRUE ...
+##  $ rental      : logi  FALSE FALSE FALSE ...
+##  $ vacantbuil  : logi  FALSE FALSE FALSE ...
+##  $ assessedla  : int  475 10800 20200 18000 18000 ...
+##  $ assessedva  : int  500 69300 88300 70500 74000 ...
+##  $ tax.exempt  : logi  TRUE FALSE FALSE ...
+##  $ countytxbl  : int  500 69300 88300 70500 74000 ...
+##  $ schooltxbl  : int  500 69300 88300 70500 74000 ...
+##  $ citytaxabl  : int  500 69300 88300 70500 74000 ...
+##  $ star        : logi  NA TRUE TRUE ...
+##  $ amtdelinqu  : num  0 0 0 0 0 ...
+##  $ taxyrsdeli  : int  0 0 0 0 0 ...
+##  $ totint      : num  0 0 0 0 0 ...
+##  $ overduewater: num  0 178 ...</code></pre>
+<p><br/> <br/></p>
+</div>
+</div>
+<div class="section level1">
+<h1>Questions &amp; Solutions</h1>
+<p><strong>Instructions:</strong> Provide the code for each solution in
+the following “chunks”.</p>
+<p><em>Remember to modify the text to show your answer in human-readable
+terms.</em></p>
+<p><br/></p>
+<div class="section level2">
+<h2>Question 1: Total Parcels</h2>
+<p><strong>Question:</strong> <em>How many tax parcels are in Syracuse,
+NY?</em></p>
+<p><strong>Answer:</strong> There are <strong>41,502</strong> tax
+parcels in Syracuse, NY. The answer to this question is found by using
+the functions below as well as reading the description of the data found
+in the data dictionary</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb11-1"></a><span class="fu">dim</span>(dat) <span class="co"># one can use dim() or... </span></span></code></pre></div>
+<pre><code>## [1] 41502    29</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb13-1"></a><span class="fu">nrow</span>(dat) <span class="co"># or another approach...</span></span></code></pre></div>
+<pre><code>## [1] 41502</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb15-1"></a><span class="fu">length</span>(dat<span class="sc">$</span>tax_id) <span class="co"># only works if you specify a vector within the data set</span></span></code></pre></div>
+<pre><code>## [1] 41502</code></pre>
+<p><strong>Comments:</strong> The function <code>dim()</code> shows the
+dimensions of the data set (rows and columns). The rows represent a
+unique tax parcel while the columns represent the variables in the data
+set.</p>
+<p>Because the data dictionary tells us that each row represents a
+unique tax parcel we can simply use the <code>nrow()</code> function to
+determine the number of tax parcels.</p>
+<p>Even though the data dictionary states each row is a unique tax
+parcel, is this actually confirmed by the data?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb17-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(dat<span class="sc">$</span>tax_id)) <span class="co"># interesting... </span></span></code></pre></div>
+<pre><code>## [1] 41469</code></pre>
+<p><br/></p>
+</div>
+<div class="section level2">
+<h2>Question 2: Total Acres</h2>
+<p><strong>Question:</strong> <em>How many acres of land are in
+Syracuse, NY?</em></p>
+<p><strong>Answer:</strong> There are <strong>12,510.49</strong> acres
+of land in Syracuse, NY.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb19-1"></a><span class="fu">class</span>(dat<span class="sc">$</span>acres) <span class="co"># confirm acres is a numeric vector/variable</span></span></code></pre></div>
+<pre><code>## [1] &quot;numeric&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb21-1"></a><span class="fu">summary</span>(dat<span class="sc">$</span>acres) <span class="co"># summary statistics</span></span></code></pre></div>
+<pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+##   0.00028   0.10101   0.13180   0.30144   0.18866 140.56053</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb23-1"></a><span class="fu">sum</span>(dat<span class="sc">$</span>acres) <span class="co"># finding the summation </span></span></code></pre></div>
+<pre><code>## [1] 12510.49</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb25-1"></a><span class="fu">sum</span>(dat<span class="sc">$</span>acres, <span class="at">na.rm=</span>T) <span class="co"># same result because there are no missing values </span></span></code></pre></div>
+<pre><code>## [1] 12510.49</code></pre>
+<p><strong>Comments:</strong> Realizing <code>acres</code> is a numeric
+variable, we can check for summary statistics using
+<code>summary()</code> to see if there are any missing values (NAs). We
+confirm that there are none.</p>
+<p>Because there are no missing values in the acres variable it does not
+matter if we use the argument <code>na.rm = TRUE</code> in our
+<code>sum()</code> function.</p>
+</div>
+<div class="section level2">
+<h2>Question 3: Vacant Buildings</h2>
+<p><strong>Question:</strong> <em>How many vacant buildings are there in
+Syracuse, NY?</em></p>
+<p><strong>Answer:</strong> There are <strong>1,888</strong> vacant
+buildings in Syracuse, NY.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb27-1"></a><span class="fu">class</span>(dat<span class="sc">$</span>vacantbuil) <span class="co"># confirming vacantbuil is a logical vector/variable. </span></span></code></pre></div>
+<pre><code>## [1] &quot;logical&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb29-1"></a><span class="fu">summary</span>(dat<span class="sc">$</span>vacantbuil) <span class="co"># summary statistics for variable vacantbuil in dat has missing values</span></span></code></pre></div>
+<pre><code>##    Mode   FALSE    TRUE    NA&#39;s 
+## logical   38859    1888     755</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb31-1"></a><span class="fu">sum</span>(dat<span class="sc">$</span>vacantbuil) <span class="co"># finding the summation does not work in there are missing values present  </span></span></code></pre></div>
+<pre><code>## [1] NA</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb33-1"></a><span class="fu">sum</span>(dat<span class="sc">$</span>vacantbuil, <span class="at">na.rm=</span>T) <span class="co"># ignores/removes missing values then calculates sum</span></span></code></pre></div>
+<pre><code>## [1] 1888</code></pre>
+<p><strong>Comments:</strong> Realizing <code>vacantbuil</code> is a
+logical variable (True or False), we can check for summary statistics to
+see if there are any missing values (NAs). We confirm that there are
+indeed 755 missing values for this variable.</p>
+<p>Because there are missing values in the <code>vacantbuil</code>
+variable it does matter if we use the argument <code>na.rm = TRUE</code>
+in our <code>sum()</code> function. When we don’t include this argument
+and there are missing values, R will output <code>NA</code> rather than
+the count of TRUEs.</p>
+<p>The argument <code>na.rm = TRUE</code> will tell R to ignore/remove
+the missing values and give you the sum of all the TRUE values which is
+1888.</p>
+<p><br/></p>
+</div>
+<div class="section level2">
+<h2>Question 4: Tax-Exempt Parcels</h2>
+<p><strong>Question:</strong> <em>What proportion of parcels are
+tax-exempt?</em></p>
+<p><strong>Answer:</strong> <strong>10.7%</strong> of parcels are
+tax-exempt.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb35-1"></a><span class="fu">class</span>(dat<span class="sc">$</span>tax.exempt) <span class="co"># confirming tax.exempt is a logical vector. </span></span></code></pre></div>
+<pre><code>## [1] &quot;logical&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb37-1"></a><span class="fu">summary</span>(dat<span class="sc">$</span>tax.exempt) <span class="co"># summary statistics and checking for NAs </span></span></code></pre></div>
+<pre><code>##    Mode   FALSE    TRUE 
+## logical   37061    4441</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb39-1"></a><span class="fu">mean</span>(dat<span class="sc">$</span>tax.exempt) <span class="co"># mean or average when False==0 and True==1 is the same as a proportion.</span></span></code></pre></div>
+<pre><code>## [1] 0.1070069</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb41-1"></a><span class="fu">mean</span>(dat<span class="sc">$</span>tax.exempt, <span class="at">na.rm=</span>T) <span class="co"># mean function that ignores missing values </span></span></code></pre></div>
+<pre><code>## [1] 0.1070069</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb43-1"></a><span class="fu">sum</span>(dat<span class="sc">$</span>tax.exempt)<span class="sc">/</span><span class="fu">length</span>(dat<span class="sc">$</span>tax.exempt) <span class="co"># Another approach that calculates the proportion</span></span></code></pre></div>
+<pre><code>## [1] 0.1070069</code></pre>
+<p><strong>Comments:</strong> Realizing <code>tax.exempt</code> is a
+logical variable (True or False), we can check for summary statistics to
+see if there are any missing values (NAs). We confirm that there are no
+missing values for this variable.</p>
+<p>Because there are no missing values, the <code>mean()</code> function
+gives us the same result regardless of the <code>na.rm</code>
+argument.</p>
+<p><br/></p>
+</div>
+<div class="section level2">
+<h2>Question 5: Neighborhoods &amp; Parcels</h2>
+<p><strong>Question:</strong> <em>Which neighborhood contains the most
+tax parcels?</em></p>
+<p><strong>Answer:</strong> <strong>Eastwood</strong> contains the most
+tax parcels. It contains <strong>4889</strong> tax parcels.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb45-1"></a><span class="fu">table</span>(dat<span class="sc">$</span>neighborhood) <span class="co"># tabulates neighborhoods and counts </span></span></code></pre></div>
+<pre><code>## 
+##                Brighton          Court-Woodlawn                Downtown 
+##                    2302                    2402                     389 
+##                Eastwood                 Elmwood            Far Westside 
+##                    4889                    1444                    1027 
+##         Franklin Square            Hawley-Green               Lakefront 
+##                      89                     367                     312 
+##            Lincoln Hill             Meadowbrook           Near Eastside 
+##                    1123                    1878                     441 
+##           Near Westside            North Valley               Northside 
+##                    1772                    1531                    3261 
+##          Outer Comstock               Park Ave.           Prospect Hill 
+##                     990                     942                     365 
+##            Salt Springs                Sedgwick              Skunk City 
+##                    1414                    1138                     713 
+##            South Campus            South Valley               Southside 
+##                      36                    1925                    1370 
+##               Southwest              Strathmore               Tipp Hill 
+##                    1150                    1822                    1468 
+##         University Hill University Neighborhood       Washington Square 
+##                     505                    1259                    1180 
+##                Westcott               Winkworth 
+##                    1540                     452</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb47-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(dat<span class="sc">$</span>neighborhood), <span class="at">decreasing=</span><span class="cn">TRUE</span>) <span class="co"># sorts table in decreasing order</span></span></code></pre></div>
+<pre><code>## 
+##                Eastwood               Northside          Court-Woodlawn 
+##                    4889                    3261                    2402 
+##                Brighton            South Valley             Meadowbrook 
+##                    2302                    1925                    1878 
+##              Strathmore           Near Westside                Westcott 
+##                    1822                    1772                    1540 
+##            North Valley               Tipp Hill                 Elmwood 
+##                    1531                    1468                    1444 
+##            Salt Springs               Southside University Neighborhood 
+##                    1414                    1370                    1259 
+##       Washington Square               Southwest                Sedgwick 
+##                    1180                    1150                    1138 
+##            Lincoln Hill            Far Westside          Outer Comstock 
+##                    1123                    1027                     990 
+##               Park Ave.              Skunk City         University Hill 
+##                     942                     713                     505 
+##               Winkworth           Near Eastside                Downtown 
+##                     452                     441                     389 
+##            Hawley-Green           Prospect Hill               Lakefront 
+##                     367                     365                     312 
+##         Franklin Square            South Campus 
+##                      89                      36</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb49-1"></a><span class="fu">which.max</span>(<span class="fu">table</span>(dat<span class="sc">$</span>neighborhood)) <span class="co"># Quick way of finding the max, but doesn&#39;t display count.</span></span></code></pre></div>
+<pre><code>## Eastwood 
+##        4</code></pre>
+<p><strong>Comments:</strong> The <code>table()</code> function can be
+used to produce a table that lists all neighborhoods and the count of
+tax parcels within each neighborhood. However, this list comes in
+alphabetical order which isn’t very helpful in identifying which
+neighborhood contains the most tax parcels.</p>
+<p>The <code>sort()</code> function will sort by count to help identify
+what we are looking for. The default is ascending or increasing order,
+so if we use the argument <code>decreasing=TRUE</code> we get the
+neighborhoods with most tax parcels first.</p>
+<p>One quick method of finding the max value across a table or vector is
+using the <code>which.max()</code> function. But this function won’t
+display the actual count. It simply tells us that Eastwood, which has
+the max value, is the fourth unique value in the ‘neighborhood’
+variable.</p>
+<p><br/></p>
+</div>
+<div class="section level2">
+<h2>Question 6: Neighborhoods &amp; Vacant Lots</h2>
+<p><strong>Question:</strong> <em>Which neighborhood contains the most
+vacant lots?</em></p>
+<p><strong>Answer:</strong> <strong>Near Westside</strong> contains the
+most vacant lots. It contains 425 vacant lots.</p>
+<p><br/></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb51-1"></a><span class="fu">table</span>(dat<span class="sc">$</span>neighborhood, dat<span class="sc">$</span>land_use) <span class="co"># cross tabulation using our two variables of interest</span></span></code></pre></div>
+<pre><code>##                          
+##                           Apartment Cemetery Commercial Community Services
+##   Brighton                       26        0         49                 10
+##   Court-Woodlawn                 18        4         52                  2
+##   Downtown                        6        0        209                 17
+##   Eastwood                      139        0        149                  6
+##   Elmwood                        13        3         41                  4
+##   Far Westside                   32        0         82                  2
+##   Franklin Square                 3        0         27                  1
+##   Hawley-Green                   47        0         78                  2
+##   Lakefront                       1        0        121                  2
+##   Lincoln Hill                   58        0         62                  4
+##   Meadowbrook                    14        1         18                  1
+##   Near Eastside                  36        0         79                  4
+##   Near Westside                  75        0        133                 11
+##   North Valley                   43        0         65                  3
+##   Northside                     165        1        239                  5
+##   Outer Comstock                 20       18         65                  0
+##   Park Ave.                      48        0        171                  4
+##   Prospect Hill                  54        0         76                  5
+##   Salt Springs                   31        1        107                  7
+##   Sedgwick                       11        0         14                  0
+##   Skunk City                     17        0         18                  4
+##   South Campus                    4        0          2                  0
+##   South Valley                   22        2         53                  4
+##   Southside                      45        0         84                 10
+##   Southwest                      31        0         46                  5
+##   Strathmore                      8        0          5                  1
+##   Tipp Hill                      32        1         74                  2
+##   University Hill                81        0        137                 15
+##   University Neighborhood        20        1        132                  1
+##   Washington Square              89        1        127                  4
+##   Westcott                       38        1         81                  2
+##   Winkworth                       1        0          5                  0
+##                          
+##                           Industrial Multiple Residence Parking Parks
+##   Brighton                         0                  9       2     1
+##   Court-Woodlawn                   1                  4       7     3
+##   Downtown                         4                  0      78     8
+##   Eastwood                         2                 13      15     3
+##   Elmwood                          0                  5       8     6
+##   Far Westside                     2                 14      11     1
+##   Franklin Square                 10                  0       9     0
+##   Hawley-Green                     4                  9      32     2
+##   Lakefront                       12                  4       3     0
+##   Lincoln Hill                     3                 10      13     1
+##   Meadowbrook                      0                  0       2     6
+##   Near Eastside                   11                  1       6     2
+##   Near Westside                    9                 25      25     3
+##   North Valley                     0                  4       3     3
+##   Northside                        3                 37      29     9
+##   Outer Comstock                   7                  3       1     1
+##   Park Ave.                        7                 26      24     5
+##   Prospect Hill                    2                  3      33     0
+##   Salt Springs                     1                  0       8     1
+##   Sedgwick                         0                  1       2     1
+##   Skunk City                       0                  3       3     0
+##   South Campus                     0                  0       0     0
+##   South Valley                     1                  6       4     7
+##   Southside                        5                  6      23     9
+##   Southwest                       11                  1      15     3
+##   Strathmore                       0                  2       2     5
+##   Tipp Hill                        1                 10       7     6
+##   University Hill                  2                  1      58     4
+##   University Neighborhood          0                  1       0     3
+##   Washington Square                4                 17      11     2
+##   Westcott                         0                  2       3     3
+##   Winkworth                        0                  0       0     0
+##                          
+##                           Recreation Religious Schools Single Family
+##   Brighton                         2        16       3          1398
+##   Court-Woodlawn                   0         2       4          1859
+##   Downtown                         5         6       4             1
+##   Eastwood                         4         7       2          3605
+##   Elmwood                          2         7       2           909
+##   Far Westside                     4         5       1           471
+##   Franklin Square                  1         0       0             0
+##   Hawley-Green                     2         3       0            52
+##   Lakefront                        3         0       0            24
+##   Lincoln Hill                     3         2       2           580
+##   Meadowbrook                      1        10       6          1721
+##   Near Eastside                    0         3       0            93
+##   Near Westside                    3        12       2           521
+##   North Valley                     1         6       3          1194
+##   Northside                        1         7       3          1508
+##   Outer Comstock                   0         2       1           697
+##   Park Ave.                        1         6       3           167
+##   Prospect Hill                    0         4       1            29
+##   Salt Springs                     2         2       1          1029
+##   Sedgwick                         1         2       2           892
+##   Skunk City                       0         1       1           345
+##   South Campus                     0         0       1            25
+##   South Valley                     3         5       4          1605
+##   Southside                        1        24       3           481
+##   Southwest                        0        14       1           419
+##   Strathmore                       0         3       4          1475
+##   Tipp Hill                        1         7       3           785
+##   University Hill                  6         6      41            17
+##   University Neighborhood          4         3       6           803
+##   Washington Square                1         5       0           425
+##   Westcott                         2         4       2           851
+##   Winkworth                        1         0       0           411
+##                          
+##                           Three Family Two Family Utilities Vacant Land
+##   Brighton                          38        436         0         312
+##   Court-Woodlawn                    11        370         1          64
+##   Downtown                           0          0         6          45
+##   Eastwood                          50        718         2         174
+##   Elmwood                           18        240         0         186
+##   Far Westside                      23        271         7         101
+##   Franklin Square                    0          0         5          33
+##   Hawley-Green                      14         66         0          56
+##   Lakefront                          1         21        18         102
+##   Lincoln Hill                      24        274         3          84
+##   Meadowbrook                        1         30         2          65
+##   Near Eastside                     23        103         4          76
+##   Near Westside                     63        460         5         425
+##   North Valley                       7        102         1          96
+##   Northside                        159        920         1         174
+##   Outer Comstock                     1         67         9          98
+##   Park Ave.                         45        314         5         116
+##   Prospect Hill                     31         88         0          39
+##   Salt Springs                       2        120         7          95
+##   Sedgwick                          11        181         0          20
+##   Skunk City                        14        197         1         109
+##   South Campus                       0          0         0           4
+##   South Valley                       8         89         1         111
+##   Southside                         35        293        10         341
+##   Southwest                         23        209         5         367
+##   Strathmore                        21        237         3          56
+##   Tipp Hill                         35        433         2          69
+##   University Hill                   13         30         3          91
+##   University Neighborhood           41        208         1          35
+##   Washington Square                 47        352         0          95
+##   Westcott                          66        420         0          65
+##   Winkworth                          0         10         0          24</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb53-1"></a><span class="fu">unique</span>(dat<span class="sc">$</span>land_use) <span class="co"># examine unique values for land_use to find our value of interest</span></span></code></pre></div>
+<pre><code>##  [1] &quot;Vacant Land&quot;        &quot;Single Family&quot;      &quot;Commercial&quot;        
+##  [4] &quot;Parking&quot;            &quot;Two Family&quot;         &quot;Three Family&quot;      
+##  [7] &quot;Apartment&quot;          &quot;Schools&quot;            &quot;Parks&quot;             
+## [10] &quot;Multiple Residence&quot; &quot;Cemetery&quot;           &quot;Religious&quot;         
+## [13] &quot;Recreation&quot;         &quot;Community Services&quot; &quot;Utilities&quot;         
+## [16] &quot;Industrial&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb55-1"></a><span class="fu">table</span>(dat<span class="sc">$</span>neighborhood, dat<span class="sc">$</span>land_use<span class="sc">==</span><span class="st">&quot;Vacant Land&quot;</span>) <span class="co"># narrowed down cross-tabulation </span></span></code></pre></div>
+<pre><code>##                          
+##                           FALSE TRUE
+##   Brighton                 1990  312
+##   Court-Woodlawn           2338   64
+##   Downtown                  344   45
+##   Eastwood                 4715  174
+##   Elmwood                  1258  186
+##   Far Westside              926  101
+##   Franklin Square            56   33
+##   Hawley-Green              311   56
+##   Lakefront                 210  102
+##   Lincoln Hill             1039   84
+##   Meadowbrook              1813   65
+##   Near Eastside             365   76
+##   Near Westside            1347  425
+##   North Valley             1435   96
+##   Northside                3087  174
+##   Outer Comstock            892   98
+##   Park Ave.                 826  116
+##   Prospect Hill             326   39
+##   Salt Springs             1319   95
+##   Sedgwick                 1118   20
+##   Skunk City                604  109
+##   South Campus               32    4
+##   South Valley             1814  111
+##   Southside                1029  341
+##   Southwest                 783  367
+##   Strathmore               1766   56
+##   Tipp Hill                1399   69
+##   University Hill           414   91
+##   University Neighborhood  1224   35
+##   Washington Square        1085   95
+##   Westcott                 1475   65
+##   Winkworth                 428   24</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb57-1"></a><span class="fu">table</span>(dat<span class="sc">$</span>neighborhood,dat<span class="sc">$</span>land_use <span class="sc">==</span> <span class="st">&quot;Vacant Land&quot;</span>)[ ,<span class="dv">2</span>] <span class="co"># [ , 2] displays only the second column for all rows</span></span></code></pre></div>
+<pre><code>##                Brighton          Court-Woodlawn                Downtown 
+##                     312                      64                      45 
+##                Eastwood                 Elmwood            Far Westside 
+##                     174                     186                     101 
+##         Franklin Square            Hawley-Green               Lakefront 
+##                      33                      56                     102 
+##            Lincoln Hill             Meadowbrook           Near Eastside 
+##                      84                      65                      76 
+##           Near Westside            North Valley               Northside 
+##                     425                      96                     174 
+##          Outer Comstock               Park Ave.           Prospect Hill 
+##                      98                     116                      39 
+##            Salt Springs                Sedgwick              Skunk City 
+##                      95                      20                     109 
+##            South Campus            South Valley               Southside 
+##                       4                     111                     341 
+##               Southwest              Strathmore               Tipp Hill 
+##                     367                      56                      69 
+##         University Hill University Neighborhood       Washington Square 
+##                      91                      35                      95 
+##                Westcott               Winkworth 
+##                      65                      24</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span><a rel="noopener" href="#cb59-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(dat<span class="sc">$</span>neighborhood,dat<span class="sc">$</span>land_use <span class="sc">==</span> <span class="st">&quot;Vacant Land&quot;</span>)[ ,<span class="dv">2</span>], <span class="at">decreasing=</span><span class="cn">TRUE</span>) <span class="co"># sorts the table </span></span></code></pre></div>
+<pre><code>##           Near Westside               Southwest               Southside 
+##                     425                     367                     341 
+##                Brighton                 Elmwood                Eastwood 
+##                     312                     186                     174 
+##               Northside               Park Ave.            South Valley 
+##                     174                     116                     111 
+##              Skunk City               Lakefront            Far Westside 
+##                     109                     102                     101 
+##          Outer Comstock            North Valley            Salt Springs 
+##                      98                      96                      95 
+##       Washington Square         University Hill            Lincoln Hill 
+##                      95                      91                      84 
+##           Near Eastside               Tipp Hill             Meadowbrook 
+##                      76                      69                      65 
+##                Westcott          Court-Woodlawn            Hawley-Green 
+##                      65                      64                      56 
+##              Strathmore                Downtown           Prospect Hill 
+##                      56                      45                      39 
+## University Neighborhood         Franklin Square               Winkworth 
+##                      35                      33                      24 
+##                Sedgwick            South Campus 
+##                      20                       4</code></pre>
+<p><strong>Comments:</strong> The key to answering this question is to
+produce a cross tabulation using the two variables of interest from our
+data set. The <code>table()</code> function produces a cross tabulation
+that lists all neighborhoods and their respective number of tax parcels
+across different land zoning values. However, we are only interested in
+vacant lots so it is helpful to narrow it down to only see the
+<code>Vacant Land</code> zones across neighborhoods.</p>
+<p>By identifying <code>Vacant Land</code> as the value of interest,
+whether or not we’ve used function unique() to do so, we can create more
+targeted, concise, and elegant output if we use the relational operator,
+<code>==</code>, to specify the value we seek.</p>
+<p>We can get even more concise by subsetting to extract only the second
+column <code>[ , 2]</code>, which contains all the instances of
+<code>TRUE</code> in the more narrowed down crosstabulation. Then we can
+sort the table to find the max value more easily.</p>
+<p><br/> <br/></p>
+</div>
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="module" src="https://s.brightspace.com/lib/bsi/2025.1.235/unbundled/mathjax.js"></script><script type="text/javascript">document.addEventListener('DOMContentLoaded', function() {
+						if (document.querySelector('math') || /\$\$|\\\(|\\\[|\\begin{|\\ref{|\\eqref{/.test(document.body.innerHTML)) {
+							document.querySelectorAll('mspace[linebreak="newline"]').forEach(elm => {
+								elm.setAttribute('style', 'display: block; height: 0.5rem;');
+							});
+
+							window.D2L.MathJax.loadMathJax({
+								outputScale: 1.5,
+								renderLatex: false,
+								enableMML3Support: false
+							});
+						}
+					});</script><script type="module" src="https://s.brightspace.com/lib/bsi/2025.1.235/unbundled/prism.js"></script><script type="text/javascript">document.addEventListener('DOMContentLoaded', function() {
+					document.querySelectorAll('.d2l-code').forEach(code => {
+						window.D2L.Prism.formatCodeElement(code);
+					});
+				});</script><script type="module" src="https://s.brightspace.com/lib/bsi/2025.1.235/unbundled/embeds.js"></script><script type="text/javascript">document.addEventListener('DOMContentLoaded', function() {
+					window.D2L.EmbedRenderer.renderEmbeds(document.body);
+				});</script></body></html>

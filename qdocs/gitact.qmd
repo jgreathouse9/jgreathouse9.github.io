@@ -4,15 +4,15 @@ date: 2025-01-31
 categories: [Github, Automation]
 ---
 
-Life is full of repititive actions; we get up, make coffee, shower, and so on, and work in data science is no exception to this. Perhaps you must produce a plot of some form to clean a specific dataset/set of datasets each week, say revenue data or some such thing. Or perhaps, some files must be managed or cleaned, or a researcher wishes to collect the public housing data from Zillow each month when it updates. On one hand, we could physically do this ourselves, but this leaves us open to errors: for one, if we're scraping a dataset from a website, what if the data are only there temporarily? What if it only exists for today, and then tomorrow it is updated with the then current data? What if we are away from our computers, and cannot be there to run script on our local machine? Surely, there must be a solution to this, and one such solution is Github Actions, which I learned about as an intern at Gainwell Technologies.
+Life is full of repititive actions and work in data science is no exception to this. Perhaps you must produce a plot of some form to clean a specific dataset/set of datasets each week, say revenue data or some such thing. Or perhaps, some files must be managed or cleaned, or a researcher wishes to collect the public housing data from Zillow each month when it updates. On one hand, we could physically do this ourselves, but this leaves us open to errors: for one, if we're scraping a dataset from a website, what if the data are only there temporarily? What if it only exists for today, and then tomorrow it is updated with the then current data? What if we are away from our computers, and cannot be there to run script on our local machine? Surely, there must be a solution to this, and one such solution is Github Actions, which I learned about as an intern at Gainwell Technologies.
 
 This post explains Github Actions in a very short, simple to intuit example. Of course, their applications are so vast that I cannot cover everything about them here, but they are still very useful to people who do a repetitive/very similar set of tasks over and over again.
 
 # Defining a Github Action
 
-As the name sounds, a Github Action is a set of instructions designed to be performed by a virtual machine on Github. The list of things it may do is very expansive and context dependent, so I focus on the case of pulling in a dataset from the internet on a regularly scheduled interval. The first thing we need to get started with this, however, is for one, a Github Account, and two, a repo to test this with. You also need to ensusre that the settings for your current repo allow actions to write to your current repo, which can be found in the Settings tab.
+As the name sounds, a Github Action is a set of instructions designed to be performed by a virtual machine on Github. The list of things it may do is very expansive and context dependent, so I focus on the case of pulling in a dataset from the internet on a regularly scheduled interval. The first thing we need to get started with this, however, is for one, a Github Account, and two, a repo to test this with. You also need to ensure that the settings for your current repo allow actions to write to your current repo, which can be found in the Settings tab.
 
-Github Actions are organized and excecuted via what we call a ```yml``` (yeah mill) file. A ```yml``` file is simply a kind of configuration file that we use to set up GitHub Actions. ```yml``` files MUST be defined at the ```.github/workflows``` directory that is in the root of ones project
+Github Actions are organized and executed via what we call a ```yml``` (yeah mill) file. A ```yml``` file is simply a kind of configuration file that we use to set up GitHub Actions. ```yml``` files MUST be defined at the ```.github/workflows``` directory that is in the root of ones project
 
 ## A Simple yml file
 
@@ -69,7 +69,7 @@ jobs:
 
 ```
 
-Here is a ```yml``` file we can find in my [AAA repo](https://github.com/jgreathouse9/AAAGas/tree/main). It begins by naming the action to be performed, which is to [scrape](https://jgreathouse9.github.io/qdocs/aaascrape.html) some city level gas price data. It is scheduled to run at 9:30 UTC time, or at 4:30 each morning Eastern Standard Time, with the cron time. It may also run whenever I wish for it to run.
+Here is a ```yml``` file we can find in my [AAA repo](https://github.com/jgreathouse9/AAAGas/tree/main). It begins by naming the action to be performed, which is to [scrape](https://jgreathouse9.github.io/qdocs/aaascrape.html) some city level gas price data. It is [scheduled](https://adminschoice.com/crontab-quick-reference/) to run at 9:30 UTC time, or at 4:30 each morning Eastern Standard Time, with the cron time. It may also run whenever I wish for it to run; alternatively, we can specify that some actions run on push to a repo, branch, or even a certain working directory.
 
 ```{yml}
 name: City Level Gas Price Scraper
@@ -80,7 +80,7 @@ on:
   workflow_dispatch:
 ```
 
-Actions proceed by defining a set of jobs for the workflow to excecute. In this case, it's just "scrape", but you can define more jobs that are interdependent on one another. The job runs on a virtual computer, in this case Ubuntu. Step one is to checkout the repo, which [essentially](https://git-scm.com/docs/git-checkout) just clones the current repo on to the virtual machine. 
+Actions proceed by defining a set of _jobs_ for the workflow to excecute. In this case, it's just "scrape", but you can define more jobs that are interdependent on one another. The job runs on a virtual computer, in this case Ubuntu. Jobs proceeds with a list of _steps_, or an order that the job proceeds in os the action can function. Step one is to checkout the repo, which [essentially](https://git-scm.com/docs/git-checkout) just clones the current repo on to the virtual machine. 
 
 ```{yml}
 jobs:
@@ -152,5 +152,5 @@ And finally, we commit the csv file my code creates to the directory at the repo
 
 The real value of this is not the data I'm scraping (unless you're a fuel economist/policy scholar). The value is that this job runs independent of my will. I do not have to be at my computer for this to run. I do not need to worry about whether my computer has power or whether I'm home to personally oversee it. The value here is that I've manually gotten my computer to do a specific task every single day, the correct way (assuming you've coded everything right!!!), every time. Of course, this job is so insignificant such that I did not feel the need to run additional safechecks (say AAA's site is down, I could have the action restart in 6 hours, or have it ```curl``` the website on the hour until it does respond), but obviously you can do plenty more here if the task matters enough. This is also a very partial list of what may be done. You can also place lots of parameters around your actions that may make life easier, or employ pre-commit hooks which can do checks for the quality of the code and other tasks before anything is committed,which will fail if they are not satisfied.
 
-So, if you're a policy researcher, and your org uses Github, and you're _not_ using Actions for this kind of thing (again, far beyond webscraping), these provide a very useful tool to handle repetitive actions that you do not wish to manually do yourself.
+Also, it's worth noting that Actions [may run](https://andrewpwheeler.com/2023/02/02/setting-up-pyspark-to-run-sql-tests/) in conjunction with cloud computing for larger-scale jobs. So, if you're a policy researcher, and your org uses Github, and you're _not_ using Actions for this kind of thing (again, far beyond just webscraping), these provide a very useful tool to handle repetitive actions that you do not wish to manually do yourself.
 

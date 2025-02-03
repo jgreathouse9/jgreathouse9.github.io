@@ -90,6 +90,33 @@ We then perform k-means clustering over the the rows of $\tilde{\mathbf{U}}$, or
 
 We now may apply the SCM estimator. The weight vector $\mathbf{w}$ is obtained by solving $\underset{\mathbf{w} \in \mathbb{R}^{n_A}}{\operatorname*{argmin}} \lVert \mathbf{y}_1^- - \mathbf{w}^\top \mathbf{A}^- \rVert_2^2$, where $n_A$ is the cardinality of the selected subset of controls. For the FPCA method, see [the documentation](https://mlsynth.readthedocs.io/en/latest/clustersc.html) for ``mlsynth``.
 
+# Estimating the Causal Impact
+
+We may now estimate the impact with either PCR or another robust matrix factorization method. Non-convex half-quadratic regularization aims to decompose the observed noisy matrix $\mathbf{Y}_0$ into a low-rank matrix $\mathbf{X}$ and a sparse matrix $\mathbf{N}$, such that $\mathbf{Y}_0 = \mathbf{X} + \mathbf{N}$, where $\mathbf{X} = \mathbf{U} \mathbf{V}^T$ represents the low-rank approximation, and $\mathbf{N}$ models the sparse noise. The optimization proceeds iteratively by updating $\mathbf{U}$, $\mathbf{V}$, and $\mathbf{N}$. The matrices $\mathbf{U}$ and $\mathbf{V}$ are initialized randomly with dimensions $m \times r$ and $n \times r$, respectively. The matrix $\mathbf{D} = \mathbf{Y}_0 - \mathbf{N}$ is initialized as $\mathbf{Y}_0$, assuming that $\mathbf{N}$ is initially zero. The scale $\sigma$ is initialized based on the median absolute deviation of the residuals, and $\mathbf{N}$ is updated later using this noise model. For all of the super technical details of this, see the [original paper].
+
+Basically, similar to how Mani did in [his dissertation](https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&context=gc_etds), we use an iterative algorithm to exrtacttthe low-rank matrix of our new donor pool. We initialize $\mathbf{U}$ and $\mathbf{V}$ in so doing. The low-rank approximation $\mathbf{X}$ is computed as the product $\mathbf{U} \mathbf{V}^T$. The update equations for $\mathbf{U}$ and $\mathbf{V}$ are:
+  $$
+  \mathbf{U} = \left( \mathbf{D} \mathbf{V}^T - \lambda_1 \mathbf{U}_p \right) \left( \mathbf{V} \mathbf{V}^T - \lambda_1 \mathbf{I} \right)^{-1}
+  $$
+  where $\mathbf{D} = \mathbf{Y}_0 - \mathbf{N}$ and $\mathbf{U}_p$ is the previous value of $\mathbf{U}$ and
+  $$
+  \mathbf{V} = \left( \mathbf{U}^T \mathbf{U} - \lambda_2 \mathbf{I} \right)^{-1} \left( \mathbf{U}^T \mathbf{D} - \lambda_2 \mathbf{V}_p \right)
+  $$
+where $\mathbf{D} = \mathbf{Y}_0 - \mathbf{N}$ and $\mathbf{V}_p$ is the previous value of $\mathbf{V}$. These updates minimize the approximation error in the low-rank structure of $\mathbf{Y}_0$. This basically updates the low-rank component, similar to the ADMM setup from Mani's dissertation.
+
+After updating $\mathbf{U}$ and $\mathbf{V}$, the next step is to update the sparse noise matrix $\mathbf{N}$. This update is based on the residual $\mathbf{T} = \mathbf{Y}_0 - \mathbf{X}$, identifying large residuals that are likely to represent noise. The scale $\sigma$ is computed using the median absolute deviation of the residuals:
+$$
+\sigma = 10 \times 1.4815 \times \text{median}(\left| \mathbf{T} - \text{median}(\mathbf{T}) \right|).
+$$
+Then, $\mathbf{N}$ is updated by retaining only the large residuals:
+$$
+\mathbf{N} = \mathbf{T} \circ \mathbf{Q}_1
+$$
+where $\mathbf{Q}_1$ is a binary matrix that marks large residuals. The entries of $\mathbf{Q}_1$ are set to 1 if the absolute deviation exceeds $\sigma$, and 0 otherwise. After updating $\mathbf{U}$, $\mathbf{V}$, and $\mathbf{N}$, the algorithm checks for convergence by monitoring the change in the Frobenius norm:
+$$
+\text{RMSE}[t] = \frac{\| \mathbf{Y}_0 - \mathbf{X} \|_F}{\sqrt{m \cdot n}}
+$$
+If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, $1 \times 10^{-6}$), the algorithm terminates early.
 
 ```{python}
 #| fig-align: center

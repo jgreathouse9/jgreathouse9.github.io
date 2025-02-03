@@ -4,7 +4,7 @@ date: 2025-02-03
 categories: [Causal Inference, Machine Learning]
 ---
 
-Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. How can we mitigate this? One way is to use clustering methods to select the control group.
+Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be _a priori_. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider the classic Basque Country example
 
 ```{python}
 #| fig-align: center
@@ -15,6 +15,30 @@ from mlsynth.mlsynth import dataprep
 from mlsynth.mlsynth import CLUSTERSC
 import matplotlib
 import numpy as np
+
+def plot_donors_and_treated(donor_matrix, treated_vector, pre_periods, title):
+    plt.figure(figsize=(10, 6))
+
+    # Plot the donor units
+    for i in range(donor_matrix.shape[1]):
+        plt.plot(donor_matrix[:, i], color='gray', linewidth=0.5, alpha=0.8, label='_nolegend_')
+
+    # Plot the treated unit
+    plt.plot(treated_vector, color='black', linewidth=2, label='Treated Unit')
+
+    # Plot the normalized average of controls
+    plt.plot(donor_matrix.mean(axis=1), color='blue', linewidth=2, label='Average of Controls')
+
+    # Add vertical line for the pre-periods (waterline)
+    plt.axvline(x=pre_periods, color='red', linestyle='--', linewidth=1.5, label='Terrorism')
+
+    # Add labels and title
+    plt.title(title)
+    plt.xlabel('Time Periods')
+    plt.legend()
+
+    plt.show()
+
 # Set up theme for Matplotlib
 def set_theme():
     theme = {
@@ -37,6 +61,35 @@ def set_theme():
     matplotlib.rcParams.update(theme)
 
 set_theme()
+
+
+file = 'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'
+# Load the CSV file using pandas
+df = pd.read_csv(file)
+
+df["Terrorism"] = (df["regionname"].str.contains("Basque", case=False, na=False) & (df["year"] >= 1973)).astype(int)
+treat = "Terrorism"
+outcome = "gdpcap"
+unitid = "regionname"
+time = "year"
+
+basque_prepped = dataprep(df, unitid, time, outcome, treat)
+
+plot_donors_and_treated(basque_prepped['donor_matrix'], basque_prepped['y'], basque_prepped['pre_periods'], 'Basque vs. Controls')
+
+```
+
+Here, we plot the Basue versus the average of its controls as well as the individual donor outcomes themselves.
+
+```{python}
+#| fig-align: center
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from mlsynth.mlsynth import dataprep
+from mlsynth.mlsynth import CLUSTERSC
+import matplotlib
+import numpy as np
 
 file = 'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'
 # Load the CSV file using pandas

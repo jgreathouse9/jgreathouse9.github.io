@@ -201,7 +201,13 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#clustering-for-scm" id="toc-clustering-for-scm" class="nav-link active" data-scroll-target="#clustering-for-scm">Clustering for SCM</a></li>
+  </ul>
+</nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(4)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -241,8 +247,8 @@ window.Quarto = {
 </header>
 
 
-<p>Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be <em>a priori</em>. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider the classic Basque Country example.</p>
-<div id="084b98f9" class="cell" data-execution_count="1">
+<p>Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be <em>a priori</em>. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider <a href="https://economics.mit.edu/sites/default/files/publications/The%20Economic%20Costs%20of%20Conflict.pdf">the classic Basque Country example</a> below, where the Basque Country undergoes a wave of terrorism in the mid-1970s which is thought to impact their GDP per Capita relative to other areas of Spain.</p>
+<div id="3bb23354" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -251,8 +257,13 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<p>Here, we plot the Basue versus the average of its controls as well as the individual donor outcomes themselves. We can see that the Basque Country is one of the wealthiest areas of Spain, up there with Madrid, Cataluna, and the Balearic Islands. We have other donors too, which by comparison are less wealthy. The key, then, is to ask which donors we should select for the algorithm to consider in the first place, so as to have the best out of sample predictions for counterfactual predictions.</p>
-<div id="7dd6d651" class="cell" data-execution_count="2">
+<p>Here, we plot the Basque versus the average of its controls as well as the individual donor outcome vectors themselves. We can see that the Basque Country is one of the wealthiest areas of Spain, up there with Madrid, Cataluna, and the Balearic Islands. We have other donors too, which by comparison are less wealthy. The key, then, is to ask which donors we should select for the synthetic control algorithm to consider in the first place, by exploiting pre-intervention similarities between the treated unit and control group. With “better” pre-policy donors, there is a higher chance that our out-of-sample predictions would be closer to the actual counterfactual.</p>
+<section id="clustering-for-scm" class="level1">
+<h1>Clustering for SCM</h1>
+<p>To begin, we use SVD over the outcomes matrix <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}\)</span>. SVD decomposes it into <span class="math inline">\(\mathbf{Y}_0 = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^\top\)</span>, where <span class="math inline">\(\mathbf{U} \in \mathbb{R}^{N_0 \times T}\)</span> contains the left singular vectors, <span class="math inline">\(\mathbf{\Sigma} \in \mathbb{R}^{T \times T}\)</span> is a diagonal matrix of singular values, and <span class="math inline">\(\mathbf{V} \in \mathbb{R}^{T \times T}\)</span> contains the right singular vectors. Using singular value thresholding or taking the spectral rank, keeping only the top <span class="math inline">\(r\)</span> singular values, we have a low-dimensional representation of the outcomes matrix, <span class="math inline">\(\mathbf{M} = \sum_{i=1}^{r} \sigma_i \mathbf{u}_i \mathbf{v}_i^\top\)</span>. The transformed representation is then defined as <span class="math inline">\(\tilde{\mathbf{U}} = \mathbf{U} \mathbf{\Sigma}_r\)</span>, where <span class="math inline">\(\mathbf{\Sigma}_r\)</span> is the truncated diagonal matrix containing only the retained singular values.</p>
+<p>We then perform k-means clustering over the the rows of <span class="math inline">\(\tilde{\mathbf{U}}\)</span>, or the singular vectors. We seek to partition the units into <span class="math inline">\(k\)</span> clusters by minimizing the within-cluster variance, solving <span class="math inline">\(\underset{P}{\operatorname*{argmin}} \sum_{i=1}^{N_0} \min_{j \in [k]} \|\tilde{\mathbf{U}}_i - P_j\|^2\)</span>, where <span class="math inline">\(P_j\)</span> represents the cluster centers. <code>mlsynth</code> uses the silhouette method to choose the number of clusters. Each unit is assigned a cluster, and we use the cluster that contains the treated unit as the donor pool.</p>
+<p>We now may apply the SCM estimator. The weight vector <span class="math inline">\(\mathbf{w}\)</span> is obtained by solving <span class="math inline">\(\underset{\mathbf{w} \in \mathbb{R}^{n_A}}{\operatorname*{argmin}} \lVert \mathbf{y}_1^- - \mathbf{w}^\top \mathbf{A}^- \rVert_2^2\)</span>, where <span class="math inline">\(n_A\)</span> is the cardinality of the selected subset of controls. For the FPCA method, see <a href="https://mlsynth.readthedocs.io/en/latest/clustersc.html">the documentation</a> for <code>mlsynth</code>.</p>
+<div id="b72fea13" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> dataprep</span>
@@ -301,10 +312,11 @@ window.Quarto = {
 
 
 
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738603527243" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738610890482" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -328,7 +340,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738603527236" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738610890474" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -352,7 +364,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738603527240" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738610890478" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -376,7 +388,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738603569458" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738610933461" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

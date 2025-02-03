@@ -104,19 +104,19 @@ The low-rank approximation $\mathbf{L}$ is computed as the product $\mathbf{U} \
   $$
 where $\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}$ and $\mathbf{V}_p$ is the previous value of $\mathbf{V}$. These updates minimize the approximation error in the low-rank structure of $\mathbf{Y}_0$. In our case, both lambdas are chosen as $\lambda = \frac{1}{\sqrt{\max(m, n)}}$ where $m$ is the number of rows and $n$ is the number of columns for the selected donor matrix.
 
-After updating $\mathbf{U}$ and $\mathbf{V}$, the next step is to update the sparse noise matrix $\mathbf{S}$. This update is based on the residual $\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}$, identifying large residuals that are likely to represent noise. The scale $\sigma$ is computed using the median absolute deviation of the residuals:
+After updating $\mathbf{U}$ and $\mathbf{V}$, the next step is to update the sparse noise matrix $\mathbf{S}$. This update is based on the residual $\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}$, identifying large residuals that are likely to represent noise. This process involves the calculation of a scale factor $\sigma$ that helps to identify large residuals from the matrix $\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}$. The scale $\sigma$ is initialized based on the median absolute deviation of the residuals
 $$
 \sigma = 10 \times 1.4815 \times \text{median}(\left| \mathbf{T} - \text{median}(\mathbf{T}) \right|).
 $$
-Then, $\mathbf{S}$ is updated by retaining only the large residuals:
+where $\mathbf{T}$ represents the residual matrix, and $1.4815$ is a constant that converts the median absolute deviation to an estimate of the standard deviation of the noise term. $\sigma$, serves as a threshold for identifying significant deviations in the data that are considered noise. Then, $\mathbf{S}$ is updated by retaining only the large residuals:
 $$
 \mathbf{S} = \mathbf{T} \circ \mathbf{Q}_1
 $$
-where $\mathbf{Q}_1$ is a binary matrix that marks large residuals. The entries of $\mathbf{Q}_1$ are set to 1 if the absolute deviation exceeds $\sigma$, and 0 otherwise. After updating $\mathbf{U}$, $\mathbf{V}$, and $\mathbf{S}$, the algorithm checks for convergence by monitoring the change in the Frobenius norm:
+where $\circ$ denotes the element-wise multiplication, and $\mathbf{Q}_1$ is a binary matrix with entries of 1 for residuals whose absolute deviation exceeds $\sigma$ and 0 otherwise. After updating $\mathbf{U}$, $\mathbf{V}$, and $\mathbf{S}$, the algorithm checks for convergence by monitoring the change in the Frobenius norm of the observed data versus the summation of its low-rank structure and the noise term:
 $$
 \text{RMSE}[t] = \frac{\| \mathbf{Y}_0 - \mathbf{L} \|_F}{\sqrt{m \cdot n}}
 $$
-If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, $1 \times 10^{-6}$), the algorithm terminates early. Alright, that's the explanation, just an iterative algorithm to extract the low rank structure. With that, now we do the SCM optimization
+If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, $1 \times 10^{-6}$), the algorithm terminates early. With the low-rank structure in hand, we then exploit only the pre-intervetion portion of it to serve as the denoised donor pool. Now we do the SCM optimization to weigh our control group
 
 $$
 \begin{split}\begin{align}
@@ -124,7 +124,7 @@ $$
     \text{s.t.} \: & \mathbf{w}: w_{j} \in \mathbb{R}_{\geq 0}
 \end{align}\end{split}
 $$
-As ususal, we take the dot product between the solution vector and the low-rank structure, and those are our counterfactual predictions.
+As ususal, we take the dot product between the solution weight vector and the low-rank structure. Those predictions are our in and out of sample predictions.
 
 ## Plotting Our Selected Donors
 

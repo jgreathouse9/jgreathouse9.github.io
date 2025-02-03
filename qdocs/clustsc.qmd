@@ -133,13 +133,14 @@ As ususal, we take the dot product between the solution vector and the low-rank 
 #| fig-align: center
 #| echo: false
 
-# Substrings to match
+# Substrings to match on
+
 substrings = ['Cata', 'Madrid', 'Balear']
 
-# Filter column names that contain any of the substrings
+
 filtered_columns = [col for col in basque_prepped["Ywide"].columns if any(substring in col for substring in substrings)]
 
-# Extract the matrix of the filtered columns
+
 Y0sub = basque_prepped["Ywide"][filtered_columns].to_numpy()
 
 plot_donors_and_treated(Y0sub, basque_prepped['y'], basque_prepped['pre_periods'], 'Basque vs. Subset of Controls')
@@ -162,7 +163,9 @@ import matplotlib
 import numpy as np
 
 file = 'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'
-# Load the CSV file using pandas
+
+# Load the Basque Data from my repo
+
 df = pd.read_csv(file)
 
 df["Terrorism"] = (df["regionname"].str.contains("Basque", case=False, na=False) & (df["year"] >= 1975)).astype(int)

@@ -205,7 +205,7 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#clustering-for-scm" id="toc-clustering-for-scm" class="nav-link active" data-scroll-target="#clustering-for-scm">Clustering for SCM</a></li>
+  <li><a href="#time-series-clustering-for-synthetic-controls" id="toc-time-series-clustering-for-synthetic-controls" class="nav-link active" data-scroll-target="#time-series-clustering-for-synthetic-controls">Time-Series Clustering for Synthetic Controls</a></li>
   <li><a href="#estimating-the-causal-impact" id="toc-estimating-the-causal-impact" class="nav-link" data-scroll-target="#estimating-the-causal-impact">Estimating the Causal Impact</a>
   <ul class="collapse">
   <li><a href="#plotting-our-selected-donors" id="toc-plotting-our-selected-donors" class="nav-link" data-scroll-target="#plotting-our-selected-donors">Plotting Our Selected Donors</a></li>
@@ -253,7 +253,7 @@ window.Quarto = {
 
 
 <p>Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be <em>a priori</em>. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider <a href="https://economics.mit.edu/sites/default/files/publications/The%20Economic%20Costs%20of%20Conflict.pdf">the classic Basque Country example</a> below, where the Basque Country undergoes a wave of terrorism in the mid-1970s which is thought to impact their GDP per Capita relative to other areas of Spain.</p>
-<div id="d076a135" class="cell" data-execution_count="1">
+<div id="fbe63c15" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -263,15 +263,15 @@ window.Quarto = {
 </div>
 </div>
 <p>Here, we plot the Basque versus the average of its controls as well as the individual donor outcome vectors themselves. We can see that the Basque Country is one of the wealthiest areas of Spain, up there with Madrid, Cataluna, and the Balearic Islands. We have other donors too, which by comparison are less wealthy. The key, then, is to ask which donors we should select for the synthetic control algorithm to consider in the first place, by exploiting pre-intervention similarities between the treated unit and control group. With “better” pre-policy donors, there is a higher chance that our out-of-sample predictions would be closer to the actual counterfactual.</p>
-<section id="clustering-for-scm" class="level1">
-<h1>Clustering for SCM</h1>
+<section id="time-series-clustering-for-synthetic-controls" class="level1">
+<h1>Time-Series Clustering for Synthetic Controls</h1>
 <p>To begin, we use SVD over the outcomes matrix <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{N_0 \times T}\)</span>. SVD decomposes it into <span class="math inline">\(\mathbf{Y}_0 = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^\top\)</span>, where <span class="math inline">\(\mathbf{U} \in \mathbb{R}^{N_0 \times T}\)</span> contains the left singular vectors, <span class="math inline">\(\mathbf{\Sigma} \in \mathbb{R}^{T \times T}\)</span> is a diagonal matrix of singular values, and <span class="math inline">\(\mathbf{V} \in \mathbb{R}^{T \times T}\)</span> contains the right singular vectors. Using singular value thresholding or taking the spectral rank, keeping only the top <span class="math inline">\(r\)</span> singular values, we have a low-dimensional representation of the outcomes matrix, <span class="math inline">\(\mathbf{M} = \sum_{i=1}^{r} \sigma_i \mathbf{u}_i \mathbf{v}_i^\top\)</span>. The transformed representation is then defined as <span class="math inline">\(\tilde{\mathbf{U}} = \mathbf{U} \mathbf{\Sigma}_r\)</span>, where <span class="math inline">\(\mathbf{\Sigma}_r\)</span> is the truncated diagonal matrix containing only the retained singular values.</p>
 <p>We then perform k-means clustering over the the rows of <span class="math inline">\(\tilde{\mathbf{U}}\)</span>, or the singular vectors. We seek to partition the units into <span class="math inline">\(k\)</span> clusters by minimizing the within-cluster variance, solving <span class="math inline">\(\underset{P}{\operatorname*{argmin}} \sum_{i=1}^{N_0} \min_{j \in [k]} \|\tilde{\mathbf{U}}_i - P_j\|^2\)</span>, where <span class="math inline">\(P_j\)</span> represents the cluster centers. <code>mlsynth</code> uses the silhouette method to choose the number of clusters. Each unit is assigned a cluster, and we use the cluster that contains the treated unit as the donor pool.</p>
-<p>We now may apply the SCM estimator. The weight vector <span class="math inline">\(\mathbf{w}\)</span> is obtained by solving <span class="math inline">\(\underset{\mathbf{w} \in \mathbb{R}^{n_A}}{\operatorname*{argmin}} \lVert \mathbf{y}_1^- - \mathbf{w}^\top \mathbf{A}^- \rVert_2^2\)</span>, where <span class="math inline">\(n_A\)</span> is the cardinality of the selected subset of controls. For the FPCA method, see <a href="https://mlsynth.readthedocs.io/en/latest/clustersc.html">the documentation</a> for <code>mlsynth</code>.</p>
+<p>We now may apply the SCM estimator. The weight vector <span class="math inline">\(\mathbf{w}\)</span> is obtained by solving <span class="math inline">\(\underset{\mathbf{w} \in \mathbb{R}^{n_A}}{\operatorname*{argmin}} \lVert \mathbf{y}_1^- - \mathbf{w}^\top \mathbf{A}^- \rVert_2^2\)</span>, where <span class="math inline">\(n_A\)</span> is the cardinality of the selected subset of controls. For the FPCA method, see <a href="https://mlsynth.readthedocs.io/en/latest/clustersc.html">the documentation</a> for <code>mlsynth</code>, which essentially does a functional data version of this exact method.</p>
 </section>
 <section id="estimating-the-causal-impact" class="level1">
 <h1>Estimating the Causal Impact</h1>
-<p>We may now estimate the impact with either PCR or another robust matrix factorization method similar to how Mani did in <a href="https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&amp;context=gc_etds">his dissertation</a>. We use an iterative algorithm to exrtact the low-rank matrix of our new donor pool. Mani uses what we would call Principal Componenet Pursuit, but another such method is non-convex half-quadratic regularization (HQF). HQF is a form of Robust PCA, a general class of methods which aims to decompose the observed noisy matrix <span class="math inline">\(\mathbf{Y}_0\)</span> into a low-rank matrix <span class="math inline">\(\mathbf{L}\)</span> and a sparse matrix <span class="math inline">\(\mathbf{S}\)</span>, such that <span class="math inline">\(\mathbf{Y}_0 = \mathbf{L} + \mathbf{S}\)</span>, where <span class="math inline">\(\mathbf{L} = \mathbf{U} \mathbf{V}^{top}\)</span> represents the low-rank approximation, and <span class="math inline">\(\mathbf{S}\)</span> models the sparse noise. The optimization proceeds iteratively by updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>. The matrices <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are initialized randomly with dimensions <span class="math inline">\(m \times r\)</span> and <span class="math inline">\(n \times r\)</span>, respectively. The matrix <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> is initialized as <span class="math inline">\(\mathbf{Y}_0\)</span>, assuming that <span class="math inline">\(\mathbf{S}\)</span> is initially zero. The scale <span class="math inline">\(\sigma\)</span> is initialized based on the median absolute deviation of the residuals, and <span class="math inline">\(\mathbf{S}\)</span> is updated later using this noise model. For all of the super technical details of this, see the <a href="https://doi.org/10.1016/j.sigpro.2022.108816">original paper</a>.</p>
+<p>We may now estimate the impact with either PCR or another robust matrix factorization method similar to how Mani did in <a href="https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&amp;context=gc_etds">his dissertation</a>. We use an iterative algorithm to extract the low-rank structure of our new donor pool. Mani uses what we would call Principal Componenet Pursuit, but another such method is non-convex half-quadratic regularization (HQF), which I implemented for Python from <a href="https://github.com/bestzywang/Robust-PCA-via-Non-convex-Half-quadratic-Regularization/blob/main/RPCA_HQF.m">the original MATLAB code</a>. HQF is a form of Robust PCA, a general class of methods which aims to decompose the observed noisy matrix <span class="math inline">\(\mathbf{Y}_0\)</span> into a low-rank matrix <span class="math inline">\(\mathbf{L}\)</span> and a sparse matrix <span class="math inline">\(\mathbf{S}\)</span>, such that <span class="math inline">\(\mathbf{Y}_0 = \mathbf{L} + \mathbf{S}\)</span>, where <span class="math inline">\(\mathbf{L} = \mathbf{U} \mathbf{V}^{top}\)</span> represents the low-rank approximation, and <span class="math inline">\(\mathbf{S}\)</span> models the sparse noise. The optimization proceeds iteratively by updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>. The matrices <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are initialized randomly with dimensions <span class="math inline">\(m \times r\)</span> and <span class="math inline">\(n \times r\)</span>, respectively. The matrix <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> is initialized as <span class="math inline">\(\mathbf{Y}_0\)</span>, assuming that <span class="math inline">\(\mathbf{S}\)</span> is initially zero. The scale <span class="math inline">\(\sigma\)</span> is initialized based on the median absolute deviation of the residuals, and <span class="math inline">\(\mathbf{S}\)</span> is updated later using this noise model. For all of the super technical details of this, see the <a href="https://doi.org/10.1016/j.sigpro.2022.108816">original paper</a>.</p>
 <p>The low-rank approximation <span class="math inline">\(\mathbf{L}\)</span> is computed as the product <span class="math inline">\(\mathbf{U} \mathbf{V}^{\top}\)</span>. The update equations for <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are: <span class="math display">\[
   \mathbf{U} = \left( \mathbf{D} \mathbf{V}^{\top} - \lambda_1 \mathbf{U}_p \right) \left( \mathbf{V} \mathbf{V}^{\top} - \lambda_1 \mathbf{I} \right)^{-1}
   \]</span> where <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> and <span class="math inline">\(\mathbf{U}_p\)</span> is the previous value of <span class="math inline">\(\mathbf{U}\)</span> and <span class="math display">\[
@@ -292,7 +292,7 @@ window.Quarto = {
 \]</span> As ususal, we take the dot product between the solution vector and the low-rank structure, and those are our counterfactual predictions.</p>
 <section id="plotting-our-selected-donors" class="level2">
 <h2 class="anchored" data-anchor-id="plotting-our-selected-donors">Plotting Our Selected Donors</h2>
-<div id="1fc5b1fa" class="cell" data-execution_count="2">
+<div id="76eb2a28" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -301,8 +301,10 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<p>Here we plot the Basque Country versus its selected donors. We can see that these donors (Cataluna, the very closest grey line in Euclidean distnace to the Basque Country), Madrid, and the Balearic Islands are much more similar to the Basque Country than the other 13 control units. Both fPCA-clustering implemented in Mani’s dissertation and the clustering over the right singular vectors choose the same donor pool when the pretreatment period extends up to 1975. Here are the estimated synthetic controls with this setup (note that again, we’re only using these three donors, not the full 16 unit donor pool).</p>
-<div id="e3a64913" class="cell" data-execution_count="3">
+<p>Here we plot the Basque Country versus its selected donors. We can see that these donors (Cataluna, the very closest grey line in Euclidean distnace to the Basque Country), Madrid, and the Balearic Islands are much more similar to the Basque Country than the other 13 control units. Both fPCA-clustering implemented in Mani’s dissertation and the clustering over the right singular vectors choose the same donor pool when the pretreatment period extends up to 1975.</p>
+<p>#@ The Results from the Models</p>
+<p>Here are the estimated synthetic controls with this setup (note that again, we’re only using these three chosen donors, not the full 16 unit donor pool).</p>
+<div id="41815f06" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> dataprep</span>
@@ -348,7 +350,7 @@ window.Quarto = {
 </div>
 </div>
 <p>As we can see the results between HQF-SYNTH and PCR generally agree (note I’m using the Bayesian Ridge regression that <a href="https://jmlr.org/papers/volume19/17-777/17-777.pdf">Amjad and co</a> advocate for in their paper). You the reader may say “well okay Jared, these results seem to agree. Why do we care about one versus the other?” The <em>truly interesting thing</em>, of course, happens when we do in-time placebos. Here is the result for 1973</p>
-<div id="257c2896" class="cell" data-execution_count="4">
+<div id="cc0e8854" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -361,7 +363,7 @@ window.Quarto = {
 </div>
 </div>
 <p>and the next one for 1970</p>
-<div id="f7ff4727" class="cell" data-execution_count="5">
+<div id="393406fe" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -387,7 +389,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738622074741" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738622708271" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -411,7 +413,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738622074732" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738622708262" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -435,7 +437,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738622074737" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738622708268" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -459,7 +461,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738622117521" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738622755133" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

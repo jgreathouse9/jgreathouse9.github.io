@@ -256,7 +256,7 @@ window.Quarto = {
 
 
 <p>Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be <em>a priori</em>. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider <a href="https://economics.mit.edu/sites/default/files/publications/The%20Economic%20Costs%20of%20Conflict.pdf">the classic Basque Country example</a> below, where the Basque Country undergoes a wave of terrorism in the mid-1970s which is thought to impact their GDP per Capita relative to other areas of Spain.</p>
-<div id="d2660ea9" class="cell" data-execution_count="1">
+<div id="815a3ffc" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -280,22 +280,22 @@ window.Quarto = {
   \]</span> where <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> and <span class="math inline">\(\mathbf{U}_p\)</span> is the previous value of <span class="math inline">\(\mathbf{U}\)</span> and <span class="math display">\[
   \mathbf{V} = \left( \mathbf{U}^{\top} \mathbf{U} - \lambda_2 \mathbf{I} \right)^{-1} \left( \mathbf{U}^{\top} \mathbf{D} - \lambda_2 \mathbf{V}_p \right)
   \]</span> where <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> and <span class="math inline">\(\mathbf{V}_p\)</span> is the previous value of <span class="math inline">\(\mathbf{V}\)</span>. These updates minimize the approximation error in the low-rank structure of <span class="math inline">\(\mathbf{Y}_0\)</span>. In our case, both lambdas are chosen as <span class="math inline">\(\lambda = \frac{1}{\sqrt{\max(m, n)}}\)</span> where <span class="math inline">\(m\)</span> is the number of rows and <span class="math inline">\(n\)</span> is the number of columns for the selected donor matrix.</p>
-<p>After updating <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span>, the next step is to update the sparse noise matrix <span class="math inline">\(\mathbf{S}\)</span>. This update is based on the residual <span class="math inline">\(\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}\)</span>, identifying large residuals that are likely to represent noise. The scale <span class="math inline">\(\sigma\)</span> is computed using the median absolute deviation of the residuals: <span class="math display">\[
+<p>After updating <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span>, the next step is to update the sparse noise matrix <span class="math inline">\(\mathbf{S}\)</span>. This update is based on the residual <span class="math inline">\(\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}\)</span>, identifying large residuals that are likely to represent noise. This process involves the calculation of a scale factor <span class="math inline">\(\sigma\)</span> that helps to identify large residuals from the matrix <span class="math inline">\(\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}\)</span>. The scale <span class="math inline">\(\sigma\)</span> is initialized based on the median absolute deviation of the residuals <span class="math display">\[
 \sigma = 10 \times 1.4815 \times \text{median}(\left| \mathbf{T} - \text{median}(\mathbf{T}) \right|).
-\]</span> Then, <span class="math inline">\(\mathbf{S}\)</span> is updated by retaining only the large residuals: <span class="math display">\[
+\]</span> where <span class="math inline">\(\mathbf{T}\)</span> represents the residual matrix, and <span class="math inline">\(1.4815\)</span> is a constant that converts the median absolute deviation to an estimate of the standard deviation of the noise term. <span class="math inline">\(\sigma\)</span>, serves as a threshold for identifying significant deviations in the data that are considered noise. Then, <span class="math inline">\(\mathbf{S}\)</span> is updated by retaining only the large residuals: <span class="math display">\[
 \mathbf{S} = \mathbf{T} \circ \mathbf{Q}_1
-\]</span> where <span class="math inline">\(\mathbf{Q}_1\)</span> is a binary matrix that marks large residuals. The entries of <span class="math inline">\(\mathbf{Q}_1\)</span> are set to 1 if the absolute deviation exceeds <span class="math inline">\(\sigma\)</span>, and 0 otherwise. After updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>, the algorithm checks for convergence by monitoring the change in the Frobenius norm: <span class="math display">\[
+\]</span> where <span class="math inline">\(\circ\)</span> denotes the element-wise multiplication, and <span class="math inline">\(\mathbf{Q}_1\)</span> is a binary matrix with entries of 1 for residuals whose absolute deviation exceeds <span class="math inline">\(\sigma\)</span> and 0 otherwise. After updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>, the algorithm checks for convergence by monitoring the change in the Frobenius norm of the observed data versus the summation of its low-rank structure and the noise term: <span class="math display">\[
 \text{RMSE}[t] = \frac{\| \mathbf{Y}_0 - \mathbf{L} \|_F}{\sqrt{m \cdot n}}
-\]</span> If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, <span class="math inline">\(1 \times 10^{-6}\)</span>), the algorithm terminates early. Alright, that’s the explanation, just an iterative algorithm to extract the low rank structure. With that, now we do the SCM optimization</p>
+\]</span> If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, <span class="math inline">\(1 \times 10^{-6}\)</span>), the algorithm terminates early. With the low-rank structure in hand, we then exploit only the pre-intervetion portion of it to serve as the denoised donor pool. Now we do the SCM optimization to weigh our control group</p>
 <p><span class="math display">\[
 \begin{split}\begin{align}
     \underset{w}{\text{argmin}} &amp; \quad ||\mathbf{y}_{1} - \mathbf{L} \mathbf{w}^{\top}||_{2}^2 \\
     \text{s.t.} \: &amp; \mathbf{w}: w_{j} \in \mathbb{R}_{\geq 0}
 \end{align}\end{split}
-\]</span> As ususal, we take the dot product between the solution vector and the low-rank structure, and those are our counterfactual predictions.</p>
+\]</span> As ususal, we take the dot product between the solution weight vector and the low-rank structure. Those predictions are our in and out of sample predictions.</p>
 <section id="plotting-our-selected-donors" class="level2">
 <h2 class="anchored" data-anchor-id="plotting-our-selected-donors">Plotting Our Selected Donors</h2>
-<div id="438ab11d" class="cell" data-execution_count="2">
+<div id="43bf247a" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -310,7 +310,7 @@ window.Quarto = {
 <section id="the-counterfactuals" class="level1">
 <h1>The Counterfactuals</h1>
 <p>Here are the estimated synthetic controls using Bayesian PCR and HQF-SCM (note that again, we’re only using these three chosen donors, not the full 16 unit donor pool).</p>
-<div id="6d3420a7" class="cell" data-execution_count="3">
+<div id="7221c3f8" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> dataprep</span>
@@ -358,7 +358,7 @@ window.Quarto = {
 </div>
 </div>
 <p>As we can see the results between HQF-SYNTH and PCR generally agree (note I’m using the Bayesian Ridge regression that <a href="https://jmlr.org/papers/volume19/17-777/17-777.pdf">Amjad and co</a> advocate for in their paper). You the reader may say “well okay Jared, these results seem to agree. Why do we care about one versus the other?” The <em>truly interesting thing</em>, of course, happens when we do in-time placebos. Here is the result for 1973</p>
-<div id="a344c4d5" class="cell" data-execution_count="4">
+<div id="5c4c2ea6" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -371,7 +371,7 @@ window.Quarto = {
 </div>
 </div>
 <p>and the next one for 1970</p>
-<div id="97564a2f" class="cell" data-execution_count="5">
+<div id="30617182" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -396,7 +396,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738623558358" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738624168611" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -420,7 +420,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738623558349" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738624168602" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -444,7 +444,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738623558355" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738624168608" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -468,7 +468,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738623602959" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738624211897" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

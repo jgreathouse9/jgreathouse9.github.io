@@ -253,7 +253,7 @@ window.Quarto = {
 
 
 <p>Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be <em>a priori</em>. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider <a href="https://economics.mit.edu/sites/default/files/publications/The%20Economic%20Costs%20of%20Conflict.pdf">the classic Basque Country example</a> below, where the Basque Country undergoes a wave of terrorism in the mid-1970s which is thought to impact their GDP per Capita relative to other areas of Spain.</p>
-<div id="79f6870a" class="cell" data-execution_count="1">
+<div id="d076a135" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -292,7 +292,7 @@ window.Quarto = {
 \]</span> As ususal, we take the dot product between the solution vector and the low-rank structure, and those are our counterfactual predictions.</p>
 <section id="plotting-our-selected-donors" class="level2">
 <h2 class="anchored" data-anchor-id="plotting-our-selected-donors">Plotting Our Selected Donors</h2>
-<div id="1a6b23b9" class="cell" data-execution_count="2">
+<div id="1fc5b1fa" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -302,7 +302,7 @@ window.Quarto = {
 </div>
 </div>
 <p>Here we plot the Basque Country versus its selected donors. We can see that these donors (Cataluna, the very closest grey line in Euclidean distnace to the Basque Country), Madrid, and the Balearic Islands are much more similar to the Basque Country than the other 13 control units. Both fPCA-clustering implemented in Mani’s dissertation and the clustering over the right singular vectors choose the same donor pool when the pretreatment period extends up to 1975. Here are the estimated synthetic controls with this setup (note that again, we’re only using these three donors, not the full 16 unit donor pool).</p>
-<div id="01300683" class="cell" data-execution_count="3">
+<div id="e3a64913" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> dataprep</span>
@@ -348,7 +348,7 @@ window.Quarto = {
 </div>
 </div>
 <p>As we can see the results between HQF-SYNTH and PCR generally agree (note I’m using the Bayesian Ridge regression that <a href="https://jmlr.org/papers/volume19/17-777/17-777.pdf">Amjad and co</a> advocate for in their paper). You the reader may say “well okay Jared, these results seem to agree. Why do we care about one versus the other?” The <em>truly interesting thing</em>, of course, happens when we do in-time placebos. Here is the result for 1973</p>
-<div id="cd8140fd" class="cell" data-execution_count="4">
+<div id="257c2896" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -361,7 +361,7 @@ window.Quarto = {
 </div>
 </div>
 <p>and the next one for 1970</p>
-<div id="cdcb3c41" class="cell" data-execution_count="5">
+<div id="f7ff4727" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -377,7 +377,8 @@ window.Quarto = {
 </section>
 <section id="takeaways-for-practitioners" class="level2">
 <h2 class="anchored" data-anchor-id="takeaways-for-practitioners">Takeaways for Practitioners</h2>
-<p>The meaning of these results are quite simple: donor selection matters for SCM studies. In fact, simple machine-learning donor selection methods can oftentimes give the same or similar answers to classical studies which oftentimes used covariates (in the original SCM paper, Abadie and his advisor used 13 covariates to construct the origignal SCM, returning Cataluna and Madrid as the weighted donors). I say oftentimes because these results are predicated on both assumptions and tuning parameters. We assume some low rank approximation exists, and that it can fit the pre-intervention time series of the treated unit. The tuning parameters matter too– the lambda parameters control the sparisty of our results, for example. I use a simple herustic to tune it, but it may be more reasonable to use methods such as cross-validation to select the number of clusters or the values lambda should take, but this would demand simulation evidence.</p>
+<p>The meaning of these results are quite simple: donor selection matters for SCM studies. In fact, simple machine-learning donor selection methods can oftentimes give the same or similar answers to classical studies which oftentimes used covariates (in the original SCM paper, Abadie and his advisor used 13 covariates to construct the counterfactual, returning Cataluna and Madrid as the weighted donors). I say oftentimes because these results are predicated on both assumptions and tuning parameters. We assume, for example, some low rank approximation exists that can fit the pre-intervention time series of the treated unit. The tuning parameters matter too– the lambda parameters control the sparisty of our results, for example. I use a simple herustic to tune it, but it may be more reasonable to use methods such as cross-validation to select the number of clusters or the values lambda should take, but this would demand simulation evidence.</p>
+<p>Either way, the main benefit for policy analysts is that these two methods offer ways to select a donor poor for synthetic control methods, on top of not needing to collect auxilary covariates that the original paper used to obtain very similar counterfactual predictions, and more work should be done on these estimators to see when and why they’d agree.</p>
 
 
 
@@ -386,7 +387,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738621595257" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738622074741" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -410,7 +411,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738621595249" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738622074732" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -434,7 +435,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738621595254" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738622074737" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -458,7 +459,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738621638310" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738622117521" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

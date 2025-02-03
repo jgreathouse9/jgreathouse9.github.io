@@ -206,7 +206,10 @@ window.Quarto = {
    
   <ul>
   <li><a href="#clustering-for-scm" id="toc-clustering-for-scm" class="nav-link active" data-scroll-target="#clustering-for-scm">Clustering for SCM</a></li>
-  <li><a href="#estimating-the-causal-impact" id="toc-estimating-the-causal-impact" class="nav-link" data-scroll-target="#estimating-the-causal-impact">Estimating the Causal Impact</a></li>
+  <li><a href="#estimating-the-causal-impact" id="toc-estimating-the-causal-impact" class="nav-link" data-scroll-target="#estimating-the-causal-impact">Estimating the Causal Impact</a>
+  <ul class="collapse">
+  <li><a href="#plotting-our-selected-donors" id="toc-plotting-our-selected-donors" class="nav-link" data-scroll-target="#plotting-our-selected-donors">Plotting Our Selected Donors</a></li>
+  </ul></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(4)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -249,7 +252,7 @@ window.Quarto = {
 
 
 <p>Picking a donor pool is very important with the synthetic control method. The vanilla method suffers from interpolation biases in the case when the donor pool is not suitable for the target unit. This is farily common with applied SCM in real life, as oftentimes we may have a high-dimensional donor pool and not know what the right control units would be <em>a priori</em>. The standard advice given in this instance is to limit our control group to units that are already similar to the target unit. But how do we do this? One way is to use clustering methods to select the control group. Consider <a href="https://economics.mit.edu/sites/default/files/publications/The%20Economic%20Costs%20of%20Conflict.pdf">the classic Basque Country example</a> below, where the Basque Country undergoes a wave of terrorism in the mid-1970s which is thought to impact their GDP per Capita relative to other areas of Spain.</p>
-<div id="30d2dc4c" class="cell" data-execution_count="1">
+<div id="bbc79d52" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -267,20 +270,38 @@ window.Quarto = {
 </section>
 <section id="estimating-the-causal-impact" class="level1">
 <h1>Estimating the Causal Impact</h1>
-<p>We may now estimate the impact with either PCR or another robust matrix factorization method similar to how Mani did in <a href="https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&amp;context=gc_etds">his dissertation</a>. We use an iterative algorithm to exrtact the low-rank matrix of our new donor pool. Mani uses what we would call Principal Componenet Pursuit, but another such method is non-convex half-quadratic regularization (HQF). HQF is a form of Robust PCA, a general class of methods which aims to decompose the observed noisy matrix <span class="math inline">\(\mathbf{Y}_0\)</span> into a low-rank matrix <span class="math inline">\(\mathbf{L}\)</span> and a sparse matrix <span class="math inline">\(\mathbf{S}\)</span>, such that <span class="math inline">\(\mathbf{Y}_0 = \mathbf{L} + \mathbf{S}\)</span>, where <span class="math inline">\(\mathbf{L} = \mathbf{U} \mathbf{V}^T\)</span> represents the low-rank approximation, and <span class="math inline">\(\mathbf{S}\)</span> models the sparse noise. The optimization proceeds iteratively by updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>. The matrices <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are initialized randomly with dimensions <span class="math inline">\(m \times r\)</span> and <span class="math inline">\(n \times r\)</span>, respectively. The matrix <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> is initialized as <span class="math inline">\(\mathbf{Y}_0\)</span>, assuming that <span class="math inline">\(\mathbf{S}\)</span> is initially zero. The scale <span class="math inline">\(\sigma\)</span> is initialized based on the median absolute deviation of the residuals, and <span class="math inline">\(\mathbf{S}\)</span> is updated later using this noise model. For all of the super technical details of this, see the <a href="https://doi.org/10.1016/j.sigpro.2022.108816">original paper</a>.</p>
-<p>The low-rank approximation <span class="math inline">\(\mathbf{L}\)</span> is computed as the product <span class="math inline">\(\mathbf{U} \mathbf{V}^T\)</span>. The update equations for <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are: <span class="math display">\[
-  \mathbf{U} = \left( \mathbf{D} \mathbf{V}^T - \lambda_1 \mathbf{U}_p \right) \left( \mathbf{V} \mathbf{V}^T - \lambda_1 \mathbf{I} \right)^{-1}
+<p>We may now estimate the impact with either PCR or another robust matrix factorization method similar to how Mani did in <a href="https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&amp;context=gc_etds">his dissertation</a>. We use an iterative algorithm to exrtact the low-rank matrix of our new donor pool. Mani uses what we would call Principal Componenet Pursuit, but another such method is non-convex half-quadratic regularization (HQF). HQF is a form of Robust PCA, a general class of methods which aims to decompose the observed noisy matrix <span class="math inline">\(\mathbf{Y}_0\)</span> into a low-rank matrix <span class="math inline">\(\mathbf{L}\)</span> and a sparse matrix <span class="math inline">\(\mathbf{S}\)</span>, such that <span class="math inline">\(\mathbf{Y}_0 = \mathbf{L} + \mathbf{S}\)</span>, where <span class="math inline">\(\mathbf{L} = \mathbf{U} \mathbf{V}^{top}\)</span> represents the low-rank approximation, and <span class="math inline">\(\mathbf{S}\)</span> models the sparse noise. The optimization proceeds iteratively by updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>. The matrices <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are initialized randomly with dimensions <span class="math inline">\(m \times r\)</span> and <span class="math inline">\(n \times r\)</span>, respectively. The matrix <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> is initialized as <span class="math inline">\(\mathbf{Y}_0\)</span>, assuming that <span class="math inline">\(\mathbf{S}\)</span> is initially zero. The scale <span class="math inline">\(\sigma\)</span> is initialized based on the median absolute deviation of the residuals, and <span class="math inline">\(\mathbf{S}\)</span> is updated later using this noise model. For all of the super technical details of this, see the <a href="https://doi.org/10.1016/j.sigpro.2022.108816">original paper</a>.</p>
+<p>The low-rank approximation <span class="math inline">\(\mathbf{L}\)</span> is computed as the product <span class="math inline">\(\mathbf{U} \mathbf{V}^{top}\)</span>. The update equations for <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span> are: <span class="math display">\[
+  \mathbf{U} = \left( \mathbf{D} \mathbf{V}^{top} - \lambda_1 \mathbf{U}_p \right) \left( \mathbf{V} \mathbf{V}^{top} - \lambda_1 \mathbf{I} \right)^{-1}
   \]</span> where <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> and <span class="math inline">\(\mathbf{U}_p\)</span> is the previous value of <span class="math inline">\(\mathbf{U}\)</span> and <span class="math display">\[
-  \mathbf{V} = \left( \mathbf{U}^T \mathbf{U} - \lambda_2 \mathbf{I} \right)^{-1} \left( \mathbf{U}^T \mathbf{D} - \lambda_2 \mathbf{V}_p \right)
-  \]</span> where <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> and <span class="math inline">\(\mathbf{V}_p\)</span> is the previous value of <span class="math inline">\(\mathbf{V}\)</span>. These updates minimize the approximation error in the low-rank structure of <span class="math inline">\(\mathbf{Y}_0\)</span>.</p>
+  \mathbf{V} = \left( \mathbf{U}^{top} \mathbf{U} - \lambda_2 \mathbf{I} \right)^{-1} \left( \mathbf{U}^{   op} \mathbf{D} - \lambda_2 \mathbf{V}_p \right)
+  \]</span> where <span class="math inline">\(\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}\)</span> and <span class="math inline">\(\mathbf{V}_p\)</span> is the previous value of <span class="math inline">\(\mathbf{V}\)</span>. These updates minimize the approximation error in the low-rank structure of <span class="math inline">\(\mathbf{Y}_0\)</span>. In our case, both lambdas are chosen as <span class="math inline">\(\lambda = \frac{1}{\sqrt{\max(m, n)}}\)</span> where <span class="math inline">\(m\)</span> is the number of rows and <span class="math inline">\(n\)</span> is the number of columns for the selected donor matrix.</p>
 <p>After updating <span class="math inline">\(\mathbf{U}\)</span> and <span class="math inline">\(\mathbf{V}\)</span>, the next step is to update the sparse noise matrix <span class="math inline">\(\mathbf{S}\)</span>. This update is based on the residual <span class="math inline">\(\mathbf{T} = \mathbf{Y}_0 - \mathbf{L}\)</span>, identifying large residuals that are likely to represent noise. The scale <span class="math inline">\(\sigma\)</span> is computed using the median absolute deviation of the residuals: <span class="math display">\[
 \sigma = 10 \times 1.4815 \times \text{median}(\left| \mathbf{T} - \text{median}(\mathbf{T}) \right|).
 \]</span> Then, <span class="math inline">\(\mathbf{S}\)</span> is updated by retaining only the large residuals: <span class="math display">\[
 \mathbf{S} = \mathbf{T} \circ \mathbf{Q}_1
 \]</span> where <span class="math inline">\(\mathbf{Q}_1\)</span> is a binary matrix that marks large residuals. The entries of <span class="math inline">\(\mathbf{Q}_1\)</span> are set to 1 if the absolute deviation exceeds <span class="math inline">\(\sigma\)</span>, and 0 otherwise. After updating <span class="math inline">\(\mathbf{U}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, and <span class="math inline">\(\mathbf{S}\)</span>, the algorithm checks for convergence by monitoring the change in the Frobenius norm: <span class="math display">\[
 \text{RMSE}[t] = \frac{\| \mathbf{Y}_0 - \mathbf{L} \|_F}{\sqrt{m \cdot n}}
-\]</span> If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, <span class="math inline">\(1 \times 10^{-6}\)</span>), the algorithm terminates early.</p>
-<div id="dcfcc14a" class="cell" data-execution_count="2">
+\]</span> If the change in RMSE between consecutive iterations is smaller than a predefined threshold (in our case, <span class="math inline">\(1 \times 10^{-6}\)</span>), the algorithm terminates early. Alright, that’s the explanation, just an iterative algorithm to extract the low rank structure. With that, now we do the SCM optimization</p>
+<p><span class="math display">\[
+\begin{split}\begin{align}
+    \underset{w}{\text{argmin}} &amp; \quad ||\mathbf{y}_{1} - \mathbf{L} \mathbf{w}^{\top}||_{2}^2 \\
+    \text{s.t.} \: &amp; \mathbf{w}: w_{j} \in \mathbb{R}_{\geq 0}
+\end{align}\end{split}
+\]</span> As ususal, we take the dot product between the solution vector and the low-rank structure, and those are our counterfactual predictions.</p>
+<section id="plotting-our-selected-donors" class="level2">
+<h2 class="anchored" data-anchor-id="plotting-our-selected-donors">Plotting Our Selected Donors</h2>
+<div id="a9b010e6" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="clustsc_files/figure-html/cell-3-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="822" height="546"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Here we plot the Basque Country versus its selected donors.</p>
+<div id="8aeb376f" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> dataprep</span>
@@ -317,7 +338,7 @@ window.Quarto = {
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="clustsc_files/figure-html/cell-3-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="841" height="546"></p>
+<p><img src="clustsc_files/figure-html/cell-4-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="841" height="546"></p>
 </figure>
 </div>
 </div>
@@ -330,10 +351,11 @@ window.Quarto = {
 
 
 </section>
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738617114467" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1738619112678" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -357,7 +379,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738617114460" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1738619112671" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -381,7 +403,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738617114464" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1738619112675" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -405,7 +427,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738617158900" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1738619161116" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

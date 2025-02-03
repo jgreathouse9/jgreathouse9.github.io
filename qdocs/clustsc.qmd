@@ -94,13 +94,13 @@ We now may apply the SCM estimator. The weight vector $\mathbf{w}$ is obtained b
 
 We may now estimate the impact with either PCR or another robust matrix factorization method similar to how Mani did in [his dissertation](https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&context=gc_etds). We use an iterative algorithm to exrtact the low-rank matrix of our new donor pool. Mani uses what we would call Principal Componenet Pursuit, but another such method is non-convex half-quadratic regularization (HQF). HQF is a form of Robust PCA, a general class of methods which aims to decompose the observed noisy matrix $\mathbf{Y}_0$ into a low-rank matrix $\mathbf{L}$ and a sparse matrix $\mathbf{S}$, such that $\mathbf{Y}_0 = \mathbf{L} + \mathbf{S}$, where $\mathbf{L} = \mathbf{U} \mathbf{V}^{top}$ represents the low-rank approximation, and $\mathbf{S}$ models the sparse noise. The optimization proceeds iteratively by updating $\mathbf{U}$, $\mathbf{V}$, and $\mathbf{S}$. The matrices $\mathbf{U}$ and $\mathbf{V}$ are initialized randomly with dimensions $m \times r$ and $n \times r$, respectively. The matrix $\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}$ is initialized as $\mathbf{Y}_0$, assuming that $\mathbf{S}$ is initially zero. The scale $\sigma$ is initialized based on the median absolute deviation of the residuals, and $\mathbf{S}$ is updated later using this noise model. For all of the super technical details of this, see the [original paper](https://doi.org/10.1016/j.sigpro.2022.108816).
 
-The low-rank approximation $\mathbf{L}$ is computed as the product $\mathbf{U} \mathbf{V}^{top}$. The update equations for $\mathbf{U}$ and $\mathbf{V}$ are:
+The low-rank approximation $\mathbf{L}$ is computed as the product $\mathbf{U} \mathbf{V}^{\top}$. The update equations for $\mathbf{U}$ and $\mathbf{V}$ are:
   $$
-  \mathbf{U} = \left( \mathbf{D} \mathbf{V}^{top} - \lambda_1 \mathbf{U}_p \right) \left( \mathbf{V} \mathbf{V}^{top} - \lambda_1 \mathbf{I} \right)^{-1}
+  \mathbf{U} = \left( \mathbf{D} \mathbf{V}^{\top} - \lambda_1 \mathbf{U}_p \right) \left( \mathbf{V} \mathbf{V}^{\top} - \lambda_1 \mathbf{I} \right)^{-1}
   $$
   where $\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}$ and $\mathbf{U}_p$ is the previous value of $\mathbf{U}$ and
   $$
-  \mathbf{V} = \left( \mathbf{U}^{top} \mathbf{U} - \lambda_2 \mathbf{I} \right)^{-1} \left( \mathbf{U}^{	op} \mathbf{D} - \lambda_2 \mathbf{V}_p \right)
+  \mathbf{V} = \left( \mathbf{U}^{\top} \mathbf{U} - \lambda_2 \mathbf{I} \right)^{-1} \left( \mathbf{U}^{\top} \mathbf{D} - \lambda_2 \mathbf{V}_p \right)
   $$
 where $\mathbf{D} = \mathbf{Y}_0 - \mathbf{S}$ and $\mathbf{V}_p$ is the previous value of $\mathbf{V}$. These updates minimize the approximation error in the low-rank structure of $\mathbf{Y}_0$. In our case, both lambdas are chosen as $\lambda = \frac{1}{\sqrt{\max(m, n)}}$ where $m$ is the number of rows and $n$ is the number of columns for the selected donor matrix.
 
@@ -145,7 +145,7 @@ Y0sub = basque_prepped["Ywide"][filtered_columns].to_numpy()
 plot_donors_and_treated(Y0sub, basque_prepped['y'], basque_prepped['pre_periods'], 'Basque vs. Subset of Controls')
 
 ```
-Here we plot the Basque Country versus its selected donors.
+Here we plot the Basque Country versus its selected donors. We can see that these donors (Cataluna, the very closest grey line in Euclidean distnace to the Basque Country), Madrid, and the Balearic Islands are much more similar to the Basque Country than the other 13 control units. Both fPCA-clustering implemented in Mani's dissertation and the clustering over the right singular vectors choose the same donor pool when the pretreatment period extends up to 1975. Here are the estimated synthetic controls with this setup (note that again, we're only using these three donors, not the full 16 unit donor pool).
 
 
 ```{python}
@@ -162,7 +162,7 @@ file = 'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/b
 # Load the CSV file using pandas
 df = pd.read_csv(file)
 
-df["Terrorism"] = (df["regionname"].str.contains("Basque", case=False, na=False) & (df["year"] >= 1973)).astype(int)
+df["Terrorism"] = (df["regionname"].str.contains("Basque", case=False, na=False) & (df["year"] >= 1975)).astype(int)
 
 
 treat = "Terrorism"
@@ -186,4 +186,32 @@ model = CLUSTERSC(config)
 arco = model.fit()
 ```
 
-Here we have the Basque dataset.
+As we can see the results between HQF-SYNTH and PCR generally agree (note I'm using the Bayesian Ridge regression that [Amjad and co](https://jmlr.org/papers/volume19/17-777/17-777.pdf) advocate for in their paper). You the reader may say "well okay Jared, these results seem to agree. Why do we care about one versus the other?" The _truly interesting thing_, of course, happens when we do in-time placebos. Here is the result for 1973
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+df["Terrorism"] = (df["regionname"].str.contains("Basque", case=False, na=False) & (df["year"] >= 1973)).astype(int)
+arco = model.fit()
+```
+and the next one for 1970
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+df["Terrorism"] = (df["regionname"].str.contains("Basque", case=False, na=False) & (df["year"] >= 1970)).astype(int)
+arco = model.fit()
+```
+
+As we can see from these figures, the original Robust SCM (Bayesian or not!), the model seems to overfit to the pre-intervention period. The fit becomes terrible from the 1970 period to the 1975 period with the RSC/PCR method with the treatment year of 1970, leading to an inflated effect size. Also, the clustering over the right singular vectors, with the 1970 treatment date, selects only Cataluna and Madrid as the donors. The weights given to both are 0.516, which is almost equuivalent to the DID method which assigns proportional weights to the control units. In contrast, the HQF-SCM method doesn't change very much at all when we use the alternate treatment dates. This suggests that more sophisticated robust matrix factorization like Robust PCA/HQF methods plus clustering routines are competitive, at least, to the PCR method, since their effect sizes (in this case) is quite robust to the in-time placebo test. The practical conclusions of the HQF-SCM method remains the same as the original SCM which studied this question.
+
+## Takeaways for Practitioners
+
+The meaning of these results are quite simple: donor selection matters for SCM studies. In fact, simple machine-learning donor selection methods can oftentimes give the same or similar answers to classical studies which oftentimes used covariates (in the original SCM paper, Abadie and his advisor used 13 covariates to construct the origignal SCM, returning Cataluna and Madrid as the weighted donors). I say oftentimes because these results are predicated on both assumptions and tuning parameters. We assume some low rank approximation exists, and that it can fit the pre-intervention time series of the treated unit. The tuning parameters matter too-- the lambda parameters control the sparisty of our results, for example. I use a simple herustic to tune it, but it may be more reasonable to use methods such as cross-validation to select the number of clusters or the values lambda should take, but this would demand simulation evidence.
+
+
+
+
+

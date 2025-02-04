@@ -96,11 +96,15 @@ The transformed representation is then defined as
 $$
 \tilde{\mathbf{U}} = \mathbf{U}_r \mathbf{\Sigma}_r,
 $$
-where $\mathbf{U}_r$ consists of the first $r$ columns of $\mathbf{U}$ and $\mathbf{\Sigma}_r$ is the truncated diagonal matrix containing the top $r$ singular values.
-
-We then perform k-means clustering over the the rows of $\tilde{\mathbf{U}}$, or the singular vectors. We seek to partition the units into $k$ clusters by minimizing the within-cluster variance, solving $\underset{P}{\operatorname*{argmin}} \sum_{i=1}^{N_0} \min_{j \in [k]} \|\tilde{\mathbf{U}}_i - P_j\|^2$, where $P_j$ represents the cluster centers. ``mlsynth`` uses the silhouette method to choose the number of clusters. Each unit is assigned a cluster, and we use the cluster that contains the treated unit as the donor pool.
-
-We now may apply the SCM estimator. The weight vector $\mathbf{w}$ is obtained by solving $\underset{\mathbf{w} \in \mathbb{R}^{n_A}}{\operatorname*{argmin}} \lVert \mathbf{y}_1^- - \mathbf{w}^\top \mathbf{A}^- \rVert_2^2$, where $n_A$ is the cardinality of the selected subset of controls. For the FPCA method, see [the documentation](https://mlsynth.readthedocs.io/en/latest/clustersc.html) for ``mlsynth``, which essentially does a functional data version of this exact method.
+where $\mathbf{U}_r$ consists of the first $r$ columns of $\mathbf{U}$ and $\mathbf{\Sigma}_r$ is the truncated diagonal matrix containing the top $r$ singular values. We then perform k-means clustering over the rows of $\mathbf{U}_r$, which correspond to the time-series patterns of the units in the reduced-rank space. We seek to partition the units into $k$ clusters by minimizing the within-cluster variance:
+$$
+\underset{P}{\operatorname*{argmin}} \sum_{j=1}^{N_0} \min_{c \in [k]} \|\mathbf{U}_{r,j} - P_c\|^2,
+$$
+where $\mathbf{U}_{r,j}$ is the $j$-th row of $\mathbf{U}_r$ and $P_c$ represents the cluster centers. The number of clusters is chosen using the silhouette method in \texttt{mlsynth}. Each unit is assigned a cluster, and the donor pool consists of all control units that belong to the same cluster as the treated unit. We now apply the SCM estimator. The weight vector $\mathbf{w}$ is obtained by solving  
+$$
+\underset{\mathbf{w} \in \mathbb{R}^{n_A}}{\operatorname*{argmin}} \lVert \mathbf{y}_1^- - \mathbf{w}^\top \mathbf{A}^- \rVert_2^2,
+$$
+where $n_A$ is the number of control units in the selected donor pool, and $\mathbf{A}^-$ is the matrix of their corresponding outcomes in the pre-intervention period. For the FPCA method, see [the documentation](https://mlsynth.readthedocs.io/en/latest/clustersc.html) for \texttt{mlsynth}, which implements a functional data version of this method.
 
 # Estimating the Causal Impact
 

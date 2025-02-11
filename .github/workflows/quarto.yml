@@ -35,6 +35,26 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
 
+    - name: Log and Delete Existing Docs Directory  # Cold start step with logging
+      run: |
+        echo "Checking if docs/ directory exists before deletion..."
+        if [ -d docs ]; then
+          echo "docs/ directory found. Deleting..."
+          rm -rf docs
+          echo "docs/ directory deleted."
+        else
+          echo "No existing docs/ directory found. Skipping deletion."
+        fi
+
+    - name: Verify docs Directory Removal
+      run: |
+        if [ -d docs ]; then
+          echo "ERROR: docs/ directory still exists after deletion attempt."
+          exit 1
+        else
+          echo "docs/ directory successfully removed."
+        fi
+
     - name: Generate index.qmd
       run: |
         echo "---" > qdocs/index.qmd

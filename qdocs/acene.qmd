@@ -257,7 +257,7 @@ config = {
     "outcome": outcome,
     "unitid": unitid,
     "display_graphs": True,
-    "method": "l2", "tau": .3
+    "method": "l2", "tau": .25
 }
 
 model = PDA(config)
@@ -265,4 +265,14 @@ model = PDA(config)
 arco = model.fit()
 ```
 
-After analysis.
+I won't go over the details of it here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html), but the returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors find a price drop of -1.5.
+
+My analysis has the advantage of using formal causal methods which explicitly takes advantage of a control group (more than 700 controls) instead of the dozen or so the original folks do, and addresses variance estimation using heteoskedasticity and autocorrelation adjusted CIs.
+
+The point of this post is that we can't just shove a dataset into ```scipy``` and (metaphorically) pray for valid results. We can't say "well, parallel trends for DID doesn't hold, let's go with the old school t-test and report that" (by the way, parallel trends DOES in fact hold when we use the Forward DID method from ```mlsynth```). In such cases,  we need a little more care to be put into these questions if we mean to even try to answer them.
+
+My main conclusion reminds me more or less of [a post](https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/) by Andrew Gelman, who writes pretty much what I think about the report above. It isn't that the question is silly- the question matters, but
+
+> The problem is that the data are observational, the data are sparse and highly variable; that is, the problem is hard. And it doesn’t help when researchers are under the impression that these real difficulties can be easily resolved using canned statistical identification techniques.
+
+Said another way, the answer you get to the question is less important than the mathematical reasoning process you use to get to that point. All of the tests we run and models we estimate have assumptions which fulfill identification criteria, assumptions such themselves are usually underpinned by some theoretically motivated DGP. For objective causal inference, researchers should respect this idea, even if it means we have to move to more advanced estimators.

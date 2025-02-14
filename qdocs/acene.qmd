@@ -1,0 +1,173 @@
+---
+title: 'Data Science for Policy Analysts: On Importance of Data Generating Processes'
+date: 2025-01-31
+categories: [Econometrics, Causal Inference]
+---
+
+# All Casual Estimates Are Not Created Equal
+
+I just began my dissertation last week. The first chapter studies the causal impact of Texas' repeal of the tampon tax on demand as well as consumer price savings, naturally, using synthetic control methods as one may have guessed. I was doing the literature review, [my favorite part](https://andrewpwheeler.com/2020/12/16/lit-reviews-are-almost-functionally-worthless/) of the research process, and upon doing some digging, I _had to_ write a post about this.
+
+I found [a paper](https://doi.org/10.1038/s41562-024-01996-4) called "Why current menstrual policies do not work". Much of the framing of the paper is fine, until we get to the part about evidence regarding the tampon tax. King writes
+
+> Similarly, a recent UK campaign to abolish a 5% ‘tampon tax’ unintentionally boosted the profits of disposable product manufacturers by about £15 million per year, without substantially reducing the cost of products for consumers,
+
+citing [this paper](https://taxpolicy.org.uk/wp-content/assets/tampon_tax_report.pdf) by Tax Policy Associates. I read this and though "Hmm, this is an empirical claim, I wonder what their causal methodology was. So I went to look the paper up as a bit of professional curiosity.
+
+The paper studies the pass through rate of abolishing the tax on savings to consumers. To quote the paper directly,
+
+> We used Office for National Statistics data to analyse tampon price changes around 1 January 2021, the date that the “tampon tax” was abolished. We were able to do this because the ONS includes tampons (but not other menstrual products) in the price quotes it samples every month to compile the consumer prices index. Since 2017, the ONS has published the full datasets for its price sampling.
+
+Okay fine. No problems so far. The euthors find "Overall, the average price for [tampons in] the period after the VAT abolition is about 1.5% less than it was beforehand." Still no issues so far. But then we check the methodology, that they [link to](https://github.com/DanNeidle/tampontax/blob/main/tampon_tax_indexes_all_goods.py) at their Github, and the results were less than exciting, putting it politely. Why? The authors do a simple t-test. That is, a simple pre-post test which compares the mean difference of tampon prices before the abolition of the tax and after the abolition of the tax.
+
+I want to be clear about something: _no matter what_ result we get with other methods such as synthetic control or DID, this is not the correct way to do things. For the purposes of this post though, I want to explain why this is from a more intuitive way that isn't simply "SCM uses fancy optimization". To really understand what's wrong here, we have to go back to basic causal inference and discuss data generating processes.
+
+## Data Generating Processes
+
+For DID, the DGP for the outcome $y_{jt}$ is usually assumed to follow a two-way fixed effects model
+
+$$
+y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilon}_{jt}
+$$
+
+where we have $\boldsymbol{\lambda}_j = \begin{bmatrix} a_j \\ 1 \end{bmatrix} \in \mathbb{R}^2$ represents the unit-specific fixed effects, with $a_j$ being the fixed effect for unit $j$ and $\boldsymbol{\delta}_t = \begin{bmatrix} 1 \\ b_t \end{bmatrix} \in \mathbb{R}^2$ represents the time-specific fixed effects, with $b_t$ being the fixed effect for time $t$.
+
+Essentially, the authors are making an assumption that is even stronger than the synthetic control assumption or DID's super strict parallel trends assumption. For the t-test to be valid, the authors have to assume that NOTHING else except the policy changed in the pre-post period (effectively that the treatment assignment is as good as random), and that not even systemic time differences are influencing the outcome, it is ONLY the treatment that's at work here.
+
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+import requests
+import pandas as pd
+from io import StringIO
+from mlsynth.mlsynth import FDID
+import os
+import matplotlib
+
+jared_theme = {
+    "axes.grid": False,
+    "grid.linestyle": "-",
+    "grid.color": "black",
+    "legend.framealpha": 1,
+    "legend.facecolor": "white",
+    "legend.shadow": True,
+    "legend.fontsize": 14,
+    "legend.title_fontsize": 16,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 14,
+    "axes.labelsize": 14,
+    "axes.titlesize": 20,
+    "figure.dpi": 120,
+    "axes.facecolor": "white",
+    "figure.figsize": (10, 5.5),
+}
+
+matplotlib.rcParams.update(jared_theme)
+
+def fetch_and_combine_github_csvs(owner, repo, directory):
+    """
+    Fetches all CSV files in the given GitHub directory that start with 'upload',
+    combines them into a single DataFrame, and processes it.
+
+    Parameters:
+        owner (str): GitHub username or organization name.
+        repo (str): Repository name.
+        directory (str): Directory path within the repository.
+
+    Returns:
+        pd.DataFrame: Combined and processed DataFrame.
+    """
+    # GitHub API URL to list contents of the directory
+    api_url = f'https://api.github.com/repos/{owner}/{repo}/contents/{directory}'
+
+    # Get the directory contents
+    response = requests.get(api_url)
+    files = response.json()
+
+    # Filter for CSV files that start with 'upload'
+    csv_files = [file for file in files if file['name'].startswith('upload') and file['name'].endswith('.csv')]
+
+    # Base URL for raw file content
+    raw_base_url = f'https://raw.githubusercontent.com/{owner}/{repo}/main/{directory}/'
+
+    # List to hold DataFrames
+    df_list = []
+
+    # Download and read each CSV file
+    for file in csv_files:
+        csv_url = raw_base_url + file['name']
+        csv_response = requests.get(csv_url)
+        df = pd.read_csv(StringIO(csv_response.text))
+        df_list.append(df)
+
+    # Concatenate all DataFrames
+    combined_df = pd.concat(df_list, ignore_index=True)
+
+    # Convert INDEX_DATE to a proper date format (assuming YYYYMM format)
+    combined_df['INDEX_DATE'] = pd.to_datetime(combined_df['INDEX_DATE'], format='%Y%m')
+
+    # Sort by ITEM_ID and INDEX_DATE
+    combined_df = combined_df.sort_values(by=['ITEM_ID', 'INDEX_DATE'])
+
+    # Create 'Tax' column and set to 1 if ITEM_ID == 520206 and INDEX_DATE >= Jan 2021
+    combined_df['Tax'] = 0
+    combined_df.loc[(combined_df['ITEM_ID'] == 520206) & (combined_df['INDEX_DATE'] >= '2021-01-01'), 'Tax'] = 1
+
+    # Select only specific columns by index
+    selected_columns = [0, 1, 2, 5, -1]  # Column indices to keep
+    combined_df = combined_df.iloc[:, selected_columns]
+
+    # Reset index
+    combined_df = combined_df.reset_index(drop=True)
+
+    # Filter only ITEM_IDs that have exactly 53 observations
+    counts = combined_df['ITEM_ID'].value_counts()
+    balanced_item_ids = counts[counts == 53].index  # Get ITEM_IDs with 53 observations
+    combined_df = combined_df[combined_df['ITEM_ID'].isin(balanced_item_ids)]
+
+    combined_df['ITEM_ID'] = 'Unit ' + combined_df['ITEM_ID'].astype(str)
+
+    # Reset index after filtering
+    combined_df = combined_df.reset_index(drop=True)
+
+    combined_df.to_csv("TamponData.csv", index=False)
+
+    return combined_df
+
+
+
+# Example usage
+owner = 'DanNeidle'
+repo = 'tampontax'
+directory = 'ONS_data'
+df = fetch_and_combine_github_csvs(owner, repo, directory)
+
+treat = "Tax"
+outcome = "ITEM_INDEX"
+unitid = "ITEM_ID"
+time = "INDEX_DATE"
+
+save = {
+    "filename": "UKTampon",
+    "extension": "png",
+    "directory": os.getcwd(),
+}
+
+config = {
+    "df": df,
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": True,
+    "save": save
+}
+
+model = FDID(config)
+
+arco = model.fit()
+```
+
+After analysis.

@@ -286,44 +286,49 @@ y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilo
 <h3 class="anchored" data-anchor-id="t-test">T Test</h3>
 <p>We can do the exact same thing with the t-test too. In the pre-treatment period, the expected outcome for unit <span class="math inline">\(j\)</span> is:</p>
 <p><span class="math display">\[
-\mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\lambda_j + \epsilon_{jt} \mid d_{jt} = 0]
+\mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\lambda_j + \delta_t + \epsilon_{jt} \mid d_{jt} = 0]
 \]</span></p>
-<p>Since <span class="math inline">\(\lambda_j\)</span> is constant, the expected outcome simplifies to:</p>
+<p>Since <span class="math inline">\(\lambda_j\)</span> and <span class="math inline">\(\delta_t\)</span> are both constant for a given unit and time, the expected outcome simplifies to:</p>
 <p><span class="math display">\[
-\color{red}\mathbb{E}[y_{jt} \mid d_{jt} = 0] = \lambda_j + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
+\mathbb{E}[y_{jt} \mid d_{jt} = 0] = \lambda_j + \delta_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
 \]</span></p>
 <p>Similarly, in the post-treatment period, the expected outcome for unit <span class="math inline">\(j\)</span> is:</p>
 <p><span class="math display">\[
-\mathbb{E}[y_{jt} \mid d_{jt} = 1] = \mathbb{E}[\lambda_j + \epsilon_{jt} \mid d_{jt} = 1]
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] = \mathbb{E}[\lambda_j + \delta_t + \epsilon_{jt} \mid d_{jt} = 1]
 \]</span></p>
-<p>Since<span class="math inline">\(\lambda_j\)</span> is constant, the expected outcome simplifies to:</p>
+<p>Since <span class="math inline">\(\lambda_j\)</span> and <span class="math inline">\(\delta_t\)</span> are again constant, this simplifies to:</p>
 <p><span class="math display">\[
-\mathbb{E}[y_{jt} \mid d_{jt} = 1] = \lambda_j + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] = \lambda_j + \delta_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]
 \]</span></p>
 <p>Now, we compute the difference in expected outcomes between the pre-treatment and post-treatment periods for the treated unit:</p>
 <p><span class="math display">\[
-\underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}}-\underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}}
-= \left( \lambda_j + \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} \right)
-- \left( \lambda_j + \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}} \right)
+\underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} -
+\underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}}
 \]</span></p>
-<p>Since <span class="math inline">\(\lambda_j\)</span> is constant for both periods, it cancels out:</p>
+<p>Substituting the expressions above:</p>
+<p><span class="math display">\[
+\left( \lambda_j + \delta_t + \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} \right)
+-
+\left( \lambda_j + \delta_t + \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}} \right)
+\]</span></p>
+<p>Since both <span class="math inline">\(\lambda_j\)</span> (unit fixed effect) and <span class="math inline">\(\delta_t\)</span> (time fixed effect) are present in both terms, they cancel out:</p>
 <p><span class="math display">\[
 \underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} -
 \underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}}
-= \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} -
+=
+\underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} -
 \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}}
 \]</span></p>
-<p>For the pre-post t-test to be valid, we essentially must assume that the error terms <span class="math inline">\(\epsilon_{jt}\)</span> are independent and identically distributed between the pre-treatment and post-treatment periods. This means that any difference in outcomes between the pre-treatment and post-treatment periods should be solely due to the treatment effect, and not due to other unobserved factors.</p>
-<p>The assumption is that the expected difference in error terms between the two periods is zero:</p>
+<p>For the pre-post t-test to be valid, we essentially assume that the error terms <span class="math inline">\(\epsilon_{jt}\)</span> are independent and identically distributed (i.i.d.) between the pre-treatment and post-treatment periods. This means that any difference in outcomes should be due solely to the treatment effect, not due to other unobserved factors.</p>
+<p>The assumption is that the expected difference in error terms is zero:</p>
 <p><span class="math display">\[
 \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] = 0
 \]</span></p>
-<p>Thus, the difference in expected outcomes for the treated unit in the pre- and post-treatment periods simplifies to:</p>
+<p>Thus, the difference in expected outcomes for the treated unit simplifies to:</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = 0
 \]</span></p>
-<p>This result implies that any observed difference in outcomes between the pre- and post-treatment periods is entirely due to the treatment effect, assuming no confounding or time-specific effects. This is before I even get into the fact that the t-test presumes that the observations are independent (they rarely if ever are in time series, basically).</p>
-<p>In fairness, the authors do recognize these shortcomings, writing</p>
+<p>This result implies that any observed difference in outcomes between the pre- and post-treatment periods must be entirely due to the treatment effect, assuming no confounding factors or time-specific shocks, which basically is never true in real life. In fairness, the authors do recognize these shortcomings, writing</p>
 <blockquote class="blockquote">
 <p>The prices of tampons and the other consumer goods considered in this paper will be affected by numerous factors – the supply of raw materials, energy costs, and sheer random happenstance. It is therefore unsurprising that we see a large amount of month-to-month variation in prices; this makes it difficult to identify separate real trends from noise. More sophisticated statistical methods than a t-test are therefore not helpful (difference-in-difference and synthetic control methods were attempted, but did not produce meaningful results).</p>
 </blockquote>
@@ -332,7 +337,7 @@ y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilo
 </section>
 <section id="a-re-analysis-with-mlsynth" class="level2">
 <h2 class="anchored" data-anchor-id="a-re-analysis-with-mlsynth">A Re-Analysis with <code>mlsynth</code></h2>
-<div id="c414bb5d" class="cell" data-execution_count="1">
+<div id="bb906503" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -353,7 +358,7 @@ y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilo
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739559371917" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739560156399" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -377,7 +382,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739559371914" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739560156396" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -401,7 +406,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739559371915" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739560156396" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -425,7 +430,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739559371915" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739560156396" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -449,7 +454,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739559419611" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739560198748" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

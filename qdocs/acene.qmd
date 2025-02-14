@@ -1,6 +1,6 @@
 ---
 title: 'Data Science for Policy Analysts: On Importance of Data Generating Processes'
-date: 2025-01-31
+date: 2025-02-14
 categories: [Econometrics, Causal Inference]
 ---
 
@@ -24,6 +24,8 @@ I want to be clear about something: _no matter what_ result we get with other me
 
 ## Data Generating Processes
 
+### DID
+
 For DID, the DGP for the outcome $y_{jt}$ is usually assumed to follow a two-way fixed effects model
 
 $$
@@ -36,27 +38,88 @@ where we have $\boldsymbol{\lambda}_j = \begin{bmatrix} a_j \\ 1 \end{bmatrix} \
 \mathbb{E}[y_{jt} \mid d_jt = 1] - \mathbb{E}[y_{jt} \mid d_jt = 0] = \mathbb{E}[\boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t] \quad \text{for all } t
 \]
 
-Substituting the fixed effects model, we have:
+All we're saying here is that the difference between our observed outcomes and our control group outcomes should be equvalent to the additive factor model we just specified. Now, we may substitute the scalar interpretation of this into this, giving us:
 
 \[
 \mathbb{E}[y_{jt} \mid d_{jt} = 1] = a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]
 \]
-
+which is simply the factor model for the treated unit and
 \[
 \mathbb{E}[y_{jt} \mid d_{jt} = 0] = a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
 \]
-
-Thus, the difference between the treated and control groups' expected outcomes, in the absence of treatment, should be:
+is the same for the control units. Thus, the difference between the treated and control groups' expected outcomes, in the absence of treatment, should be:
 
 \[
-\mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
+\mathbb{E}[y_{jt} \mid D_j = 1] - \mathbb{E}[y_{jt} \mid D_j = 0] = \left(a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid D_j = 1]\right) - \left(a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid D_j = 0]\right)
+\]
+
+Notice that the unit-specific fixed effect \(a_j\) and the time-specific fixed effect \(b_t\) cancel out, as they are the same for both treated and control groups. This leaves us with:
+
+\[
+\mathbb{E}[y_{jt} \mid D_j = 1] - \mathbb{E}[y_{jt} \mid D_j = 0] = \mathbb{E}[\epsilon_{jt} \mid D_j = 1] - \mathbb{E}[\epsilon_{jt} \mid D_j = 0]
 \]
 
 For the parallel trends assumption to hold, this difference should be constant over time, implying that:
 
 \[
-\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] = \text{constant for all } t
+\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] = \text{constant } \forall \, t
 \]
+
+Or, that conditional only on some error term, the difference is constant with respect to both the treated and untreated groups.
+
+### T Test
+
+We can do the exact same thing with the t-test too. In the pre-treatment period, the expected outcome for unit $j$ is:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\lambda_j + \epsilon_{jt} \mid d_{jt} = 0]
+\]
+
+Since $\lambda_j$ is constant, the expected outcome simplifies to:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 0] = \lambda_j + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
+\]
+
+Similarly, in the post-treatment period, the expected outcome for unit $j$ is:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] = \mathbb{E}[\lambda_j + \epsilon_{jt} \mid d_{jt} = 1]
+\]
+
+Since$\lambda_j$ is constant, the expected outcome simplifies to:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] = \lambda_j + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]
+\]
+
+Now, we compute the difference in expected outcomes between the pre-treatment and post-treatment periods for the treated unit:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = \left( \lambda_j + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] \right) - \left( \lambda_j + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] \right)
+\]
+
+Since $\lambda_j$ is constant for both periods, it cancels out:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
+\]
+
+For the pre-post t-test to be valid, we assume that the error terms $\epsilon_{jt}$ are independent and identically distributed between the pre-treatment and post-treatment periods. This means that any difference in outcomes between the pre-treatment and post-treatment periods should be solely due to the treatment effect, and not due to other unobserved factors.
+
+The assumption is that the expected difference in error terms between the two periods is zero:
+
+\[
+\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] = 0
+\]
+
+Thus, the difference in expected outcomes for the treated unit in the pre- and post-treatment periods simplifies to:
+
+\[
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = 0
+\]
+
+This result implies that any observed difference in outcomes between the pre- and post-treatment periods is entirely due to the treatment effect, assuming no confounding or time-specific effects.
 
 
 Essentially, the authors are making an assumption that is even stronger than the synthetic control assumption or DID's super strict parallel trends assumption. For the t-test to be valid, the authors have to assume that NOTHING else except the policy changed in the pre-post period (effectively that the treatment assignment is as good as random), and that not even systemic time differences are influencing the outcome, it is ONLY the treatment that's at work here.

@@ -22,7 +22,7 @@ Okay fine. No problems so far. The euthors find "Overall, the average price for 
 
 > Apply [sic] statistical techniques to these datasets is not straightforward given the limited number of datapoints and very high degree of volatility. It was, however, thought appropriate to run an unequal variance one-sided t-test (using the python SciPy library) to compare the pricing datasets for the six months before 1 January 2021 with those for the subsequent six months.
 
-Appropriate? By who? Who said this was a good idea? Look, I knmow that real data are often messy and that we have to take steps to compensate for noise, corruption, and overall lack of cleanliness, but I want to be clear about something: _no matter what_ the extant difficulties are, this is not at all the correct way to do things, and the point of this post is to explain why. To really understand what's wrong here, we have to go back to basic causal inference and discuss data generating processes.
+Appropriate? By who? Who said this was a good idea? Look, I know that real data are often messy and that we have to take steps to compensate for noise, corruption, and overall lack of cleanliness, but I want to be clear about something: _no matter what_ the extant difficulties are, this is not at all the correct way to do things, and the point of this post is to explain why. To really understand what's wrong here, we have to discuss data generating processes.
 
 ## Data Generating Processes
 
@@ -64,11 +64,11 @@ $$
 \mathbb{E}[y_{\mathcal{N}_0 t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t'}(0)] = b_t - b_{t'}.
 $$
 
-Since the time difference is identical for both groups, this means that absent the treatment, the difference between the treatment unit and the control unit would be some constant, let's call it $\alpha$. Note what this means: the differences do NOT need to be the same in terms of levels. They just need to be identical in terms of trends, the average difference of their trajectories.
+Since the time difference is identical for both groups, this means that absent the treatment, the difference between the treatment unit and the control unit would be some constant, let's call it $\alpha$. Note what this means: the groups do NOT need to be the same in terms of levels. They just need to be identical in terms of _average trends_, proxied by the average scalar difference of their trajectories.
 
 ### T Test
 
-We can follow the exact same logic for t-tests. In the pre-treatment period, the expected outcome for unit $j$ is:
+We can follow the exact same logic for t-test, under an even simpler setup. In the pre-treatment period, the expected outcome for unit $j$ is:
 
 $$
 \mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\lambda_j + \delta_t + \epsilon_{jt} \mid d_{jt} = 0]
@@ -92,7 +92,7 @@ $$
 \mathbb{E}[y_{jt} \mid d_{jt} = 1] = \lambda_j + \delta_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]
 $$
 
-Now, we compute the difference in expected outcomes between the pre-treatment and post-treatment periods for the treated unit:
+Now, we compute the difference in expected outcomes between the pre-treatment and post-treatment periods for the treated unit
 
 $$
 \underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} -
@@ -107,7 +107,7 @@ $$
 \left( \lambda_j + \delta_t + \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}} \right)
 $$
 
-Since both $\lambda_j$ (unit fixed effect) and $\delta_t$ (time fixed effect) are present in both terms, they cancel out:
+Since both $\lambda_j$ (unit fixed effect) and $\delta_t$ (time fixed effect) are present in both terms, they cancel each other out:
 
 $$
 \underbrace{\mathbb{E}[y_{jt} \mid d_{jt} = 1]}_{\text{Post-Period}} -
@@ -117,7 +117,7 @@ $$
 \underbrace{\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]}_{\text{Pre-Period}}
 $$
 
-For the pre-post t-test to be valid, we essentially assume that the error terms $\epsilon_{jt}$ are independent and identically distributed (i.i.d.) between the pre-treatment and post-treatment periods. This means that any difference in outcomes should be due solely to the treatment effect, not due to other unobserved factors.
+For the pre-post t-test to be valid, we essentially must assume that the error terms $\epsilon_{jt}$ are independent and identically distributed (i.i.d.) between the pre-treatment and post-treatment periods. This means that any difference in outcomes should be due solely to the treatment effect, not due to other unobserved factors.
 
 The assumption is that the expected difference in error terms is zero:
 
@@ -131,11 +131,11 @@ $$
 \mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = 0
 $$
 
-This result implies that any observed difference in outcomes between the pre- and post-treatment periods must be entirely due to the treatment effect, assuming no confounding factors or time-specific shocks, which basically is never true in real life. In fairness, the authors do recognize these shortcomings, writing
+This result implies that any observed difference in outcomes between the pre- and post-treatment periods must be entirely due to the treatment effect, assuming no confounding factors or time-specific shocks, which basically is _never_ true in real life. In fairness, the authors do recognize these shortcomings, writing
 
 > The prices of tampons and the other consumer goods considered in this paper will be affected by numerous factors – the supply of raw materials, energy costs, and sheer random happenstance. It is therefore unsurprising that we see a large amount of month-to-month variation in prices; this makes it difficult to identify separate real trends from noise. More sophisticated statistical methods than a t-test are therefore not helpful (difference-in-difference and synthetic control methods were attempted, but did not produce meaningful results).
 
-I agree that there are plenty of confounding factors (mostly unobserved) and noise, but in situations like that, we use modern advances in econometrics to deal with these cases, instead of shoehorning a method to fit the data limitations.
+I agree that there are plenty of confounding factors (mostly unobserved) and noise, but in situations like that, we should use modern advances in econometrics to deal with this instead of shoehorning the data for a given method.
 
 ## A Re-Analysis with ```mlsynth```
 
@@ -271,8 +271,8 @@ My analysis has the advantage of using formal causal methods which explicitly ta
 
 The point of this post is that we can't just shove a dataset into ```scipy``` and (metaphorically) pray for valid results. We can't say "well, parallel trends for DID doesn't hold, let's go with the old school t-test and report that" (by the way, parallel trends DOES in fact hold when we use the Forward DID method from ```mlsynth```). In such cases,  we need a little more care to be put into these questions if we mean to even try to answer them.
 
-My main conclusion reminds me more or less of [a post](https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/) by Andrew Gelman, who writes pretty much what I think about the report above. It isn't that the question is silly- the question matters, but
+My main conclusion reminds me more or less of [a post](https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/) by Andrew Gelman, who writes pretty much what I think about the report above. It isn't that the question under study is silly- the question matters, but
 
 > The problem is that the data are observational, the data are sparse and highly variable; that is, the problem is hard. And it doesn’t help when researchers are under the impression that these real difficulties can be easily resolved using canned statistical identification techniques.
 
-Said another way, the answer you get to the question is less important than the mathematical reasoning process you use to get to that point. All of the tests we run and models we estimate have assumptions which fulfill identification criteria, assumptions such themselves are usually underpinned by some theoretically motivated DGP. For objective causal inference, researchers should respect this idea, even if it means we have to move to more advanced estimators.
+Said another way, the answer you get to the question is less important than the mathematical reasoning process you use to get to the answer. All of the tests we run and models we estimate have assumptions. These assumptions fulfill identification criteria, and are themselves are usually underpinned by some theoretically motivated DGP. For objective causal inference, researchers should respect this idea, even if it means we have to employ more advanced estimators.

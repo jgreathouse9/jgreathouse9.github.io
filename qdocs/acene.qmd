@@ -40,7 +40,7 @@ $$
 \mathbb{E}[y_{jt} \mid d_jt = 1] - \mathbb{E}[y_{jt} \mid d_jt = 0] = \mathbb{E}[\boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t] \quad \text{for all } t
 $$
 
-All we're saying here is that the difference between our observed outcomes and our control group outcomes should be equvalent to the additive factor model we just specified. Now, we may substitute the scalar interpretation of this into this, giving us:
+All we're saying here is that the difference between our observed outcomes and our control group outcomes should be equivalent to the additive factor model we just specified. Now, we may substitute the scalar interpretation of this into this, giving us:
 
 $$
 \mathbb{E}[y_{jt} \mid d_{jt} = 1] = a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]
@@ -52,22 +52,22 @@ $$
 is the same for the control units. Thus, the difference between the treated and control groups' expected outcomes, in the absence of treatment, should be:
 
 $$
-\mathbb{E}[y_{jt} \mid D_j = 1] - \mathbb{E}[y_{jt} \mid D_j = 0] = \left(a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid D_j = 1]\right) - \left(a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid D_j = 0]\right)
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = \left(a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1]\right) - \left(a_j + b_t + \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]\right)
 $$
 
-Notice that the unit-specific fixed effect \(a_j\) and the time-specific fixed effect \(b_t\) cancel out, as they are the same for both treated and control groups. This leaves us with:
+Notice that the unit-specific fixed effect $a_j$ and the time-specific fixed effect $b_t$ cancel out, as they are the same for both treated and control groups. This leaves us with:
 
 $$
-\mathbb{E}[y_{jt} \mid D_j = 1] - \mathbb{E}[y_{jt} \mid D_j = 0] = \mathbb{E}[\epsilon_{jt} \mid D_j = 1] - \mathbb{E}[\epsilon_{jt} \mid D_j = 0]
+\mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0]
 $$
 
 For the parallel trends assumption to hold, this difference should be constant over time, implying that:
 
 $$
-\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] = \text{constant } \forall \, t
+\mathbb{E}[\epsilon_{jt} \mid d_{jt} = 1] - \mathbb{E}[\epsilon_{jt} \mid d_{jt} = 0] = \alpha \forall \, t
 $$
 
-Or, that conditional only on some error term, the difference is constant with respect to both the treated and untreated groups.
+Or that the difference is constant with respect to both the treated and untreated groups. By definition, we can never see the counterfactual, so we restrict our attention of validating parallel trends in the pre-intervention period, since that is the only time we may see the treated unit under control.
 
 ### T Test
 
@@ -142,6 +142,7 @@ I agree that there are plenty of confounding factors (mostly unobserved) and noi
 
 ## A Re-Analysis with ```mlsynth```
 
+Here is a re-analysis of this question using ```mlsynth```. I use the $\ell_2$ relaxer.
 
 ```{python}
 #| fig-align: center

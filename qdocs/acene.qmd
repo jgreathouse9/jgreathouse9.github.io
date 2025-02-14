@@ -4,7 +4,7 @@ date: 2025-02-14
 categories: [Econometrics, Causal Inference]
 ---
 
-# All Casual Estimates Are Not Created Equal
+# All ATTs Are Not Created Equal
 
 I just began my dissertation last week. The first chapter studies the causal impact of Texas' repeal of the tampon tax on demand as well as consumer price savings, naturally, using synthetic control methods as one may have guessed. I was doing the literature review, [my favorite part](https://andrewpwheeler.com/2020/12/16/lit-reviews-are-almost-functionally-worthless/) of the research process, and upon doing some digging, I _had to_ write a post about this.
 
@@ -18,11 +18,11 @@ The paper studies the pass through rate of abolishing the tax on savings to cons
 
 > We used Office for National Statistics data to analyse tampon price changes around 1 January 2021, the date that the “tampon tax” was abolished. We were able to do this because the ONS includes tampons (but not other menstrual products) in the price quotes it samples every month to compile the consumer prices index. Since 2017, the ONS has published the full datasets for its price sampling.
 
-Okay fine. No problems so far. The euthors find "Overall, the average price for [tampons in] the period after the VAT abolition is about 1.5% less than it was beforehand." Still no issues so far. But then we check the methodology, that they [link to](https://github.com/DanNeidle/tampontax/blob/main/tampon_tax_indexes_all_goods.py) at their Github, and the results were less than exciting, putting it politely. Why? The authors do a simple t-test. That is, a simple pre-post test which compares the mean difference of tampon prices before the abolition of the tax and after the abolition of the tax. Precisely, they write
+Okay fine. No problems so far. The authors find "Overall, the average price for [tampons in] the period after the VAT abolition is about 1.5% less than it was beforehand." Still no issues so far. But then we check the methodology, that they [link to](https://github.com/DanNeidle/tampontax/blob/main/tampon_tax_indexes_all_goods.py), and the results were less than exciting, putting it quite politely. Why? The authors do a simple t-test. That is, a simple pre-post test which compares the mean difference of tampon prices before the abolition of the tax and after the abolition of the tax. Precisely, they write
 
 > Apply [sic] statistical techniques to these datasets is not straightforward given the limited number of datapoints and very high degree of volatility. It was, however, thought appropriate to run an unequal variance one-sided t-test (using the python SciPy library) to compare the pricing datasets for the six months before 1 January 2021 with those for the subsequent six months.
 
-Appropriate? By who? Who said this was a good idea? Look, I know that real data are often messy and that we have to take steps to compensate for noise, corruption, and overall lack of cleanliness, but I want to be clear about something: _no matter what_ the extant difficulties are, this is not at all the correct way to do things, and the point of this post is to explain why. To really understand what's wrong here, we have to discuss data generating processes.
+_Appropriate_? By who? Who said this was a good idea? Look, I know that real data are often messy and that we have to take steps to compensate for noise, corruption, and overall lack of cleanliness, but I must be clear about something: _no matter what_ the extant difficulties are, this is not at all the correct way to do things, and the point of this post is to explain why. To really understand what's wrong here, we have to discuss data generating processes.
 
 ## Data Generating Processes
 
@@ -143,7 +143,6 @@ Here is a re-analysis of this question using ```mlsynth```. I use the $\ell_2$ r
 
 ```{python}
 #| fig-align: center
-#| echo: false
 
 import requests
 import pandas as pd
@@ -211,10 +210,9 @@ def fetch_and_combine_github_csvs(owner, repo, directory):
     # Concatenate all DataFrames
     combined_df = pd.concat(df_list, ignore_index=True)
 
-    # Convert INDEX_DATE to a proper date format (assuming YYYYMM format)
     combined_df['INDEX_DATE'] = pd.to_datetime(combined_df['INDEX_DATE'], format='%Y%m')
 
-    # Sort by ITEM_ID and INDEX_DATE
+    # Sort by panel and time
     combined_df = combined_df.sort_values(by=['ITEM_ID', 'INDEX_DATE'])
 
     # Create 'Tax' column and set to 1 if ITEM_ID == 520206 and INDEX_DATE >= Jan 2021
@@ -228,7 +226,7 @@ def fetch_and_combine_github_csvs(owner, repo, directory):
     # Reset index
     combined_df = combined_df.reset_index(drop=True)
 
-    # Filter only ITEM_IDs that have exactly 53 observations
+    # Filter only ITEM_IDs that have exactly 53 observations,  to balance our panel
     counts = combined_df['ITEM_ID'].value_counts()
     balanced_item_ids = counts[counts == 53].index  # Get ITEM_IDs with 53 observations
     combined_df = combined_df[combined_df['ITEM_ID'].isin(balanced_item_ids)]
@@ -265,13 +263,13 @@ model = PDA(config)
 arco = model.fit()
 ```
 
-I won't go over the details of it here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html), but the returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors find a price drop of -1.5.
+I won't go over the details of $\ell_2$ relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html). The returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5.
 
-My analysis has the advantage of using formal causal methods which explicitly takes advantage of a control group (more than 700 controls) instead of the dozen or so the original folks do, and addresses variance estimation using heteoskedasticity and autocorrelation adjusted CIs.
+The key issue here is that my analysis is more causal. It explicitly takes advantage of the full control group (more than 700 controls) instead of the dozen or so controls the original folks sort of subjectively use. $\ell_2$ relaxation also addresses variance estimation using heteoskedasticity and autocorrelation adjusted CI, so we can do proper inference about the ATT.
 
-The point of this post is that we can't just shove a dataset into ```scipy``` and (metaphorically) pray for valid results. We can't say "well, parallel trends for DID doesn't hold, let's go with the old school t-test and report that" (by the way, parallel trends DOES in fact hold when we use the Forward DID method from ```mlsynth```). In such cases,  we need a little more care to be put into these questions if we mean to even try to answer them.
+The point of this post is that we can't just shove a dataset into ```scipy``` and (metaphorically) pray for valid results. We can't say "well, parallel trends for DID doesn't hold, let's go with the old school t-test and report that" (by the way, parallel trends _DOES_ in fact hold when we use the Forward DID method from ```mlsynth```). We need a little more care to be put into these questions if we mean to even try to answer them.
 
-My main conclusion reminds me more or less of [a post](https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/) by Andrew Gelman, who writes pretty much what I think about the report above. It isn't that the question under study is silly- the question matters, but
+Writing this, I was reminded of [a post](https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/) by Andrew Gelman, who writes pretty much what I think about the report above. It isn't that the question under study is silly- the question matters, but
 
 > The problem is that the data are observational, the data are sparse and highly variable; that is, the problem is hard. And it doesn’t help when researchers are under the impression that these real difficulties can be easily resolved using canned statistical identification techniques.
 

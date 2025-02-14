@@ -129,7 +129,6 @@ def fetch_and_combine_github_csvs(owner, repo, directory):
 
     combined_df['ITEM_ID'] = 'Unit ' + combined_df['ITEM_ID'].astype(str)
 
-    # Reset index after filtering
     combined_df = combined_df.reset_index(drop=True)
 
     combined_df.to_csv("TamponData.csv", index=False)
@@ -137,8 +136,6 @@ def fetch_and_combine_github_csvs(owner, repo, directory):
     return combined_df
 
 
-
-# Example usage
 owner = 'DanNeidle'
 repo = 'tampontax'
 directory = 'ONS_data'
@@ -149,20 +146,13 @@ outcome = "ITEM_INDEX"
 unitid = "ITEM_ID"
 time = "INDEX_DATE"
 
-save = {
-    "filename": "UKTampon",
-    "extension": "png",
-    "directory": os.getcwd(),
-}
-
 config = {
     "df": df,
     "treat": treat,
     "time": time,
     "outcome": outcome,
     "unitid": unitid,
-    "display_graphs": True,
-    "save": save
+    "display_graphs": True
 }
 
 model = FDID(config)

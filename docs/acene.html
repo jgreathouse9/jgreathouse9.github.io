@@ -11,7 +11,7 @@
 <meta name="keywords" content="policy analysis, causal inference, data science, econometrics">
 <meta name="description" content="Policy analysis, data science, and causal inference insights">
 
-<title>Data Science for Policy Analysts: A Simple Introduction to Github Actions – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Data Science for Policy Analysts: On Importance of Data Generating Processes – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -173,22 +173,22 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#defining-a-github-action" id="toc-defining-a-github-action" class="nav-link active" data-scroll-target="#defining-a-github-action">Defining a Github Action</a>
+  <li><a href="#all-casual-estimates-are-not-created-equal" id="toc-all-casual-estimates-are-not-created-equal" class="nav-link active" data-scroll-target="#all-casual-estimates-are-not-created-equal">All Casual Estimates Are Not Created Equal</a>
   <ul class="collapse">
-  <li><a href="#a-simple-yml-file" id="toc-a-simple-yml-file" class="nav-link" data-scroll-target="#a-simple-yml-file">A Simple yml file</a></li>
+  <li><a href="#data-generating-processes" id="toc-data-generating-processes" class="nav-link" data-scroll-target="#data-generating-processes">Data Generating Processes</a></li>
   </ul></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(5)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(3)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(2)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(5)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Data Science for Policy Analysts: A Simple Introduction to Github Actions</h1>
+<h1 class="title">Data Science for Policy Analysts: On Importance of Data Generating Processes</h1>
   <div class="quarto-categories">
-    <div class="quarto-category">Github</div>
-    <div class="quarto-category">Automation</div>
+    <div class="quarto-category">Econometrics</div>
+    <div class="quarto-category">Causal Inference</div>
   </div>
   </div>
 
@@ -229,123 +229,37 @@ window.Quarto = {
 </header>
 
 
-<p>Life is full of repititive actions and work in data science is no exception to this. Perhaps you must produce a plot of some form to clean a specific dataset/set of datasets each week, say revenue data or some such thing. Or perhaps, some files must be managed or cleaned, or a researcher wishes to collect the public housing data from Zillow each month when it updates. On one hand, we could physically do this ourselves, but this leaves us open to errors: for one, if we’re scraping a dataset from a website, what if the data are only there temporarily? What if it only exists for today, and then tomorrow it is updated with the then current data? What if we are away from our computers, and cannot be there to run script on our local machine? Surely, there must be a solution to this, and one such solution is Github Actions, which I learned about as an intern at Gainwell Technologies.</p>
-<p>This post explains Github Actions in a very short, simple to intuit example. Of course, their applications are so vast that I cannot cover everything about them here, but they are still very useful to people who do a repetitive/very similar set of tasks over and over again.</p>
-<section id="defining-a-github-action" class="level1">
-<h1>Defining a Github Action</h1>
-<p>As the name sounds, a Github Action is a set of instructions designed to be performed by a virtual machine on Github. The list of things it may do is very expansive and context dependent, so I focus on the case of pulling in a dataset from the internet on a regularly scheduled interval. The first thing we need to get started with this, however, is for one, a Github Account, and two, a repo to test this with. You also need to ensure that the settings for your current repo allow actions to write to your current repo, which can be found in the Settings tab.</p>
-<p>Github Actions are organized and executed via what we call a <code>yml</code> (yeah mill) file. A <code>yml</code> file is simply a kind of configuration file that we use to set up GitHub Actions. <code>yml</code> files MUST be defined at the <code>.github/workflows</code> directory that is in the root of ones project</p>
-<section id="a-simple-yml-file" class="level2">
-<h2 class="anchored" data-anchor-id="a-simple-yml-file">A Simple yml file</h2>
-<pre class="{yml}"><code>name: City Level Gas Price Scraper
-
-on:
-  schedule:
-    - cron: '30 9 * * *'
-  workflow_dispatch:
-
-jobs:
-  scrape:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Run gas scraper
-      run: |
-        python "City Scrape/cityscrape.py"
-
-    - name: Ensure directory exists
-      run: |
-        mkdir -p "City Scrape/Data/"
-
-    - name: Commit and push updated CSV to repository
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Check if there are changes before committing
-        if git diff --quiet &amp;&amp; git diff --staged --quiet; then
-          echo "No changes detected, skipping commit."
-          exit 0
-        fi
-        
-        git add "City Scrape/Data/City_*.csv"
-        git commit -m "Update gas prices data for $(date +'%Y-%m-%d')"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-</code></pre>
-<p>Here is a <code>yml</code> file we can find in my <a href="https://github.com/jgreathouse9/AAAGas/tree/main">AAA repo</a>. It begins by naming the action to be performed, which is to <a href="https://jgreathouse9.github.io/qdocs/aaascrape.html">scrape</a> some city level gas price data. It is <a href="https://adminschoice.com/crontab-quick-reference/">scheduled</a> to run at 9:30 UTC time, or at 4:30 each morning Eastern Standard Time, with the cron time. It may also run whenever I wish for it to run; alternatively, we can specify that some actions run on push to a repo, branch, or even a certain working directory.</p>
-<pre class="{yml}"><code>name: City Level Gas Price Scraper
-
-on:
-  schedule:
-    - cron: '30 9 * * *'
-  workflow_dispatch:</code></pre>
-<p>Actions proceed by defining a set of <em>jobs</em> for the workflow to excecute. In this case, it’s just “scrape”, but you can define more jobs that are interdependent on one another. The job runs on a virtual computer, in this case Ubuntu. Jobs proceeds with a list of <em>steps</em>, or an order that the job proceeds in os the action can function. Step one is to checkout the repo, which <a href="https://git-scm.com/docs/git-checkout">essentially</a> just clones the current repo on to the virtual machine.</p>
-<pre class="{yml}"><code>jobs:
-  scrape:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
-</code></pre>
-<p>Step two here is to set up Python, since that’s the language I use, but I’m certain this may be done with R and other langauges (in fact, this entire blog is written in Quarto, which the action must install before working with each post). Note how we specify the version of Python here, too. We then install <code>pip</code> and the requirements that the Python code needs to run the scrape.</p>
-<pre class="{yml}"><code>    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-</code></pre>
-<p>Now, we simply run the code, which is no different practically speaking from running the code from our command line. Note that how the file is defined within a driectory, which must be specified if the python file is not at the root (different ways of doing this).</p>
-<pre class="{yml}"><code>
-    - name: Run gas scraper
-      run: |
-        python "City Scrape/cityscrape.py"
-</code></pre>
-<p>Next, I make the directory for the data if it does not exist.</p>
-<pre class="{yml}"><code>
-    - name: Ensure directory exists
-      run: |
-        mkdir -p "City Scrape/Data/"
-</code></pre>
-<p>And finally, we commit the csv file my code creates to the directory at the repo. We use the Github Actions bot to do the commit. <a href="https://git-scm.com/docs/git-diff">If there are no changes</a> between any of the files before and after committing, we don’t add them and then the job ends (this is what happens if I try to run the action after it’s ran already that day). If not, the files are pushed. In my case, the files are named things like <code>City_2025-01-31.csv</code>. These files are staged, or prepared for being committed, with the addition of the commit message that I’m updating the data for that day. Then we push them to the directory of interest, and then job complete.</p>
-<pre class="{yml}"><code>    - name: Commit and push updated CSV to repository
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Check if there are changes before committing
-        if git diff --quiet &amp;&amp; git diff --staged --quiet; then
-          echo "No changes detected, skipping commit."
-          exit 0
-        fi
-        
-        git add "City Scrape/Data/City_*.csv"
-        git commit -m "Update gas prices data for $(date +'%Y-%m-%d')"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-</code></pre>
-<p>The real value of this is not the data I’m scraping (unless you’re a fuel economist/policy scholar). The value is that this job runs independent of my will. I do not have to be at my computer for this to run. I do not need to worry about whether my computer has power or whether I’m home to personally oversee it. The value here is that I’ve manually gotten my computer to do a specific task every single day, the correct way (assuming you’ve coded everything right!!!), every time. Of course, this job is so insignificant such that I did not feel the need to run additional safechecks (say AAA’s site is down, I could have the action restart in 6 hours, or have it <code>curl</code> the website on the hour until it does respond), but obviously you can do plenty more here if the task matters enough. This is also a very partial list of what may be done. You can also place lots of parameters around your actions that may make life easier, or employ pre-commit hooks which can do checks for the quality of the code and other tasks before anything is committed, which will fail if they are not satisfied.</p>
-<p>Also, it’s worth noting that Actions <a href="https://andrewpwheeler.com/2023/02/02/setting-up-pyspark-to-run-sql-tests/">may run</a> in conjunction with cloud computing for larger-scale jobs. So, if you’re a policy researcher, and your org uses Github but <em>not</em> using Actions for all kinds of process automation tasks, these provide a very useful tool to handle repetitive actions that free up your time to do other things. After all, a key benefit of script is to <a href="https://automatetheboringstuff.com/">automate the boring stuff</a>, provided that we’ve automated our tasks correctly.</p>
+<section id="all-casual-estimates-are-not-created-equal" class="level1">
+<h1>All Casual Estimates Are Not Created Equal</h1>
+<p>I just began my dissertation last week. The first chapter studies the causal impact of Texas’ repeal of the tampon tax on demand as well as consumer price savings, naturally, using synthetic control methods as one may have guessed. I was doing the literature review, <a href="https://andrewpwheeler.com/2020/12/16/lit-reviews-are-almost-functionally-worthless/">my favorite part</a> of the research process, and upon doing some digging, I <em>had to</em> write a post about this.</p>
+<p>I found <a href="https://doi.org/10.1038/s41562-024-01996-4">a paper</a> called “Why current menstrual policies do not work”. Much of the framing of the paper is fine, until we get to the part about evidence regarding the tampon tax. King writes</p>
+<blockquote class="blockquote">
+<p>Similarly, a recent UK campaign to abolish a 5% ‘tampon tax’ unintentionally boosted the profits of disposable product manufacturers by about £15 million per year, without substantially reducing the cost of products for consumers,</p>
+</blockquote>
+<p>citing <a href="https://taxpolicy.org.uk/wp-content/assets/tampon_tax_report.pdf">this paper</a> by Tax Policy Associates. I read this and though “Hmm, this is an empirical claim, I wonder what their causal methodology was. So I went to look the paper up as a bit of professional curiosity.</p>
+<p>The paper studies the pass through rate of abolishing the tax on savings to consumers. To quote the paper directly,</p>
+<blockquote class="blockquote">
+<p>We used Office for National Statistics data to analyse tampon price changes around 1 January 2021, the date that the “tampon tax” was abolished. We were able to do this because the ONS includes tampons (but not other menstrual products) in the price quotes it samples every month to compile the consumer prices index. Since 2017, the ONS has published the full datasets for its price sampling.</p>
+</blockquote>
+<p>Okay fine. No problems so far. The euthors find “Overall, the average price for [tampons in] the period after the VAT abolition is about 1.5% less than it was beforehand.” Still no issues so far. But then we check the methodology, that they <a href="https://github.com/DanNeidle/tampontax/blob/main/tampon_tax_indexes_all_goods.py">link to</a> at their Github, and the results were less than exciting, putting it politely. Why? The authors do a simple t-test. That is, a simple pre-post test which compares the mean difference of tampon prices before the abolition of the tax and after the abolition of the tax.</p>
+<p>I want to be clear about something: <em>no matter what</em> result we get with other methods such as synthetic control or DID, this is not the correct way to do things. For the purposes of this post though, I want to explain why this is from a more intuitive way that isn’t simply “SCM uses fancy optimization”. To really understand what’s wrong here, we have to go back to basic causal inference and discuss data generating processes.</p>
+<section id="data-generating-processes" class="level2">
+<h2 class="anchored" data-anchor-id="data-generating-processes">Data Generating Processes</h2>
+<p>For DID, the DGP for the outcome <span class="math inline">\(y_{jt}\)</span> is usually assumed to follow a two-way fixed effects model</p>
+<p><span class="math display">\[
+y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilon}_{jt}
+\]</span></p>
+<p>where we have <span class="math inline">\(\boldsymbol{\lambda}_j = \begin{bmatrix} a_j \\ 1 \end{bmatrix} \in \mathbb{R}^2\)</span> represents the unit-specific fixed effects, with <span class="math inline">\(a_j\)</span> being the fixed effect for unit <span class="math inline">\(j\)</span> and <span class="math inline">\(\boldsymbol{\delta}_t = \begin{bmatrix} 1 \\ b_t \end{bmatrix} \in \mathbb{R}^2\)</span> represents the time-specific fixed effects, with <span class="math inline">\(b_t\)</span> being the fixed effect for time <span class="math inline">\(t\)</span>.</p>
+<p>Essentially, the authors are making an assumption that is even stronger than the synthetic control assumption or DID’s super strict parallel trends assumption. For the t-test to be valid, the authors have to assume that NOTHING else except the policy changed in the pre-post period (effectively that the treatment assignment is as good as random), and that not even systemic time differences are influencing the outcome, it is ONLY the treatment that’s at work here.</p>
+<div id="d134a410" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-stdout">
+<pre><code>Plot saved to: /home/runner/work/jgreathouse9.github.io/jgreathouse9.github.io/qdocs/UKTampon.png</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>&lt;Figure size 1200x660 with 0 Axes&gt;</code></pre>
+</div>
+</div>
+<p>After analysis.</p>
 
 
 
@@ -402,21 +316,21 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739545622274" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1202">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739545622274" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./acene.html" class="no-external">Data Science for Policy Analysts: On Importance of Data Generating Processes</a>
+<a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
 </h3>
 <div class="listing-categories">
 
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+<div class="listing-category" onclick="window.quartoListingCategory('R2l0aHVi'); return false;">Github</div>
 
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+<div class="listing-category" onclick="window.quartoListingCategory('QXV0b21hdGlvbg=='); return false;">Automation</div>
 
 </div>
 </div>
 <div class="metadata">
-<a href="./acene.html" class="no-external">
+<a href="./gitact.html" class="no-external">
 <div class="listing-date">
 Jan 31, 2025
 </div>

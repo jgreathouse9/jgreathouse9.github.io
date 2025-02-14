@@ -180,6 +180,7 @@ window.Quarto = {
   <li><a href="#did" id="toc-did" class="nav-link" data-scroll-target="#did">DID</a></li>
   <li><a href="#t-test" id="toc-t-test" class="nav-link" data-scroll-target="#t-test">T Test</a></li>
   </ul></li>
+  <li><a href="#a-re-analysis-with-mlsynth" id="toc-a-re-analysis-with-mlsynth" class="nav-link" data-scroll-target="#a-re-analysis-with-mlsynth">A Re-Analysis with <code>mlsynth</code></a></li>
   </ul></li>
   </ul>
 </nav>
@@ -245,8 +246,11 @@ window.Quarto = {
 <blockquote class="blockquote">
 <p>We used Office for National Statistics data to analyse tampon price changes around 1 January 2021, the date that the “tampon tax” was abolished. We were able to do this because the ONS includes tampons (but not other menstrual products) in the price quotes it samples every month to compile the consumer prices index. Since 2017, the ONS has published the full datasets for its price sampling.</p>
 </blockquote>
-<p>Okay fine. No problems so far. The euthors find “Overall, the average price for [tampons in] the period after the VAT abolition is about 1.5% less than it was beforehand.” Still no issues so far. But then we check the methodology, that they <a href="https://github.com/DanNeidle/tampontax/blob/main/tampon_tax_indexes_all_goods.py">link to</a> at their Github, and the results were less than exciting, putting it politely. Why? The authors do a simple t-test. That is, a simple pre-post test which compares the mean difference of tampon prices before the abolition of the tax and after the abolition of the tax.</p>
-<p>I want to be clear about something: <em>no matter what</em> result we get with other methods such as synthetic control or DID, this is not the correct way to do things. For the purposes of this post though, I want to explain why this is from a more intuitive way that isn’t simply “SCM uses fancy optimization”. To really understand what’s wrong here, we have to go back to basic causal inference and discuss data generating processes.</p>
+<p>Okay fine. No problems so far. The euthors find “Overall, the average price for [tampons in] the period after the VAT abolition is about 1.5% less than it was beforehand.” Still no issues so far. But then we check the methodology, that they <a href="https://github.com/DanNeidle/tampontax/blob/main/tampon_tax_indexes_all_goods.py">link to</a> at their Github, and the results were less than exciting, putting it politely. Why? The authors do a simple t-test. That is, a simple pre-post test which compares the mean difference of tampon prices before the abolition of the tax and after the abolition of the tax. Precisely, they write</p>
+<blockquote class="blockquote">
+<p>Apply [sic] statistical techniques to these datasets is not straightforward given the limited number of datapoints and very high degree of volatility. It was, however, thought appropriate to run an unequal variance one-sided t-test (using the python SciPy library) to compare the pricing datasets for the six months before 1 January 2021 with those for the subsequent six months.</p>
+</blockquote>
+<p>Appropriate? By who? Who said this was a good idea? Look, I knmow that real data are often messy and that we have to take steps to compensate for noise, corruption, and overall lack of cleanliness, but I want to be clear about something: <em>no matter what</em> the extant difficulties are, this is not at all the correct way to do things, and the point of this post is to explain why. To really understand what’s wrong here, we have to go back to basic causal inference and discuss data generating processes.</p>
 <section id="data-generating-processes" class="level2">
 <h2 class="anchored" data-anchor-id="data-generating-processes">Data Generating Processes</h2>
 <section id="did" class="level3">
@@ -313,9 +317,17 @@ y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilo
 <p><span class="math display">\[
 \mathbb{E}[y_{jt} \mid d_{jt} = 1] - \mathbb{E}[y_{jt} \mid d_{jt} = 0] = 0
 \]</span></p>
-<p>This result implies that any observed difference in outcomes between the pre- and post-treatment periods is entirely due to the treatment effect, assuming no confounding or time-specific effects.</p>
-<p>Essentially, the authors are making an assumption that is even stronger than the synthetic control assumption or DID’s super strict parallel trends assumption. For the t-test to be valid, the authors have to assume that NOTHING else except the policy changed in the pre-post period (effectively that the treatment assignment is as good as random), and that not even systemic time differences are influencing the outcome, it is ONLY the treatment that’s at work here.</p>
-<div id="1cc054b3" class="cell" data-execution_count="1">
+<p>This result implies that any observed difference in outcomes between the pre- and post-treatment periods is entirely due to the treatment effect, assuming no confounding or time-specific effects. This is before I even get into the fact that the t-test presumes that the observations are independent (they rarely if ever are in time series, basically).</p>
+<p>In fairness, the authors do recognize these shortcomings, writing</p>
+<blockquote class="blockquote">
+<p>The prices of tampons and the other consumer goods considered in this paper will be affected by numerous factors – the supply of raw materials, energy costs, and sheer random happenstance. It is therefore unsurprising that we see a large amount of month-to-month variation in prices; this makes it difficult to identify separate real trends from noise. More sophisticated statistical methods than a t-test are therefore not helpful (difference-in-difference and synthetic control methods were attempted, but did not produce meaningful results).</p>
+</blockquote>
+<p>I agree that there are plenty of confounding factors (mostly unobserved) and noise, but in situations like that, we use modern advances in econometrics to deal with these cases, instead of shoehorning a method to fit the data limitations.</p>
+</section>
+</section>
+<section id="a-re-analysis-with-mlsynth" class="level2">
+<h2 class="anchored" data-anchor-id="a-re-analysis-with-mlsynth">A Re-Analysis with <code>mlsynth</code></h2>
+<div id="243c6018" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -333,11 +345,10 @@ y_{jt} = \boldsymbol{\lambda}_j^\top \boldsymbol{\delta}_t + \boldsymbol{\epsilo
 
 </section>
 </section>
-</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739550567305" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739557390385" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -361,7 +372,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739550567302" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739557390382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -385,7 +396,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739550567303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739557390382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -409,7 +420,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739550567303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739557390382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -433,7 +444,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739550608148" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739557432503" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

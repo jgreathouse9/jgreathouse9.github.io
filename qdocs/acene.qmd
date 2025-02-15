@@ -263,7 +263,25 @@ model = PDA(config)
 arco = model.fit()
 ```
 
-I won't go over the details of $\ell_2$ relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html). The returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5.
+I won't go over the details of $\ell_2$ relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html). The returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5. We can even do Forward Difference-in-Differences.
+
+```{python}
+#| fig-align: center
+
+# Fit Forward DID Model
+config_fdid = {
+    "df": df,
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": True
+}
+
+model_fdid = FDID(config_fdid)
+arco_fdid = model_fdid.fit()
+
+```
 
 The key issue here is that my analysis is more causal. It explicitly takes advantage of the full control group (more than 700 controls) instead of the dozen or so controls the original folks sort of subjectively use. $\ell_2$ relaxation also addresses variance estimation using heteoskedasticity and autocorrelation adjusted CI, so we can do proper inference about the ATT.
 

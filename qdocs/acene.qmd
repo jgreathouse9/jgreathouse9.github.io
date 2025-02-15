@@ -18,7 +18,6 @@ Their paper studies the pass through rate of abolishing the tax, in the U.K., on
 
 ```{python}
 #| fig-align: center
-#| echo: false
 
 import requests
 import pandas as pd
@@ -291,105 +290,6 @@ Here is a re-analysis of this question using ```mlsynth```. I use the $\ell_2$ r
 
 ```{python}
 #| fig-align: center
-
-import requests
-import pandas as pd
-from io import StringIO
-from mlsynth.mlsynth import PDA, FDID
-import os
-import matplotlib
-
-jared_theme = {
-    "axes.grid": False,
-    "grid.linestyle": "-",
-    "grid.color": "black",
-    "legend.framealpha": 1,
-    "legend.facecolor": "white",
-    "legend.shadow": True,
-    "legend.fontsize": 14,
-    "legend.title_fontsize": 16,
-    "xtick.labelsize": 11,
-    "ytick.labelsize": 14,
-    "axes.labelsize": 14,
-    "axes.titlesize": 20,
-    "figure.dpi": 120,
-    "axes.facecolor": "white",
-    "figure.figsize": (10, 5.5),
-}
-
-matplotlib.rcParams.update(jared_theme)
-
-def fetch_and_combine_github_csvs(owner, repo, directory):
-    """
-    Fetches all CSV files in the given GitHub directory that start with 'upload',
-    combines them into a single DataFrame, and processes it.
-
-    Parameters:
-        owner (str): GitHub username or organization name.
-        repo (str): Repository name.
-        directory (str): Directory path within the repository.
-
-    Returns:
-        pd.DataFrame: Combined and processed DataFrame.
-    """
-    # GitHub API URL to list contents of the directory
-    api_url = f'https://api.github.com/repos/{owner}/{repo}/contents/{directory}'
-
-    # Get the directory contents
-    response = requests.get(api_url)
-    files = response.json()
-
-    # Filter for CSV files that start with 'upload'
-    csv_files = [file for file in files if file['name'].startswith('upload') and file['name'].endswith('.csv')]
-
-    # Base URL for raw file content
-    raw_base_url = f'https://raw.githubusercontent.com/{owner}/{repo}/main/{directory}/'
-
-    # List to hold DataFrames
-    df_list = []
-
-    # Download and read each CSV file
-    for file in csv_files:
-        csv_url = raw_base_url + file['name']
-        csv_response = requests.get(csv_url)
-        df = pd.read_csv(StringIO(csv_response.text))
-        df_list.append(df)
-
-    # Concatenate all DataFrames
-    combined_df = pd.concat(df_list, ignore_index=True)
-
-    combined_df['INDEX_DATE'] = pd.to_datetime(combined_df['INDEX_DATE'], format='%Y%m')
-
-    # Sort by panel and time
-    combined_df = combined_df.sort_values(by=['ITEM_ID', 'INDEX_DATE'])
-
-    # Create 'Tax' column and set to 1 if ITEM_ID == 520206 and INDEX_DATE >= Jan 2021
-    combined_df['Tax'] = 0
-    combined_df.loc[(combined_df['ITEM_ID'] == 520206) & (combined_df['INDEX_DATE'] >= '2021-01-01'), 'Tax'] = 1
-
-    # Select only specific columns by index
-    selected_columns = [0, 1, 2, 5, -1]  # Column indices to keep
-    combined_df = combined_df.iloc[:, selected_columns]
-
-    # Reset index
-    combined_df = combined_df.reset_index(drop=True)
-
-    # Filter only ITEM_IDs that have exactly 53 observations,  to balance our panel
-    counts = combined_df['ITEM_ID'].value_counts()
-    balanced_item_ids = counts[counts == 53].index  # Get ITEM_IDs with 53 observations
-    combined_df = combined_df[combined_df['ITEM_ID'].isin(balanced_item_ids)]
-
-    combined_df['ITEM_ID'] = 'Unit ' + combined_df['ITEM_ID'].astype(str)
-
-    combined_df = combined_df.reset_index(drop=True)
-
-    return combined_df
-
-
-owner = 'DanNeidle'
-repo = 'tampontax'
-directory = 'ONS_data'
-df = fetch_and_combine_github_csvs(owner, repo, directory)
 
 treat = "Tax"
 outcome = "ITEM_INDEX"

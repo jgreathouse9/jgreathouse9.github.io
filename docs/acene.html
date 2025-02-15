@@ -370,8 +370,8 @@ y_{jt} = a_j + b_t + \epsilon_{jt},
 </section>
 <section id="a-re-analysis-with-mlsynth" class="level2">
 <h2 class="anchored" data-anchor-id="a-re-analysis-with-mlsynth">A Re-Analysis with <code>mlsynth</code></h2>
-<p>Here is a re-analysis of this question using <code>mlsynth</code>. I use the <span class="math inline">\(\ell_2\)</span> relaxer.</p>
-<div id="79eada3c" class="cell" data-execution_count="1">
+<p>Here is a re-analysis of this question using <code>mlsynth</code>. I use the <span class="math inline">\(\ell_2\)</span> relaxer and Forward DID (FDID).</p>
+<div id="000e6123" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> StringIO</span>
@@ -500,8 +500,8 @@ y_{jt} = a_j + b_t + \epsilon_{jt},
 <pre><code>&lt;Figure size 1200x660 with 0 Axes&gt;</code></pre>
 </div>
 </div>
-<p>I won’t go over the details of <span class="math inline">\(\ell_2\)</span> relaxation here, as I’ve done that <a href="https://jgreathouse9.github.io/docs/scdense.html">elsewhere</a>. The returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5. We can even do Forward Difference-in-Differences.</p>
-<div id="570a7ea6" class="cell" data-execution_count="2">
+<p>I won’t go over the details of <span class="math inline">\(\ell_2\)</span> relaxation here, as I’ve done that <a href="https://jgreathouse9.github.io/docs/scdense.html">elsewhere</a>, and I’ll have to do a post onm FDID at some point. The returned ATT for <span class="math inline">\(\ell_2\)</span> relaxation we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5. Next consider FDID. The ATT for FDID is -1.618, with the 95% CI being [-1.91,-1.32]. For DID, the ATT is -2.863, and the 95% CI being [-3.685,-2.041]. We can clearly see here that one, parallel trends holds for Forward DID and not for DID. The <span class="math inline">\(R^2=0.83\)</span>, and for DID the <span class="math inline">\(R^2=-0.312\)</span>, or, DID being even WORSE than just the empirical average of controls. We can clearly see that that the FDID method is improved by the forward-selection algorithm used to select the control group for the DID estimator. FDID selects 54 controls of the 646 unit control group. The key issue here is that my analysis is more causal. Both analyses advantage of the full control group (646 controls) instead of the dozen or so controls the original folks sort of subjectively use. <span class="math inline">\(\ell_2\)</span> relaxation and FDID in their own way addresses variance estimation using heteoskedasticity and autocorrelation adjusted CI, so we can do proper inference about the ATT.</p>
+<div id="9d62398e" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Forward DID Model</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>config_fdid <span class="op">=</span> {</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
@@ -525,8 +525,7 @@ y_{jt} = a_j + b_t + \epsilon_{jt},
 <pre><code>&lt;Figure size 1200x660 with 0 Axes&gt;</code></pre>
 </div>
 </div>
-<p>The key issue here is that my analysis is more causal. It explicitly takes advantage of the full control group (more than 700 controls) instead of the dozen or so controls the original folks sort of subjectively use. <span class="math inline">\(\ell_2\)</span> relaxation also addresses variance estimation using heteoskedasticity and autocorrelation adjusted CI, so we can do proper inference about the ATT.</p>
-<p>The point of this post is that we can’t just shove a dataset into <code>scipy</code> and (metaphorically) pray for valid results. We can’t say “well, parallel trends for DID doesn’t hold, let’s go with the old school t-test and report that” (by the way, parallel trends <em>DOES</em> in fact hold when we use the Forward DID method from <code>mlsynth</code>). We need a little more care to be put into these questions if we mean to even try to answer them.</p>
+<p>The point of this post is that we can’t just shove a dataset into <code>scipy</code> and (metaphorically) pray for valid results. We can’t say “well, parallel trends for DID doesn’t hold, let’s go with the old school t-test and report that” (again, PTA DOES hold when we use the improved control group). We need a little more care to be put into these questions if we mean to even try to answer them.</p>
 <p>Writing this, I was reminded of <a href="https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/">a post</a> by Andrew Gelman, who writes pretty much what I think about the report above. It isn’t that the question under study is silly- the question matters, but</p>
 <blockquote class="blockquote">
 <p>The problem is that the data are observational, the data are sparse and highly variable; that is, the problem is hard. And it doesn’t help when researchers are under the impression that these real difficulties can be easily resolved using canned statistical identification techniques.</p>
@@ -540,7 +539,7 @@ y_{jt} = a_j + b_t + \epsilon_{jt},
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739580913537" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739582933320" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -564,7 +563,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739580913534" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739582933317" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -588,7 +587,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739580913534" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739582933318" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -612,7 +611,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739580913534" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739582933317" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -636,7 +635,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739580953510" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739582976681" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

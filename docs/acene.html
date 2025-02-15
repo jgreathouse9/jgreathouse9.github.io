@@ -11,7 +11,7 @@
 <meta name="keywords" content="policy analysis, causal inference, data science, econometrics">
 <meta name="description" content="Policy analysis, data science, and causal inference insights">
 
-<title>Data Science for Policy Analysts: On Importance of Data Generating Processes – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Why Data Generating Processes Matter for Causal Infernece – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -207,7 +207,7 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#all-atts-are-not-created-equal" id="toc-all-atts-are-not-created-equal" class="nav-link active" data-scroll-target="#all-atts-are-not-created-equal">All ATTs Are Not Created Equal</a></li>
+  <li><a href="#all-causal-estimates-are-not-created-equally" id="toc-all-causal-estimates-are-not-created-equally" class="nav-link active" data-scroll-target="#all-causal-estimates-are-not-created-equally">All Causal Estimates Are Not Created Equally</a></li>
   <li><a href="#data-generating-processes" id="toc-data-generating-processes" class="nav-link" data-scroll-target="#data-generating-processes">Data Generating Processes</a>
   <ul class="collapse">
   <li><a href="#did" id="toc-did" class="nav-link" data-scroll-target="#did">DID</a></li>
@@ -222,7 +222,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Data Science for Policy Analysts: On Importance of Data Generating Processes</h1>
+<h1 class="title">Why Data Generating Processes Matter for Causal Infernece</h1>
   <div class="quarto-categories">
     <div class="quarto-category">Econometrics</div>
     <div class="quarto-category">Causal Inference</div>
@@ -266,16 +266,14 @@ window.Quarto = {
 </header>
 
 
-<section id="all-atts-are-not-created-equal" class="level1">
-<h1>All ATTs Are Not Created Equal</h1>
-<p>I began my dissertation last week. The first chapter studies the causal impact of Texas’ repeal of the tampon tax on demand as well as consumer price savings, naturally, using synthetic control methods as one may have guessed. I was doing the literature review, <a href="https://andrewpwheeler.com/2020/12/16/lit-reviews-are-almost-functionally-worthless/">my favorite part</a> of the research process, and upon doing some digging, I <em>had to</em> write a post about this.</p>
-<p>I found <a href="https://doi.org/10.1038/s41562-024-01996-4">a paper</a> called “Why current menstrual policies do not work”. Much of the framing of the paper is fine, until we get to the part about evidence regarding the tampon tax. King writes</p>
+<section id="all-causal-estimates-are-not-created-equally" class="level1">
+<h1>All Causal Estimates Are Not Created Equally</h1>
+<p>I began my dissertation last week. The first chapter studies the causal impact of Texas’ repeal of the tampon tax on consumer demand as well as consumer price savings. Naturally, I’ll be using synthetic control methods as one may have guessed to answer this question. I was in the middle of doing the literature review, <a href="https://andrewpwheeler.com/2020/12/16/lit-reviews-are-almost-functionally-worthless/">my favorite part</a> of the research process. Upon doing some digging, I <em>had to</em> write a post about this. I found <a href="https://doi.org/10.1038/s41562-024-01996-4">a paper</a> which is titled “Why current menstrual policies do not work”. Much of the framing of the paper is actually fine, <em>until</em> we get to the part about evidence regarding the tampon tax. King writes</p>
 <blockquote class="blockquote">
 <p>Similarly, a recent UK campaign to abolish a 5% ‘tampon tax’ unintentionally boosted the profits of disposable product manufacturers by about £15 million per year, without substantially reducing the cost of products for consumers,</p>
 </blockquote>
-<p>citing <a href="https://taxpolicy.org.uk/wp-content/assets/tampon_tax_report.pdf">this paper</a> by Tax Policy Associates, with the web version being at <a href="https://taxpolicy.org.uk/2022/11/10/tampontax/">this link</a>. I read this and though “Hmm, this is an empirical claim, I wonder what their causal methodology was. So I went to look the paper up as a bit of professional curiosity.</p>
-<p>Their paper studies the pass through rate of abolishing the tax, in the U.K., on savings to consumers. I grab the data from their Github and plot the treated unit versus the trajectory of the controls. We can see that this is an extremely high dimensional dataset. There are 646 control units and only 36 pre-treatment periods.</p>
-<div id="5a5d499e" class="cell" data-execution_count="1">
+<p>citing <a href="https://taxpolicy.org.uk/wp-content/assets/tampon_tax_report.pdf">this paper</a> at <a href="https://taxpolicy.org.uk/2022/11/10/tampontax/">this link</a>. I read this and thought “Hmm, I wonder what their identification strategy is.” So I went to look up the paper King cites. The paper, written by Tax Policy Associates, studies the pass through effects of abolishing the tampon tax (in the U.K.) on savings to consumers. For quick refernece, I grab the data from their Github and plot the treated unit (a normalized estimate of tampon sales) versus the trajectory of the controls. Instantly, we can see that this is an extremely high dimensional dataset. There are 646 control units and only 37 pre-treatment periods.</p>
+<div id="64c26bc1" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> StringIO</span>
@@ -387,33 +385,31 @@ window.Quarto = {
 <span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>    combined_df[<span class="st">'Tax'</span>] <span class="op">=</span> <span class="dv">0</span></span>
 <span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>    combined_df.loc[(combined_df[<span class="st">'ITEM_ID'</span>] <span class="op">==</span> <span class="dv">520206</span>) <span class="op">&amp;</span> (combined_df[<span class="st">'INDEX_DATE'</span>] <span class="op">&gt;=</span> <span class="st">'2021-01-01'</span>), <span class="st">'Tax'</span>] <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Select only specific columns by index</span></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>    selected_columns <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="op">-</span><span class="dv">1</span>]  <span class="co"># Column indices to keep</span></span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df.iloc[:, selected_columns]</span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Reset index</span></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Filter only ITEM_IDs that have exactly 53 observations,  to balance our panel</span></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>    counts <span class="op">=</span> combined_df[<span class="st">'ITEM_ID'</span>].value_counts()</span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>    balanced_item_ids <span class="op">=</span> counts[counts <span class="op">==</span> <span class="dv">53</span>].index  <span class="co"># Get ITEM_IDs with 53 observations</span></span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df[combined_df[<span class="st">'ITEM_ID'</span>].isin(balanced_item_ids)]</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>    selected_columns <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="op">-</span><span class="dv">1</span>]  <span class="co"># Column indices to keep</span></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df.iloc[:, selected_columns]</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Filter only ITEM_IDs that have exactly 53 observations,  to balance our panel</span></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a>    counts <span class="op">=</span> combined_df[<span class="st">'ITEM_ID'</span>].value_counts()</span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>    balanced_item_ids <span class="op">=</span> counts[counts <span class="op">==</span> <span class="dv">53</span>].index</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df[combined_df[<span class="st">'ITEM_ID'</span>].isin(balanced_item_ids)]</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a>    combined_df[<span class="st">'ITEM_ID'</span>] <span class="op">=</span> <span class="st">'Unit '</span> <span class="op">+</span> combined_df[<span class="st">'ITEM_ID'</span>].astype(<span class="bu">str</span>)</span>
 <span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>    combined_df[<span class="st">'ITEM_ID'</span>] <span class="op">=</span> <span class="st">'Unit '</span> <span class="op">+</span> combined_df[<span class="st">'ITEM_ID'</span>].astype(<span class="bu">str</span>)</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>    combined_df <span class="op">=</span> combined_df.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> combined_df</span>
 <span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> combined_df</span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>owner <span class="op">=</span> <span class="st">'DanNeidle'</span></span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>repo <span class="op">=</span> <span class="st">'tampontax'</span></span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>directory <span class="op">=</span> <span class="st">'ONS_data'</span></span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> fetch_and_combine_github_csvs(owner, repo, directory)</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>owner <span class="op">=</span> <span class="st">'DanNeidle'</span></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>repo <span class="op">=</span> <span class="st">'tampontax'</span></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>directory <span class="op">=</span> <span class="st">'ONS_data'</span></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> fetch_and_combine_github_csvs(owner, repo, directory)</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>prepped <span class="op">=</span> dataprep(df, <span class="st">'ITEM_ID'</span>, <span class="st">"INDEX_DATE"</span>, <span class="st">"ITEM_INDEX"</span>, <span class="st">'Tax'</span>)</span>
 <span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>prepped <span class="op">=</span> dataprep(df, <span class="st">'ITEM_ID'</span>, <span class="st">"INDEX_DATE"</span>, <span class="st">"ITEM_INDEX"</span>, <span class="st">'Tax'</span>)</span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>plot_treated_vs_controls(prepped[<span class="st">"donor_matrix"</span>], prepped[<span class="st">"y"</span>], prepped[<span class="st">"pre_periods"</span>], <span class="st">"Tampons vs. Controls"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>plot_treated_vs_controls(prepped[<span class="st">"donor_matrix"</span>], prepped[<span class="st">"y"</span>], prepped[<span class="st">"pre_periods"</span>], <span class="st">"Tampons vs. Controls"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -430,45 +426,42 @@ window.Quarto = {
 <blockquote class="blockquote">
 <p>Apply [sic] statistical techniques to these datasets is not straightforward given the limited number of datapoints and very high degree of volatility. It was, however, thought appropriate to run an unequal variance one-sided t-test (using the python SciPy library) to compare the pricing datasets for the six months before 1 January 2021 with those for the subsequent six months.</p>
 </blockquote>
-<p><em>Thought appropriate</em>? By who? Who said this was a good idea? Who would look at this and say it is okay? Look, I know that real data are often messy and that we have to take steps to compensate for noise, corruption, and overall lack of cleanliness, but I must be clear about something: <em>no matter what</em> the extant difficulties are, this is not at all the correct way to do things, and the point of this post is to explain why. To really understand what is wrong here, we have to discuss data generating processes.</p>
+<p>I read this and I was kind of horrified. <em>Thought appropriate</em>? By who? Who said this was a good idea? Who would look at this and say it is okay, especially for a written publication that people are going to cite? Look, I get it. I know that real data are often messy and that as data scientists we have to take steps to compensate for noise, corruption, and overall lack of cleanliness… but I must be clear about something: <em>no matter what</em> the extant difficulties are, this is not at all the correct way to do things. In fact, I’m going to prove it in this post, beyond saying “it’s just a t-test, so therefore it’s bad”. To really understand what is wrong here, we have to discuss the role of data generating processes and why they matter. All the time, we see statisticians write about <a href="https://doi.org/10.48550/arXiv.2402.11652">low-rank models</a> or <a href="https://doi.org/10.48550/arXiv.2501.15692">linear factor models</a>, and I’m not sure policy analysts or data scientists actually consider what they mean for applications.</p>
 </section>
 <section id="data-generating-processes" class="level1">
 <h1>Data Generating Processes</h1>
+<p>Below, I connect the Difference-in-Differences design (DID) to its two-way fixed effects model as well as its estimation process. I then do the same for the t-test, and emphasze what we might conclude about the identifying assumptions for both methods.</p>
 <section id="did" class="level2">
 <h2 class="anchored" data-anchor-id="did">DID</h2>
-<p>The parallel trends assumption in DID follows directly from the two-way fixed effects model. In this setup, the outcome <span class="math inline">\(y_{jt}\)</span> is generated by:</p>
+<p>For DID, we presume the outcome <span class="math inline">\(y_{jt}\)</span> is (at minimum) generated by:</p>
 <p><span class="math display">\[
 y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 \]</span></p>
-<p>where <span class="math inline">\(\lambda_j\)</span> is the unit-specific fixed effect, <span class="math inline">\(\delta_t\)</span> is the time-specific fixed effect, and <span class="math inline">\(\epsilon_{jt}\)</span> is the idiosyncratic error term. For the purposes of DID, we focus on the pre-treatment period, where no treatment occurs and we observe the untreated potential outcome. Taking expectations removes the error term (assuming it has mean zero), so we have:</p>
+<p>where <span class="math inline">\(\lambda_j\)</span> is the unit-specific fixed effect, <span class="math inline">\(\delta_t\)</span> is the time-specific fixed effect, and <span class="math inline">\(\epsilon_{jt}\)</span> is the idiosyncratic mean zero error term. All this means is that each outcome we see in the spreadsheet is generated by some common time effect and unit specific effects. We begin by taking expectations, as this removes the error term. When we do this, we are left with</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{jt}(0)] = \lambda_j + \delta_t.
 \]</span></p>
-<p>Consider two periods, <span class="math inline">\(t\)</span> and <span class="math inline">\(t^{\prime}\)</span>, in the pre-treatment period. The expected untreated outcome at time <span class="math inline">\(t\)</span> is <span class="math inline">\(\lambda_j + \delta_t\)</span>, and at time <span class="math inline">\(t^{\prime}\)</span> it is <span class="math inline">\(\lambda_j + \delta_{t^{\prime}}\)</span>. The difference between these expected outcomes is:</p>
+<p>Now, consider two periods, <span class="math inline">\(t\)</span> and <span class="math inline">\(t^{\prime}\)</span>. The expected untreated outcome at time <span class="math inline">\(t\)</span> is <span class="math inline">\(\lambda_j + \delta_t\)</span>, and at time <span class="math inline">\(t^{\prime}\)</span> it is <span class="math inline">\(\lambda_j + \delta_{t^{\prime}}\)</span>. The difference between these expected outcomes is:</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{jt}(0)] - \mathbb{E}[y_{jt^{\prime}}(0)] = (\lambda_j + \delta_t) - (\lambda_j + \delta_{t^{\prime}}) = \delta_t - \delta_{t^{\prime}}.
 \]</span></p>
-<p>Notice that the unit fixed effect <span class="math inline">\(\lambda_j\)</span> cancels out, and the difference in expected untreated outcomes depends only on the time effects <span class="math inline">\(\delta_t\)</span> and <span class="math inline">\(\delta_{t^{\prime}}\)</span>. This result applies both to the treated unit and to the control group. For the treated unit, denoted as <span class="math inline">\(j = 1\)</span>, the expected difference is:</p>
+<p>Notice that the unit fixed effect <span class="math inline">\(\lambda_j\)</span> goes away. The difference in expected untreated outcomes depends <em>only</em> on the time effects <span class="math inline">\(\delta_t\)</span> and <span class="math inline">\(\delta_{t^{\prime}}\)</span>. This result applies both to the treated unit and to the control group. For the treated unit, denoted as <span class="math inline">\(j = 1\)</span>, the expected difference is:</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{1t^{\prime}}(0)] = \delta_t - \delta_{t^{\prime}}.
 \]</span></p>
-<p>For the control group, taking the average over all units <span class="math inline">\(j \in \mathcal{N}_0\)</span>, we obtain:</p>
+<p>For the control group, averaging over all units <span class="math inline">\(j \in \mathcal{N}_0\)</span>, we obtain:</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{\mathcal{N}_0 t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t^{\prime}}(0)] = \delta_t - \delta_{t^{\prime}}.
 \]</span></p>
-<p>Mathematically, this is saying thatabsent treatment,</p>
+<p>This is saying that absent treatment, the equality</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t^{\prime}}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t^{\prime}}(0)]
 \]</span></p>
-<p>holds across all periods. This simplifies to:</p>
-<p><span class="math display">\[
-\delta_t - \delta_{\mathcal{N}_0 t} = \delta_{t^{\prime}} - \delta_{\mathcal{N}_0 t^{\prime}},
-\]</span></p>
-<p>where <span class="math inline">\(\delta_{\mathcal{N}_0 t}\)</span> is the average time effect for the control group at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(\delta_{\mathcal{N}_0 t^{\prime}}\)</span> is the average time effect for the control group at time <span class="math inline">\(t^{\prime}\)</span>. In other words, the difference between the treated and control units would remain constant over time. The groups do not need to have the same levels of outcomes; they only need to share the same average trends over time. We use the average of the controls as a proxy for the unit fixed effect.</p>
+<p>holds across all periods, including the post-intervention period. In other words, the difference between the treated and control units would remain constant over time, even absent the treatment. The groups do not need to have the same levels of outcomes; they only need to share the same average trends over time. This of course is the parallel trends assumption, which we can already see in plenty of work which <a href="https://doi.org/10.1086/711509">extends</a> this idea to the staggered adoption setting.</p>
 </section>
 <section id="t-test" class="level2">
 <h2 class="anchored" data-anchor-id="t-test">T Test</h2>
-<p>We can follow the exact same logic for the t-test under an even simpler setup. In the pre-treatment period, the expected outcome for unit <span class="math inline">\(j\)</span>is:</p>
+<p>We can follow the exact same logic for the t-test under an even simpler setup. In the pre-treatment period, the expected outcome for unit <span class="math inline">\(j\)</span> is:</p>
 <p><span class="math display">\[
 {\color{red} \mathbb{E}[y_{jt} \mid d_{jt} = 0]} = \mathbb{E}[\lambda_j + \delta_t + \epsilon_{jt} \mid d_{jt} = 0]
 \]</span></p>
@@ -524,7 +517,7 @@ y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 <section id="a-re-analysis-with-mlsynth" class="level1">
 <h1>A Re-Analysis with <code>mlsynth</code></h1>
 <p>Here is a re-analysis of this question <a href="https://mlsynth.readthedocs.io">using</a> <code>mlsynth</code>. I use the <span class="math inline">\(\ell_2\)</span> relaxer and Forward DID (FDID).</p>
-<div id="f1717034" class="cell" data-execution_count="2">
+<div id="37522a17" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>treat <span class="op">=</span> <span class="st">"Tax"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>outcome <span class="op">=</span> <span class="st">"ITEM_INDEX"</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>unitid <span class="op">=</span> <span class="st">"ITEM_ID"</span></span>
@@ -557,7 +550,7 @@ y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 <p>I won’t go over the details of <span class="math inline">\(\ell_2\)</span>relaxation here, as I’ve done that <a href="https://jgreathouse9.github.io/docs/scdense.html">elsewhere</a>, and I’ll have to do a post onm FDID at some point. The returned ATT for <span class="math inline">\(\ell_2\)</span> relaxation we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5.</p>
 <p>Next consider FDID. The ATT for FDID is -1.618, with the 95% CI being [-1.91,-1.32]. For DID, the ATT is -2.863, and the 95% CI being [-3.685,-2.041]. We can clearly see here that one, parallel trends holds for Forward DID and not for DID. The <span class="math inline">\(R^2=0.83\)</span>, and for DID the <span class="math inline">\(R^2=-0.312\)</span>, or, DID being even WORSE than just the empirical average of controls. We can clearly see that that the FDID method is improved by the forward-selection algorithm used to select the control group for the DID estimator. FDID selects 54 controls of the 646 unit control group. The key issue here is that my analysis is more causal.</p>
 <p>Both analyses take advantage of the full control group (646 controls) instead of the dozen or so controls the original folks sort of subjectively use (of course FDID drops most controls but I did not subjectively choose which controls to include or not). <span class="math inline">\(\ell_2\)</span> relaxation and FDID in their own way addresses variance estimation using heteoskedasticity and autocorrelation adjusted standard errors, so we can do proper inference about the ATT.</p>
-<div id="a7daeb43" class="cell" data-execution_count="3">
+<div id="227fb712" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Forward DID Model</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>config_fdid <span class="op">=</span> {</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
@@ -594,7 +587,7 @@ y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739654408838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1739656119132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -618,7 +611,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739654408835" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1739656119129" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -642,7 +635,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739654408835" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1739656119130" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -666,7 +659,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739654408835" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1739656119130" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -690,7 +683,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739654450092" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1739656160937" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

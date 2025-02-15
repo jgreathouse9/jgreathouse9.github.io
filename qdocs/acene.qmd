@@ -14,7 +14,155 @@ I found [a paper](https://doi.org/10.1038/s41562-024-01996-4) called "Why curren
 
 citing [this paper](https://taxpolicy.org.uk/wp-content/assets/tampon_tax_report.pdf) by Tax Policy Associates, with the web version being at [this link](https://taxpolicy.org.uk/2022/11/10/tampontax/). I read this and though "Hmm, this is an empirical claim, I wonder what their causal methodology was. So I went to look the paper up as a bit of professional curiosity.
 
-The paper studies the pass through rate of abolishing the tax on savings to consumers. To quote the paper directly,
+The paper studies the pass through rate of abolishing the tax on savings to consumers.
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+import requests
+import pandas as pd
+from io import StringIO
+from mlsynth.mlsynth import PDA, FDID, dataprep
+import os
+import matplotlib
+import numpy as np
+import matplotlib.pyplot as plt
+
+def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
+    """
+    Plots a single treated unit against the control group.
+    
+    Parameters:
+    - donor_matrix (numpy.ndarray): A 2D array where each column represents a control unit.
+    - treated_vector (numpy.ndarray): A 1D array representing the treated unit.
+    - pre_periods (int): The cutoff time index for the pre-treatment period.
+    - title (str): The title of the plot.
+    """
+    plt.figure(figsize=(8, 5))
+
+    # Plot control group trajectories
+    plt.plot(donor_matrix, color='gray', linewidth=0.5, alpha=0.8, label='_nolegend_')
+
+    # Plot the treated unit
+    plt.plot(treated_vector, color='black', linewidth=2, label='Treated Unit')
+
+    # Plot the average of control units
+    average_controls = donor_matrix.mean(axis=1)
+    plt.plot(average_controls, color='red', linewidth=2, label='Mean of Controls')
+
+    # Indicate pre-treatment period cutoff
+    plt.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Pre-Treatment Cutoff')
+
+    # Labels and legend
+    plt.title(title)
+    plt.xlabel('Time Periods')
+    plt.ylabel('Outcome')
+    plt.legend()
+    
+    plt.show()
+
+
+jared_theme = {
+    "axes.grid": False,
+    "grid.linestyle": "-",
+    "grid.color": "black",
+    "legend.framealpha": 1,
+    "legend.facecolor": "white",
+    "legend.shadow": True,
+    "legend.fontsize": 14,
+    "legend.title_fontsize": 16,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 14,
+    "axes.labelsize": 14,
+    "axes.titlesize": 20,
+    "figure.dpi": 120,
+    "axes.facecolor": "white",
+    "figure.figsize": (10, 5.5),
+}
+
+matplotlib.rcParams.update(jared_theme)
+
+def fetch_and_combine_github_csvs(owner, repo, directory):
+    """
+    Fetches all CSV files in the given GitHub directory that start with 'upload',
+    combines them into a single DataFrame, and processes it.
+
+    Parameters:
+        owner (str): GitHub username or organization name.
+        repo (str): Repository name.
+        directory (str): Directory path within the repository.
+
+    Returns:
+        pd.DataFrame: Combined and processed DataFrame.
+    """
+    # GitHub API URL to list contents of the directory
+    api_url = f'https://api.github.com/repos/{owner}/{repo}/contents/{directory}'
+
+    # Get the directory contents
+    response = requests.get(api_url)
+    files = response.json()
+
+    # Filter for CSV files that start with 'upload'
+    csv_files = [file for file in files if file['name'].startswith('upload') and file['name'].endswith('.csv')]
+
+    # Base URL for raw file content
+    raw_base_url = f'https://raw.githubusercontent.com/{owner}/{repo}/main/{directory}/'
+
+    # List to hold DataFrames
+    df_list = []
+
+    # Download and read each CSV file
+    for file in csv_files:
+        csv_url = raw_base_url + file['name']
+        csv_response = requests.get(csv_url)
+        df = pd.read_csv(StringIO(csv_response.text))
+        df_list.append(df)
+
+    # Concatenate all DataFrames
+    combined_df = pd.concat(df_list, ignore_index=True)
+
+    combined_df['INDEX_DATE'] = pd.to_datetime(combined_df['INDEX_DATE'], format='%Y%m')
+
+    # Sort by panel and time
+    combined_df = combined_df.sort_values(by=['ITEM_ID', 'INDEX_DATE'])
+
+    # Create 'Tax' column and set to 1 if ITEM_ID == 520206 and INDEX_DATE >= Jan 2021
+    combined_df['Tax'] = 0
+    combined_df.loc[(combined_df['ITEM_ID'] == 520206) & (combined_df['INDEX_DATE'] >= '2021-01-01'), 'Tax'] = 1
+
+    # Select only specific columns by index
+    selected_columns = [0, 1, 2, 5, -1]  # Column indices to keep
+    combined_df = combined_df.iloc[:, selected_columns]
+
+    # Reset index
+    combined_df = combined_df.reset_index(drop=True)
+
+    # Filter only ITEM_IDs that have exactly 53 observations,  to balance our panel
+    counts = combined_df['ITEM_ID'].value_counts()
+    balanced_item_ids = counts[counts == 53].index  # Get ITEM_IDs with 53 observations
+    combined_df = combined_df[combined_df['ITEM_ID'].isin(balanced_item_ids)]
+
+    combined_df['ITEM_ID'] = 'Unit ' + combined_df['ITEM_ID'].astype(str)
+
+    combined_df = combined_df.reset_index(drop=True)
+
+    return combined_df
+
+
+owner = 'DanNeidle'
+repo = 'tampontax'
+directory = 'ONS_data'
+df = fetch_and_combine_github_csvs(owner, repo, directory)
+
+df = dataprep(df, 'ITEM_ID', 'INDEX_DATE, ITEM_INDEX, 'Tax')
+
+plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_periods"], "Treated Unit vs. Controls")
+
+```
+
+
+To quote the paper directly,
 
 > We used Office for National Statistics data to analyse tampon price changes around 1 January 2021, the date that the “tampon tax” was abolished. We were able to do this because the ONS includes tampons (but not other menstrual products) in the price quotes it samples every month to compile the consumer prices index. Since 2017, the ONS has published the full datasets for its price sampling.
 

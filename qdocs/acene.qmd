@@ -139,7 +139,7 @@ I agree that there are plenty of confounding factors (mostly unobserved) and noi
 
 ## A Re-Analysis with ```mlsynth```
 
-Here is a re-analysis of this question using ```mlsynth```. I use the $\ell_2$ relaxer.
+Here is a re-analysis of this question using ```mlsynth```. I use the $\ell_2$ relaxer and Forward DID (FDID).
 
 ```{python}
 #| fig-align: center
@@ -263,7 +263,7 @@ model = PDA(config)
 arco = model.fit()
 ```
 
-I won't go over the details of $\ell_2$ relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html). The returned ATT we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5. We can even do Forward Difference-in-Differences.
+I won't go over the details of $\ell_2$ relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html), and I'll have to do a post onm FDID at some point. The returned ATT for $\ell_2$ relaxation we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5. Next consider FDID. The ATT for FDID is -1.618, with the 95% CI being [-1.91,-1.32]. For DID, the ATT is -2.863, and the 95% CI being [-3.685,-2.041]. We can clearly see here that one, parallel trends holds for Forward DID and not for DID. The $R^2=0.83$, and for DID the $R^2=-0.312$, or, DID being even WORSE than just the empirical average of controls. We can clearly see that that the FDID method is improved by the forward-selection algorithm used to select the control group for the DID estimator. FDID selects 54 controls of the 646 unit control group. The key issue here is that my analysis is more causal. Both analyses advantage of the full control group (646 controls) instead of the dozen or so controls the original folks sort of subjectively use. $\ell_2$ relaxation and FDID in their own way addresses variance estimation using heteoskedasticity and autocorrelation adjusted CI, so we can do proper inference about the ATT.
 
 ```{python}
 #| fig-align: center
@@ -283,9 +283,7 @@ arco_fdid = model_fdid.fit()
 
 ```
 
-The key issue here is that my analysis is more causal. It explicitly takes advantage of the full control group (more than 700 controls) instead of the dozen or so controls the original folks sort of subjectively use. $\ell_2$ relaxation also addresses variance estimation using heteoskedasticity and autocorrelation adjusted CI, so we can do proper inference about the ATT.
-
-The point of this post is that we can't just shove a dataset into ```scipy``` and (metaphorically) pray for valid results. We can't say "well, parallel trends for DID doesn't hold, let's go with the old school t-test and report that" (by the way, parallel trends _DOES_ in fact hold when we use the Forward DID method from ```mlsynth```). We need a little more care to be put into these questions if we mean to even try to answer them.
+The point of this post is that we can't just shove a dataset into ```scipy``` and (metaphorically) pray for valid results. We can't say "well, parallel trends for DID doesn't hold, let's go with the old school t-test and report that" (again, PTA DOES hold when we use the improved control group). We need a little more care to be put into these questions if we mean to even try to answer them.
 
 Writing this, I was reminded of [a post](https://statmodeling.stat.columbia.edu/2023/10/12/debate-over-effect-of-reduced-prosecutions-on-urban-homicides-also-larger-questions-about-synthetic-control-methods-in-causal-inference/) by Andrew Gelman, who writes pretty much what I think about the report above. It isn't that the question under study is silly- the question matters, but
 

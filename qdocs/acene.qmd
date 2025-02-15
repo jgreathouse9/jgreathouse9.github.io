@@ -38,7 +38,10 @@ def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
     - pre_periods (int): The cutoff time index for the pre-treatment period.
     - title (str): The title of the plot.
     """
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(10, 5))
+
+    # Indicate pre-treatment period cutoff
+    plt.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Treatment Date')
 
     # Plot control group trajectories
     plt.plot(donor_matrix, color='gray', linewidth=0.35, alpha=0.35, label='_nolegend_')
@@ -48,10 +51,7 @@ def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
 
     # Plot the average of control units
     average_controls = donor_matrix.mean(axis=1)
-    plt.plot(average_controls, color='red', linewidth=2, label='Mean of Controls')
-
-    # Indicate pre-treatment period cutoff
-    plt.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Pre-Treatment Cutoff')
+    plt.plot(average_controls, color='red', linewidth=1, label='Mean of Controls')
 
     # Labels and legend
     plt.title(title)

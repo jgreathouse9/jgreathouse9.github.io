@@ -286,7 +286,7 @@ They do not share their code for either the latter, but I will share mine. I agr
 
 # A Re-Analysis with ```mlsynth```
 
-Here is a re-analysis of this question [using](https://mlsynth.readthedocs.io) ```mlsynth```. I use the $\ell_2$ relaxer and Forward DID (FDID).
+Here is a re-analysis of this question [using](https://mlsynth.readthedocs.io) ```mlsynth```. I use the [$\ell_2$ relaxer](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) and [Forward DID](https://mlsynth.readthedocs.io/en/latest/fdid.html) (FDID) which were respectively develoepd [here](https://doi.org/10.13140/RG.2.2.11670.97609) and [here](https://doi.org/10.1287/mksc.2022.0212).
 
 ```{python}
 #| fig-align: center
@@ -311,9 +311,9 @@ model = PDA(config)
 arco = model.fit()
 ```
 
-I won't go over the details of $\ell_2$relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html), and I'll have to do a post onm FDID at some point. The returned ATT for $\ell_2$ relaxation we get with a tau equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5.
+I won't go over the details of $\ell_2$ relaxation here, as I've done that [elsewhere](https://jgreathouse9.github.io/docs/scdense.html), and I'll have to do a post on FDID at some point. The returned ATT for $\ell_2$ relaxation we get with a $\tau$ equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5.
 
-Next consider FDID. The ATT for FDID is -1.618, with the 95% CI being [-1.91,-1.32]. For DID, the ATT is -2.863, and the 95% CI being [-3.685,-2.041]. We can clearly see here that one, parallel trends holds for Forward DID and not for DID. The $R^2=0.83$, and for DID the $R^2=-0.312$, or, DID being even WORSE than just the empirical average of controls. We can clearly see that that the FDID method is improved by the forward-selection algorithm used to select the control group for the DID estimator. FDID selects 54 controls of the 646 unit control group. The key issue here is that my analysis is more causal.
+Next consider FDID. The ATT for FDID is -1.618, with the 95% CI being [-1.91,-1.32]. For DID, the ATT is -2.863, and the 95% CI being [-3.685,-2.041]. We can clearly see here that one, parallel trends holds for Forward DID and not for DID. The $R^2=0.83$ for FDID, and for DID the $R^2=-0.312$. In this case, DID is even WORSE than had we just used the empirical average of controls. We can clearly see that DID is improved by the forward-selection algorithm from FDID. FDID selects 54 controls of the 646 unit control group. The key issue here is that my analysis is more causal, and not because of magic, but because the selected PTA underlying FDID and the ineteractive fixed effects model that $\ell_2$ relaxation works with is simply a more realsitic viewpoint of the world (of course, the technical details of these estimators matter too).
 
 Both analyses take advantage of the full control group (646 controls) instead of the dozen or so controls the original folks sort of subjectively use (of course FDID drops most controls but I did not subjectively choose which controls to include or not). $\ell_2$ relaxation and FDID in their own way addresses variance estimation using heteoskedasticity and autocorrelation adjusted standard errors, so we can do proper inference about the ATT.
 

@@ -1,33 +1,26 @@
-name: Check for Paper Upload
+name: Check for Paper Update
 
 on:
   schedule:
-    - cron: "0 12 * * *"  # Runs every day at 12:00 UTC
-  workflow_dispatch:  # Allows manual triggering
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
   check-paper:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check if Paper is Hyperlinked
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
         run: |
-          python - <<EOF
-          import requests
-          from bs4 import BeautifulSoup
+          pip install -r Python/requirements.txt
 
-          url = "https://zhentaoshi.github.io/papersbyyears/"  # Replace with actual URL
-          text_to_check = "Relaxed Balancing for Synthetic Control"
-
-          response = requests.get(url)
-          soup = BeautifulSoup(response.text, "html.parser")
-
-          # Find all <a> tags and check if any contain the target text
-          linked = any(a for a in soup.find_all("a") if text_to_check in a.get_text())
-
-          if linked:
-              print("Paper is live! Triggering failure to notify via GitHub email.")
-              exit(1)  # Force failure so GitHub sends an email
-          else:
-              print("Paper is not hyperlinked yet.")
-              exit(0)  # Success (no email sent)
-          EOF
+      - name: Run paper check
+        run: python Python/checkpaper.py

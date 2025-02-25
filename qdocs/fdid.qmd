@@ -216,10 +216,12 @@ results = {
         arcomed[0]["FDID"]["Effects"]["ATT"],
         arco[0]["FDID"]["Fit"]["R-Squared"],
         arcomed[0]["FDID"]["Fit"]["R-Squared"],
-        str(arco[0]["FDID"]["Weights"]),
-        str(arcomed[0]["FDID"]["Weights"])
+        ', '.join(set(arco[0]["FDID"]["Weights"].keys())),
+        ', '.join(set(arcomed[0]["FDID"]["Weights"].keys()))
     ]
 }
+
+# Takes the keys of the dictionary and makes them into a set, joined by commas
 
 results_df = pd.DataFrame(results)
 
@@ -232,3 +234,5 @@ Markdown(markdown_table)
 Well, we see that these DID models do pretty well (by comparison, even with the Mediterranean donor pool, DID does not do nearly as well without the regularization of the forward selection algorithm). We also see that regardless of who I use as controls, the models agree that Donors 30, 40, 81, and 82 were among the most important control units in the entire universe of controls provided to us. Now, we do not know who these donors are, but the point is that we now have, with Forward DID, a mehod by which we can choose our control group for treated units. By comparison, when we use [the $\ell_2$ relaxer](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation), we get an ATT of 10.95 and an $R^2=0.883$ for the case of all donors. When we use only Mediterranean donors, we get an ATT of 12.75 and an $R^2=0.911$. The point of this is that by using advanced quasi-experimental methods, we can uncover causal impacts that we could not otherwise by simply doing a $t$-test; we can mitigate overfitting and judiciously weigh our control group to have a better sense of what might have been absent the treatment.
 
 ## Business Use Cases
+
+When might these be useful in business science such as construction or in tourism?

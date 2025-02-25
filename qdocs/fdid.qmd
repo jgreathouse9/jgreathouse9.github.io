@@ -16,24 +16,24 @@ In July 2015, Barcelona [enacted a hotel moratorium](https://www.hotelmanagement
 
 # Parallel Trends
 
-Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units and $\mathcal{U}$ be some subset of $\mathcal{N}$. For our purposes, $i = 0$ denotes the treated unit, and $i \in \mathcal{N} \setminus {0}$ denotes the control group. Parallel trends for Difference-in-Differences (DID) can be formalized as:
+Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units. Let $i = 0$ denote the treated unit, and $\mathcal{N}_0 \coloneqq \mathcal{N} \setminus {0}$ denotes the control group. Further, denote $\mathcal{U} \subset \mathcal{N}_0$. Parallel trends for Difference-in-Differences (DID) can be formalized as:
 
 $$
-\mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N},t-1}(0) \mid \mathcal{N}] = \alpha_{\mathcal{N}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}_0] = \mathbb{E}[y_{0,t-1}(0) \mid \mathcal{N}_0] - \mathbb{E}[y_{\mathcal{N}_0,t-1}(0) \mid \mathcal{N}_0] = \alpha_{\mathcal{N}_0t}, \quad t = 2, \dots, T
 $$
 
-This is the difference between the treated unit, $y_{0t}$, and the average of the control group, $y_{\mathcal{N}t}$. If parallel trends hold perfectly, this difference would be constant at every time point in the time series. The degree to which this does not hold represents the bias due to violations of parallel trends. Algebraically, we can model this as:
+This is the difference between the treated unit, $y_{0t}$, and the average of the control group, $y_{\mathcal{N}_0t}$. If parallel trends hold perfectly, this difference would be constant at every time point in the time series. The degree to which this does not hold represents the bias due to violations of parallel trends. Algebraically, we can model this as:
 
 $$
-y_{0t} = \alpha_{\mathcal{N}t} + \bar{y}_{\mathcal{N}t}
+y_{0t} = \alpha_{\mathcal{N}_0t} + \bar{y}_{\mathcal{N}_0t}
 $$
 
-where $\bar{y}_{\mathcal{N}t} = \frac{1}{|\mathcal{N}|} \sum_{i \in \mathcal{N}} y_{it}$. Here, we know the control group average, so we are estimating only a single parameter, the baseline difference, $\alpha_{\mathcal{N}t}$. This is equivalent to the regression model used in synthetic control, except that the weights for the control units are proportional to the cardinality of the control group.
+where $\bar{y}_{\mathcal{N}_0t} = \frac{1}{|\mathcal{N}_0|} \sum_{i \in \mathcal{N}_0} y_{it}$. Here, we know the control group average, so we are estimating only a single parameter, the baseline difference, $\alpha_{\mathcal{N}_0t}$. This is equivalent to the regression model used in synthetic control, except that the weights for the control units are proportional to the cardinality of the control group.
 
 With Forward DID, our Parallel Trends Assumption (PTA) is that a subset of these units will better satisfy parallel trends:
 
 $$
-\mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U},t-1}(0) \mid \mathcal{U}] = \alpha_{\mathcal{U}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{0,t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U},t-1}(0) \mid \mathcal{U}] = \alpha_{\mathcal{U}t}, \quad t = 2, \dots, T
 $$
 
 Our regression estimator is almost identical to the one above:
@@ -47,8 +47,6 @@ Here, $\bar{y}_{\mathcal{U}t}$ corresponds to the average of the subset of selec
 $$
 \bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
 $$
-
-## Testing Parallel Trends
 
 One thing we can do to test parallel trends is to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).
 
@@ -152,5 +150,5 @@ plt.legend()
 plt.show()
 ```
 
-This is the hotel prices of Barcelona (averaged over the week) compared to the average of control units.
+This is the hotel prices of Barcelona (averaged over the week) compared to the average of all 83 control units. Well, what can we take away from this? We can see that Barcelona differs quite a lot from the control group on levels, but what about on trends? Unfortunately, the trends also appear quite dissimilar. Barcelona has higher amplitude compared to the average of controls, as well as slightly higher variance. Thus, using all control units may not be sensible in this case to generate the counterfactual.
 

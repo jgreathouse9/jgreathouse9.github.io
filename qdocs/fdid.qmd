@@ -155,13 +155,15 @@ The key issue here is "which donors should we pick of the 83 control units"? The
 
 The attractive feature of Forward DID is that it uses a forward selection algorithm to choose our controls for us. The DID model is still the same (we can even prove this by estimating it with the standard interaction term setup), the issue is just who comprises the control group. I won't go into the algorithmic details here, you can read the formalities in my [mlsynth code](https://mlsynth.readthedocs.io/en/latest/fdid.html) or Kathy Li's excellent paper which goes into even more details. Strictly speaking (as folks like Pedro Sant'Anna and Kyle Butts have also pointed out to me), the FDID method is justified mainly in the Large $T$, fixed $N$ framework (more akin to synthetic controls), so it's unclear at present how this method would fit within the broader DID literature. But, either way, the Forward DID method is useful because it selects a better control group (assuming it's parallel trends assumption holds with these controls), and has more straightforward inferential theory than SCM (but this is [rapidly changing](https://doi.org/10.48550/arXiv.2501.15692)).
 
+# Applying Forward DID
+
 Okay, now how can we use this tool? First intstall the latest version of mlsynth
 
 ```bash
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 ```
 
-Now we can import the fit the FDID model using the entire donor pool.
+Now we can fit the FDID model using the entire donor pool. The treatment happens 2015 week 27, and extends to August of the same year.
 
 ```{python}
 #| fig-align: center
@@ -181,7 +183,7 @@ arco = model.fit()
 
 ```
 
-Our ATT using all donors is 12.98, and the pre-treatment $R^2= 0.853$. We can do the same with the Mediterranaean only dataframe
+We can do the same with the Mediterranaean only dataframe
 
 ```{python}
 #| fig-align: center
@@ -201,7 +203,7 @@ modelmed = FDID(config)
 arcomed = modelmed.fit()
 ```
 
-Where now the ATT is 11.64 and the $R^2=0.859$. These results may be summarized in a table
+These results may be summarized in a table
 
 ```{python}
 from IPython.display import Markdown
@@ -227,3 +229,6 @@ Markdown(markdown_table)
 
 ```
 
+Well, we see that these DID models do pretty well (by comparison, even with the Mediterranean donor pool, DID does not do nearly as well without the regularization of the forward selection algorithm). We also see that regardless of who I use as controls, the models agree that Donors 30, 40, 81, and 82 were among the most important control units in the entire universe of controls provided to us. Now, we do not know who these donors are, but the point is that we now have, with Forward DID, a mehod by which we can choose our control group for treated units. By comparison, when we use [the $\ell_2$ relaxer](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation), we get an ATT of 10.95 and an $R^2=0.883$ for the case of all donors. When we use only Mediterranean donors, we get an ATT of 12.75 and an $R^2=0.911$. The point of this is that by using advanced quasi-experimental methods, we can uncover causal impacts that we could not otherwise by simply doing a $t$-test; we can mitigate overfitting and judiciously weigh our control group to have a better sense of what might have been absent the treatment.
+
+## Business Use Cases

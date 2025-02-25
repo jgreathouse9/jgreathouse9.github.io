@@ -16,7 +16,7 @@ In July 2015, Barcelona [enacted a hotel moratorium](https://www.hotelmanagement
 
 # Parallel Trends
 
-Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units and $\mathcal{U}$ be some subset of $\mathcal{N}$. For our purposes, $i = 0$ denotes the treated unit, and $i \in \mathcal{N}$ represents the control group. Parallel trends for Difference-in-Differences (DID) can be formalized as:
+Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units and $\mathcal{U}$ be some subset of $\mathcal{N}$. For our purposes, $i = 0$ denotes the treated unit, and $i \in \mathcal{N} \setminus {0}$ denotes the control group. Parallel trends for Difference-in-Differences (DID) can be formalized as:
 
 $$
 \mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N},t-1}(0) \mid \mathcal{N}] = \alpha_{\mathcal{N}t}, \quad t = 2, \dots, T
@@ -47,3 +47,110 @@ Here, $\bar{y}_{\mathcal{U}t}$ corresponds to the average of the subset of selec
 $$
 \bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
 $$
+
+## Testing Parallel Trends
+
+One thing we can do to test parallel trends is to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from mlsynth.mlsynth import FDID
+from mlsynth.mlsynth import dataprep
+import numpy as np
+
+andy_theme = {'axes.grid': True,
+              'grid.linestyle': '-',
+              'legend.framealpha': 1,
+              'legend.facecolor': 'white',
+              'legend.shadow': True,
+              'legend.fontsize': 14,
+              'legend.title_fontsize': 16,
+              'xtick.labelsize': 14,
+              'ytick.labelsize': 14,
+              'axes.labelsize': 16,
+              'axes.titlesize': 20,
+              'figure.dpi': 100}
+
+matplotlib.rcParams.update(andy_theme)
+
+# Load the data into a DataFrame
+data = 'https://raw.githubusercontent.com/jgreathouse9/GSUmetricspolicy/refs/heads/main/data/RawData/HotelPricesRaw.csv'
+df = pd.read_csv(data, delimiter=',', thousands='.', decimal=',')
+df.columns = df.columns.str.lower()
+
+# Convert 'yyyy_mm_dd' column to datetime
+df['yrweek'] = pd.to_datetime(df['yyyy_mm_dd'])
+
+# Extract year and week number
+df['year'] = df['yrweek'].dt.year
+df['week'] = df['yrweek'].dt.isocalendar().week
+
+# Create a proper weekly date (Monday of the given week)
+df['yrweek'] = pd.to_datetime(df['year'].astype(str) + df['week'].astype(str) + '1', format='%G%V%u')
+
+
+drop_date = pd.to_datetime('2017-08-21')
+df = df[df['yrweek'] <= drop_date]
+
+df['id'] = df.groupby(['city_id']).ngroup()
+
+df["name"] = 'Donor'
+
+df['fullname'] = df['name'].map(str) + ' ' + df['id'].map(str)
+
+df.loc[df["is_barcelona"] == 1, "fullname"] = "Barcelona"
+
+
+# Calculate the average of indexed_price by id and yrweek
+df = df.groupby(['id', 'yrweek', 'fullname', 'mediterranean'])[
+    'indexed_price'].mean().reset_index()
+
+df = df.sort_values(by=['id', 'yrweek'])
+
+# Define the reference week (2015-W27, which starts on July 6, 2015)
+moratorium_start = pd.to_datetime("2015-07-06")
+
+# Create the 'Moratorium' indicator
+df['Moratorium'] = ((df['fullname'] == "Barcelona") & (df['yrweek'] > moratorium_start)).astype(int)
+
+df.rename(columns={'indexed_price': 'Hotel Prices', 'yrweek': "Date"}, inplace=True)
+
+treat = "Moratorium"
+outcome = "Hotel Prices"
+unitid = "fullname"
+time = "Date"
+
+prepdict = dataprep(df, unitid, time, outcome, treat)
+
+Nmean = np.mean(prepdict["donor_matrix"],axis=1)
+
+y = prepdict["y"]
+
+plt.figure(figsize=(10, 6))
+# Extract the dates from Ywide's index
+time_index = prepdict["Ywide"].index
+
+plt.axvline(x=time_index[prepdict["pre_periods"] - 1], color="blue", linestyle="--", linewidth=2, label="Moratorium Date")
+
+
+# Plot control average in red
+plt.plot(time_index, Nmean, color="red", linewidth=2, label="Control Avg")
+
+# Plot treated unit in black
+plt.plot(time_index, y, color="black", linewidth=2, label="Treated Unit")
+
+# Format x-axis labels
+plt.xticks(rotation=45)
+plt.xlabel("Date")
+plt.ylabel("Hotel Prices")
+plt.legend()
+plt.show()
+```
+
+This is the hotel prices of Barcelona (averaged over the week) compared to the average of control units.
+

@@ -253,12 +253,12 @@ window.Quarto = {
 </header>
 
 
-<p>Causal inference is critical to economics, marketing, policy, real estate, and other sectors of industry. Frequently, policies or natural events occur that may affect metrics we care about. In order to maximize our decision making capabilities, understanding the effects of these events we care about is critical so that businseses and governments may plan future business decisions better or know if a policy intervention achieves its intended aims. In absence of A/B tests (randomized controlled trials, which is quite popular amongst marketing firms/other areas of tech), business scientists and policy analysts frequently resort to constructing counterfactuals to infer treatment effecs.</p>
+<p>Causal inference is critical to economics, marketing, policy, real estate, and other sectors of industry. Frequently, policies or natural events occur that may affect metrics we care about. In order to maximize our decision making capabilities, understanding the effects of these events we care about is critical so that businseses and governments may plan future business decisions better or know if a policy intervention achieves its intended aims. In absence of A/B tests (randomized controlled trials, which is quite popular amongst marketing firms/other areas of tech), business scientists and policy analysts frequently resort to constructing counterfactuals to infer treatment effecs. This is because conducting proper experiments is difficult, costly, and/or unethical, especially with most of the events we are concerned with which impact millions of people.</p>
 <p>Difference-in-Differences (DID) is one of the most popular methods for quasi-experimental designs/treatment effect analysis. DID is simple to compute, and is valid even in settings where we have one treated unit and a single control unit. The key identifying assumption of DID is parallel trends (PTA), or that the trend of the treated group would be constant with respect to the control group had a given intervention or policy never took place. Additionally, PTA posits no-anticipation of the intervention. <a href="https://doi.org/10.1086/711509">Various restatements</a> of PTA are common in the econometrics literature, especially under staggered adoption where DID is frequently applied to use cases researchers care about. However, sometimes DID is used even in settings of <a href="https://doi.org/10.1111/jels.12188">a single treated unit</a>. And in these settings, PTA may be less likely to hold. This blog post goes over <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">the Forward DID method</a> with an application to the construction/tourism industry.</p>
 <section id="barcelonas-ban-on-hotel-construction" class="level1">
 <h1>Barcelona’s Ban on Hotel Construction</h1>
 <p>Overtourism is an important problem for cities the globe over. Often, a major complaint about massive tourism based economies is that many of the inhabitants may feel they <a href="https://www.theguardian.com/news/2025/jan/25/no-neighbours-overtourism-residents-spain-portugal-visitor">have no neighbors</a>. In response to such complaints, cities such as <a href="https://uk.style.yahoo.com/florence-rome-venice-italian-cities-153523897.html?">Venice, Florence, and Rome</a> have enacted or will enact taxes on visitors, or that <a href="https://www.nytimes.com/2024/04/18/world/europe/amsterdam-tourism-hotel-stop.html">Amsterdam</a> and even places like <a href="https://www.miamitodaynews.com/2024/01/02/tourist-mecca-miami-beach-weighs-a-hotels-moratorium/">Miami Beach</a> have or have considerd enacting a moratorium on new hotel construction. A key question then, for the hotel inndustry, would be “how might this impact demand or the prices of hotel rooms”. For the bigger construction industry, depending on how important hotel construction is to the local economy, one may ask how these policies would affect put in place value, or the total amount built each month.</p>
-<p>In July 2015, Barcelona <a href="https://www.hotelmanagement.net/development/investor-appeal-to-continue-despite-barcelona-hotel-performance-declines">enacted a hotel moratorium</a> which stopped the building of new hotels. The effect this measure had on the normalized prices of hotel rooms was studied in <a href="https://doi.org/10.1080/13504851.2021.1927958">an academic paper</a>. This paper used the synthetic control method, finding a 16 point index increase in the price of hotel rooms. I use their data to demonstrate the Forward DID method.</p>
+<p>In July 2015, Barcelona <a href="https://www.hotelmanagement.net/development/investor-appeal-to-continue-despite-barcelona-hotel-performance-declines">enacted a hotel moratorium</a> which stopped the building of new hotels. The effect this measure had on the normalized prices of hotel rooms was studied in <a href="https://doi.org/10.1080/13504851.2021.1927958">an academic paper</a>. This paper used the synthetic control method, finding a 16 point index increase in the price of hotel rooms. I use their data to demonstrate the Forward DID method, method which may serve as a complement to standard methods such as synthetic controls.</p>
 </section>
 <section id="parallel-trends" class="level1">
 <h1>Parallel Trends</h1>
@@ -271,7 +271,7 @@ window.Quarto = {
 y_{0t} = \alpha_{\mathcal{N}_0t} + \bar{y}_{\mathcal{N}_0t}
 \]</span></p>
 <p>where <span class="math inline">\(\bar{y}_{\mathcal{N}_0t} = \frac{1}{|\mathcal{N}_0|} \sum_{i \in \mathcal{N}_0} y_{it}\)</span>. Here, we know the control group average, so we are estimating only a single parameter, the baseline difference, <span class="math inline">\(\alpha_{\mathcal{N}_0t}\)</span>. This is equivalent to the regression model used in synthetic control, except that the weights for the control units are proportional to the cardinality of the control group.</p>
-<p>With Forward DID, our Parallel Trends Assumption (PTA) is that a subset of these units will better satisfy parallel trends:</p>
+<p>With Forward DID, we posit that a subset of these units will better satisfy PTA:</p>
 <p><span class="math display">\[
 \mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{0,t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U},t-1}(0) \mid \mathcal{U}] = \alpha_{\mathcal{U}t}, \quad t = 2, \dots, T
 \]</span></p>
@@ -283,8 +283,8 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <p><span class="math display">\[
 \bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
 \]</span></p>
-<p>One thing we can do to test parallel trends is to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).</p>
-<div id="706e1ecf" class="cell" data-execution_count="1">
+<p>One thing we can do to test PTA s to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).</p>
+<div id="e968a35e" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
@@ -397,7 +397,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <p>Okay, now how can we use Forward DID? First install the latest version of mlsynth</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Now we can fit the FDID model using the entire donor pool. The treatment happens 2015 week 27, and extends to August of the same year.</p>
-<div id="742d7030" class="cell" data-execution_count="2">
+<div id="e59a222a" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
@@ -422,7 +422,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 </div>
 </div>
 <p>This plots the observed versus fitted predictions. We can do the same with the Mediterranean only dataframe</p>
-<div id="fffe3560" class="cell" data-execution_count="3">
+<div id="1c506427" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mediterranean_df <span class="op">=</span> df[df[<span class="st">"mediterranean"</span>] <span class="op">==</span> <span class="dv">1</span>]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -448,7 +448,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 </div>
 </div>
 <p>These results may be summarized in a table</p>
-<div id="b031e2a8" class="cell" data-execution_count="4">
+<div id="ea72eb35" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -502,11 +502,11 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Weights (Original)</td>
-<td style="text-align: left;">Donor 81, Donor 30, Donor 80, Donor 82, Donor 40</td>
+<td style="text-align: left;">Donor 81, Donor 40, Donor 30, Donor 80, Donor 82</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Weights (Mediterranean)</td>
-<td style="text-align: left;">Donor 81, Donor 6, Donor 30, Donor 82, Donor 40</td>
+<td style="text-align: left;">Donor 81, Donor 40, Donor 30, Donor 82, Donor 6</td>
 </tr>
 </tbody>
 </table>
@@ -516,7 +516,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <p>The main insight here is that the prices were raised by around 12 index points compared to what they would have been absent the policy intervention. It would be super cool to see what actually happened to demand for hotel rooms and so on, but the data do not afford us that luxury.</p>
 <section id="business-use-cases" class="level2">
 <h2 class="anchored" data-anchor-id="business-use-cases">Business Use Cases</h2>
-<p>When might these be useful in business science such as construction or in tourism? Well for one, <a href="https://www.constructiondive.com/news/heat-laws-construction-water-breaks-safety/716883/">lots of</a> [states}(https://www.npr.org/2024/04/12/1244316874/florida-blocks-heat-protections-for-workers-right-before-summer) have passed laws regarding heat safety for workers which restrict local areas from passing laws which would provide workers with water, shade, and rest in the hot summer months. If tourism is a concern, we can use these kinds of methods to know the impact of policies or other vents that are meant to affect the phyisical building of construction units (which could, in some cases, affect put-in-place value or other relvant metrics). Equally, we may quantify the effects of policies such as <a href="https://www.constructiondive.com/news/contractors-brace-steel-aluminum-tariff-impacts/740119/">tariffs</a> on the costs of materials, hotel demand, or other industry relevant instances. With proper causal infernece, firms and policymakers may better plan and take action with scientifically based analysis.</p>
+<p>When might these be useful in business science such as construction or in tourism? Well for one, <a href="https://www.constructiondive.com/news/heat-laws-construction-water-breaks-safety/716883/">lots of</a> <a href="https://www.npr.org/2024/04/12/1244316874/florida-blocks-heat-protections-for-workers-right-before-summer">states</a> have passed laws regarding heat safety for workers which restrict local areas from passing laws which would provide workers with water, shade, and rest in the hot summer months. If tourism is a concern, we can use causal inference to estimate the impact of events that are meant to affect the demand for tourism or the physical building of construction units (which could, in some cases, affect put-in-place value or other relvant metrics in some markets). Equally, we may quantify the effects of policies such as <a href="https://www.constructiondive.com/news/contractors-brace-steel-aluminum-tariff-impacts/740119/">tariffs</a> on the costs of materials, hotel demand, or other industry relevant instances. With proper causal infernece, firms and policymakers may better plan and take action with scientifically based analysis.</p>
 
 
 
@@ -525,7 +525,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740503397016" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740507425840" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -549,7 +549,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740503397013" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740507425838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -573,7 +573,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740503397013" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740507425838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -597,7 +597,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740503397013" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740507425838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -621,7 +621,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740503397013" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740507425838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -647,7 +647,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1740503443814" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1740507471245" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

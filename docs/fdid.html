@@ -209,6 +209,10 @@ window.Quarto = {
   <ul>
   <li><a href="#barcelonas-ban-on-hotel-construction" id="toc-barcelonas-ban-on-hotel-construction" class="nav-link active" data-scroll-target="#barcelonas-ban-on-hotel-construction">Barcelona’s Ban on Hotel Construction</a></li>
   <li><a href="#parallel-trends" id="toc-parallel-trends" class="nav-link" data-scroll-target="#parallel-trends">Parallel Trends</a></li>
+  <li><a href="#applying-forward-did" id="toc-applying-forward-did" class="nav-link" data-scroll-target="#applying-forward-did">Applying Forward DID</a>
+  <ul class="collapse">
+  <li><a href="#business-use-cases" id="toc-business-use-cases" class="nav-link" data-scroll-target="#business-use-cases">Business Use Cases</a></li>
+  </ul></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(6)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(3)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(2)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -293,7 +297,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 \bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
 \]</span></p>
 <p>One thing we can do to test parallel trends is to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).</p>
-<div id="5aeb6803" class="cell" data-execution_count="1">
+<div id="34f666a3" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
@@ -399,10 +403,13 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <p>This is the hotel prices of Barcelona (averaged over the week) compared to the average of all 83 control units. Well, what can we take away from this? We can see that Barcelona differs quite a lot from the control group on levels, but what about on trends? Unfortunately, the trends also appear quite dissimilar. Barcelona has higher amplitude compared to the average of controls, as well as slightly higher variance. Thus, using all control units may not be sensible in this case to generate the counterfactual.</p>
 <p>The key issue here is “which donors should we pick of the 83 control units”? The data were provided by Booking.com, but the city names had to be masked because of the interest of preserving privacy. So, the most Booking provided the original authors was a single covariate, which indicates whether the city is a donor on the Mediterranean Sea. We could simply use all Mediterranean Donors, on the grounds that these are more likely to be similar to one another. But this is a kind of subjective decision, even if it does make sense conceptually. It’s possible that other non-Mediterranean donors could be an adequate subset of controls too.</p>
 <p>The attractive feature of Forward DID is that it uses a forward selection algorithm to choose our controls for us. The DID model is still the same (we can even prove this by estimating it with the standard interaction term setup), the issue is just who comprises the control group. I won’t go into the algorithmic details here, you can read the formalities in my <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">mlsynth code</a> or Kathy Li’s excellent paper which goes into even more details. Strictly speaking (as folks like Pedro Sant’Anna and Kyle Butts have also pointed out to me), the FDID method is justified mainly in the Large <span class="math inline">\(T\)</span>, fixed <span class="math inline">\(N\)</span> framework (more akin to synthetic controls), so it’s unclear at present how this method would fit within the broader DID literature. But, either way, the Forward DID method is useful because it selects a better control group (assuming it’s parallel trends assumption holds with these controls), and has more straightforward inferential theory than SCM (but this is <a href="https://doi.org/10.48550/arXiv.2501.15692">rapidly changing</a>).</p>
+</section>
+<section id="applying-forward-did" class="level1">
+<h1>Applying Forward DID</h1>
 <p>Okay, now how can we use this tool? First intstall the latest version of mlsynth</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Now we can import the fit the FDID model using the entire donor pool.</p>
-<div id="ae65f23b" class="cell" data-execution_count="2">
+<p>Now we can fit the FDID model using the entire donor pool. The treatment happens 2015 week 27, and extends to August of the same year.</p>
+<div id="e8801be7" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df, <span class="co"># df[df["mediterranean"] == 1]</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
@@ -426,8 +433,8 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <pre><code>&lt;Figure size 700x500 with 0 Axes&gt;</code></pre>
 </div>
 </div>
-<p>Our ATT using all donors is 12.98, and the pre-treatment <span class="math inline">\(R^2= 0.853\)</span>. We can do the same with the Mediterranaean only dataframe</p>
-<div id="d1f0c9cb" class="cell" data-execution_count="3">
+<p>We can do the same with the Mediterranaean only dataframe</p>
+<div id="c90d9a85" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mediterranean_df <span class="op">=</span> df[df[<span class="st">"mediterranean"</span>] <span class="op">==</span> <span class="dv">1</span>]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -452,8 +459,8 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <pre><code>&lt;Figure size 700x500 with 0 Axes&gt;</code></pre>
 </div>
 </div>
-<p>Where now the ATT is 11.64 and the <span class="math inline">\(R^2=0.859\)</span>. These results may be summarized in a table</p>
-<div id="361339aa" class="cell" data-execution_count="4">
+<p>These results may be summarized in a table</p>
+<div id="e3c5e40b" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -515,14 +522,18 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 </table>
 </div>
 </div>
+<p>Well, we see that these DID models do pretty well (by comparison, even with the Mediterranean donor pool, DID does not do nearly as well without the regularization of the forward selection algorithm). We also see that regardless of who I use as controls, the models agree that Donors 30, 40, 81, and 82 were among the most important control units in the entire universe of controls provided to us. Now, we do not know who these donors are, but the point is that we now have, with Forward DID, a mehod by which we can choose our control group for treated units. By comparison, when we use <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation">the <span class="math inline">\(\ell_2\)</span> relaxer</a>, we get an ATT of 10.95 and an <span class="math inline">\(R^2=0.883\)</span> for the case of all donors. When we use only Mediterranean donors, we get an ATT of 12.75 and an <span class="math inline">\(R^2=0.911\)</span>. The point of this is that by using advanced quasi-experimental methods, we can uncover causal impacts that we could not otherwise by simply doing a <span class="math inline">\(t\)</span>-test; we can mitigate overfitting and judiciously weigh our control group to have a better sense of what might have been absent the treatment.</p>
+<section id="business-use-cases" class="level2">
+<h2 class="anchored" data-anchor-id="business-use-cases">Business Use Cases</h2>
 
 
 
 </section>
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740498256713" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740499914381" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -546,7 +557,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740498256710" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740499914378" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -570,7 +581,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740498256711" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740499914378" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -594,7 +605,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740498256710" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740499914378" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -618,7 +629,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740498256710" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740499914378" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -644,7 +655,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1740498301347" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1740499962029" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

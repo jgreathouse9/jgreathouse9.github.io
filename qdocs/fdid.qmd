@@ -16,16 +16,18 @@ In July 2015, Barcelona [enacted a hotel moratorium](https://www.hotelmanagement
 
 # Parallel Trends
 
-Parallel trends is formalized as 
+Let units be indexed by $i$ and time by $t$. Parallel trends is formalized as 
 
 $$
-\mathbb{E}[y_{1t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t-1}(0) \mid \mathcal{N}] + v_{\mathcal{N}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{1t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t-1}(0) \mid \mathcal{N}]=\alpha_{\mathcal{N}t}, \quad t = 2, \dots, T
 $$
 
-Li's PTA is
+This is simply the difference between the treated unit, $y_{1t}$, and the average of the control group $y_{\mathcal{N}t}$. If parallel trends held perfectly, this difference would be constant at every single time point in the time series. The degree to which this does not hold, is bias from parallel trends violations. By algebra, this means that we can model this, even, via a regression model: $y_{1t}=\alpha_{\mathcal{N}t}+ \bar{y}_{\mathcal{N}t}}$. All this is, is the baseline difference (alpha, from above) and $\bar{y}_{\mathcal{N}t} = \frac{1}{|\mathcal{N}|} \sum_{i \in \mathcal{N}} y_{it}$. We know what the control group average is, so we technically are estimating only a single parameter.
+
+With Forward DID, our PTA is the idea that some subset of these units will better satisfy parallel trends
 
 $$
-\mathbb{E}[y_{1t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{1t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t-1}(0) \mid \mathcal{U}] + v_{\mathcal{U}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{1t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{1t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t-1}(0) \mid \mathcal{U}]=]alpha_{\mathcal{U}t}, \quad t = 2, \dots, T.
 $$
 
-holds across all periods, 
+Our regression estimator is almost the same as above, $y_{1t}=\alpha_{\mathcal{U}t}+ \bar{y}_{\mathcal{U}t}}$. Here though, $\bar{y}_{\mathcal{U}t}$ corresponds to the average of the subset of selected controls, $\frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}$.

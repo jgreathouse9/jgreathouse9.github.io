@@ -1,6 +1,6 @@
 ---
-title: 'Forward Difference-in-Differences'
-date: 2025-02-24
+title: 'Applying Forward DID to Construction and Tourism Policy'
+date: 2025-02-25
 categories: [Causal Inference, Machine Learning, Econometrics]
 ---
 
@@ -201,5 +201,28 @@ modelmed = FDID(config)
 arcomed = modelmed.fit()
 ```
 
-Where now the ATT is 11.64 and the $R^2=0.859$
+Where now the ATT is 11.64 and the $R^2=0.859$. These results may be summarized in a table
+
+```{python}
+
+import pandas as pd
+
+results = {
+    "Metric": ["ATT (Original)", "ATT (Mediterranean)", "R-Squared (Original)", "R-Squared (Mediterranean)", "Weights (Original)", "Weights (Mediterranean)"],
+    "Value": [
+        arco[0]["FDID"]["Effects"]["ATT"],
+        arcomed[0]["FDID"]["Effects"]["ATT"],
+        arco[0]["FDID"]["Fit"]["R-Squared"],
+        arcomed[0]["FDID"]["Fit"]["R-Squared"],
+        str(arco[0]["FDID"]["Weights"]),
+        str(arcomed[0]["FDID"]["Weights"])
+    ]
+}
+
+results_df = pd.DataFrame(results)
+
+markdown_table = results_df.to_markdown(index=False)
+
+print(markdown_table)
+```
 

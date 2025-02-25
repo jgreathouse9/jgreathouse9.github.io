@@ -16,18 +16,34 @@ In July 2015, Barcelona [enacted a hotel moratorium](https://www.hotelmanagement
 
 # Parallel Trends
 
-Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units and $\mathcal{U}$ be some subset of all units. For our purposes, $i=0$ is our treated unit and $i \in \mathbb{N}$ is our control group of units. Parallel trends for DID is formalized as 
+Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units and $\mathcal{U}$ be some subset of $\mathcal{N}$. For our purposes, $i = 0$ denotes the treated unit, and $i \in \mathcal{N}$ represents the control group. Parallel trends for Difference-in-Differences (DID) can be formalized as:
 
 $$
-\mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t-1}(0) \mid \mathcal{N}]=\alpha_{\mathcal{N}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N},t-1}(0) \mid \mathcal{N}] = \alpha_{\mathcal{N}t}, \quad t = 2, \dots, T
 $$
 
-This is simply the difference between the treated unit, $y_{0t}$, and the average of the control group $y_{\mathcal{N}t}$. If parallel trends held perfectly, this difference would be constant at every single time point in the time series. The degree to which this does not hold, is bias from parallel trends violations. By algebra, this means that we can model this, even, via a regression model: $y_{0t}=\alpha_{\mathcal{N}t}+ \bar{y}_{\mathcal{N}t}$. All this is, is the baseline difference (alpha, from above) and $\bar{y}_{\mathcal{N}t} = \frac{1}{|\mathcal{N}|} \sum_{i \in \mathcal{N}} y_{it}$. We know what the control group average is, so we technically are estimating only a single parameter, or the baseline difference. By the way if you're curious, this is the exact same regression model as a standard synthetic control method, the only difference is that the weights for the control units are proportional to the cardinality of the control group.
-
-With Forward DID, our PTA is the idea that some subset of these units will better satisfy parallel trends
+This is the difference between the treated unit, $y_{0t}$, and the average of the control group, $y_{\mathcal{N}t}$. If parallel trends hold perfectly, this difference would be constant at every time point in the time series. The degree to which this does not hold represents the bias due to violations of parallel trends. Algebraically, we can model this as:
 
 $$
-\mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{1t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t-1}(0) \mid \mathcal{U}]=]alpha_{\mathcal{U}t}, \quad t = 2, \dots, T.
+y_{0t} = \alpha_{\mathcal{N}t} + \bar{y}_{\mathcal{N}t}
 $$
 
-Our regression estimator is almost the same as above, $y_{0t}=\alpha_{\mathcal{U}t}+ \bar{y}_{\mathcal{U}t}$. Here though, $\bar{y}_{\mathcal{U}t}$ corresponds to the average of the subset of selected controls, $\frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}$.
+where $\bar{y}_{\mathcal{N}t} = \frac{1}{|\mathcal{N}|} \sum_{i \in \mathcal{N}} y_{it}$. Here, we know the control group average, so we are estimating only a single parameter, the baseline difference, $\alpha_{\mathcal{N}t}$. This is equivalent to the regression model used in synthetic control, except that the weights for the control units are proportional to the cardinality of the control group.
+
+With Forward DID, our Parallel Trends Assumption (PTA) is that a subset of these units will better satisfy parallel trends:
+
+$$
+\mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U},t-1}(0) \mid \mathcal{U}] = \alpha_{\mathcal{U}t}, \quad t = 2, \dots, T
+$$
+
+Our regression estimator is almost identical to the one above:
+
+$$
+y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
+$$
+
+Here, $\bar{y}_{\mathcal{U}t}$ corresponds to the average of the subset of selected controls:
+
+$$
+\bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
+$$

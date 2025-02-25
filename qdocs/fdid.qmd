@@ -16,7 +16,7 @@ In July 2015, Barcelona [enacted a hotel moratorium](https://www.hotelmanagement
 
 # Parallel Trends
 
-Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units. Let $i = 0$ denote the treated unit, and $\mathcal{N}_0 \coloneqq \mathcal{N} \setminus {0}$ denotes the control group. Further, denote $\mathcal{U} \subset \mathcal{N}_0$. Parallel trends for Difference-in-Differences (DID) can be formalized as:
+Let units be indexed by $i$ and time by $t$. Let $\mathcal{N}$ be the set of all units. Let $i = 0$ denote the treated unit, and $\mathcal{N}_0 \coloneqq \mathcal{N} \setminus {0}$ denotes the control group. Further, denote $\mathcal{U} \subset \mathcal{N}_0$. Parallel trends for DID can be formalized as:
 
 $$
 \mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}_0] = \mathbb{E}[y_{0,t-1}(0) \mid \mathcal{N}_0] - \mathbb{E}[y_{\mathcal{N}_0,t-1}(0) \mid \mathcal{N}_0] = \alpha_{\mathcal{N}_0t}, \quad t = 2, \dots, T
@@ -51,7 +51,6 @@ $$
 One thing we can do to test parallel trends is to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).
 
 ```{python}
-#| echo: false
 #| fig-align: center
 
 import pandas as pd
@@ -61,7 +60,7 @@ from mlsynth.mlsynth import FDID
 from mlsynth.mlsynth import dataprep
 import numpy as np
 
-andy_theme = {'axes.grid': True,
+jared_theme = {'axes.grid': True,
               'grid.linestyle': '-',
               'legend.framealpha': 1,
               'legend.facecolor': 'white',
@@ -74,7 +73,7 @@ andy_theme = {'axes.grid': True,
               'axes.titlesize': 20,
               'figure.dpi': 100}
 
-matplotlib.rcParams.update(andy_theme)
+matplotlib.rcParams.update(jared_theme)
 
 # Load the data into a DataFrame
 data = 'https://raw.githubusercontent.com/jgreathouse9/GSUmetricspolicy/refs/heads/main/data/RawData/HotelPricesRaw.csv'
@@ -155,4 +154,52 @@ This is the hotel prices of Barcelona (averaged over the week) compared to the a
 The key issue here is "which donors should we pick of the 83 control units"? The data were provided by Booking.com, but the city names had to be masked because of the interest of preserving privacy. So, the most Booking provided the original authors was a single covariate, which indicates whether the city is a donor on the Mediterranean Sea. We could simply use all Mediterranean Donors, on the grounds that these are more likely to be similar to one another. But this is a kind of subjective decision, even if it does make sense conceptually. It's possible that other non-Mediterranean donors could be an adequate subset of controls too.
 
 The attractive feature of Forward DID is that it uses a forward selection algorithm to choose our controls for us. The DID model is still the same (we can even prove this by estimating it with the standard interaction term setup), the issue is just who comprises the control group. I won't go into the algorithmic details here, you can read the formalities in my [mlsynth code](https://mlsynth.readthedocs.io/en/latest/fdid.html) or Kathy Li's excellent paper which goes into even more details. Strictly speaking (as folks like Pedro Sant'Anna and Kyle Butts have also pointed out to me), the FDID method is justified mainly in the Large $T$, fixed $N$ framework (more akin to synthetic controls), so it's unclear at present how this method would fit within the broader DID literature. But, either way, the Forward DID method is useful because it selects a better control group (assuming it's parallel trends assumption holds with these controls), and has more straightforward inferential theory than SCM (but this is [rapidly changing](https://doi.org/10.48550/arXiv.2501.15692)).
+
+Okay, now how can we use this tool? First intstall the latest version of mlsynth
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+Now we can import the fit the FDID model using the entire donor pool.
+
+```{python}
+#| fig-align: center
+
+config = {
+    "df": df, # df[df["mediterranean"] == 1]
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": True
+}
+
+model = FDID(config)
+
+arco = model.fit()
+
+```
+
+Our ATT using all donors is 12.98, and the pre-treatment $R^2= 0.853$. We can do the same with the Mediterranaean only dataframe
+
+```{python}
+#| fig-align: center
+
+mediterranean_df = df[df["mediterranean"] == 1]
+
+config = {
+    "df": mediterranean_df,  # Use the filtered dataframe
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": True
+}
+
+modelmed = FDID(config)
+arcomed = modelmed.fit()
+```
+
+Where now the ATT is 11.64 and the $R^2=0.859$
 

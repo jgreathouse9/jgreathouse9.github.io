@@ -174,10 +174,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#barcelonas-ban-on-hotel-construction" id="toc-barcelonas-ban-on-hotel-construction" class="nav-link active" data-scroll-target="#barcelonas-ban-on-hotel-construction">Barcelona’s Ban on Hotel Construction</a></li>
-  <li><a href="#parallel-trends" id="toc-parallel-trends" class="nav-link" data-scroll-target="#parallel-trends">Parallel Trends</a>
-  <ul class="collapse">
-  <li><a href="#testing-parallel-trends" id="toc-testing-parallel-trends" class="nav-link" data-scroll-target="#testing-parallel-trends">Testing Parallel Trends</a></li>
-  </ul></li>
+  <li><a href="#parallel-trends" id="toc-parallel-trends" class="nav-link" data-scroll-target="#parallel-trends">Parallel Trends</a></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(6)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(3)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(2)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -240,18 +237,18 @@ window.Quarto = {
 </section>
 <section id="parallel-trends" class="level1">
 <h1>Parallel Trends</h1>
-<p>Let units be indexed by <span class="math inline">\(i\)</span> and time by <span class="math inline">\(t\)</span>. Let <span class="math inline">\(\mathcal{N}\)</span> be the set of all units and <span class="math inline">\(\mathcal{U}\)</span> be some subset of <span class="math inline">\(\mathcal{N}\)</span>. For our purposes, <span class="math inline">\(i = 0\)</span> denotes the treated unit, and <span class="math inline">\(i \in \mathcal{N} \setminus {0}\)</span> denotes the control group. Parallel trends for Difference-in-Differences (DID) can be formalized as:</p>
+<p>Let units be indexed by <span class="math inline">\(i\)</span> and time by <span class="math inline">\(t\)</span>. Let <span class="math inline">\(\mathcal{N}\)</span> be the set of all units. Let <span class="math inline">\(i = 0\)</span> denote the treated unit, and <span class="math inline">\(\mathcal{N}_0 \coloneqq \mathcal{N} \setminus {0}\)</span> denotes the control group. Further, denote <span class="math inline">\(\mathcal{U} \subset \mathcal{N}_0\)</span>. Parallel trends for Difference-in-Differences (DID) can be formalized as:</p>
 <p><span class="math display">\[
-\mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N},t-1}(0) \mid \mathcal{N}] = \alpha_{\mathcal{N}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{0t}(0) \mid \mathcal{N}] - \mathbb{E}[y_{\mathcal{N}t}(0) \mid \mathcal{N}_0] = \mathbb{E}[y_{0,t-1}(0) \mid \mathcal{N}_0] - \mathbb{E}[y_{\mathcal{N}_0,t-1}(0) \mid \mathcal{N}_0] = \alpha_{\mathcal{N}_0t}, \quad t = 2, \dots, T
 \]</span></p>
-<p>This is the difference between the treated unit, <span class="math inline">\(y_{0t}\)</span>, and the average of the control group, <span class="math inline">\(y_{\mathcal{N}t}\)</span>. If parallel trends hold perfectly, this difference would be constant at every time point in the time series. The degree to which this does not hold represents the bias due to violations of parallel trends. Algebraically, we can model this as:</p>
+<p>This is the difference between the treated unit, <span class="math inline">\(y_{0t}\)</span>, and the average of the control group, <span class="math inline">\(y_{\mathcal{N}_0t}\)</span>. If parallel trends hold perfectly, this difference would be constant at every time point in the time series. The degree to which this does not hold represents the bias due to violations of parallel trends. Algebraically, we can model this as:</p>
 <p><span class="math display">\[
-y_{0t} = \alpha_{\mathcal{N}t} + \bar{y}_{\mathcal{N}t}
+y_{0t} = \alpha_{\mathcal{N}_0t} + \bar{y}_{\mathcal{N}_0t}
 \]</span></p>
-<p>where <span class="math inline">\(\bar{y}_{\mathcal{N}t} = \frac{1}{|\mathcal{N}|} \sum_{i \in \mathcal{N}} y_{it}\)</span>. Here, we know the control group average, so we are estimating only a single parameter, the baseline difference, <span class="math inline">\(\alpha_{\mathcal{N}t}\)</span>. This is equivalent to the regression model used in synthetic control, except that the weights for the control units are proportional to the cardinality of the control group.</p>
+<p>where <span class="math inline">\(\bar{y}_{\mathcal{N}_0t} = \frac{1}{|\mathcal{N}_0|} \sum_{i \in \mathcal{N}_0} y_{it}\)</span>. Here, we know the control group average, so we are estimating only a single parameter, the baseline difference, <span class="math inline">\(\alpha_{\mathcal{N}_0t}\)</span>. This is equivalent to the regression model used in synthetic control, except that the weights for the control units are proportional to the cardinality of the control group.</p>
 <p>With Forward DID, our Parallel Trends Assumption (PTA) is that a subset of these units will better satisfy parallel trends:</p>
 <p><span class="math display">\[
-\mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{1,t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U},t-1}(0) \mid \mathcal{U}] = \alpha_{\mathcal{U}t}, \quad t = 2, \dots, T
+\mathbb{E}[y_{0t}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U}t}(0) \mid \mathcal{U}] = \mathbb{E}[y_{0,t-1}(0) \mid \mathcal{U}] - \mathbb{E}[y_{\mathcal{U},t-1}(0) \mid \mathcal{U}] = \alpha_{\mathcal{U}t}, \quad t = 2, \dots, T
 \]</span></p>
 <p>Our regression estimator is almost identical to the one above:</p>
 <p><span class="math display">\[
@@ -261,10 +258,8 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <p><span class="math display">\[
 \bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
 \]</span></p>
-<section id="testing-parallel-trends" class="level2">
-<h2 class="anchored" data-anchor-id="testing-parallel-trends">Testing Parallel Trends</h2>
 <p>One thing we can do to test parallel trends is to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).</p>
-<div id="47578a1e" class="cell" data-execution_count="1">
+<div id="769c783a" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -273,16 +268,15 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 </div>
 </div>
 </div>
-<p>This is the hotel prices of Barcelona (averaged over the week) compared to the average of control units.</p>
+<p>This is the hotel prices of Barcelona (averaged over the week) compared to the average of all 83 control units. Well, what can we take away from this? We can see that Barcelona differs quite a lot from the control group on levels, but what about on trends? Unfortunately, the trends also appear quite dissimilar. Barcelona has higher amplitude compared to the average of controls, as well as slightly higher variance. Thus, using all control units may not be sensible in this case to generate the counterfactual.</p>
 
 
 
-</section>
 </section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740492077152" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740493329954" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -306,7 +300,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740492077149" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740493329951" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -330,7 +324,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740492077150" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740493329952" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -354,7 +348,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740492077149" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740493329952" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -378,7 +372,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740492077149" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740493329952" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -404,7 +398,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1740492127213" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="5" data-listing-file-modified-sort="1740493377267" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

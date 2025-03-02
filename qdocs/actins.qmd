@@ -30,14 +30,19 @@ My issue with the post was this: the second you add the phrase "Impact X happene
 
 Before we get to the modeling (rest assured we will!) let's come up with a simple example. Suppose we work for Uber. Uber introduced Uber Green in September of 2020, as an initiative that is meant to (among other things) incentivize drivers to use electric cars/low emissions vehicles. For the purposes of this post, we'll be evaluating whether this policy in fact affected the number of drivers who use electric. Given this situation, we must roll out this intervention someplace first in order to see how it may work in other markets (say, Sayulita, Mexico), and we must generate a counterfactual. Or, the number of driver's who would've used electric cars, had we never rolled out Uber Green in this market at this time. In order to accomplish this task, I will use synthetic control based methodologies to estimate the impact. Of course, the goal here is to compute the average treatment effect on the treated, or the average of the differences between our treated unit and the out-of-sample predictions (post intervention period).
 
-## Simulating the Problem
+## Solving the Problem
+
+<details>
 
 Let $\mathcal{N}$ denote the set of cities indexed by $j$, where $N \coloneqq |\mathcal{N}|$ represents the total number of markets. Sayulita, the treated city, is indexed by $j = 1$, while the set of control cities is denoted by $\mathcal{N}_0 \coloneqq \mathcal{N} \setminus \{1\}$, with cardinality $N_0 \coloneqq |\mathcal{N}_0|$. Time periods are indexed by $t$, with pre-intervention periods $\mathcal{T}_1 \coloneqq \{1, 2, \dots, T_0\}$ and post-intervention periods $\mathcal{T}_2 \coloneqq \{T_0+1, \dots, T\}$, where $T_0$ is the last period before the intervention.
 
-For each market $j$, let $\mathbf{y}_j \coloneqq [y_{jt}, \dots, y_{jT}]^\top \in \mathbb{R}^{T}$ represent the vector of new drivers who use electric cars, where $y_{jt}$ denotes the number of weekly new drivers in market $j$ at time $t$. Let $\mathbf{Y}_0 \coloneqq (\mathbf{y}_j)_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$ be the matrix of control markets that did not do this intervention at this time.
+For each market $j$, let $\mathbf{y}_j \coloneqq [y_{jt}, \dots, y_{jT}]^\top \in \mathbb{R}^{T}$ represent the vector of new drivers who use electric cars, where $y_{jt}$ denotes the number of weekly new drivers in market $j$ at time $t$. Let $\mathbf{Y}_0 \coloneqq (\mathbf{y}_j)_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$ be the matrix of control markets that did not do this intervention at this time. To estimate the counterfactual new driver supply in Sayulita, we construct a synthetic control by taking some weighted average of the control markets based on their pre-intervention trends, $\hat{\mathbf{y}}_1(0) = \mathbf{Y}_0 \mathbf{w}^\top$, where $\mathbf{w} \in \mathbb{R}^{N_0}$ is a vector of weights assigned to the control cities. These weights are chosen to minimize some loss function. The treatment effect at time $t$ is then estimated as the difference between the observed and counterfactual outcomes, $\widehat{\Delta}_t \coloneqq y_{1t} - \hat{y}_{1t}(0)$. Our result of interest is the average of these treatment effects over the post-intervention period:
 
-<details>
-The observed driver supply in Sayulita follows a factor model:
+$$
+\widehat{ATT} \coloneqq \mathbb{E}_2[\widehat{\Delta}_t] = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \widehat{\Delta}_t.
+$$
+
+If the introduction of Uber Green in Sayulita leads to an increase in the number of new drivers who use electric vehicles, we expect $\widehat{\Delta}_t$, we can then comment on how this program may be applied to other areas.[^1]. The observed new drivers who use electric cars in Sayulita follows a factor model:
 
 $$
 \mathbf{y}_1 = \mathbf{\Gamma} \mathbf{F} + \boldsymbol{\nu}_1 + \boldsymbol{\delta} \mathbb{1}(t \geq T_0),
@@ -52,24 +57,160 @@ $$
 where $\rho$ is the autocorrelation parameter and $\boldsymbol{\eta}_t$ is a noise term. The idiosyncratic error term, $\boldsymbol{\nu}_1$, is assumed to follow a normal distribution with zero mean and variance $\sigma^2$, i.e., $\boldsymbol{\nu}_1 \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})$. The treatment effect vector $\boldsymbol{\delta} \coloneqq [\delta_{T_0+1}, \dots, \delta_T]^\top$ represents the change in driver supply due to the Uber Green intervention, which is assumed to affect Sayulita starting at time $T_0+1$.
 </details>
 
-To estimate the counterfactual new driver supply in Sayulita, we construct a synthetic control by taking a weighted average of the driver supply from the control markets:
+Let's begin by plotting our outcome.
 
-$$
-\hat{\mathbf{y}}_1(0) = \mathbf{Y}_0 \mathbf{w}^\top,
-$$
+```{python}
+#| fig-align: center
+#| echo: false
 
-where $\mathbf{w} \in \mathbb{R}^{N_0}$ is a vector of weights assigned to the control cities. These weights are chosen to minimize the difference between the pre-treatment trends of Sayulita and the synthetic control, ensuring that the control group closely matches the treated city before the intervention.
+import pandas as pd
+from mlsynth.mlsynth import TSSC, FDID, CLUSTERSC, dataprep
+import matplotlib
+import numpy as np
+import matplotlib.pyplot as plt
 
-The treatment effect at time $t$ is then estimated as the difference between the observed and counterfactual outcomes:
 
-$$
-\widehat{\Delta}_t \coloneqq y_{1t} - \hat{y}_{1t}(0).
-$$
+def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
+    """
+    Plots a single treated unit against the control group.
 
-Our ATT is given by the average of these treatment effects over the post-intervention period:
+    Parameters:
+    - donor_matrix (numpy.ndarray): A 2D array where each column represents a control unit.
+    - treated_vector (numpy.ndarray): A 1D array representing the treated unit.
+    - pre_periods (int): The cutoff time index for the pre-treatment period.
+    - title (str): The title of the plot.
+    """
 
-$$
-\widehat{ATT} \coloneqq \mathbb{E}_2[\widehat{\Delta}_t] = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \widehat{\Delta}_t.
-$$
+    # Indicate pre-treatment period cutoff
+    plt.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Treatment Date')
 
-If the introduction of Uber Green in Sayulita leads to an increase in the number of active drivers—particularly those with electric vehicles—relative to the synthetic control, we expect $\widehat{\Delta}_t$ to be positive and statistically significant, indicating that the program had a positive effect on driver supply in the treated city.
+    # Plot control group trajectories
+    plt.plot(donor_matrix, color='gray', linewidth=0.2, alpha=0.35, label='_nolegend_')
+
+    # Plot the average of control units
+    average_controls = donor_matrix.mean(axis=1)
+    plt.plot(average_controls, color='red', linewidth=1, label='Mean of Controls')
+
+    # Plot the treated unit
+    plt.plot(treated_vector, color='black', linewidth=2, label='Sayulita')
+
+    # Labels and legend
+    plt.title(title)
+    plt.xlabel('Time Periods')
+    plt.ylabel('New Drivers')
+    plt.legend()
+
+    plt.show()
+
+
+jared_theme = {
+    "axes.grid": False,
+    "grid.linestyle": "-",
+    "grid.color": "black",
+    "legend.framealpha": 1,
+    "legend.facecolor": "white",
+    "legend.shadow": True,
+    "legend.fontsize": 14,
+    "legend.title_fontsize": 16,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 14,
+    "axes.labelsize": 14,
+    "axes.titlesize": 20,
+    "figure.dpi": 120,
+    "axes.facecolor": "white",
+    "figure.figsize": (10, 5.5),
+}
+
+matplotlib.rcParams.update(jared_theme)
+
+np.random.seed(3111)
+
+# Parameters
+n_units = 100
+n_periods = 104
+n_factors = 12
+rho = 0.85
+sigma = 1.25
+
+treated_unit = 54
+treatment_period = 50
+treatment_effect = 15
+
+# List of Cities, for Monte Carlo Could simply be generalized to "Cities + n"
+cities = [
+    "São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
+    "Bogotá", "Santiago", "Caracas", "Guayaquil", "Quito",
+    "Brasília", "Montevideo", "Asunción", "El Paso", "Playa del Carmen",
+    "Medellín", "Porto Alegre", "Placencia", "Recife", "Salvador",
+    "Zihuatanejo", "San José", "Panama City", "Barranquilla", "Tegucigalpa",
+    "Foz do Iguaçu", "Maracaibo", "Rosario", "Maracay", "Antofagasta",
+    "San Pedro Sula", "San Juan", "Chihuahua", "Cayo District", "Maturín",
+    "Buzios", "Puebla", "Miami", "Arequipa", "Fernando de Noronha", "Guatemala City",
+    "Zacatecas", "Mérida", "Córdoba", "San Miguel", "Trujillo",
+    "Corozal Town", "Santa Cruz de la Sierra", "San Luis Potosí", "Jalapão", "Potosí",
+    "Tucumán", "Neuquén", "La Plata", "Sayulita", "Florianópolis", "Lagos de Moreno",
+    "La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
+    "Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
+    "San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
+    "Los Angeles", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
+    "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Vallarta", "Chiclayo", "Ambato",
+    "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
+    "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
+    "Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
+]
+
+# Setting the common factors
+common_factors = np.zeros((n_periods, n_factors))
+
+# Setting the common factors for period 1
+common_factors[0, :] = np.random.normal(0, 1, n_factors)
+
+for t in range(1, n_periods):
+    common_factors[t, :] = rho * common_factors[t-1, :] + np.random.normal(0, 1, n_factors)
+
+# Factor Loadings with error terms
+factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
+
+# Error term for model
+error_terms = np.random.normal(0, sigma, (n_periods, n_units))
+
+
+data = np.zeros((n_periods, n_units))
+
+for i in range(n_units):
+    data[:, i] = common_factors @ factor_loadings[i, :] + error_terms[:, i]+np.random.randint(40, 80)
+
+
+data[treatment_period:, treated_unit] += treatment_effect
+
+
+market_names = cities
+time = np.repeat(np.arange(1, n_periods+1), n_units)
+markets = np.tile(market_names, n_periods)
+
+# Reshape data into the correct format for DataFrame
+sales = data.flatten()
+
+indicator = np.where((markets ==cities[treated_unit]) & (time >= treatment_period), 1, 0)
+
+# Create DataFrame
+df = pd.DataFrame({
+    'Market': markets,
+    'Time': time,
+    'Drivers': sales,
+    'Uber Green': indicator
+})
+
+treat = "Uber Green"
+time = "Time"
+outcome = "Drivers"
+unitid = "Market"
+
+
+prepped = dataprep(df, unitid, time, outcome, treat)
+
+plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_periods"], "Sayulita vs. Controls")
+
+```
+
+[^1]: Here is the footnote.

@@ -277,9 +277,11 @@ We can see that both the Robust PCA Synthetic Control and the Robust Synthetic C
 #| fig-align: center
 #| echo: false
 
+from mlsynth.utils.estutils import Opt
+
 model_DID = FDID(config)
 
-arco = model_DID.fit()
+arcoDID = model_DID.fit()
 
 # Extract relevant metrics for FDID (index 0) and DID (index 1)
 results = {
@@ -289,14 +291,14 @@ results = {
         "Percent ATT"
     ],
     "FDID": [
-        arco[0]["FDID"]["Effects"].get("ATT", None),
-        arco[0]["FDID"]["Fit"].get("T0 RMSE", None),
-        arco[0]["FDID"]["Effects"].get("Percent ATT", None)
+        arcoDID[0]["FDID"]["Effects"].get("ATT", None),
+        arcoDID[0]["FDID"]["Fit"].get("T0 RMSE", None),
+        arcoDID[0]["FDID"]["Effects"].get("Percent ATT", None)
     ],
     "DID": [
-        arco[1]["DID"]["Effects"].get("ATT", None),
-        arco[1]["DID"]["Fit"].get("T0 RMSE", None),
-        arco[1]["DID"]["Effects"].get("Percent ATT", None)
+        arcoDID[1]["DID"]["Effects"].get("ATT", None),
+        arcoDID[1]["DID"]["Fit"].get("T0 RMSE", None),
+        arcoDID[1]["DID"]["Effects"].get("Percent ATT", None)
     ]
 }
 
@@ -305,6 +307,33 @@ results_df = pd.DataFrame(results)
 
 # Display the DataFrame
 display(results_df)
+
+
+# MA
+
+# Extract counterfactual estimates from each model
+cf_RSC = np.array(arco["RSC"]["Vectors"]["Counterfactual"])
+cf_RPCASC = np.array(arco["RPCASC"]["Vectors"]["Counterfactual"])
+cf_FDID = np.array(arcoDID[0]["FDID"]["Vectors"]["Counterfactual"])
+
+# Stack them into a matrix (T x 3), where T is the time dimension
+cf_matrix = np.column_stack((cf_RSC, cf_RPCASC, cf_FDID))
+
+# Extract pre-period data
+num_pre_periods = prepped["pre_periods"]
+y_pre = prepped["y"][:num_pre_periods]  # Observed treated unit outcome in pre-period
+Y_pre = cf_matrix[:num_pre_periods, :] # Pre-period counterfactuals
+
+# Run the optimizer using SIMPLEX model
+beta_value = Opt.SCopt(len(Y_pre), y_pre, num_pre_periods, Y_pre, model="SIMPLEX")
+
+# Compute the final averaged counterfactual
+cf_final = np.dot(cf_matrix, beta_value)
+
+# Print results
+print("Optimal Weights:", beta_value)
+
+
 
 ```
 

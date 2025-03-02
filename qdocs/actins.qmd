@@ -321,7 +321,7 @@ cf_matrix = np.column_stack((cf_RSC, cf_RPCASC, cf_FDID))
 
 # Extract pre-period data
 num_pre_periods = prepped["pre_periods"]
-y_pre = prepped["y"][:num_pre_periods].reshape(-1, 1)
+y_pre = prepped["y"][:num_pre_periods]
 Y_pre = cf_matrix[:num_pre_periods, :]  # (num_pre_periods, 3)
 
 # Print dimensions of the pre-period data and counterfactual matrix
@@ -338,7 +338,7 @@ print("Dimensions of cf_matrix:", cf_matrix.shape)  # Should be (T, 3)
 
 
 # Run the optimizer using SIMPLEX model
-beta_value = Opt.SCopt(len(Y_pre), y_pre, num_pre_periods, Y_pre.T, model="SIMPLEX")
+beta_value = Opt.SCopt(len(Y_pre), y_pre, num_pre_periods, Y_pre, model="SIMPLEX")
 
 # Compute the final averaged counterfactual
 cf_final = np.dot(Y_pre, beta_value)

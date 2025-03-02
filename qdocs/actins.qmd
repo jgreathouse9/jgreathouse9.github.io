@@ -57,7 +57,7 @@ $$
 where $\rho$ is the autocorrelation parameter and $\boldsymbol{\eta}_t$ is a noise term. The idiosyncratic error term, $\boldsymbol{\nu}_1$, is assumed to follow a normal distribution with zero mean and variance $\sigma^2$, i.e., $\boldsymbol{\nu}_1 \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})$. The treatment effect vector $\boldsymbol{\delta} \coloneqq [\delta_{T_0+1}, \dots, \delta_T]^\top$ represents the change in driver supply due to the Uber Green intervention, which is assumed to affect Sayulita starting at time $T_0+1$.
 </details>
 
-Let's begin by plotting our outcome.
+Let's begin by plotting our outcome. The plot depicts the weekly new Uber drivers who have switched to electric vehicles. Sayulita is our target unit in black, the average of the control group is the thin red line, and the thin grey line are our donors that didn't enact the intervention.
 
 ```{python}
 #| fig-align: center
@@ -227,7 +227,9 @@ plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_per
 
 ```
 
-Here is our plot... Now to study this...
+A few things are apparent: for one, the parallel trends assumption doesn't apply here across the 75 pre-treatment periods. The mean of controls doesn't mirror the trend of Sayilita, suggesting that the time effects are not common across all units (no, instead, the time effects depend on unit specific factors). So, we must use something a little more sophisticated than the standard Difference-in-Differences method. Furthermore, these donors have pretty noisy outcome series. So, vanilla SCM may not be a good estimator either. Fortunately, we can exploit the low rank structure of our control group and use that to learn the weights which reconstructs the pre-intervention time series for our treated unit. I've written more about this [here](https://jgreathouse9.github.io/docs/clustsc.html). Basically, we denoise the data via PCA or functional analysis, and cluster over the functional representation of control units or their right singular values, and extract the donor pool from this low-rank representation. We can then use principal component regression or robust principal component regression to learn our unit weights. 
+
+When we do this, we obtain these predictions, of course using my ```mlsynth``` to fit the pre-intervention period.
 
 ```{python}
 #| fig-align: center

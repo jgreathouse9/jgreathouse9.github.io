@@ -281,22 +281,22 @@ model_DID = FDID(config)
 
 arco = model_DID.fit()
 
-# Extract relevant metrics for FDID and DID
-
+# Extract relevant metrics for FDID (index 0) and DID (index 1)
 results = {
     "Metric": [
-        "ATT (FDID)", "ATT (DID)", 
-        "R-Squared (FDID)", "R-Squared (DID)", 
-        "Weights (FDID)", "Weights (DID)"
+        "ATT", 
+        "Pre-Treatment RMSE", 
+        "Percent ATT"
     ],
     "FDID": [
-        arco[0]["FDID"]["Effects"]["ATT"],
-        arco[0]["FDID"]["Fit"]["R-Squared"],
-        ', '.join(set(arco[0]["FDID"]["Weights"].keys()))
+        arco[0]["FDID"]["Effects"].get("ATT", None),
+        arco[0]["FDID"]["Fit"].get("T0 RMSE", None),
+        arco[0]["FDID"]["Effects"].get("Percent ATT", None)
     ],
     "DID": [
-        arco[1]["DID"]["Effects"]["ATT"],
-        arco[1]["DID"]["Fit"]["R-Squared"]
+        arco[1]["DID"]["Effects"].get("ATT", None),
+        arco[1]["DID"]["Fit"].get("T0 RMSE", None),
+        arco[1]["DID"]["Effects"].get("Percent ATT", None)
     ]
 }
 

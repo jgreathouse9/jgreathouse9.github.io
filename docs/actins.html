@@ -178,7 +178,7 @@ window.Quarto = {
   <li><a href="#actionable-insights-econometrics-style" id="toc-actionable-insights-econometrics-style" class="nav-link" data-scroll-target="#actionable-insights-econometrics-style">Actionable Insights, Econometrics Style</a>
   <ul class="collapse">
   <li><a href="#defining-the-problem" id="toc-defining-the-problem" class="nav-link" data-scroll-target="#defining-the-problem">Defining the Problem</a></li>
-  <li><a href="#simulating-the-problem" id="toc-simulating-the-problem" class="nav-link" data-scroll-target="#simulating-the-problem">Simulating the Problem</a></li>
+  <li><a href="#solving-the-problem" id="toc-solving-the-problem" class="nav-link" data-scroll-target="#solving-the-problem">Solving the Problem</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -248,12 +248,15 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="defining-the-problem">Defining the Problem</h2>
 <p>Before we get to the modeling (rest assured we will!) let’s come up with a simple example. Suppose we work for Uber. Uber introduced Uber Green in September of 2020, as an initiative that is meant to (among other things) incentivize drivers to use electric cars/low emissions vehicles. For the purposes of this post, we’ll be evaluating whether this policy in fact affected the number of drivers who use electric. Given this situation, we must roll out this intervention someplace first in order to see how it may work in other markets (say, Sayulita, Mexico), and we must generate a counterfactual. Or, the number of driver’s who would’ve used electric cars, had we never rolled out Uber Green in this market at this time. In order to accomplish this task, I will use synthetic control based methodologies to estimate the impact. Of course, the goal here is to compute the average treatment effect on the treated, or the average of the differences between our treated unit and the out-of-sample predictions (post intervention period).</p>
 </section>
-<section id="simulating-the-problem" class="level2">
-<h2 class="anchored" data-anchor-id="simulating-the-problem">Simulating the Problem</h2>
-<p>Let <span class="math inline">\(\mathcal{N}\)</span> denote the set of cities indexed by <span class="math inline">\(j\)</span>, where <span class="math inline">\(N \coloneqq |\mathcal{N}|\)</span> represents the total number of markets. Sayulita, the treated city, is indexed by <span class="math inline">\(j = 1\)</span>, while the set of control cities is denoted by <span class="math inline">\(\mathcal{N}_0 \coloneqq \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0 \coloneqq |\mathcal{N}_0|\)</span>. Time periods are indexed by <span class="math inline">\(t\)</span>, with pre-intervention periods <span class="math inline">\(\mathcal{T}_1 \coloneqq \{1, 2, \dots, T_0\}\)</span> and post-intervention periods <span class="math inline">\(\mathcal{T}_2 \coloneqq \{T_0+1, \dots, T\}\)</span>, where <span class="math inline">\(T_0\)</span> is the last period before the intervention.</p>
-<p>For each market <span class="math inline">\(j\)</span>, let <span class="math inline">\(\mathbf{y}_j \coloneqq [y_{jt}, \dots, y_{jT}]^\top \in \mathbb{R}^{T}\)</span> represent the vector of new drivers who use electric cars, where <span class="math inline">\(y_{jt}\)</span> denotes the number of weekly new drivers in market <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. Let <span class="math inline">\(\mathbf{Y}_0 \coloneqq (\mathbf{y}_j)_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span> be the matrix of control markets that did not do this intervention at this time.</p>
+<section id="solving-the-problem" class="level2">
+<h2 class="anchored" data-anchor-id="solving-the-problem">Solving the Problem</h2>
 <details>
-<p>The observed driver supply in Sayulita follows a factor model:</p>
+<p>Let <span class="math inline">\(\mathcal{N}\)</span> denote the set of cities indexed by <span class="math inline">\(j\)</span>, where <span class="math inline">\(N \coloneqq |\mathcal{N}|\)</span> represents the total number of markets. Sayulita, the treated city, is indexed by <span class="math inline">\(j = 1\)</span>, while the set of control cities is denoted by <span class="math inline">\(\mathcal{N}_0 \coloneqq \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0 \coloneqq |\mathcal{N}_0|\)</span>. Time periods are indexed by <span class="math inline">\(t\)</span>, with pre-intervention periods <span class="math inline">\(\mathcal{T}_1 \coloneqq \{1, 2, \dots, T_0\}\)</span> and post-intervention periods <span class="math inline">\(\mathcal{T}_2 \coloneqq \{T_0+1, \dots, T\}\)</span>, where <span class="math inline">\(T_0\)</span> is the last period before the intervention.</p>
+<p>For each market <span class="math inline">\(j\)</span>, let <span class="math inline">\(\mathbf{y}_j \coloneqq [y_{jt}, \dots, y_{jT}]^\top \in \mathbb{R}^{T}\)</span> represent the vector of new drivers who use electric cars, where <span class="math inline">\(y_{jt}\)</span> denotes the number of weekly new drivers in market <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. Let <span class="math inline">\(\mathbf{Y}_0 \coloneqq (\mathbf{y}_j)_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span> be the matrix of control markets that did not do this intervention at this time. To estimate the counterfactual new driver supply in Sayulita, we construct a synthetic control by taking some weighted average of the control markets based on their pre-intervention trends, <span class="math inline">\(\hat{\mathbf{y}}_1(0) = \mathbf{Y}_0 \mathbf{w}^\top\)</span>, where <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> is a vector of weights assigned to the control cities. These weights are chosen to minimize some loss function. The treatment effect at time <span class="math inline">\(t\)</span> is then estimated as the difference between the observed and counterfactual outcomes, <span class="math inline">\(\widehat{\Delta}_t \coloneqq y_{1t} - \hat{y}_{1t}(0)\)</span>. Our result of interest is the average of these treatment effects over the post-intervention period:</p>
+<p><span class="math display">\[
+\widehat{ATT} \coloneqq \mathbb{E}_2[\widehat{\Delta}_t] = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \widehat{\Delta}_t.
+\]</span></p>
+<p>If the introduction of Uber Green in Sayulita leads to an increase in the number of new drivers who use electric vehicles, we expect <span class="math inline">\(\widehat{\Delta}_t\)</span>, we can then comment on how this program may be applied to other areas.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The observed new drivers who use electric cars in Sayulita follows a factor model:</p>
 <p><span class="math display">\[
 \mathbf{y}_1 = \mathbf{\Gamma} \mathbf{F} + \boldsymbol{\nu}_1 + \boldsymbol{\delta} \mathbb{1}(t \geq T_0),
 \]</span></p>
@@ -263,29 +266,26 @@ window.Quarto = {
 \]</span></p>
 where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter and <span class="math inline">\(\boldsymbol{\eta}_t\)</span> is a noise term. The idiosyncratic error term, <span class="math inline">\(\boldsymbol{\nu}_1\)</span>, is assumed to follow a normal distribution with zero mean and variance <span class="math inline">\(\sigma^2\)</span>, i.e., <span class="math inline">\(\boldsymbol{\nu}_1 \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})\)</span>. The treatment effect vector <span class="math inline">\(\boldsymbol{\delta} \coloneqq [\delta_{T_0+1}, \dots, \delta_T]^\top\)</span> represents the change in driver supply due to the Uber Green intervention, which is assumed to affect Sayulita starting at time <span class="math inline">\(T_0+1\)</span>.
 </details>
-<p>To estimate the counterfactual new driver supply in Sayulita, we construct a synthetic control by taking a weighted average of the driver supply from the control markets:</p>
-<p><span class="math display">\[
-\hat{\mathbf{y}}_1(0) = \mathbf{Y}_0 \mathbf{w}^\top,
-\]</span></p>
-<p>where <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> is a vector of weights assigned to the control cities. These weights are chosen to minimize the difference between the pre-treatment trends of Sayulita and the synthetic control, ensuring that the control group closely matches the treated city before the intervention.</p>
-<p>The treatment effect at time <span class="math inline">\(t\)</span> is then estimated as the difference between the observed and counterfactual outcomes:</p>
-<p><span class="math display">\[
-\widehat{\Delta}_t \coloneqq y_{1t} - \hat{y}_{1t}(0).
-\]</span></p>
-<p>Our ATT is given by the average of these treatment effects over the post-intervention period:</p>
-<p><span class="math display">\[
-\widehat{ATT} \coloneqq \mathbb{E}_2[\widehat{\Delta}_t] = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \widehat{\Delta}_t.
-\]</span></p>
-<p>If the introduction of Uber Green in Sayulita leads to an increase in the number of active drivers—particularly those with electric vehicles—relative to the synthetic control, we expect <span class="math inline">\(\widehat{\Delta}_t\)</span> to be positive and statistically significant, indicating that the program had a positive effect on driver supply in the treated city.</p>
+<p>Let’s begin by plotting our outcome.</p>
+<div id="7fd7f84c" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="actins_files/figure-html/cell-2-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1039" height="627"></p>
+</figure>
+</div>
+</div>
+</div>
 
 
 
 </section>
 </section>
+
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740934164525" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740936579078" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -309,7 +309,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740934164522" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740936579075" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -333,7 +333,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740934164522" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740936579075" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -357,7 +357,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740934164522" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740936579075" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -381,7 +381,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740934164522" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740936579075" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -407,7 +407,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1740934164522" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1740936579075" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -433,7 +433,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1740934208527" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1740936631765" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>
@@ -449,7 +449,12 @@ Jared Greathouse
 </div>
 </div>
 <div class="listing-no-matching d-none">No matching items</div>
-</div></main> <!-- /main -->
+</div><div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Here is the footnote.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

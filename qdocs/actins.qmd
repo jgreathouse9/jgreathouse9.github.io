@@ -324,6 +324,19 @@ num_pre_periods = prepped["pre_periods"]
 y_pre = prepped["y"][:num_pre_periods].reshape(-1, 1)
 Y_pre = cf_matrix[:num_pre_periods, :]  # (num_pre_periods, 3)
 
+# Print dimensions of the pre-period data and counterfactual matrix
+print("Dimensions of y_pre:", y_pre.shape)  # Should be (num_pre_periods, 1)
+print("Dimensions of Y_pre:", Y_pre.shape)  # Should be (num_pre_periods, 3)
+
+# Print dimensions of counterfactual estimates
+print("Dimensions of cf_RSC:", cf_RSC.shape)
+print("Dimensions of cf_RPCASC:", cf_RPCASC.shape)
+print("Dimensions of cf_FDID:", cf_FDID.shape)
+
+# Print dimensions of the stacked counterfactual matrix
+print("Dimensions of cf_matrix:", cf_matrix.shape)  # Should be (T, 3)
+
+
 # Run the optimizer using SIMPLEX model
 beta_value = Opt.SCopt(len(Y_pre), Y_pre, num_pre_periods, Y_pre, model="SIMPLEX")
 

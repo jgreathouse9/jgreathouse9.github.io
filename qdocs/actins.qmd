@@ -275,6 +275,7 @@ We can see that both the Robust PCA Synthetic Control and the Robust Synthetic C
 
 ```{python}
 #| fig-align: center
+#| echo: false
 
 from mlsynth.utils.estutils import Opt
 from sklearn.metrics import mean_squared_error
@@ -308,40 +309,49 @@ results_df = pd.DataFrame(results)
 
 # Display the DataFrame
 display(results_df)
+```
 
+Here we plot the results of the standard Difference-in-Differences design and the Forward DID method. As we can see, parallel pre-intervention trends doesn't hold at all. The selected parallel trends made by FDID is a lot more sensible in this instance, fitting as well as the synthetic control methods as above.
 
-# MA
+Just to go really crazy, I decided to combine my estimates.
+
+```{python}
+#| fig-align: center
+#| echo: false
 
 # Extract counterfactual estimates from each model
+
 cf_RSC = np.array(arco["RSC"]["Vectors"]["Counterfactual"])
+
+
 cf_RPCASC = np.array(arco["RPCASC"]["Vectors"]["Counterfactual"])
+
+
 cf_FDID = np.array(arcoDID[0]["FDID"]["Vectors"]["Counterfactual"])
 
-# Stack them into a matrix (T x 3), where T is the time dimension
 cf_matrix = np.column_stack((cf_RSC, cf_RPCASC, cf_FDID))
 
-# Extract pre-period data
 num_pre_periods = prepped["pre_periods"]
+
 y_pre = prepped["y"][:num_pre_periods].flatten()
-Y_pre = cf_matrix[:num_pre_periods, :]  # (num_pre_periods, 3)
+
+Y_pre = cf_matrix[:num_pre_periods, :]
 
 # Run the optimizer using SIMPLEX model
+
 beta_value = Opt.SCopt(len(Y_pre[1]), y_pre, num_pre_periods, Y_pre, model="SIMPLEX")
 
-# Compute the final averaged counterfactual
 cf_final = np.dot(cf_matrix, beta_value)
 
 print("Optimal Weights:", np.round(beta_value, 4))
 
-# Compute RMSE for pre-treatment period
 rmse_pre_treatment = np.sqrt(mean_squared_error(y_pre, cf_matrix[:num_pre_periods, :]))
 
-# Print the RMSE
 print("Pre-treatment RMSE:", rmse_pre_treatment)
 
 ```
 
-Here we plot the results of the standard Difference-in-Differences design and the Forward DID method. As we can see, parallel pre-intervention trends doesn't hold at all. The selected parallel trends made by FDID is a lot more sensible in this instance, fitting as well as the synthetic control methods as above.
+MA
 
 ## Delivering Actionable Insights
 

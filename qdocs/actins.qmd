@@ -250,7 +250,7 @@ arco = model.fit()
 
 # Extract results from the fit
 metrics_data = {
-    "Metric": ["T0 RMSE", "ATT", "Percent ATT"],
+    "Metric": ["Pre-Treatment RMSE", "ATT", "Percent ATT"],
     "RSC": [
         arco["RSC"]["Fit"].get("T0 RMSE", None),
         arco["RSC"]["Effects"].get("ATT", None),
@@ -271,6 +271,45 @@ display(metrics_df)
 
 ```
 
+We can see that both the Robust PCA Synthetic Control and the Robust Synthetic Control/Principal Component Regression methods fit Sayulita quite well in the pre-intervention period. They also have very similar ATTs, suggesting that Uber Green increased new electric vehicle use amongst its drivers by anywhere from 22.473 to 26.425 percent. The normal ATTs are also pretty close to the what I simulated, an ATT of 15. Next, I'll simulate the ATT using Forward Difference-in-Differences.
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+model_DID = FDID(config)
+
+arco = model_DID.fit()
+
+# Extract relevant metrics for FDID and DID
+
+results = {
+    "Metric": [
+        "ATT (FDID)", "ATT (DID)", 
+        "R-Squared (FDID)", "R-Squared (DID)", 
+        "Weights (FDID)", "Weights (DID)"
+    ],
+    "FDID": [
+        arco[0]["FDID"]["Effects"]["ATT"],
+        arco[0]["FDID"]["Fit"]["R-Squared"],
+        ', '.join(set(arco[0]["FDID"]["Weights"].keys()))
+    ],
+    "DID": [
+        arco[1]["DID"]["Effects"]["ATT"],
+        arco[1]["DID"]["Fit"]["R-Squared"]
+    ]
+}
+
+# Convert to DataFrame
+results_df = pd.DataFrame(results)
+
+# Display the DataFrame
+display(results_df)
+
+
+```
+
+Here we plot the results of the standard Difference-in-Differences design and the Forward DID method.
 
 
 [^1]: Here is the footnote.

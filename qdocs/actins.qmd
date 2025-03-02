@@ -26,22 +26,50 @@ My issue with the post was this: the second you add the phrase "Impact X happene
 
 # Actionable Insights, Econometrics Style
 
-a factor model structure with a treatment intervention at a specific time period. Let $\mathbf{Y}_{t}$ be the $n \times 1$ vector of observed outcomes (e.g., sales) for \(n\) markets at time \(t\), and let \(\mathbf{F}_{t}\) be a \(k \times 1\) vector of unobserved common factors. The factor model is given by:  
+## Defining the Problem
+
+Before we get to the modeling (rest assured we will!) let's come up with a simple example. Suppose we work for Uber. Uber introduced Uber Green in September of 2020, as an initiative that is meant to (among other things) incentivize drivers to use electric cars/low emissions vehicles. For the purposes of this post, we'll be evaluating whether this policy in fact affected the number of drivers who use electric. Given this situation, we must roll out this intervention someplace first in order to see how it may work in other markets (say, Sayulita, Mexico), and we must generate a counterfactual. Or, the number of driver's who would've used electric cars, had we never rolled out Uber Green in this market at this time. In order to accomplish this task, I will use synthetic control based methodologies to estimate the impact. Of course, the goal here is to compute the average treatment effect on the treated, or the average of the differences between our treated unit and the out-of-sample predictions (post intervention period).
+
+## Simulating the Problem
+
+Let $\mathcal{N}$ denote the set of cities indexed by $j$, where $N \coloneqq |\mathcal{N}|$ represents the total number of markets. Sayulita, the treated city, is indexed by $j = 1$, while the set of control cities is denoted by $\mathcal{N}_0 \coloneqq \mathcal{N} \setminus \{1\}$, with cardinality $N_0 \coloneqq |\mathcal{N}_0|$. Time periods are indexed by $t$, with pre-intervention periods $\mathcal{T}_1 \coloneqq \{1, 2, \dots, T_0\}$ and post-intervention periods $\mathcal{T}_2 \coloneqq \{T_0+1, \dots, T\}$, where $T_0$ is the last period before the intervention.
+
+For each market $j$, let $\mathbf{y}_j \coloneqq [y_{jt}, \dots, y_{jT}]^\top \in \mathbb{R}^{T}$ represent the vector of new drivers who use electric cars, where $y_{jt}$ denotes the number of weekly new drivers in market $j$ at time $t$. Let $\mathbf{Y}_0 \coloneqq (\mathbf{y}_j)_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$ be the matrix of control markets that did not do this intervention at this time.
+
+<details>
+The observed driver supply in Sayulita follows a factor model:
 
 $$
-\mathbf{y}_{j} = \mathbf{\Lambda} \mathbf{F}_{t} + \boldsymbol{\epsilon}_{t}
+\mathbf{y}_1 = \mathbf{\Gamma} \mathbf{F} + \boldsymbol{\nu}_1 + \boldsymbol{\delta} \mathbb{1}(t \geq T_0),
 $$
 
-where $\mathbf{\Lambda}$ is an $n \times k$ matrix of factor loadings, and $\boldsymbol{\epsilon}_{t} \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I}_n)$ is an idiosyncratic error term. The common factors evolve according to an autoregressive process:  
+where $\mathbf{\Gamma} \in \mathbb{R}^{1 \times k}$ represents the factor loadings, $\mathbf{F} \in \mathbb{R}^{k \times T}$ is the matrix of latent common factors, and the factors evolve as:
 
 $$
-\mathbf{F}_{t} = \rho \mathbf{F}_{t-1} + \boldsymbol{\eta}_{t}, \quad \boldsymbol{\eta}_{t} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}_k).
+\mathbf{F}_t = \rho \mathbf{F}_{t-1} + \boldsymbol{\eta}_t, \quad \boldsymbol{\eta}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{I}_k),
 $$
 
-The observed sales data for any given unit is a vector, $\mathbf{y}_{j}$, generated as a function of these latent factors and the idiosyncratic shocks. The treated unit, indexed by $i=0$, receives a treatment effect $\tau$ starting at time $T_0$:  
+where $\rho$ is the autocorrelation parameter and $\boldsymbol{\eta}_t$ is a noise term. The idiosyncratic error term, $\boldsymbol{\nu}_1$, is assumed to follow a normal distribution with zero mean and variance $\sigma^2$, i.e., $\boldsymbol{\nu}_1 \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})$. The treatment effect vector $\boldsymbol{\delta} \coloneqq [\delta_{T_0+1}, \dots, \delta_T]^\top$ represents the change in driver supply due to the Uber Green intervention, which is assumed to affect Sayulita starting at time $T_0+1$.
+</details>
+
+To estimate the counterfactual new driver supply in Sayulita, we construct a synthetic control by taking a weighted average of the driver supply from the control markets:
 
 $$
-y_{0t} = \Lambda_{0} \mathbf{F}_{t} + \epsilon_{0t} + \tau \mathbb{1}(t \geq T_0).
+\hat{\mathbf{y}}_1(0) = \mathbf{Y}_0 \mathbf{w}^\top,
 $$
 
+where $\mathbf{w} \in \mathbb{R}^{N_0}$ is a vector of weights assigned to the control cities. These weights are chosen to minimize the difference between the pre-treatment trends of Sayulita and the synthetic control, ensuring that the control group closely matches the treated city before the intervention.
 
+The treatment effect at time $t$ is then estimated as the difference between the observed and counterfactual outcomes:
+
+$$
+\widehat{\Delta}_t \coloneqq y_{1t} - \hat{y}_{1t}(0).
+$$
+
+Our ATT is given by the average of these treatment effects over the post-intervention period:
+
+$$
+\widehat{ATT} \coloneqq \mathbb{E}_2[\widehat{\Delta}_t] = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \widehat{\Delta}_t.
+$$
+
+If the introduction of Uber Green in Sayulita leads to an increase in the number of active drivers—particularly those with electric vehicles—relative to the synthetic control, we expect $\widehat{\Delta}_t$ to be positive and statistically significant, indicating that the program had a positive effect on driver supply in the treated city.

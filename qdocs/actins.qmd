@@ -69,8 +69,7 @@ from mlsynth.mlsynth import TSSC, FDID, CLUSTERSC, dataprep
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-
-
+from IPython.display import display, Markdown
 
 # Custom theme to mimic Uber's style
 ubertheme = {
@@ -249,6 +248,22 @@ model = CLUSTERSC(config)
 
 arco = model.fit()
 
+# Extract results from the fit
+T0_RMSE_RSC = arco["RSC"]["Fit"].get("T0 RMSE", None)
+T0_RMSE_RPCASC = arco["RPCASC"]["Fit"].get("T0 RMSE", None)
+
+# Extract ATT and Percent ATT from the Effects dictionary
+ATT_RSC = arco["RSC"]["Effects"].get("ATT", None)
+ATT_RPCASC = arco["RPCASC"]["Effects"].get("ATT", None)
+
+Percent_ATT_RSC = arco["RSC"]["Effects"].get("Percent ATT", None)
+Percent_ATT_RPCASC = arco["RPCASC"]["Effects"].get("Percent ATT", None)
+
+# Display the table
+display(Markdown(table_md))
+
 ```
+
+
 
 [^1]: Here is the footnote.

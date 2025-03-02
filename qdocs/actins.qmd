@@ -63,44 +63,47 @@ Let's begin by plotting our outcome.
 #| fig-align: center
 #| echo: false
 
+
 import pandas as pd
 from mlsynth.mlsynth import TSSC, FDID, CLUSTERSC, dataprep
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+
+
 
 # Custom theme to mimic Uber's style
 ubertheme = {
-    'axes.grid': True, 
+    'axes.grid': True,
     'grid.linestyle': '--',
     'legend.framealpha': 1,
-    'legend.facecolor': 'white', 
-    'legend.shadow': True, 
-    'legend.fontsize': 14, 
+    'legend.facecolor': 'white',
+    'legend.shadow': True,
+    'legend.fontsize': 14,
     'legend.title_fontsize': 16,
     'xtick.labelsize': 14,
-    'ytick.labelsize': 14, 
-    'axes.labelsize': 16, 
-    'axes.titlesize': 20, 
-    'figure.dpi': 100, 
-    'axes.facecolor': 'white', 
-    'axes.edgecolor': 'black', 
-    'axes.linewidth': 1, 
+    'ytick.labelsize': 14,
+    'axes.labelsize': 16,
+    'axes.titlesize': 20,
+    'figure.dpi': 100,
+    'axes.facecolor': 'white',
+    'axes.edgecolor': 'black',
+    'axes.linewidth': 1,
     'axes.grid': True,
     'grid.color': 'gray',
     'grid.linewidth': 0.5,
-    'font.family': 'sans-serif', 
+    'font.family': 'sans-serif',
     'font.sans-serif': ['Helvetica', 'Arial'],
     'xtick.direction': 'in',
     'ytick.direction': 'in',
-    'xtick.major.size': 5, 
+    'xtick.major.size': 5,
     'ytick.major.size': 5,
-    'axes.titleweight': 'bold', 
-    'axes.labelweight': 'bold', 
+    'axes.titleweight': 'bold',
+    'axes.labelweight': 'bold',
 }
 
+# Apply the custom theme
 matplotlib.rcParams.update(ubertheme)
-
 
 def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
     """
@@ -134,7 +137,6 @@ def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
 
     plt.show()
 
-
 np.random.seed(3111)
 
 # Parameters
@@ -146,29 +148,29 @@ sigma = 1.25
 
 treated_unit = 54
 treatment_period = 76
-treatment_effect = 25
+treatment_effect = 15
 
 # List of Cities, for Monte Carlo Could simply be generalized to "Cities + n"
 cities = [
-"São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
-"Bogotá", "Santiago", "Caracas", "Guayaquil", "Quito",
-"Brasília", "Montevideo", "Asunción", "El Paso", "Playa del Carmen",
-"Medellín", "Porto Alegre", "Placencia", "Recife", "Salvador",
-"Zihuatanejo", "San José", "Panama City", "Barranquilla", "Tegucigalpa",
-"Foz do Iguaçu", "Maracaibo", "Rosario", "Maracay", "Antofagasta",
-"San Pedro Sula", "San Juan", "Chihuahua", "Cayo District", "Maturín",
-"Buzios", "Puebla", "Miami", "Arequipa", "Fernando de Noronha", "Guatemala City",
-"Zacatecas", "Mérida", "Córdoba", "San Miguel", "Trujillo",
-"Corozal Town", "Santa Cruz de la Sierra", "San Luis Potosí", "Jalapão", "Potosí",
-"Tucumán", "Neuquén", "La Plata", "Sayulita", "Florianópolis", "Lagos de Moreno",
-"La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
-"Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
-"San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
-"Los Angeles", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
-"Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Vallarta", "Chiclayo", "Ambato",
-"Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
-"Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
-"Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
+    "São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
+    "Bogotá", "Santiago", "Caracas", "Guayaquil", "Quito",
+    "Brasília", "Montevideo", "Asunción", "El Paso", "Playa del Carmen",
+    "Medellín", "Porto Alegre", "Placencia", "Recife", "Salvador",
+    "Zihuatanejo", "San José", "Panama City", "Barranquilla", "Tegucigalpa",
+    "Foz do Iguaçu", "Maracaibo", "Rosario", "Maracay", "Antofagasta",
+    "San Pedro Sula", "San Juan", "Chihuahua", "Cayo District", "Maturín",
+    "Buzios", "Puebla", "Miami", "Arequipa", "Fernando de Noronha", "Guatemala City",
+    "Zacatecas", "Mérida", "Córdoba", "San Miguel", "Trujillo",
+    "Corozal Town", "Santa Cruz de la Sierra", "San Luis Potosí", "Jalapão", "Potosí",
+    "Tucumán", "Neuquén", "La Plata", "Sayulita", "Florianópolis", "Lagos de Moreno",
+    "La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
+    "Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
+    "San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
+    "Los Angeles", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
+    "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Vallarta", "Chiclayo", "Ambato",
+    "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
+    "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
+    "Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
 ]
 
 # Setting the common factors
@@ -178,7 +180,7 @@ common_factors = np.zeros((n_periods, n_factors))
 common_factors[0, :] = np.random.normal(0, 1, n_factors)
 
 for t in range(1, n_periods):
-common_factors[t, :] = rho * common_factors[t-1, :] + np.random.normal(0, 1, n_factors)
+    common_factors[t, :] = rho * common_factors[t-1, :] + np.random.normal(0, 1, n_factors)
 
 # Factor Loadings with error terms
 factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
@@ -190,7 +192,7 @@ error_terms = np.random.normal(0, sigma, (n_periods, n_units))
 data = np.zeros((n_periods, n_units))
 
 for i in range(n_units):
-data[:, i] = common_factors @ factor_loadings[i, :] + error_terms[:, i]+np.random.randint(40, 80)
+    data[:, i] = common_factors @ factor_loadings[i, :] + error_terms[:, i]+np.random.randint(40, 80)
 
 
 data[treatment_period:, treated_unit] += treatment_effect
@@ -201,16 +203,16 @@ time = np.repeat(np.arange(1, n_periods+1), n_units)
 markets = np.tile(market_names, n_periods)
 
 # Reshape data into the correct format for DataFrame
-drivers = data.flatten()
+sales = data.flatten()
 
 indicator = np.where((markets ==cities[treated_unit]) & (time >= treatment_period), 1, 0)
 
 # Create DataFrame
 df = pd.DataFrame({
-'Market': markets,
-'Time': time,
-'Drivers': drivers,
-'Uber Green': indicator
+    'Market': markets,
+    'Time': time,
+    'Drivers': sales,
+    'Uber Green': indicator
 })
 
 treat = "Uber Green"
@@ -222,6 +224,7 @@ unitid = "Market"
 prepped = dataprep(df, unitid, time, outcome, treat)
 
 plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_periods"], "Sayulita vs. Controls")
+
 
 ```
 

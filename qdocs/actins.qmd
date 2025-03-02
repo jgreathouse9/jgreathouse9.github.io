@@ -249,18 +249,25 @@ model = CLUSTERSC(config)
 arco = model.fit()
 
 # Extract results from the fit
-T0_RMSE_RSC = arco["RSC"]["Fit"].get("T0 RMSE", None)
-T0_RMSE_RPCASC = arco["RPCASC"]["Fit"].get("T0 RMSE", None)
+metrics_data = {
+    "Metric": ["T0 RMSE", "ATT", "Percent ATT"],
+    "RSC": [
+        arco["RSC"]["Fit"].get("T0 RMSE", None),
+        arco["RSC"]["Effects"].get("ATT", None),
+        arco["RSC"]["Effects"].get("Percent ATT", None)
+    ],
+    "RPCASC": [
+        arco["RPCASC"]["Fit"].get("T0 RMSE", None),
+        arco["RPCASC"]["Effects"].get("ATT", None),
+        arco["RPCASC"]["Effects"].get("Percent ATT", None)
+    ]
+}
 
-# Extract ATT and Percent ATT from the Effects dictionary
-ATT_RSC = arco["RSC"]["Effects"].get("ATT", None)
-ATT_RPCASC = arco["RPCASC"]["Effects"].get("ATT", None)
+# Create a DataFrame
+metrics_df = pd.DataFrame(metrics_data)
 
-Percent_ATT_RSC = arco["RSC"]["Effects"].get("Percent ATT", None)
-Percent_ATT_RPCASC = arco["RPCASC"]["Effects"].get("Percent ATT", None)
-
-# Display the table
-display(Markdown(table_md))
+# Display the DataFrame
+display(metrics_df)
 
 ```
 

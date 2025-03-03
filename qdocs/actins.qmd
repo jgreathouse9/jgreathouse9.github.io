@@ -322,11 +322,15 @@ $$
 where $\mathbf{m}$ belongs to the simplex:
 
 $$
-\mathbf{m} \in \Delta_K = \left\{ \mathbf{m} \in \mathbb{R}_{\geq 0}^K \mid \left\| \mathbf{m} \right\|_1 = 1 \right\}
+\mathbf{m} \in \Delta_K = \left\{ \mathbf{m} \in \mathbb{R}_{\geq 0}^K \mid \left\| \mathbf{m} \right\|_1 = 1 \right\}, 
 $$
+
+or the set spanned by the convex hull of the differing model predictions.
+
 
 ```{python}
 #| fig-align: center
+#| echo: false
 
 # Extract counterfactual estimates from each model
 
@@ -396,15 +400,27 @@ print("Average ATT:", att_mean)
 
 ```
 
+The ATT we compute is 14.902. Just as a very technical note, we see that the RMSE here with the model averaged estimator is lower than any other model I've estimated so far. This is because of Jensen's inequality. Jensen's inequality states that for a convex function $f$ and a set of inputs, the function’s value at the weighted average is less than or equal to the weighted average of the function’s inputs:
 
+$$
+f\left(\sum_{k=1}^{K} m_k A_k\right) \leq \sum_{k=1}^{K} m_k f(A_k), \quad \text{for convex } f.
+$$
+
+In our case, we consider the function of the MSE. Due to the quadratic term,  $f(x) = x^2$, we have a convex function. Applying Jensen’s inequality to our loss function, we have
+
+$$
+\text{MSE}(\mathbf{m}^\top \mathbf{A}) = \mathbb{E} \left[ (\mathbf{y}_1 - \mathbf{m}^\top \mathbf{A})^2 \right] \leq \sum_{k=1}^{K} m_k \mathbb{E} \left[ (\mathbf{y}_1 - A_k)^2 \right]
+$$
 
 ## Delivering Actionable Insights
 
 With these results, we can deliver insights a more now precisely than before. Instead of simply speculating, we can say, for example,
 
-> We simulated the effect of Uber Green four times. Our best estimates suggest that the percentage of new drivers who use electric cars increased between 22.473 and 26.4 percent in the weeks following the Uber Green program being introduced (I also here might use the Bayesian prediction intervals from RSC to comment on uncertainty). We would need to roll out the program in now areas, but it seems that the program increases electric car usage compared to the baseline.
+> We simulated the effect of Uber Green four times. Our best estimates suggest that the percentage of new drivers who use electric cars increased between 22.473 and 26.4 percent in the weeks following the Uber Green program being introduced (I also here might use the Bayesian prediction intervals from RSC to comment on uncertainty). When we combined these models together, Uber Green increased drivers use of electric cars on average by 15 per week. We would need to roll out the program in new areas, but the evidence suggests Uber Green increases electric car usage compared to the baseline.
 
 See? I'm not simply speculating. I'm simulating the universe where what did happen did not happen, and then I'm tentatively suggesting that we implement the program elsewhere based off this single case study.
+
+Moreover, consider the actual presentation of my results. I'm actually _showing_ the client the effect of the program, not just telling them. I am presenting them an explicit picture of how the world would look if they didn't do their policy. This is the great thing about synthetic control methods, they're very visual designs and can be explained to people who have 0 training with it. While I can't predict how it would behave in other markets (well I lied, I [kinda can](https://arxiv.org/html/2006.07691v7)), it's a far more compelling picture than me simply saying "Hey this bar chart shows an effect and I'm gonna connect it to this policy." When we talk about actionable insights, we can use the potential outcome framework to formalize how the policies we implement affect outcomes we care about.
 
 
 [^1]: Here is the footnote.

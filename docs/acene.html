@@ -261,7 +261,7 @@ window.Quarto = {
 <p>Similarly, a recent UK campaign to abolish a 5% ‘tampon tax’ unintentionally boosted the profits of disposable product manufacturers by about £15 million per year, without substantially reducing the cost of products for consumers,</p>
 </blockquote>
 <p>citing <a href="https://taxpolicy.org.uk/wp-content/assets/tampon_tax_report.pdf">this paper</a> at <a href="https://taxpolicy.org.uk/2022/11/10/tampontax/">this link</a>. I read this and thought “Hmm, I wonder what their identification strategy is.” So I went to look up the paper King cites. The paper, written by Tax Policy Associates, studies the pass through effects of abolishing the tampon tax (in the U.K.) on savings to consumers. For quick refernece, I grab the data from their Github and plot the treated unit (a normalized estimate of tampon sales) versus the trajectory of the controls. Instantly, we can see that this is an extremely high dimensional dataset. There are 646 control units and only 37 pre-treatment periods.</p>
-<div id="4d928c68" class="cell" data-execution_count="1">
+<div id="33bd77aa" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> StringIO</span>
@@ -505,7 +505,7 @@ y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 <section id="a-re-analysis-with-mlsynth" class="level1">
 <h1>A Re-Analysis with <code>mlsynth</code></h1>
 <p>Here is a re-analysis of this question <a href="https://mlsynth.readthedocs.io">using</a> <code>mlsynth</code>. I use the <a href="https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation"><span class="math inline">\(\ell_2\)</span> relaxer</a> and <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">Forward DID</a> (FDID) which were respectively develoepd <a href="https://doi.org/10.13140/RG.2.2.11670.97609">here</a> and <a href="https://doi.org/10.1287/mksc.2022.0212">here</a>.</p>
-<div id="6a7eb897" class="cell" data-execution_count="2">
+<div id="a1dcaeeb" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>treat <span class="op">=</span> <span class="st">"Tax"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>outcome <span class="op">=</span> <span class="st">"ITEM_INDEX"</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>unitid <span class="op">=</span> <span class="st">"ITEM_ID"</span></span>
@@ -538,7 +538,7 @@ y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 <p>I won’t go over the details of <span class="math inline">\(\ell_2\)</span> relaxation here, as I’ve done that <a href="https://jgreathouse9.github.io/docs/scdense.html">elsewhere</a>, and I’ll have to do a post on FDID at some point. The returned ATT for <span class="math inline">\(\ell_2\)</span> relaxation we get with a <span class="math inline">\(\tau\)</span> equal to 0.25 is -2.027 with a 95% CI of [-3.01,-1.05]. For context, the authors estimate an ATT of -1.5.</p>
 <p>Next consider FDID. The ATT for FDID is -1.618, with the 95% CI being [-1.91,-1.32]. For DID, the ATT is -2.863, and the 95% CI being [-3.685,-2.041]. We can clearly see here that one, parallel trends holds for Forward DID and not for DID. The <span class="math inline">\(R^2=0.83\)</span> for FDID, and for DID the <span class="math inline">\(R^2=-0.312\)</span>. In this case, DID is even WORSE than had we just used the empirical average of controls. We can clearly see that DID is improved by the forward-selection algorithm from FDID. FDID selects 54 controls of the 646 unit control group. The key issue here is that my analysis is more causal, and not because of magic, but because the selected PTA underlying FDID and the ineteractive fixed effects model that <span class="math inline">\(\ell_2\)</span> relaxation works with is simply a more realsitic viewpoint of the world (of course, the technical details of these estimators matter too).</p>
 <p>Both analyses take advantage of the full control group (646 controls) instead of the dozen or so controls the original folks sort of subjectively use (of course FDID drops most controls but I did not subjectively choose which controls to include or not). <span class="math inline">\(\ell_2\)</span> relaxation and FDID in their own way addresses variance estimation using heteoskedasticity and autocorrelation adjusted standard errors, so we can do proper inference about the ATT.</p>
-<div id="eefb2523" class="cell" data-execution_count="3">
+<div id="7ed4e556" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Forward DID Model</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>config_fdid <span class="op">=</span> {</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
@@ -575,7 +575,7 @@ y_{jt} = \lambda_j + \delta_t + \epsilon_{jt},
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740964116727" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740964589298" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -599,7 +599,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740964116724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740964589295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -623,7 +623,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740964116724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740964589295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -647,7 +647,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740964116724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740964589295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -671,7 +671,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1740964116724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1740964589295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -697,7 +697,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1741305600000" data-listing-file-modified-sort="1740964116724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2933">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1741305600000" data-listing-file-modified-sort="1740964589295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2931">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Or, What Are “Actionable Insights”, Anyways?</a>
@@ -723,7 +723,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1740964177567" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1740964632039" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

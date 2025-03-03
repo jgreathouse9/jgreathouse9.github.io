@@ -359,6 +359,31 @@ rmse_pre_treatment = np.sqrt(mean_squared_error(y_pre, cf_final[:num_pre_periods
 
 print("Pre-treatment RMSE:", rmse_pre_treatment)
 
+# Define time points
+T = len(prepped["y"])  # Total time periods
+time_points = np.arange(T)
+
+# Extract observed series
+y_observed = prepped["y"]
+
+# Plot observed vs. counterfactual
+plt.figure(figsize=(10, 6))
+plt.plot(time_points, y_observed, label="Observed Time Series", color="black", linewidth=2)
+plt.plot(time_points, cf_final, label="Model-Averaged Counterfactual", linestyle="dashed", color="red", linewidth=2)
+
+# Mark the intervention point
+plt.axvline(x=num_pre_periods - 1, color="blue", linestyle="dash", label="Uber")
+
+# Labels and legend
+plt.xlabel("Time")
+plt.ylabel("New Drivers")
+plt.title("Sayulita vs. Counterfactual Sayulita")
+plt.legend()
+
+# Show the plot
+plt.show()
+
+
 ```
 
 

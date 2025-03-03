@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2025-03-07">
+<meta name="dcterms.date" content="2025-03-03">
 
 <title>Causal Inference Runs the World: Actionable Insights, Econometrics Style – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
@@ -214,7 +214,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 7, 2025</p>
+      <p class="date">March 3, 2025</p>
     </div>
   </div>
   
@@ -228,8 +228,8 @@ window.Quarto = {
 
 <section id="what-even-are-actionable-insights-anyways" class="level1">
 <h1>What Even Are Actionable Insights, Anyways?</h1>
-<p>Man, I hate industry jargon. Don’t get me wrong, I’m not against all jargon. I’ve been in academia ten years, and I’ve spent maybe 6 of those being tormented by econometrics. We have our own jargon too, which doesn’t always jive well with industry- I say “causal inference”, marketers will say “incrementality testing”. I say “experiment”, others say “A/B testing”. I say “practical significance”, others say “value”. There’s something about the data science industry lingo that irritates me. “Ambiguity” (I’ll do a post on this one, one day). “Self starter”. “<em>Business acumen</em>”. And the favorite of the day, “actionable insights.” This post is dedicated to showing you how I think about actionable insights, from the perspective of somebody who cares a lot about causal inference, and how we can use causal methods to show whether the results we get are insightful or actionable. But I’m getting ahead of myself.</p>
-<p>“Actionable insights”. It’s the one we hear about all the time, even if it isn’t phrased quite like that. Job descriptions and data science pages will go on and on about how we’re meant to deliver them as econometricians, policy analysts, and data scientists. Our livelihoods are essentially staked to producing insights our compant or organization cares about. But, what are actionable insights anyways? <a href="https://loop-software.com/news-and-insights/what-are-actionable-insights">Some pages</a> say ““Actionable insights” describes contextualised data analysis. It’s a piece of information that can actually be put into action — supported by the analysis, context and communication tools required to get the job done.” I agree with this. This leads us to one question then: how do we know which insights are actionable? And, more pressingly, how do we prodcue these in the first place?</p>
+<p>Man, I hate industry jargon. Don’t get me wrong, I’m not against all jargon. I’ve been in academia ten years, and I’ve spent maybe 6 of those being tormented by econometrics. We have our own jargon too, which doesn’t always jive well with industry- I say “causal inference”, marketers will say “incrementality testing”. I say “experiment”, others say “A/B testing”. I say “practical significance”, others say “value”. There’s something about the data science industry lingo that irritates me. “Ambiguity” (I’ll do a post on this one, one day). “Self starter”. “<em>Business acumen</em>”. And the favorite of the day, “actionable insights.” This post is dedicated to showing you how I think about actionable insights. I approach this from the perspective of somebody who cares a lot about causal inference. I would like to focus on how we can use causal methods from econometrics to deliver acionable insights… But I’m getting ahead of myself.</p>
+<p>“Actionable insights”. It’s what we hear about all the time, even if it isn’t phrased exactly like that. Job descriptions and data science pages will go on and on about how we’re meant to deliver them as econometricians, policy analysts, and data scientists. Our livelihoods are essentially staked to producing them. But, what are actionable insights anyways? <a href="https://loop-software.com/news-and-insights/what-are-actionable-insights">Some pages</a> say ““Actionable insights” describes contextualised data analysis. It’s a piece of information that can actually be put into action — supported by the analysis, context and communication tools required to get the job done.” I agree with this. This leads us to one question then: how do we know which insights are actionable? And, more pressingly, how do we prodcue these in the first place?</p>
 <section id="a-motivating-example" class="level2">
 <h2 class="anchored" data-anchor-id="a-motivating-example">A Motivating Example</h2>
 <p>Recently <a href="https://www.linkedin.com/posts/jared-greathouse-26315711a_data-science-intern-heres-a-bar-chart-activity-7301645259157970946-kJ_T?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw">I saw a post on LinkedIn</a>. It went something like this:</p>
@@ -273,7 +273,7 @@ window.Quarto = {
 where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter and <span class="math inline">\(\boldsymbol{\eta}_t\)</span> is a noise term. The idiosyncratic error term, <span class="math inline">\(\boldsymbol{\nu}_1\)</span>, is assumed to follow a normal distribution with zero mean and variance <span class="math inline">\(\sigma^2\)</span>, i.e., <span class="math inline">\(\boldsymbol{\nu}_1 \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})\)</span>. The treatment effect vector <span class="math inline">\(\boldsymbol{\delta} \coloneqq [\delta_{T_0+1}, \dots, \delta_T]^\top\)</span> represents the change in driver supply due to the Uber Green intervention, which is assumed to affect Sayulita starting at time <span class="math inline">\(T_0+1\)</span>.
 </details>
 <p>Let’s begin by plotting our outcome. The plot depicts the weekly new Uber drivers who have switched to electric vehicles. Sayulita is our target unit in black, the average of the control group is the thin red line, and the thin grey line are our donors that didn’t enact the intervention.</p>
-<div id="bb294fee" class="cell" data-execution_count="1">
+<div id="4421d429" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -284,7 +284,7 @@ where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter
 </div>
 <p>A few things are apparent: for one, the parallel trends assumption doesn’t apply here across the 75 pre-treatment periods. The mean of controls doesn’t mirror the trend of Sayulita. So, we must use something a little more sophisticated than the standard Difference-in-Differences method. Furthermore, these donors have pretty noisy outcome series. Fortunately, we can exploit the low rank structure of our control group and use that to learn the weights which reconstructs the pre-intervention time series for our treated unit. I’ve written more about this <a href="https://jgreathouse9.github.io/docs/clustsc.html">here</a>. Basically, we denoise the data via PCA or functional analysis, and cluster over the functional representation of control units or their right singular values, and extract the donor pool from this low-rank representation. We can then use principal component regression or robust principal component regression to learn our unit weights.</p>
 <p>When we do this, we obtain these predictions, of course using my <code>mlsynth</code> to fit the pre-intervention period.</p>
-<div id="6989f76a" class="cell" data-execution_count="2">
+<div id="20a116cf" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -334,7 +334,7 @@ where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter
 </div>
 </div>
 <p>We can see that both the Robust PCA Synthetic Control and the Robust Synthetic Control/Principal Component Regression methods fit Sayulita quite well in the pre-intervention period. They also have very similar ATTs, suggesting that Uber Green increased new electric vehicle use amongst its drivers by anywhere from 22.473 to 26.425 percent. The normal ATTs are also pretty close to the what I simulated, an ATT of 15. Next, I’ll simulate the ATT using Forward Difference-in-Differences.</p>
-<div id="66cba820" class="cell" data-execution_count="3">
+<div id="db1d24f7" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -393,7 +393,7 @@ where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter
 \mathbf{w} \in \Delta_K = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^K \mid \left\| \mathbf{w} \right\|_1 = 1 \right\},
 \]</span></p>
 <p>or the set spanned by the convex hull of the differing model predictions.</p>
-<div id="f8fe9594" class="cell" data-execution_count="4">
+<div id="1afc631d" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -416,7 +416,7 @@ f\left(\sum_{k=1}^{K} w_k A_k\right) \leq \sum_{k=1}^{K} w_k f(A_k).
 <h2 class="anchored" data-anchor-id="communicating-actionable-insights">Communicating Actionable Insights</h2>
 <p>Why is this approach superior than simply showing a chart/bar graph? With these results, we can communicate findings easier than before. Instead of simply speculating, we can say, for example,</p>
 <blockquote class="blockquote">
-<p>We simulated the effect of Uber Green four times. Our best estimates suggest that the percentage of new drivers who use electric cars increased between 22.473 and 26.4 percent in the weeks following the Uber Green program being introduced (I also here might use the Bayesian prediction intervals from RSC to comment on uncertainty). When we combined our best three models together, Uber Green added 15 more electric car drivers on average by 15 per week, which adds up to 488 more than in the previous period. We would need to roll out the program in new areas for more confirmation, but the evidence suggests Uber Green increases electric car usage.</p>
+<p>We simulated the effect of Uber Green four times. Our best estimates suggest that the percentage of new drivers who use electric cars increased between 22.473 and 26.4 percent in the weeks following the Uber Green program being introduced (I also here might use the Bayesian prediction intervals from RSC to comment on uncertainty). When we combined our best three models together, Uber Green added 15 more electric car drivers on average per week. The program added around 488 more electric car drivers than what we would’ve seen otherwise. We would need to roll out the program in new areas for more confirmation, but the evidence suggests Uber Green increases electric car usage.</p>
 </blockquote>
 <p>See how I’m not simply speculating with a bar chart? The value added here is that I’m simulating the universe where what did happen, did not happen, and then I’m tentatively suggesting that we implement the program elsewhere based off my findings, not a simple analysis of trends. The potential outcomes framework, when implemented judiciously, directly suggests what should or should not be done based off the treatment effects and uncertainty.</p>
 <p>This is even more evident when we consider the actual presentation of my results. I’m actually <em>showing</em> the client the effect of the program, not just telling them. I am presenting them an explicit picture of how the world would look if they didn’t do their policy or intervention. This is the great thing about synthetic control methods (and other methods like Difference-in-Differences event studies) ; they’re very visual designs. They can be explained to people who have 0 training with and are easy to follow. The treatment effect of Uber Green here pops right out at you, mkaing the choice (more drivers being better than less drivers) obvious. What’s more, the assumptions of my model can can (sometimes) explicitly be defended, instead of sort of arguing from intuition.</p>
@@ -429,7 +429,7 @@ f\left(\sum_{k=1}^{K} w_k A_k\right) \leq \sum_{k=1}^{K} w_k f(A_k).
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1741028917399" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1741030402523" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -453,7 +453,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1741028917396" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1741030402520" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -477,7 +477,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1741028917397" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1741030402521" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -501,7 +501,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1741028917396" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1741030402521" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -525,7 +525,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1741028917396" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1741030402520" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -551,7 +551,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1741028917397" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1741030402521" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -577,7 +577,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1741028964013" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1741030446775" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

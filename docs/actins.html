@@ -22,40 +22,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -305,7 +271,7 @@ window.Quarto = {
 where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter and <span class="math inline">\(\boldsymbol{\eta}_t\)</span> is a noise term. The idiosyncratic error term, <span class="math inline">\(\boldsymbol{\nu}_1\)</span>, is assumed to follow a normal distribution with zero mean and variance <span class="math inline">\(\sigma^2\)</span>, i.e., <span class="math inline">\(\boldsymbol{\nu}_1 \sim \mathcal{N}(\mathbf{0}, \sigma^2 \mathbf{I})\)</span>. The treatment effect vector <span class="math inline">\(\boldsymbol{\delta} \coloneqq [\delta_{T_0+1}, \dots, \delta_T]^\top\)</span> represents the change in driver supply due to the Uber Green intervention, which is assumed to affect Sayulita starting at time <span class="math inline">\(T_0+1\)</span>.
 </details>
 <p>Let’s begin by plotting our outcome. The plot depicts the weekly new Uber drivers who have switched to electric vehicles. Sayulita is our target unit in black, the average of the control group is the thin red line, and the thin grey line are our donors that didn’t enact the intervention.</p>
-<div id="fd06dfdb" class="cell" data-execution_count="1">
+<div id="4013c898" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -316,7 +282,7 @@ where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter
 </div>
 <p>A few things are apparent: for one, the parallel trends assumption doesn’t apply here across the 75 pre-treatment periods. The mean of controls doesn’t mirror the trend of Sayilita, suggesting that the time effects are not common across all units (no, instead, the time effects depend on unit specific factors). So, we must use something a little more sophisticated than the standard Difference-in-Differences method. Furthermore, these donors have pretty noisy outcome series. So, vanilla SCM may not be a good estimator either. Fortunately, we can exploit the low rank structure of our control group and use that to learn the weights which reconstructs the pre-intervention time series for our treated unit. I’ve written more about this <a href="https://jgreathouse9.github.io/docs/clustsc.html">here</a>. Basically, we denoise the data via PCA or functional analysis, and cluster over the functional representation of control units or their right singular values, and extract the donor pool from this low-rank representation. We can then use principal component regression or robust principal component regression to learn our unit weights.</p>
 <p>When we do this, we obtain these predictions, of course using my <code>mlsynth</code> to fit the pre-intervention period.</p>
-<div id="b25cfdad" class="cell" data-execution_count="2">
+<div id="c22d5a2c" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -366,62 +332,7 @@ where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter
 </div>
 </div>
 <p>We can see that both the Robust PCA Synthetic Control and the Robust Synthetic Control/Principal Component Regression methods fit Sayulita quite well in the pre-intervention period. They also have very similar ATTs, suggesting that Uber Green increased new electric vehicle use amongst its drivers by anywhere from 22.473 to 26.425 percent. The normal ATTs are also pretty close to the what I simulated, an ATT of 15. Next, I’ll simulate the ATT using Forward Difference-in-Differences.</p>
-<div id="3438504d" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.estutils <span class="im">import</span> Opt</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>model_DID <span class="op">=</span> FDID(config)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>arcoDID <span class="op">=</span> model_DID.fit()</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract relevant metrics for FDID (index 0) and DID (index 1)</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Metric"</span>: [</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ATT"</span>, </span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Pre-Treatment RMSE"</span>, </span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Percent ATT"</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FDID"</span>: [</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        arcoDID[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Effects"</span>].get(<span class="st">"ATT"</span>, <span class="va">None</span>),</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        arcoDID[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Fit"</span>].get(<span class="st">"T0 RMSE"</span>, <span class="va">None</span>),</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        arcoDID[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Effects"</span>].get(<span class="st">"Percent ATT"</span>, <span class="va">None</span>)</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"DID"</span>: [</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        arcoDID[<span class="dv">1</span>][<span class="st">"DID"</span>][<span class="st">"Effects"</span>].get(<span class="st">"ATT"</span>, <span class="va">None</span>),</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        arcoDID[<span class="dv">1</span>][<span class="st">"DID"</span>][<span class="st">"Fit"</span>].get(<span class="st">"T0 RMSE"</span>, <span class="va">None</span>),</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        arcoDID[<span class="dv">1</span>][<span class="st">"DID"</span>][<span class="st">"Effects"</span>].get(<span class="st">"Percent ATT"</span>, <span class="va">None</span>)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to DataFrame</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the DataFrame</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>display(results_df)</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># MA</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract counterfactual estimates from each model</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>cf_RSC <span class="op">=</span> np.array(arco[<span class="st">"RSC"</span>][<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>])</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>cf_RPCASC <span class="op">=</span> np.array(arco[<span class="st">"RPCASC"</span>][<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>])</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>cf_FDID <span class="op">=</span> np.array(arcoDID[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>])</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Stack them into a matrix (T x 3), where T is the time dimension</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>cf_matrix <span class="op">=</span> np.column_stack((cf_RSC, cf_RPCASC, cf_FDID))</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract pre-period data</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>num_pre_periods <span class="op">=</span> prepped[<span class="st">"pre_periods"</span>]</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>y_pre <span class="op">=</span> prepped[<span class="st">"y"</span>][:num_pre_periods].flatten()</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>Y_pre <span class="op">=</span> cf_matrix[:num_pre_periods, :]  <span class="co"># (num_pre_periods, 3)</span></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the optimizer using SIMPLEX model</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>beta_value <span class="op">=</span> Opt.SCopt(<span class="bu">len</span>(Y_pre[<span class="dv">1</span>]), y_pre, num_pre_periods, Y_pre, model<span class="op">=</span><span class="st">"SIMPLEX"</span>)</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute the final averaged counterfactual</span></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>cf_final <span class="op">=</span> np.dot(cf_matrix, beta_value)</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Optimal Weights:"</span>, np.<span class="bu">round</span>(beta_value, <span class="dv">4</span>))</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Final Averaged Counterfactual:"</span>, cf_final)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="a8266afa" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -466,32 +377,19 @@ where <span class="math inline">\(\rho\)</span> is the autocorrelation parameter
 
 </div>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Optimal Weights: [0.9581 0.     0.0419]
-Final Averaged Counterfactual: [66.36160888 66.02317071 66.03155604 67.96744773 66.14993647 67.07304812
- 70.89935031 75.73795426 76.53223706 75.32096272 73.83732824 73.51692663
- 69.66485333 66.33952552 65.01479811 63.19295167 62.5184745  67.5725164
- 69.76456475 67.77873993 70.80347624 74.30080094 75.87739888 71.89938108
- 72.44255736 71.98620146 70.2992516  66.61097127 72.84432448 67.45774215
- 66.26494653 65.37104392 61.91713196 62.17884781 60.14066819 56.13390779
- 54.62195483 58.52254316 57.80752067 56.94962986 60.12013062 53.46357927
- 57.42328998 55.83436755 57.84339025 60.13674731 62.34580302 61.92002387
- 63.08061357 68.40938287 66.10850234 66.86561242 64.06676822 68.61134409
- 68.98398082 69.07190506 64.64295477 64.36678341 62.97840031 67.01538021
- 67.594813   68.83088386 67.9763365  69.63781657 67.46166503 64.92520906
- 61.20592871 65.85274903 67.10369888 65.93898661 67.78465721 70.12701223
- 69.03837196 73.8463677  75.74422505 78.33810848 77.61879847 71.64457364
- 72.12346553 73.11514682 71.08075345 71.4242393  67.13535834 65.50793579
- 60.44763583 60.05915533 61.82258655 62.9858805  64.639472   62.42396589
- 62.45083217 58.99327237 59.55575532 60.16757211 62.76959818 62.42553622
- 62.81023402 67.376431   65.43580455 64.48354445 70.98021391 70.22073855
- 65.66304767 65.0524972 ]</code></pre>
-</div>
 <div class="cell-output cell-output-display">
 <pre><code>&lt;Figure size 700x500 with 0 Axes&gt;</code></pre>
 </div>
 </div>
 <p>Here we plot the results of the standard Difference-in-Differences design and the Forward DID method. As we can see, parallel pre-intervention trends doesn’t hold at all. The selected parallel trends made by FDID is a lot more sensible in this instance, fitting as well as the synthetic control methods as above.</p>
+<p>Just to go really crazy, I decided to combine my estimates.</p>
+<div id="273705c6" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-stdout">
+<pre><code>Optimal Weights: [0.9581 0.     0.0419]
+Pre-treatment RMSE: 1.260490071667982</code></pre>
+</div>
+</div>
+<p>MA</p>
 </section>
 <section id="delivering-actionable-insights" class="level2">
 <h2 class="anchored" data-anchor-id="delivering-actionable-insights">Delivering Actionable Insights</h2>
@@ -509,7 +407,7 @@ Final Averaged Counterfactual: [66.36160888 66.02317071 66.03155604 67.96744773 
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740958096883" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1740960451441" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -533,7 +431,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740958096880" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1740960451438" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -557,7 +455,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740958096881" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1740960451439" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -581,7 +479,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740958096881" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1740960451438" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2205">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -605,7 +503,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740958096881" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1740960451438" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -631,7 +529,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1740958096881" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1740960451439" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2186">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -657,7 +555,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1740958142940" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1740960513640" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

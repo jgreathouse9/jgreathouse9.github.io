@@ -313,7 +313,17 @@ display(results_df)
 
 Here we plot the results of the standard Difference-in-Differences design and the Forward DID method. As we can see, parallel pre-intervention trends doesn't hold at all. The selected parallel trends made by FDID is a lot more sensible in this instance, fitting as well as the synthetic control methods as above.
 
-Just to go really crazy, I decided to combine my estimates into a convex average.
+Just to go really crazy, I decided to combine my estimates into a convex average. Let $K$ denote the number of counterfactual models, in our case 3. Define $\mathbf{A} \in \mathbb{R}^{T \times K}$ as the matrix of counterfactual vectors, where each column corresponds to a model and each row represents a time period. The optimization problem is formulated as:
+
+$$
+\min_{\mathbf{m} \in \Delta_K} \left\| \mathbf{y}_1 - \mathbf{A} \mathbf{m} \right\|_2
+$$
+
+where $\mathbf{m}$ belongs to the simplex:
+
+$$
+\mathbf{m} \in \Delta_K = \left\{ \mathbf{m} \in \mathbb{R}_{\geq 0}^K \mid \left\| \mathbf{m} \right\|_1 = 1 \right\}
+$$
 
 ```{python}
 #| fig-align: center

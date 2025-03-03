@@ -330,10 +330,10 @@ $$
 \min_{\mathbf{w} \in \Delta_K} \left\| \mathbf{y}_1 - \mathbf{A} \mathbf{w} \right\|_2
 $$
 
-where $\mathbf{m}$ belongs to the simplex:
+where $\mathbf{w}$ belongs to the simplex:
 
 $$
-\mathbf{m} \in \Delta_K = \left\{ \mathbf{m} \in \mathbb{R}_{\geq 0}^K \mid \left\| \mathbf{m} \right\|_1 = 1 \right\}, 
+\mathbf{w} \in \Delta_K = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^K \mid \left\| \mathbf{w} \right\|_1 = 1 \right\}, 
 $$
 
 or the set spanned by the convex hull of the differing model predictions.
@@ -406,13 +406,13 @@ att_mean = np.mean(att)
 The ATT we compute is 14.902. Just as a very technical note, we see that the RMSE here with the model averaged estimator is lower than any other model I've estimated so far. This is because of Jensen's inequality. Jensen's inequality states that for a convex function $f$ and a set of inputs, the function’s value at the weighted average is less than or equal to the weighted average of the function’s inputs:
 
 $$
-f\left(\sum_{k=1}^{K} m_k A_k\right) \leq \sum_{k=1}^{K} m_k f(A_k), \quad \text{for convex } f.
+f\left(\sum_{k=1}^{K} w_k A_k\right) \leq \sum_{k=1}^{K} w_k f(A_k).
 $$
 
 In our case, we consider the function of the MSE. Due to the quadratic term,  $f(x) = x^2$, we have a convex function. Applying Jensen’s inequality to our loss function, we have
 
 $$
-\text{MSE}(\mathbf{m}^\top \mathbf{A}) = \mathbb{E} \left[ (\mathbf{y}_1 - \mathbf{m}^\top \mathbf{A})^2 \right] \leq \sum_{k=1}^{K} m_k \mathbb{E} \left[ (\mathbf{y}_1 - A_k)^2 \right],
+\text{MSE}(\mathbf{w}^\top \mathbf{A}) = \mathbb{E} \left[ (\mathbf{y}_1 - \mathbf{w}^\top \mathbf{A})^2 \right] \leq \sum_{k=1}^{K} w_k \mathbb{E} \left[ (\mathbf{y}_1 - A_k)^2 \right],
 $$
 
 which essentially guarantees that our model averaged pre-treatment MSE must be lower than the MSE of one of these models by themselves.

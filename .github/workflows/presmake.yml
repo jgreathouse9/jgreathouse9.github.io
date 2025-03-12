@@ -48,18 +48,30 @@ jobs:
       - name: List contents of qprezrender directory
         run: |
           ls -l qprezrender
+          # Add debugging information to see where files are located
+          find qprezrender
 
-      # Step 8: Configure Git
+      # Step 8: Check Git status (ensure the files are being tracked)
+      - name: Check git status
+        run: |
+          git status
+
+      # Step 9: Configure Git
       - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      # Step 9: Commit and push rendered HTML to qprezrender directory
+      # Step 10: Commit and push rendered HTML to qprezrender directory
       - name: Commit and push rendered HTML
         run: |
-          git add qprezrender/*
-          git commit -m "Render Quarto files and push HTML"
-          git push origin HEAD:main
+          # Check if files exist before committing
+          if [ -n "$(ls -A qprezrender)" ]; then
+            git add qprezrender/*
+            git commit -m "Render Quarto files and push HTML"
+            git push origin HEAD:main
+          else
+            echo "No files to commit, skipping commit and push"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

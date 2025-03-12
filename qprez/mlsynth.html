@@ -9,9 +9,9 @@
 <link href="mlsynth_files/libs/quarto-html/quarto-syntax-highlighting-bbf0a7f1146ec3f739f17469cf885ec8.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.8">
 
-  <meta name="author" content="Jared">
+  <meta name="author" content="Jared Greathouse">
   <meta name="dcterms.date" content="2025-03-12">
-  <title>Optimizing Counterfactuals with mlsynth</title>
+  <title>Counterfactual Estimation via mlsynth</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -128,28 +128,28 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Optimizing Counterfactuals with mlsynth</h1>
+  <h1 class="title">Counterfactual Estimation via <code>mlsynth</code></h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-Jared 
+Jared Greathouse 
 </div>
 </div>
 </div>
 
   <p class="date">2025-03-12</p>
 </section>
-<section id="why-mlsynth" class="slide level2">
-<h2>Why mlsynth?</h2>
+<section id="counterfactual-estimation" class="slide level2">
+<h2>Counterfactual Estimation</h2>
 <ul>
-<li>Counterfactual estimation is crucial for policy/business decisions.</li>
-<li>Existing methods have <strong>serious limitations</strong>:
+<li>Counterfactual estimation is an important econometric problem. Much of what governments and businesses do is predicated on specific policy interventions having an effect on some outcome.</li>
+<li>Methods such as Difference-in-Differences and Synthetic Control Methods (DID and SCM) are often used to estimate counterfactuals, where some set of units are treated at one time point, and others are not treated. Both methods are predicated on using weighted averages of control groups in the pre-treatment period to predict the the post-intervention/out-of-sample values, or the values we would’ve seen absent treatment.</li>
+<li>However, existing methods have may struggle in certain instances:
 <ul>
-<li>LASSO struggles with multicollinearity.</li>
-<li>Standard SCM lacks robustness in high-dimensional settings.</li>
+<li>SCM struggles with very many controls, even with the convex hull regularization constraint. Often, smaller donor pools are prefereable to very large ones, and we must carefully choose which donors/control groups we use.</li>
+<li>Similarly, DID requires <span class="math inline">\(\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t^{\prime}}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t^{\prime}}(0)]\)</span>.</li>
 </ul></li>
-<li><strong>mlsynth</strong> improves upon these issues.</li>
 </ul>
 </section>
 <section id="problems-with-existing-approaches" class="slide level2">
@@ -186,7 +186,7 @@ Jared
 </section>
 <section id="example-fdid-in-action" class="slide level2">
 <h2>Example: FDID in Action</h2>
-<div id="64c1e4ef" class="cell" data-execution_count="1">
+<div id="a9c0f92a" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-stdout">
 <pre><code>I am Jared</code></pre>
 </div>

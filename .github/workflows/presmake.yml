@@ -1,4 +1,4 @@
-name: Render and Deploy Quarto Presentation
+name: Render Presentations
 
 on:
   push:
@@ -40,20 +40,16 @@ jobs:
         run: |
           quarto render Presentations/mlsynthpres.qmd --output-dir Presentations/prez
 
-      - name: Verify prez directory
+      - name: Verify prez directory and contents
         run: |
-          if [ -d Presentations/prez ]; then
-            echo "prez directory exists."
-          else
-            echo "ERROR: prez directory was not created!"
-            exit 1
-          fi
+          echo "Checking contents of prez directory..."
+          ls -l Presentations/prez
 
       - name: Commit and push prez directory if changed
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add Presentations/prez
+          git add Presentations/prez/*
           git diff --cached --exit-code || (git commit -m "Update rendered Quarto presentation" && git push)
 
       - name: Deploy to GitHub Pages

@@ -2,57 +2,53 @@ name: Render Presentations
 
 on:
   push:
-    branches:
-      - master  # Adjust if your default branch is different
     paths:
-      - 'Presentations/**'  # Only trigger if files in Presentations/ change
-
-  workflow_dispatch:  # Allows manual triggering
+      - 'qprez/**/*.qmd'
 
 jobs:
-  render:
+  render-and-push:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out the code
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      # Step 3: Set up Quarto
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
-          version: "1.7.8"
+          version: "1.7.8"  # Specify the exact Quarto version
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"  # Adjust as needed
-
-      - name: Install Python dependencies
+      # Step 4: Install required Python packages
+      - name: Install required Python packages
         run: |
+          python -m pip install --upgrade pip setuptools wheel
           pip install -r qdocs/requirements.txt
 
-      - name: Render Quarto Presentation directly to Presentations
+      # Step 5: Render the Quarto .qmd file
+      - name: Render Quarto file
         run: |
-          quarto render Presentations/mlsynthpres.qmd --output-dir Presentations
+          mkdir -p qprezrender
+          quarto render qprez/*.qmd --output-dir=qprezrender
 
-      - name: List all files in the repository (debugging step)
-        run: |
-          ls -la
-
-      - name: List files in Presentations directory (debugging step)
-        run: |
-          ls -la Presentations
-
-      - name: Check git status (debugging step)
-        run: |
-          git status
-
-      - name: Commit and push the rendered presentation
+      # Step 6: Configure Git
+      - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add Presentations/*  # Ensure all files in Presentations are staged
-          git commit -m "Add rendered presentation"
-          git push
+
+      # Step 7: Commit and push rendered HTML to qprezrender directory
+      - name: Commit and push rendered HTML
+        run: |
+          git add qprezrender/*
+          git commit -m "Render Quarto files and push HTML"
+          git push origin HEAD:main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

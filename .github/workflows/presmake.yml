@@ -71,9 +71,13 @@ jobs:
       # Step 11: Commit and push rendered HTML to qprezrender directory
       - name: Commit and push rendered HTML
         run: |
-          # Ensure qprezrender directory is tracked and add files
-          git add qprezrender/mlsynth.html
-          git commit -m "Render Quarto files and push HTML"
-          git push origin HEAD:main
+          # Ensure the rendered file exists and add it
+          if [ -f qprezrender/mlsynth.html ]; then
+            git add qprezrender/mlsynth.html
+            git commit -m "Render Quarto files and push HTML"
+            git push origin HEAD:main
+          else
+            echo "File qprezrender/mlsynth.html not found, skipping commit."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

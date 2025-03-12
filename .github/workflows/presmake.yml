@@ -31,27 +31,33 @@ jobs:
         run: |
           pip install -r qdocs/requirements.txt
 
-      - name: Ensure _site directory exists
+      - name: Ensure prez directory exists
         run: |
-          mkdir -p Presentations/_site
-          touch Presentations/_site/.gitkeep  # Ensure directory is tracked
+          mkdir -p Presentations/prez
+          touch Presentations/prez/.gitkeep  # Ensure directory is tracked
 
       - name: Render Quarto Presentation
         run: |
-          quarto render Presentations/mlsynthpres.qmd
+          quarto render Presentations/mlsynthpres.qmd --output-dir Presentations/prez
 
-      - name: Verify _site directory
+      - name: Verify prez directory
         run: |
-          if [ -d Presentations/_site ]; then
-            echo "_site directory exists."
+          if [ -d Presentations/prez ]; then
+            echo "prez directory exists."
           else
-            echo "ERROR: _site directory was not created!"
+            echo "ERROR: prez directory was not created!"
             exit 1
           fi
 
-      - name: Commit and push _site directory if changed
+      - name: Commit and push prez directory if changed
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add Presentations/_site
+          git add Presentations/prez
           git diff --cached --exit-code || (git commit -m "Update rendered Quarto presentation" && git push)
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./Presentations/prez  # Deploy from prez directory

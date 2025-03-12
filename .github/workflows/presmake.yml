@@ -40,20 +40,29 @@ jobs:
         run: |
           quarto render Presentations/mlsynthpres.qmd --output-dir Presentations/prez
 
-      - name: Verify prez directory and contents
+      - name: Check Quarto Output
         run: |
-          echo "Checking contents of prez directory..."
+          echo "Checking output directory after rendering..."
           ls -l Presentations/prez
+
+      - name: Show Git Status
+        run: |
+          echo "Showing git status..."
+          git status
 
       - name: Commit and push prez directory if changed
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add Presentations/prez/*
+          git add Presentations/prez  # Make sure all files in prez directory are staged
           git diff --cached --exit-code || (git commit -m "Update rendered Quarto presentation" && git push)
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./Presentations/prez  # Deploy from prez directory
+      - name: Verify prez directory and contents
+        run: |
+          echo "Checking contents of prez directory..."
+          ls -l Presentations/prez
+
+      - name: Check deployment directory
+        run: |
+          echo "Checking deployment directory..."
+          ls -l ./Presentations/prez

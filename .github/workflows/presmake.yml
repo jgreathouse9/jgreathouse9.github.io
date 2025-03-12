@@ -1,83 +1,44 @@
-name: Render Quarto and Push HTML
+name: Quarto Presentations
 
 on:
   push:
+    branches:
+      - master
     paths:
-      - 'qprez/**/*.qmd'
-  workflow_dispatch:
+      - 'qprez/**'
 
 jobs:
-  render-and-push:
+  render:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # Ensures the workflow can push changes
+
     steps:
-      # Step 1: Check out the code
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout the repository
+      uses: actions/checkout@v3
 
-      # Step 2: Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.10'
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
 
-      # Step 3: Set up Quarto
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
-        with:
-          version: "1.7.8"  # Specify the exact Quarto version
+    - name: Set up Quarto
+      uses: quarto-dev/quarto-actions/setup@v2
+      with:
+        version: "1.7.8"  # Specify the exact Quarto version
 
-      # Step 4: Install required Python packages
-      - name: Install required Python packages
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r qdocs/requirements.txt
+    - name: Install required Python packages
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -r qdocs/requirements.txt
 
-      # Step 5: Delete and recreate qprezrender directory
-      - name: Delete and recreate qprezrender directory
-        run: |
-          rm -rf qprezrender
-          mkdir qprezrender
+    - name: Render Quarto Presentation
+      run: |
+        quarto render qprez/*.qmd  # Render the .qmd file(s) in the qprez folder
 
-      # Step 6: Render the Quarto .qmd file
-      - name: Render Quarto file
-        run: |
-          quarto render qprez/*.qmd --output-dir=qprezrender
-
-      # Step 7: Ensure qprezrender directory is tracked by git
-      - name: Ensure qprezrender directory is tracked
-        run: |
-          touch qprezrender/.gitkeep  # Add a dummy file to ensure the directory is tracked
-          git add qprezrender/.gitkeep
-          git commit -m "Track qprezrender directory" || echo "No changes to commit"
-
-      # Step 8: Debugging - List contents of the output directory
-      - name: List contents of qprezrender directory
-        run: |
-          ls -l qprezrender
-          find qprezrender
-
-      # Step 9: Check Git status (ensure the files are being tracked)
-      - name: Check git status
-        run: |
-          git status
-
-      # Step 10: Configure Git
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-      # Step 11: Commit and push rendered HTML to qprezrender directory
-      - name: Commit and push rendered HTML
-        run: |
-          # Ensure the rendered file exists and add it
-          if [ -f qprezrender/mlsynth.html ]; then
-            git add qprezrender/mlsynth.html
-            git commit -m "Render Quarto files and push HTML"
-            git push origin HEAD:main
-          else
-            echo "File qprezrender/mlsynth.html not found, skipping commit."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Commit and push rendered content
+      run: |
+        git add -A
+        git commit -m "Rendered Quarto presentation"
+        git push

@@ -44,24 +44,31 @@ jobs:
         run: |
           quarto render qprez/*.qmd --output-dir=qprezrender
 
-      # Step 7: Debugging - List contents of the output directory
+      # Step 7: Ensure qprezrender directory is tracked by git
+      - name: Ensure qprezrender directory is tracked
+        run: |
+          touch qprezrender/.gitkeep  # Add a dummy file to ensure the directory is tracked
+          git add qprezrender/.gitkeep
+          git commit -m "Track qprezrender directory" || echo "No changes to commit"
+
+      # Step 8: Debugging - List contents of the output directory
       - name: List contents of qprezrender directory
         run: |
           ls -l qprezrender
           find qprezrender
 
-      # Step 8: Check Git status (ensure the files are being tracked)
+      # Step 9: Check Git status (ensure the files are being tracked)
       - name: Check git status
         run: |
           git status
 
-      # Step 9: Configure Git
+      # Step 10: Configure Git
       - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      # Step 10: Commit and push rendered HTML to qprezrender directory
+      # Step 11: Commit and push rendered HTML to qprezrender directory
       - name: Commit and push rendered HTML
         run: |
           # Ensure qprezrender directory is tracked and add files

@@ -39,11 +39,19 @@ jobs:
         run: |
           quarto render Presentations/mlsynthpres.qmd --output-dir Presentations/prez
 
+      - name: List files in Presentations/prez (debugging step)
+        run: |
+          ls -la Presentations/prez
+
+      - name: Check git status (debugging step)
+        run: |
+          git status
+
       - name: Commit and push the rendered presentation
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add Presentations/prez/*
+          git add Presentations/prez/mlsynthpres.html  # Explicitly add the generated file
           git commit -m "Add rendered presentation"
           git push
         env:

@@ -33,19 +33,29 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install -r qdocs/requirements.txt
 
-      # Step 5: Render the Quarto .qmd file
+      # Step 5: Delete and recreate qprezrender directory
+      - name: Delete and recreate qprezrender directory
+        run: |
+          rm -rf qprezrender
+          mkdir qprezrender
+
+      # Step 6: Render the Quarto .qmd file
       - name: Render Quarto file
         run: |
-          mkdir -p qprezrender
           quarto render qprez/*.qmd --output-dir=qprezrender
 
-      # Step 6: Configure Git
+      # Step 7: Debugging - List contents of the output directory
+      - name: List contents of qprezrender directory
+        run: |
+          ls -l qprezrender
+
+      # Step 8: Configure Git
       - name: Configure Git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      # Step 7: Commit and push rendered HTML to qprezrender directory
+      # Step 9: Commit and push rendered HTML to qprezrender directory
       - name: Commit and push rendered HTML
         run: |
           git add qprezrender/*

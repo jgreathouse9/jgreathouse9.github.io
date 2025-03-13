@@ -149,28 +149,30 @@ Jared Greathouse
 <li><p>Both approaches use weighted averages of control groups from the pre-treatment period to estimate counterfactuals, or the post-treatment values of the outcome we’d see absent treatment.</p></li>
 </ul>
 </section>
-<section id="counterfactual-estimation-cont." class="slide level2">
-<h2>Counterfactual Estimation cont.</h2>
+<section id="scm-and-did" class="slide level2">
+<h2>SCM and DID</h2>
 <p>Both methods conduct their optimizations over the course of the pre-treatment period.</p>
 <ul>
-<li>SCM constrains our weights to be on the simplex, <span class="math inline">\(\Delta &amp;\operatorname{:=} \{\mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} \mid \lVert \mathbf{w} \rVert_1 = 1\}\)</span>. The optimization to learn the weights is</li>
-</ul>
-<p><span class="math display">\[
-\underset{\mathbf{w} \in \Delta}{\operatorname*{argmin}} &amp;\quad \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \rVert_2^2.
-\]</span></p>
-<ul>
-<li>For DID, we have</li>
-</ul>
-<p><span class="math display">\[
+<li><p>SCM constrains our weights to be on the simplex,<br>
+<span class="math display">\[
+\Delta \operatorname{:=} \{\mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} \mid \lVert \mathbf{w} \rVert_1 = 1\}.
+\]</span><br>
+The optimization to learn the weights is<br>
+<span class="math display">\[
+\underset{\mathbf{w} \in \Delta}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \rVert_2^2.
+\]</span></p></li>
+<li><p>For DID, we have<br>
+<span class="math display">\[
 \begin{aligned}
     \underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} &amp;\quad \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \boldsymbol{\beta}_0 \rVert_2^2, \\
     \text{s.t.} &amp;\quad \mathbf{w} = \frac{1}{N_0} \mathbf{1}_{N_0}.
 \end{aligned}
-\]</span></p>
+\]</span></p></li>
+</ul>
 </section>
-<section id="counterfactual-estimation-cont.-1" class="slide level2">
-<h2>Counterfactual Estimation cont.</h2>
-<p>However, they may struggle sometimes.</p>
+<section id="potnetial-problems" class="slide level2">
+<h2>Potnetial Problems</h2>
+<p>However, SCM and DID may struggle sometimes.</p>
 <ul>
 <li><p>SCM struggles with high-dimensional datasets. Often, smaller donor pools are preferable to very large ones to mitigate overfitting biases. But picking a good donor pool can be challenging when there are very many controls.</p></li>
 <li><p>SCM solutions are often sparse, given the classical formulation of the problem’s weights are nonnegative and add to 1.</p></li>

@@ -12,11 +12,27 @@ highlight-style: github
 
 ## Counterfactual Estimation
 
-- Whether we're in business or government, maximizing value for business services and crafting effective public policy depends on knowing whether policies, promotions, new web features, or other interventions meaningfully affect metrics that we care about.
+- Maximizing value for business services and crafting effective public policy depends on knowing whether policies, promotions, new web features, taxes, or other interventions _meaningfully_ affect metrics that we care about.
 
 - Researchers commonly use Difference-in-Differences designs and Synthetic Control methods (DID and SCM) to measure causal impacts.
 
-- Both approaches in principle use weighted averages of control groups in the pre-treatment period to predict post-intervention counterfactuals, or the values of the outcome we'd see absent the treatment.
+- Both approaches use weighted averages of control groups from the pre-treatment period to estimate counterfactuals, or the post-treatment values of the outcome we'd see absent treatment.
+
+---
+
+---
+
+## Counterfactual Estimation cont.
+
+For SCM, we have
+
+$$
+\mathbf{w} \coloneqq \begin{bmatrix} w_2 & w_3 & \cdots & w_{N_0+1} \end{bmatrix}^\top, \: \text{where } w_i \: \forall \: i \in \mathcal{N}_0.
+$$ 
+is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome. SCM solves for $\mathbf{w}$ via the optimization:  
+$$
+\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2,  \: \forall \: t \in \mathcal{T}_{1}, \: \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
+$$ 
 
 ---
 

@@ -45,6 +45,8 @@ jobs:
 
     - name: Commit and push rendered content
       run: |
+        git fetch origin master  # Fetch latest changes
+        git reset --soft origin/master  # Align local history with remote while keeping changes
         git add -A
-        git commit -m "Rendered Quarto presentation"
-        git push
+        git commit -m "Rendered Quarto presentation" || echo "No changes to commit"
+        git push origin master

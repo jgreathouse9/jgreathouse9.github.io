@@ -248,26 +248,42 @@ For example...
 
 ```{python}
 #| echo: false
+#| fig-align: center
+
 import qrcode
 from PIL import Image
 import matplotlib.pyplot as plt
 
 # Generate QR code
 url = "https://doi.org/10.1287/mksc.2022.0212"
-qr = qrcode.make(url)
-
-# Save and display the QR code
-qr.save("qrcode.png")
 
 # Display the QR code in Quarto
-plt.imshow(qr, cmap="gray")
+plt.imshow(qrcode.make(url), cmap="gray")
 plt.axis("off")  # Hide axes
 plt.show()
 
-
 ```
 
-Boop.
+- Forward DID uses forward selection to choose a donor pool/control group for a single treated unit, using the DID estimator.
+
+- However, its only existing implementations are either in MATLAB (not as a function) or in R.
+
+- MATLAB naturally is not free. The R code requires users to have very specific data requirements, and requires users to hard code lots of stusy qualities.
+
+```{r}
+#| eval: false
+
+data = read.csv("GDP.csv", sep=",", header = TRUE)
+
+t=dim(data)[1]
+no_control=dim(data)[2]-1
+control_ID=1:no_control
+t1=44           # t1 is the pretreatment sample size
+y=data[,1]
+y1=data[1:t1,1]
+y2=data[(t1+1):t,1]}
+
+```
 
 ### Robust Synthetic Control
 

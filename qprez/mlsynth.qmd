@@ -37,7 +37,7 @@ Both methods optimize over pre-treatment periods.
   \underset{\mathbf{w} \in \Delta}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \rVert_2^2.
   $$
 
-Note that there's no intercept here, and we presume the donor pool will be a well-fitting convex combination of donors units.
+Note there's no intercept, and we presume the convex combination of the donor pool will be well-fitting.
 
 ---
 
@@ -45,11 +45,11 @@ Note that there's no intercept here, and we presume the donor pool will be a wel
 
 However, SCM and DID may struggle sometimes.
 
-- SCM struggles with high-dimensional datasets. Often, smaller donor pools are preferable to very large ones to mitigate overfitting biases. But picking a good donor pool can be challenging when there are very many controls.
+- DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. May not always hold, particularly with heterogeneous time trends.
 
-- Convex SCM favors sparse solutions, but what if the true vector of weights is not mostly 0?
+- SCM struggles when $N_0>>T_0$, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls. Typically, this is done _ad hoc_ via researcher domain expertise.
 
-- DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. May not always hold, particularly in small $N$, large $T$ setings).
+- Convex SCM also favors sparse solutions. But what if the true vector of weights is _not_ mostly 0?
 
 ---
 

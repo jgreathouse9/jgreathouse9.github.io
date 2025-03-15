@@ -242,7 +242,7 @@ Jared Greathouse
 <ul>
 <li>DID requires <span class="math inline">\(\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]\)</span>, or parallel trends. Does not hold when the mean of controls is dissimilar to the trend of the treated unit/group.</li>
 </ul>
-<div id="eaa03aae" class="cell" data-execution_count="1">
+<div id="bb4f2a92" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -272,10 +272,10 @@ Jared Greathouse
 <h2>Potential Solutions, cont.</h2>
 <p>For example…</p>
 <div class="panel-tabset">
-<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Forward DID</a></li><li><a href="#tabset-2-2">Robust Synthetic Control</a></li><li><a href="#tabset-2-3">Additionally…</a></li></ul>
+<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Forward DID</a></li><li><a href="#tabset-2-2">RSC</a></li><li><a href="#tabset-2-3">And…</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1">
-<div id="c24f8433" class="cell" data-execution_count="2">
+<div id="6cfd2b9e" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -290,7 +290,7 @@ Jared Greathouse
 <li><p>MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods.</p></li>
 <li><p>This may work fine for one study, but what about if we do not have 44 pretreatment periods?</p></li>
 </ul>
-<div id="f6788fe2" class="cell" data-execution_count="3">
+<div id="b8a4e73c" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a>data <span class="op">=</span> read.csv(<span class="st">"GDP.csv"</span>, sep<span class="op">=</span><span class="st">","</span>, header <span class="op">=</span> TRUE)</span>
 <span id="cb1-2"><a href=""></a></span>
 <span id="cb1-3"><a href=""></a>t<span class="op">=</span>dim(data)[<span class="dv">1</span>]</span>
@@ -303,7 +303,7 @@ Jared Greathouse
 </div>
 </div>
 <div id="tabset-2-2">
-<div id="7aaefffc" class="cell" data-execution_count="4">
+<div id="091f015a" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -314,12 +314,14 @@ Jared Greathouse
 </div>
 <ul>
 <li><p>Robust Synthetic Control uses PCA to denoise the donor pool and use the low-rank approximation to learn the weights. An upshot of this method is that, in their empirical applications at least, the method appears to not rely on additional covariate metrics that standard SCMs need to attain acceptable fit.</p></li>
-<li><p>However, one <a href="https://github.com/sdfordham/pysyncon/blob/main/examples/robust/basque_robust.ipynb">existing implementation</a> requires the user to manually specify the number of principal components/singular values as well as the lambda parameter. <a href="https://github.com/deshen24/panel-data-regressions/blob/master/case_study.py">Another</a> requires an even more complex.</p></li>
+<li><p>However, one <a href="https://github.com/sdfordham/pysyncon/blob/main/examples/robust/basque_robust.ipynb">existing implementation</a> requires the user to manually specify the number of principal components/singular values as well as the lambda parameter. <a href="https://github.com/deshen24/panel-data-regressions/blob/master/case_study.py">Another</a> requires an even more complex setup.</p></li>
 </ul>
 </div>
 <div id="tabset-2-3">
 <ul>
-<li>None of these methods calculates and stores the ATT/relevant fit metrics as a matter of course, this job is left up to the analyst</li>
+<li><p>None of these methods calculates and stores the ATT/relevant fit metrics as a matter of course, this job is left up to the analyst. While these are relatively simple to compute, having to do it manually is inconvenient.</p></li>
+<li><p>The existing implementations also (arguably) presume a more advanced knowledge of machine-learning, econometrics, and/or programming than the modal economist, marketer, or data scientist is <em>likely</em> to have.</p></li>
+<li><p>This combination makes it harder/more cumbersome for applied scientist to use these methods in practice.</p></li>
 </ul>
 </div>
 </div>

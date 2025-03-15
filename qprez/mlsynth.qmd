@@ -45,15 +45,188 @@ Note there's no intercept, and we presume the convex combination of the donor po
 
 However, SCM and DID may struggle sometimes.
 
-- DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. May not always hold, particularly with heterogeneous time trends.
+::: {.panel-tabset}
 
----
+### DID
 
-Another one
+- DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. May not always hold, particularly in small $N$, large $T$ setings).
+
+```{python}
+#| echo: false
+
+import pandas as pd
+from mlsynth.mlsynth import dataprep
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+
+# Custom Matplotlib theme (Uber-style)
+ubertheme = {
+    "figure.facecolor": "white",
+    "figure.dpi": 100,
+    "figure.titlesize": 16,
+    "figure.titleweight": "bold",
+    "lines.linewidth": 1.2,
+    "patch.facecolor": "#0072B2",  # Blue shade for patches
+    "xtick.direction": "out",
+    "ytick.direction": "out",
+    "font.size": 16,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["DejaVu Sans"],
+    "axes.grid": True,
+    "axes.facecolor": "white",
+    "axes.linewidth": 0.1,
+    "axes.titlesize": "large",
+    "axes.titleweight": "bold",
+    "axes.labelsize": "medium",
+    "axes.labelweight": "bold",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.spines.left": False,
+    "axes.spines.bottom": False,
+    "axes.titlepad": 25,
+    "axes.labelpad": 20,
+    "grid.alpha": 0.1,
+    "grid.linewidth": 0.5,
+    "grid.color": "#000000",
+    "legend.framealpha": 0.5,
+    "legend.fancybox": True,
+    "legend.borderpad": 0.5,
+    "legend.loc": "best",
+    "legend.fontsize": "small",
+    "figure.figsize": (11,5)
+}
+
+matplotlib.rcParams.update(ubertheme)
+
+def plot_treated_vs_controls(donor_matrix, treated_vector, pre_periods, title):
+    """
+    Plots a single treated unit against the control group.
+
+    Parameters:
+    - donor_matrix (numpy.ndarray): A 2D array where each column represents a control unit.
+    - treated_vector (numpy.ndarray): A 1D array representing the treated unit.
+    - pre_periods (int): The cutoff time index for the pre-treatment period.
+    - title (str): The title of the plot.
+    """
+
+    # Indicate pre-treatment period cutoff
+    plt.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Treatment Date')
+
+    # Plot control group trajectories
+    plt.plot(donor_matrix, color='gray', linewidth=0.2, alpha=0.35, label='_nolegend_')
+
+    # Plot the average of control units
+    average_controls = donor_matrix.mean(axis=1)
+    plt.plot(average_controls, color='red', linewidth=1, label='Mean of Controls')
+
+    # Plot the treated unit
+    plt.plot(treated_vector, color='black', linewidth=2, label='Sayulita')
+
+    # Labels and legend
+    plt.title(title)
+    plt.xlabel('Time Periods')
+    plt.ylabel('New Drivers')
+    plt.legend()
+
+    plt.show()
+
+np.random.seed(3111)
+
+# Parameters
+n_units = 100
+n_periods = 104
+n_factors = 12
+rho = 0.85
+sigma = 1.25
+
+treated_unit = 54
+treatment_period = 76
+treatment_effect = 15
+
+# List of Cities, for Monte Carlo Could simply be generalized to "Cities + n"
+cities = [
+    "São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
+    "Bogotá", "Santiago", "Caracas", "Guayaquil", "Quito",
+    "Brasília", "Montevideo", "Asunción", "El Paso", "Playa del Carmen",
+    "Medellín", "Porto Alegre", "Placencia", "Recife", "Salvador",
+    "Zihuatanejo", "San José", "Panama City", "Barranquilla", "Tegucigalpa",
+    "Foz do Iguaçu", "Maracaibo", "Rosario", "Maracay", "Antofagasta",
+    "San Pedro Sula", "San Juan", "Chihuahua", "Cayo District", "Maturín",
+    "Buzios", "Puebla", "Miami", "Arequipa", "Fernando de Noronha", "Guatemala City",
+    "Zacatecas", "Mérida", "Córdoba", "San Miguel", "Trujillo",
+    "Corozal Town", "Santa Cruz de la Sierra", "San Luis Potosí", "Jalapão", "Potosí",
+    "Tucumán", "Neuquén", "La Plata", "Sayulita", "Florianópolis", "Lagos de Moreno",
+    "La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
+    "Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
+    "San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
+    "Los Angeles", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
+    "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Vallarta", "Chiclayo", "Ambato",
+    "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
+    "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
+    "Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
+]
+
+# Setting the common factors
+common_factors = np.zeros((n_periods, n_factors))
+
+# Setting the common factors for period 1
+common_factors[0, :] = np.random.normal(0, 1, n_factors)
+
+for t in range(1, n_periods):
+    common_factors[t, :] = rho * common_factors[t-1, :] + np.random.normal(0, 1, n_factors)
+
+# Factor Loadings with error terms
+factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
+
+# Error term for model
+error_terms = np.random.normal(0, sigma, (n_periods, n_units))
+
+
+data = np.zeros((n_periods, n_units))
+
+for i in range(n_units):
+    data[:, i] = common_factors @ factor_loadings[i, :] + error_terms[:, i]+np.random.randint(40, 80)
+
+
+data[treatment_period:, treated_unit] += treatment_effect
+
+
+market_names = cities
+time = np.repeat(np.arange(1, n_periods+1), n_units)
+markets = np.tile(market_names, n_periods)
+
+# Reshape data into the correct format for DataFrame
+sales = data.flatten()
+
+indicator = np.where((markets ==cities[treated_unit]) & (time >= treatment_period), 1, 0)
+
+# Create DataFrame
+df = pd.DataFrame({
+    'Market': markets,
+    'Time': time,
+    'Drivers': sales,
+    'Uber Green': indicator
+})
+
+treat = "Uber Green"
+time = "Time"
+outcome = "Drivers"
+unitid = "Market"
+
+
+prepped = dataprep(df, unitid, time, outcome, treat)
+
+plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_periods"], "Sayulita vs. Controls")
+```
+
+### SCM
 
 - SCM struggles when $N_0>>T_0$, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls. Typically, this is done _ad hoc_ via researcher domain expertise.
 
 - Convex SCM also favors sparse solutions. But what if the true vector of weights is _not_ mostly 0?
+
+:::
 
 ---
 

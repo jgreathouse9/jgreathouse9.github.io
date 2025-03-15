@@ -49,7 +49,7 @@ However, SCM and DID may struggle sometimes.
 
 ### DID
 
-- DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. May not always hold, particularly in small $N$, large $T$ setings).
+- DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. Does not hold when the mean of controls is dissimilar to the trend of the treated unit/group.
 
 ```{python}
 #| echo: false
@@ -222,9 +222,9 @@ plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_per
 
 ### SCM
 
-- SCM struggles when $N_0>>T_0$, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls. Typically, this is done _ad hoc_ via researcher domain expertise.
+- SCM struggles when $N_0>>T_0$, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls.
 
-- Convex SCM also favors sparse solutions. But what if the true vector of weights is _not_ mostly 0?
+- Convex SCM also favors sparse solutions. But what if the true vector of weights is _not_ mostly 0? What if the DGP is actually dense instead of sparse?
 
 :::
 
@@ -232,5 +232,37 @@ plot_treated_vs_controls(prepped["donor_matrix"], prepped["y"], prepped["pre_per
 
 ## Potential Solutions
 
-- Econometricians have crafted methods which attempt to address these issues.
+- Fortunately, econometricians have crafted methods which attempt to address these issues.
+
+- Many of these methods are re-formulations or relaxations of the standard toolkit.
+
+---
+
+## Potential Solutions, cont.
+
+For example...
+
+::: {.panel-tabset}
+
+### Forward DID
+
+```{python}
+
+#| echo: false
+
+# Importing library
+import qrcode
+
+# Data to be encoded
+data = 'https://doi.org/10.1287/mksc.2022.0212'
+
+# Encoding data using make() function
+img = qrcode.make(data)
+
+```
+
+Boop.
+
+### Robust Synthetic Control
+
 

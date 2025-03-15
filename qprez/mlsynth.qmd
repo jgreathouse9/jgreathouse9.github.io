@@ -268,7 +268,9 @@ plt.show()
 
 - However, its only existing implementations are either in MATLAB and R.
 
-- MATLAB naturally is not free! The R code requires users to have a wide dataframe and the number of pre-treatment periods.
+- MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods.
+
+- This may work fine for one study, but what about if we do not have 44 pretreatment periods?
 
 
 ```{python}
@@ -291,4 +293,36 @@ y2=data[(t1+1):t,1]}
 
 ### Robust Synthetic Control
 
+```{python}
+#| echo: false
+#| fig-align: center
+
+import qrcode
+from PIL import Image
+import matplotlib.pyplot as plt
+
+# Generate QR code
+url = "https://jmlr.org/papers/v19/17-777.html"
+
+# Display the QR code in Quarto
+plt.imshow(qrcode.make(url), cmap="gray")
+plt.axis("off")  # Hide axes
+plt.show()
+
+```
+
+- Robust Synthetic Control uses PCA to denoise the donor pool and use the low-rank approximation to learn the weights. An upshot of this method is that, in their empirical applications at least, the method appears to not rely on additional covariate metrics that standard SCMs need to attain acceptable fit.
+
+- However, one [existing implementation](https://github.com/sdfordham/pysyncon/blob/main/examples/robust/basque_robust.ipynb) requires the user to manually specify the number of principal components/singular values as well as the lambda parameter. [Another](https://github.com/deshen24/panel-data-regressions/blob/master/case_study.py) requires an even more complex.
+
+### Additionally...
+
+- None of these methods calculates and stores the ATT/relevant fit metrics as a matter of course, this job is left up to the analyst
+
 :::
+
+---
+
+## How to Solve This, then?
+
+If only there were a more user friendly, free library that brings these approaches together, with a simpler setup and syntax...

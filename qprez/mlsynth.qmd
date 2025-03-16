@@ -364,3 +364,102 @@ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 - A numeric outcome variable.
 
 - A dummy variable denoting treatment, 1 when the treatment is active and the unit is treated, else 0 for all other units and times.
+
+---
+
+## Hubei Lockdown
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+from mlsynth.mlsynth import CLUSTERSC, dataprep
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import matplotlib
+
+ubertheme = {
+    "figure.facecolor": "white",
+    "figure.figsize": (11, 5),
+    "figure.dpi": 100,
+    "figure.titlesize": 16,
+    "figure.titleweight": "bold",
+    "lines.linewidth": 1.2,
+    "patch.facecolor": "#0072B2",  # Blue shade for patches
+    "xtick.direction": "out",
+    "ytick.direction": "out",
+    "font.size": 14,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["DejaVu Sans"],
+    "axes.grid": True,
+    "axes.facecolor": "white",
+    "axes.linewidth": 0.1,
+    "axes.titlesize": "large",
+    "axes.titleweight": "bold",
+    "axes.labelsize": "medium",
+    "axes.labelweight": "bold",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.spines.left": False,
+    "axes.spines.bottom": False,
+    "axes.titlepad": 25,
+    "axes.labelpad": 20,
+    "grid.alpha": 0.1,
+    "grid.linewidth": 0.5,
+    "grid.color": "#000000",
+    "legend.framealpha": 0.5,
+    "legend.fancybox": True,
+    "legend.borderpad": 0.5,
+    "legend.loc": "best",
+    "legend.fontsize": "small",
+}
+
+matplotlib.rcParams.update(ubertheme)
+
+df = pd.read_csv('https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/HubeiSCM.csv')
+
+unitid = df.columns[1]
+time = df.columns[-1]
+outcome = df.columns[2]
+#df[outcome] = np.log(df[outcome])
+
+treat = df.columns[-2]
+
+config = {
+    "df": df,
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": True, "cluster": True #, "objective": "SIMPLEX"
+}
+
+prepdict = dataprep(df, unitid, time, outcome, treat)
+
+Nmean = np.mean(prepdict["donor_matrix"],axis=1)
+
+y = prepdict["y"]
+
+plt.figure(figsize=(10, 6))
+# Extract the dates from Ywide's index
+time_index = prepdict["Ywide"].index
+
+plt.axvline(x=time_index[prepdict["pre_periods"] - 1], color="blue", linestyle="--", linewidth=2, label="Lockdown Date")
+
+
+# Plot control average in red
+plt.plot(time_index, Nmean, color="red", linewidth=2, label="Control Avg")
+
+# Plot treated unit in black
+plt.plot(time_index, y, color="black", linewidth=2, label="Treated Unit")
+
+# Format x-axis labels
+plt.xticks(rotation=45)
+plt.xlabel("Date")
+plt.ylabel("GDP per Capita")
+plt.legend()
+plt.show()
+
+
+```

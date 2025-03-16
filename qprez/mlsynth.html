@@ -242,7 +242,7 @@ Jared Greathouse
 <ul>
 <li>DID requires <span class="math inline">\(\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]\)</span>, or parallel trends. Does not hold when the mean of controls is dissimilar to the trend of the treated unit/group.</li>
 </ul>
-<div id="d2494657" class="cell" data-execution_count="1">
+<div id="15793da2" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -275,7 +275,7 @@ Jared Greathouse
 <ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Forward DID</a></li><li><a href="#tabset-2-2">RSC</a></li><li><a href="#tabset-2-3">And…</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1">
-<div id="8ff417e8" class="cell" data-execution_count="2">
+<div id="0d57b35c" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -290,7 +290,7 @@ Jared Greathouse
 <li><p>MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods.</p></li>
 <li><p>This may work fine for one study, but what about if we do not have 44 pretreatment periods?</p></li>
 </ul>
-<div id="cd3c6afd" class="cell" data-execution_count="3">
+<div id="0dcdc9a9" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a>data <span class="op">=</span> read.csv(<span class="st">"GDP.csv"</span>, sep<span class="op">=</span><span class="st">","</span>, header <span class="op">=</span> TRUE)</span>
 <span id="cb1-2"><a href=""></a></span>
 <span id="cb1-3"><a href=""></a>t<span class="op">=</span>dim(data)[<span class="dv">1</span>]</span>
@@ -303,7 +303,7 @@ Jared Greathouse
 </div>
 </div>
 <div id="tabset-2-2">
-<div id="d55f3b6b" class="cell" data-execution_count="4">
+<div id="f4ab6f25" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -363,7 +363,7 @@ Jared Greathouse
 <ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Inspection</a></li><li><a href="#tabset-3-2">SCM</a></li><li><a href="#tabset-3-3">FDID</a></li></ul>
 <div class="tab-content">
 <div id="tabset-3-1">
-<div id="1665e1ae" class="cell" data-execution_count="6">
+<div id="3fb957f9" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> CLUSTERSC, FDID, dataprep</span>
 <span id="cb3-2"><a href=""></a></span>
 <span id="cb3-3"><a href=""></a>df <span class="op">=</span> pd.read_csv(<span class="st">'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/HubeiSCM.csv'</span>)</span>
@@ -410,8 +410,8 @@ Jared Greathouse
 <p>Parallel trends does not appear to hold…. Hubei has a steeper upward trend compared to the average of all control units. No matter what constant we would shift it by, the mean difference does not appear to be constant. This suggests either parallel trends would hold with <em>some</em> control units, or we simply need to re-weight some donors to matter more than others.</p>
 </div>
 <div id="tabset-3-2">
-<p>Here is the results of the <code>CLUSTERSC</code> class. This class implements two SCMs which use k-means clustering and low-rank methods to select the donor pool (Principal Componenet Regression and <a href="https://doi.org/10.48550/arXiv.2108.12542">Robust PCA Synth</a> specifically). Both selected donor pools (via the clustering) choose 25 of the 30 donor units. The pre-treatment RMSE for Robust PCA is <span class="math inline">\(89.76\)</span>, and for Cluster PCR/Cluster Robust SC the RMSE is <span class="math inline">\(96.37\)</span>.</p>
-<div id="e0092a50" class="cell" data-execution_count="7">
+<p>Here is the results of the <code>CLUSTERSC</code> class. This class implements two SCMs which use k-means clustering and low-rank methods to select the donor pool (Principal Component Regression and <a href="https://doi.org/10.48550/arXiv.2108.12542">Robust PCA Synth</a> specifically). Both selected donor pools (via the clustering) choose 25 of the 30 donor units. The pre-treatment RMSE for Robust PCA is <span class="math inline">\(89.76\)</span>, and for Cluster PCR/Cluster Robust SC the RMSE is <span class="math inline">\(96.37\)</span>.</p>
+<div id="6d9743b4" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a>config <span class="op">=</span> {</span>
 <span id="cb4-2"><a href=""></a>    <span class="st">"df"</span>: df,</span>
 <span id="cb4-3"><a href=""></a>    <span class="st">"treat"</span>: treat,</span>
@@ -433,11 +433,11 @@ Jared Greathouse
 <pre><code>&lt;Figure size 1100x500 with 0 Axes&gt;</code></pre>
 </div>
 </div>
-<p>The ATT of RPCA Synth is <span class="math inline">\(-754\)</span>, and for Cluster PCR the ATT is <span class="math inline">\(-814\)</span>.</p>
+<p>The ATT of RPCA Synth is <span class="math inline">\(-754\)</span>, and for Cluster PCR the ATT is <span class="math inline">\(-814\)</span>. The original paper used the LASSO to select the controls, and we get roughly the same results as they do.</p>
 </div>
 <div id="tabset-3-3">
 <p>Here we estimate the counterfactual via the Forward DID method. The selection algorithm is spelt out in the paper, but we basically add a new unit to the DID control group if the new unit increases the pre-treatment <span class="math inline">\(R^2\)</span> statistic. FDID chooses Anhui, Beijing, Fujian, Henan, Hunan, Jiangsu, Yunnan, Zhejiang. This group gives a pre-treatment <span class="math inline">\(R^2 = 0.996\)</span>. The <span class="math inline">\(ATT = -691\)</span>, with a 95% CI of <span class="math inline">\(-797.369, -584.822\)</span>.</p>
-<div id="43a87d7f" class="cell" data-execution_count="8">
+<div id="fd122113" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href=""></a><span class="co"># We can estimate FDID without even needing to change anything.</span></span>
 <span id="cb6-2"><a href=""></a></span>
 <span id="cb6-3"><a href=""></a><span class="co"># All we need to do is change the class name.</span></span>
@@ -454,7 +454,7 @@ Jared Greathouse
 <pre><code>&lt;Figure size 1100x500 with 0 Axes&gt;</code></pre>
 </div>
 </div>
-<p>Forward DID presumes <em>selected</em> parallel trends, which we can clearly see holds here.</p>
+<p>Forward DID presumes <em>selected</em> parallel trends, or that parallel trends holds for some units instead of all of them. We can clearly see this assumption holds here, since the mean difference between the controls and treated unit is constant in the pre-treatment period.</p>
 </div>
 </div>
 </div>

@@ -467,7 +467,7 @@ Parallel trends does not appear to hold.... Hubei has a steeper upward trend com
 
 ### SCM
 
-Here is the results of the ```CLUSTERSC``` class. This class implements two SCMs which use k-means clustering and low-rank methods to select the donor pool (Principal Componenet Regression and Robust PCA specifically). Both select 25 of the 30 donor units.
+Here is the results of the ```CLUSTERSC``` class. This class implements two SCMs which use k-means clustering and low-rank methods to select the donor pool (Principal Componenet Regression and [Robust PCA Synth](https://doi.org/10.48550/arXiv.2108.12542) specifically). Both selected donor pools (via the clustering) choose 25 of the 30 donor units. The pre-treatment RMSE for Robust PCA is $89.76$, and for Cluster PCR/Cluster Robust SC  the RMSE is $96.37$.
 
 ```{python}
 #| echo: true
@@ -485,9 +485,11 @@ HubeiSC = CLUSTERSC(config).fit()
 
 ```
 
+The ATTs of RPCA Synth for all the post policy period is -754, and for Cluster PCR the ATT is -814.
+
 ### FDID
 
-Here we estimate the Forward DID method. The selction algorithm is spelt out in the paper, but we baiscally add a new unit to the DID control group if the new unit increases the pre-treatment $R^2$ statistic. FDID chooses Anhui, Beijing, Fujian, Henan, Hunan, Jiangsu, Yunnan, Zhejiang. This group gives a pre-treatment $R^2$ of 0.996.
+Here we estimate the Forward DID method. The selection algorithm is spelt out in the paper, but we basically add a new unit to the DID control group if the new unit increases the pre-treatment $R^2$ statistic. FDID chooses Anhui, Beijing, Fujian, Henan, Hunan, Jiangsu, Yunnan, Zhejiang. This group gives a pre-treatment $R^2$ of 0.996. The ATT is -691, with a 95% CI of $-797.369, -584.822$.
 
 ```{python}
 #| echo: true

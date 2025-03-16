@@ -367,7 +367,13 @@ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 
 ---
 
-## Hubei Lockdown
+## [Hubei Lockdown](https://doi.org/10.1002/jae.2871)
+
+::: {.panel-tabset}
+
+### Inspection
+
+Find the data [here](https://github.com/jgreathouse9/mlsynth/blob/main/basedata/HubeiSCM.csv).
 
 ```{python}
 #| echo: false
@@ -426,15 +432,6 @@ outcome = df.columns[2]
 
 treat = df.columns[-2]
 
-config = {
-    "df": df,
-    "treat": treat,
-    "time": time,
-    "outcome": outcome,
-    "unitid": unitid,
-    "display_graphs": True, "cluster": True #, "objective": "SIMPLEX"
-}
-
 prepdict = dataprep(df, unitid, time, outcome, treat)
 
 Nmean = np.mean(prepdict["donor_matrix"],axis=1)
@@ -460,6 +457,24 @@ plt.xlabel("Date")
 plt.ylabel("GDP per Capita")
 plt.legend()
 plt.show()
+```
 
+### Analysis
+
+```{python}
+#| echo: true
+
+config = {
+    "df": df,
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": True # "cluster": True, "objective": "SIMPLEX"
+}
+
+Hubei = CLUSTERSC(config).fit()
 
 ```
+
+:::

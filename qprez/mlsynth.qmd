@@ -467,6 +467,8 @@ Parallel trends does not appear to hold.... Hubei has a steeper upward trend com
 
 ### SCM
 
+Here is the results of the ```CLUSTERSC``` class. This class implements two SCMs which use k-means clustering and low-rank methods to select the donor pool (Principal Componenet Regression and Robust PCA specifically). Both select 25 of the 30 donor units.
+
 ```{python}
 #| echo: true
 
@@ -476,7 +478,7 @@ config = {
     "time": time,
     "outcome": outcome,
     "unitid": unitid,
-    "display_graphs": True # "cluster": True, "objective": "SIMPLEX"
+    "display_graphs": True
 }
 
 HubeiSC = CLUSTERSC(config).fit()
@@ -485,12 +487,15 @@ HubeiSC = CLUSTERSC(config).fit()
 
 ### FDID
 
+Here we estimate the Forward DID method. The selction algorithm is spelt out in the paper, but we baiscally add a new unit to the DID control group if the new unit increases the pre-treatment $R^2$ statistic. FDID chooses Anhui, Beijing, Fujian, Henan, Hunan, Jiangsu, Yunnan, Zhejiang. This group gives a pre-treatment $R^2$ of 0.996.
+
 ```{python}
+|# echo: true
 
 HubeiDID = FDID(config).fit()
 
 ```
 
-Forward DID presumes _selected_ parallel trends, or that PTA hodl with respect to some controls, instead of all of them.
+Forward DID presumes _selected_ parallel trends, which we can clearly see holds here.
 
 :::

@@ -375,13 +375,9 @@ Find the data [here](https://github.com/jgreathouse9/mlsynth/blob/main/basedata/
 
 ### Inspection
 
-Parallel trends does not appear to hold.... Hubei has a steeper upward trend compared to the average of all control units. No matter what constant we would shift it by, the mean difference does not appear to be constant. This suggests either parallel trends would hold with _some_ control units, or we simply need to re-weight some donors to matter more than others.
-
 ```{python}
 #| echo: false
-#| fig-align: center
 
-from mlsynth.mlsynth import CLUSTERSC, dataprep
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -424,36 +420,42 @@ ubertheme = {
 }
 
 matplotlib.rcParams.update(ubertheme)
+```
+
+```{python}
+#| echo: true
+#| fig-align: center
+
+from mlsynth.mlsynth import CLUSTERSC, dataprep
 
 df = pd.read_csv('https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/HubeiSCM.csv')
 
 unitid = df.columns[1]
 time = df.columns[-1]
 outcome = df.columns[2]
-#df[outcome] = np.log(df[outcome])
-
 treat = df.columns[-2]
 
+# Extracts study quality data
 prepdict = dataprep(df, unitid, time, outcome, treat)
 
-Nmean = np.mean(prepdict["donor_matrix"],axis=1)
+Nmean = np.mean(prepdict["donor_matrix"],axis=1) # Control Unit Vector
 
-y = prepdict["y"]
+y = prepdict["y"] # Our treated unit
 
 plt.figure(figsize=(10, 6))
-# Extract the dates from Ywide's index
+
+# Get the dates
+
 time_index = prepdict["Ywide"].index
 
-plt.axvline(x=time_index[prepdict["pre_periods"] - 1], color="blue", linestyle="--", linewidth=2, label="Lockdown Date")
+plt.axvline(x=time_index[prepdict["pre_periods"]], color="#7df9ff", linestyle="-", linewidth=2, label="Lockdown Date")
 
-
-# Plot control average in red
-plt.plot(time_index, Nmean, color="red", linewidth=2, label="Control Avg")
+plt.plot(time_index, Nmean, color="red", linewidth=2, label="Control Group Mean")
 
 # Plot treated unit in black
-plt.plot(time_index, y, color="black", linewidth=2, label="Treated Unit")
+plt.plot(time_index, y, color="black", linewidth=2, label="Hubei")
 
-# Format x-axis labels
+# Rotates our labels
 plt.xticks(rotation=45)
 plt.xlabel("Date")
 plt.ylabel("GDP per Capita")
@@ -461,7 +463,9 @@ plt.legend()
 plt.show()
 ```
 
-### Analysis
+Parallel trends does not appear to hold.... Hubei has a steeper upward trend compared to the average of all control units. No matter what constant we would shift it by, the mean difference does not appear to be constant. This suggests either parallel trends would hold with _some_ control units, or we simply need to re-weight some donors to matter more than others.
+
+### SCM
 
 ```{python}
 #| echo: true

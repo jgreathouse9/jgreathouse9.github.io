@@ -363,7 +363,9 @@ Y_pre = cf_matrix[:num_pre_periods, :]
 
 # Run the optimizer using SIMPLEX model
 
-beta_value = Opt.SCopt(len(Y_pre[1]), y_pre, num_pre_periods, Y_pre, model="SIMPLEX")
+prob = Opt.SCopt(len(Y_pre[1]), y_pre, num_pre_periods, Y_pre, model="SIMPLEX")
+first_key = list(prob.solution.primal_vars.keys())[0]
+beta_value = prob.solution.primal_vars[first_key]
 
 cf_final = np.dot(cf_matrix, beta_value)
 

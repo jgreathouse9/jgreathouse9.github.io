@@ -1,0 +1,38 @@
+---
+title: 'Forward Synthetic Control Estimation'
+date: 2025-03-31
+categories: [Econometrics, Causal Inference, Data Science]
+---
+# Intro
+This post introduces the [Forward Selected Synthetic Control Method](https://doi.org/10.1016/j.econlet.2024.111976). This method uses the Forward Selection method to choose the donor pool for synthetic control methods, and then uses that donor pool to fit the synthetic control predictions.
+
+## Estimation in ```mlsynth```
+
+As ususal, we begin by installing ```mlsynth```.
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+And then we load the Prop 99 data and fit the model in the ususal ```mlsynth``` fashion.
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+import pandas as pd
+from mlsynth.mlsynth import FSCM
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+data = pd.read_csv(url)
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": "red"}
+
+arco = FSCM(config).fit()
+```

@@ -253,7 +253,7 @@ window.Quarto = {
 </header>
 
 
-<p>Causal inference is critical to economics, marketing, policy, real estate, and other sectors of industry. Frequently, policies or natural events occur that may affect metrics we care about. In order to maximize our decision making capabilities, understanding the effects of these events we care about is critical so that businseses and governments may plan future business decisions better or know if a policy intervention achieves its intended aims. In absence of A/B tests (randomized controlled trials, which is quite popular amongst marketing firms/other areas of tech), business scientists and policy analysts frequently resort to constructing counterfactuals to infer treatment effecs. This is because conducting proper experiments is difficult, costly, and/or unethical, especially with most of the events we are concerned with which impact millions of people.</p>
+<p>Causal inference is critical to economics, marketing, policy, and other sectors of industry. Frequently, policies or natural events occur that may affect metrics we care about. In order to maximize our decision making capabilities, understanding the effects of these events we care about is critical so that businseses and governments may plan future business decisions better or know if a policy intervention achieves its intended aims. In absence of A/B tests (randomized controlled trials, which is quite popular amongst marketing firms/other areas of tech), business scientists and policy analysts frequently resort to constructing counterfactuals to infer treatment effecs. This is because conducting proper experiments is difficult, costly, and/or unethical, especially with most of the events we are concerned with which impact millions of people.</p>
 <p>Difference-in-Differences (DID) is one of the most popular methods for quasi-experimental designs/treatment effect analysis. DID is simple to compute, and is valid even in settings where we have one treated unit and a single control unit. The key identifying assumption of DID is parallel trends (PTA), or that the trend of the treated group would be constant with respect to the control group had a given intervention or policy never took place. Additionally, PTA posits no-anticipation of the intervention. <a href="https://doi.org/10.1086/711509">Various restatements</a> of PTA are common in the econometrics literature, especially under staggered adoption where DID is frequently applied to use cases researchers care about. However, sometimes DID is used even in settings of <a href="https://doi.org/10.1111/jels.12188">a single treated unit</a>. And in these settings, PTA may be less likely to hold. This blog post goes over <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">the Forward DID method</a> with an application to the construction/tourism industry.</p>
 <section id="barcelonas-ban-on-hotel-construction" class="level1">
 <h1>Barcelona’s Ban on Hotel Construction</h1>
@@ -284,7 +284,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 \bar{y}_{\mathcal{U}t} = \frac{1}{|\mathcal{U}|} \sum_{i \in \mathcal{U}} y_{it}.
 \]</span></p>
 <p>One thing we can do to test PTA s to plot the average of control versus the treated unit (in this case, we have block assignment, so we need not worry about staggered adoption).</p>
-<div id="a2e0caea" class="cell" data-execution_count="1">
+<div id="f2b2d458" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
@@ -397,7 +397,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <p>Okay, now how can we use Forward DID? First install the latest version of mlsynth</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Now we can fit the FDID model using the entire donor pool. The treatment happens 2015 week 27, and extends to August of the same year.</p>
-<div id="4ba96603" class="cell" data-execution_count="2">
+<div id="35db11d4" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
@@ -414,65 +414,59 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="fdid_files/figure-html/cell-3-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="919" height="567"></p>
+<p><img src="fdid_files/figure-html/cell-3-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="919" height="532"></p>
 </figure>
 </div>
-</div>
-<div class="cell-output cell-output-display">
-<pre><code>&lt;Figure size 1100x600 with 0 Axes&gt;</code></pre>
 </div>
 </div>
 <p>This plots the observed versus fitted predictions. We can do the same with the Mediterranean only dataframe</p>
-<div id="4a3db378" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mediterranean_df <span class="op">=</span> df[df[<span class="st">"mediterranean"</span>] <span class="op">==</span> <span class="dv">1</span>]</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: mediterranean_df,  <span class="co"># Use the filtered dataframe</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: time,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: outcome,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: unitid,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"#ff7d7d"</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>modelmed <span class="op">=</span> FDID(config)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>arcomed <span class="op">=</span> modelmed.fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="9e2d747c" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mediterranean_df <span class="op">=</span> df[df[<span class="st">"mediterranean"</span>] <span class="op">==</span> <span class="dv">1</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: mediterranean_df,  <span class="co"># Use the filtered dataframe</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: time,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: outcome,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: unitid,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"#ff7d7d"</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>modelmed <span class="op">=</span> FDID(config)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>arcomed <span class="op">=</span> modelmed.fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="fdid_files/figure-html/cell-4-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="919" height="567"></p>
+<p><img src="fdid_files/figure-html/cell-4-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="919" height="532"></p>
 </figure>
 </div>
 </div>
-<div class="cell-output cell-output-display">
-<pre><code>&lt;Figure size 1100x600 with 0 Axes&gt;</code></pre>
-</div>
 </div>
 <p>These results may be summarized in a table</p>
-<div id="628c2d5c" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Metric"</span>: [<span class="st">"ATT (Original)"</span>, <span class="st">"ATT (Mediterranean)"</span>, <span class="st">"R-Squared (Original)"</span>, <span class="st">"R-Squared (Mediterranean)"</span>, <span class="st">"Weights (Original)"</span>, <span class="st">"Weights (Mediterranean)"</span>],</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Value"</span>: [</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        arco[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Effects"</span>][<span class="st">"ATT"</span>],</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        arcomed[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Effects"</span>][<span class="st">"ATT"</span>],</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        arco[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Fit"</span>][<span class="st">"R-Squared"</span>],</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        arcomed[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Fit"</span>][<span class="st">"R-Squared"</span>],</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">', '</span>.join(<span class="bu">set</span>(arco[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Weights"</span>].keys())),</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">', '</span>.join(<span class="bu">set</span>(arcomed[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Weights"</span>].keys()))</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes the keys of the dictionary and makes them into a set, joined by commas</span></span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>markdown_table <span class="op">=</span> results_df.to_markdown(index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>Markdown(markdown_table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="7352ec26" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Metric"</span>: [<span class="st">"ATT (Original)"</span>, <span class="st">"ATT (Mediterranean)"</span>, <span class="st">"R-Squared (Original)"</span>, <span class="st">"R-Squared (Mediterranean)"</span>, <span class="st">"Weights (Original)"</span>, <span class="st">"Weights (Mediterranean)"</span>],</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Value"</span>: [</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        arco[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Effects"</span>][<span class="st">"ATT"</span>],</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        arcomed[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Effects"</span>][<span class="st">"ATT"</span>],</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        arco[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Fit"</span>][<span class="st">"R-Squared"</span>],</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        arcomed[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Fit"</span>][<span class="st">"R-Squared"</span>],</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">', '</span>.join(<span class="bu">set</span>(arco[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Weights"</span>].keys())),</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">', '</span>.join(<span class="bu">set</span>(arcomed[<span class="dv">0</span>][<span class="st">"FDID"</span>][<span class="st">"Weights"</span>].keys()))</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes the keys of the dictionary and makes them into a set, joined by commas</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>markdown_table <span class="op">=</span> results_df.to_markdown(index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>Markdown(markdown_table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display cell-output-markdown" data-execution_count="4">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -504,11 +498,11 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Weights (Original)</td>
-<td style="text-align: left;">Donor 30, Donor 80, Donor 40, Donor 81, Donor 82</td>
+<td style="text-align: left;">Donor 81, Donor 30, Donor 80, Donor 40, Donor 82</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Weights (Mediterranean)</td>
-<td style="text-align: left;">Donor 6, Donor 30, Donor 40, Donor 81, Donor 82</td>
+<td style="text-align: left;">Donor 81, Donor 30, Donor 40, Donor 6, Donor 82</td>
 </tr>
 </tbody>
 </table>
@@ -527,7 +521,7 @@ y_{0t} = \alpha_{\mathcal{U}t} + \bar{y}_{\mathcal{U}t}
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1741893969160" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743452879693" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -551,7 +545,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1741893969157" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743452879690" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -575,7 +569,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1741893969158" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743452879691" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -599,7 +593,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1741893969158" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743452879690" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -623,7 +617,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1741893969157" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743452879690" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -649,7 +643,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1741893969158" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3494">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743452879690" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3498">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -675,7 +669,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1741894010772" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="6" data-listing-file-modified-sort="1743452927066" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

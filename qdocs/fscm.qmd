@@ -30,16 +30,22 @@ $$
 \mathbf{w}^{(j)} = \arg\min_{\mathbf{w} \in \Delta^0(\{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
-The donor with the lowest MSE is selected as the initial candidate:
+We compute 1 MSE per donor unit (effectively this is searching for the nearest neighbor and uses it as the optimal donor). The donor with the lowest MSE, denoted as $j^\ast$, is selected as the initial candidate control unit:
 
 $$
  j^\ast = \arg\min_{j \in \mathcal{N}_0} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
 $$
 
-Next, we iteratively expand the donor pool by adding the control unit %j \in \mathcal{N}_0 \setminus \mathcal{S}$ that, when included, minimizes the MSE over the new subsimplex:
+Next, we iteratively expand the selected donor pool by adding each of the control units in the control group, or $j \in \mathcal{N}_0 \setminus \mathcal{S}$, to a new synthetic control model. As before, our criteria for donor selection is the two units which together minimizes the MSE over the new subsimplex:
 
 $$
  j^\ast = \arg\min_{j \in \mathcal{N}_0 \setminus \mathcal{S}} \min_{\mathbf{w} \in \Delta^{k}(\mathcal{S} \cup \{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
+$$
+
+This equation represents the greedy step where the next donor $j^\ast$ is selected based on the optimization over the subsimplex formed by the current set $\mathcal{S}$ and the candidate donor $j$. To generalize, we can define a tuple of sets of donor selections,  $\mathcal{S}$, and their corresponding MSE values. Let $\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K$ represent the different sets of donors chosen during the iterative process, and let their corresponding MSE values be denoted as $MSE(\mathcal{S}_1), MSE(\mathcal{S}_2), \dots, MSE(\mathcal{S}_K)$. Then, the final optimal set $\mathcal{S}^\ast$ is the set that minimizes the MSE, which can be expressed as:
+
+$$
+\mathcal{S}^\ast = \arg\min_{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}} MSE(\mathcal{S}_i).
 $$
 
 ## Estimation in ```mlsynth```

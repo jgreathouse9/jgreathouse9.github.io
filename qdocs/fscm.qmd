@@ -4,7 +4,23 @@ date: 2025-03-31
 categories: [Econometrics, Causal Inference, Data Science]
 ---
 # Intro
-This post introduces the [Forward Selected Synthetic Control Method](https://doi.org/10.1016/j.econlet.2024.111976). This method uses the Forward Selection method to choose the donor pool for synthetic control methods, and then uses that donor pool to fit the synthetic control predictions.
+Interpolation bias is known to be a problem with synthetic control methods. The donors we choose should be as similar to the target unit as possible in the pre-treatment period for valid counterfactual prediction. This means that selecting a donor pool is critical, but this isn't always easy in settings where many controls exist. This post introduces the [Forward Selected Synthetic Control Method](https://doi.org/10.1016/j.econlet.2024.111976). This method uses the Forward Selection method to choose the donor pool for a synthetic control model. Then, it uses that selected donor pool to estimate the out of sample predictions. To begin, let's define the full set of control units as $\mathcal{N}_0 = \{2, \dots, N_0+1\}$, with cardinality $N_0$. The corresponding space of synthetic control weights is the $(N_0 - 1)$-dimensional probability simplex:
+
+$$
+\Delta^{N_0 - 1} \coloneqq \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.
+$$
+
+Now, consider a restricted donor pool chosen by forward selection. Consisting of a strict subset of control units, $\mathcal{S} \subseteq \mathcal{N}_0$, with cardinality $|\mathcal{S}| = k$ where $k < N_0$, this subset induces a subsimplex of the original simplex of donor units, defined as:
+
+$$
+\Delta^{k - 1}(\mathcal{S}) \coloneqq \left\{ \mathbf{w}' \in \mathbb{R}_{\geq 0}^{k} : \|\mathbf{w}'\|_1 = 1 \right\}.
+$$
+
+Since any feasible weight vector $\mathbf{w}' \in \Delta^{k-1}(\mathcal{S})$ can be embedded in $\Delta^{N_0-1}$ by setting the weights of all units outside $\mathcal{S}$ to zero, we have the natural inclusion:
+
+$$
+\Delta^{k - 1}(\mathcal{S}) \subseteq \Delta^{N_0 - 1}.
+$$
 
 ## Estimation in ```mlsynth```
 

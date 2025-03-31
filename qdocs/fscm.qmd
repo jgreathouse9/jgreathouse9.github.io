@@ -4,10 +4,12 @@ date: 2025-03-31
 categories: [Econometrics, Causal Inference, Data Science]
 ---
 # Intro
-Interpolation bias is known to be a problem with synthetic control methods. The donors we choose should be as similar to the target unit as possible in the pre-treatment period for valid counterfactual prediction. This means that selecting a donor pool is critical, but this isn't always easy in settings where many controls exist. This post introduces the [Forward Selected Synthetic Control Method](https://doi.org/10.1016/j.econlet.2024.111976). This method uses the Forward Selection method to choose the donor pool for a synthetic control model. Then, it uses that selected donor pool to estimate the out of sample predictions. To begin, let's define the full set of control units as $\mathcal{N}_0 = \{2, \dots, N_0+1\}$, with cardinality $N_0$. The corresponding space of synthetic control weights is the $(N_0 - 1)$-dimensional probability simplex:
+Interpolation bias is known to be a problem with synthetic control methods. The donors we choose should be as similar to the target unit as possible in the pre-treatment period for valid counterfactual prediction. This means that selecting a donor pool is critical, but this isn't always easy in settings where many controls exist. This post introduces the [Forward Selected Synthetic Control Method](https://doi.org/10.1016/j.econlet.2024.111976). This method uses the Forward Selection method to choose the donor pool for a synthetic control model. Then, it uses that selected donor pool to estimate the out of sample predictions. 
+
+Let $\mathbb{R}$ denote the set of real numbers. Let a caligraphic letter, say $\mathcal S$, denote a descrete set whose cardinality is $S=|\mathcal{S}|$. Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$, represent the indices for $T$ time periods and  $N$ units. The pre-treatment period consists of consecutive time periods $\mathcal{T}_1 = \{1, 2, \ldots, T_0\}$ (cardinality $T_1$), while the post-treatment period is given by $\mathcal{T}_2 = \{T_0 + 1, \ldots, T\}$ (cardinality $T_2$). The treated unit is indexed by $i = 1$, while the remaining set of units, $\mathcal{N}_0 \coloneqq \{2, \ldots, N_0 + 1\}$ (cardinality $N_0$), forms the control group. Each outcome for all units is denoted by $y_{it}$. Denote the outcome vector for the treated unit as $\mathbf{y}_1 \coloneqq \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T$, where each entry corresponds to the outcome of the treated unit at time $t$. The donor pool matrix, similarly, is defined as $\mathbf{Y}_0$, or the concatenation of the control unit vectors, with $N_0$ columns. The corresponding space of synthetic control weights is the $(N_0)$-dimensional probability simplex:
 
 $$
-\Delta^{N_0 - 1} \coloneqq \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.
+\Delta^{N_0} \coloneqq \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.
 $$
 
 Now, consider a restricted donor pool chosen by forward selection. Consisting of a strict subset of control units, $\mathcal{S} \subseteq \mathcal{N}_0$, with cardinality $|\mathcal{S}| = k$ where $k < N_0$, this subset induces a subsimplex of the original simplex of donor units, defined as:
@@ -20,6 +22,24 @@ Since any feasible weight vector $\mathbf{w}' \in \Delta^{k-1}(\mathcal{S})$ can
 
 $$
 \Delta^{k - 1}(\mathcal{S}) \subseteq \Delta^{N_0 - 1}.
+$$
+
+Now we can discuss how we choose our donor pool. At each iteration we identify the optimal subset of control units that minimize the mean squared error (MSE) in the pre-treatment period. First, each donor $j \in \mathcal{N}_0$ is evaluated independently by solving the program:
+
+$$
+\mathbf{w}^{(j)} = \arg\min_{\mathbf{w} \in \Delta^0(\{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
+$$
+
+The donor with the lowest MSE is selected as the initial candidate:
+
+$$
+ j^\ast = \arg\min_{j \in \mathcal{N}_0} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
+$$
+
+Next, we iteratively expand the donor pool by adding the control unit %j \in \mathcal{N}_0 \setminus \mathcal{S}$ that, when included, minimizes the MSE over the new subsimplex:
+
+$$
+ j^\ast = \arg\min_{j \in \mathcal{N}_0 \setminus \mathcal{S}} \min_{\mathbf{w} \in \Delta^{k}(\mathcal{S} \cup \{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
 ## Estimation in ```mlsynth```

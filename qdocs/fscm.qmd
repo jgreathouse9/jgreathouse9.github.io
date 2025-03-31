@@ -18,9 +18,9 @@ And then we load the Prop 99 data and fit the model in the ususal ```mlsynth``` 
 
 ```{python}
 #| fig-align: center
-#| echo: false
 
 import pandas as pd
+from IPython.display import display, Markdown
 from mlsynth.mlsynth import FSCM
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
 data = pd.read_csv(url)
@@ -36,3 +36,12 @@ config = {
 
 arco = FSCM(config).fit()
 ```
+
+After estimating, we can get the weights like
+
+```{python}
+weights_dict = arco['Weights'][0]
+df = pd.DataFrame(list(weights_dict.items()), columns=['State', 'Weight'])
+display(Markdown(df.to_markdown(index=False)))
+```
+These are the weights for all 17 units that were selected by the algorithm. As we can see, all of these even did not ultimately contribute to the synthetic control, with only 6 being assigned positive weight.

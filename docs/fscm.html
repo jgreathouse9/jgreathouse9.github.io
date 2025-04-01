@@ -282,33 +282,39 @@ window.Quarto = {
 <p><span class="math display">\[
 \Delta^{k - 1}(\mathcal{S}) \subseteq \Delta^{N_0 - 1}.
 \]</span></p>
-<p>The forward selection procedure begins by choosing a single donor unit. Each donor <span class="math inline">\(j \in \mathcal{N}_0\)</span> is evaluated independently by solving:</p>
+<p>The forward selection procedure iteratively constructs the donor pool by selecting control units that minimize pre-treatment mean squared error (<span class="math inline">\(\text{MSE}\)</span>).</p>
+<p>At each step, a new control unit is selected based on its contribution to reducing <span class="math inline">\(\text{MSE}\)</span>, and the procedure terminates when no additional unit improves the fit.</p>
+<p>The procedure begins by evaluating each donor unit <span class="math inline">\(j \in \mathcal{N}_0\)</span> independently. For each donor, we solve:</p>
 <p><span class="math display">\[
 \underset{\mathbf{w} \in \Delta^0(\{j\})}{\operatorname*{argmin}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 \]</span></p>
-<p>This computes one mean squared error (MSE) per donor unit. The donor with the lowest MSE, denoted as <span class="math inline">\(j^\ast\)</span>, is selected as the first element of the donor set:</p>
+<p>This computes one <span class="math inline">\(\text{MSE}\)</span> per donor unit. The donor with the lowest <span class="math inline">\(\text{MSE}\)</span>, denoted as <span class="math inline">\(j^\ast\)</span>, is selected as the first element of the donor set:</p>
 <p><span class="math display">\[
 j^\ast = \underset{j \in \mathcal{N}_0}{\operatorname*{argmin}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
 \]</span></p>
-<p>We define this initial set as <span class="math inline">\(\mathcal{S}_1 = \{j^\ast\}\)</span>, consisting of one control unit and one MSE. At each subsequent iteration <span class="math inline">\(K\)</span>, we expand the donor pool by adding a new unit <span class="math inline">\(j^\ast\)</span> to the previous set <span class="math inline">\(\mathcal{S}_{K-1}\)</span>. Specifically, for each candidate donor <span class="math inline">\(j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}\)</span>, we update the synthetic control model and select the unit that minimizes the MSE over the expanded subsimplex:</p>
+<p>We define the initial donor set as:</p>
+<p><span class="math display">\[
+\mathcal{S}_1 = \{j^\ast\}.
+\]</span></p>
+<p>At each subsequent iteration <span class="math inline">\(K\)</span>, we expand the donor pool by selecting an additional control unit. For each candidate donor <span class="math inline">\(j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}\)</span>, we solve:</p>
 <p><span class="math display">\[
 j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \underset{\mathbf{w} \in \Delta^{K}(\mathcal{S}_{K-1} \cup \{j\})}{\operatorname*{min}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 \]</span></p>
-<p>The updated donor set is:</p>
+<p>The selected unit <span class="math inline">\(j^\ast\)</span> is added to the donor pool:</p>
 <p><span class="math display">\[
-\mathcal{S}_K = \mathcal{S}_{K-1} \cup \{j^*\}.
+\mathcal{S}_K = \mathcal{S}_{K-1} \cup \{j^{\ast}\}.
 \]</span></p>
-<p>Finally, the donor pool is chosen as the set that minimizes MSE:</p>
+<p>The procedure terminates when <span class="math inline">\(K= N_0\)</span>. The final donor pool is chosen as:</p>
 <p><span class="math display">\[
-\mathcal{S}^* = \underset{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}}{\operatorname*{argmin}} \ MSE(\mathcal{S}_i).
+\mathcal{S}^{\ast} = \underset{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_i),
 \]</span></p>
-<p>Note that not all donors in <span class="math inline">\(\mathcal{S}^*\)</span> necessarily receive positive weight in the final synthetic control solution.</p>
+<p>or the subsimplex that minmizes the pre-treatment MSE. Note that not all donors in <span class="math inline">\(\mathcal{S}^{\ast}\)</span> necessarily receive positive weight in the final solution! These are just the units that are selected dor inclusion in the donor pool.</p>
 <section id="estimation-in-mlsynth" class="level2">
 <h2 class="anchored" data-anchor-id="estimation-in-mlsynth">Estimation in <code>mlsynth</code></h2>
 <p>As ususal, we begin by installing <code>mlsynth</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>And then we load the Prop 99 data and fit the model in the ususal <code>mlsynth</code> fashion.</p>
-<div id="7fcc849b" class="cell" data-execution_count="1">
+<div id="31cb2087" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> FSCM</span>
@@ -334,7 +340,7 @@ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatornam
 </div>
 </div>
 <p>After estimating, we can get the weights like</p>
-<div id="7ebb0851" class="cell" data-execution_count="2">
+<div id="172a24c4" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>weights_dict <span class="op">=</span> arco[<span class="st">'Weights'</span>][<span class="dv">0</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(<span class="bu">list</span>(weights_dict.items()), columns<span class="op">=</span>[<span class="st">'State'</span>, <span class="st">'Weight'</span>])</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>display(Markdown(df.to_markdown(index<span class="op">=</span><span class="va">False</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -428,7 +434,7 @@ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatornam
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743489776368" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743511221121" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -452,7 +458,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743489776365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743511221118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -476,7 +482,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743489776366" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743511221118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -500,7 +506,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743489776366" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743511221118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -524,7 +530,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743489776365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743511221118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -550,7 +556,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743489776366" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743511221118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -576,7 +582,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743489776365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3498">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743511221118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3498">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -602,7 +608,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1743489816181" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1743511261883" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

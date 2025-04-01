@@ -12,7 +12,7 @@ $$
 \Delta^{N_0} \coloneqq \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.
 $$
 
-Now, consider a restricted donor pool chosen by forward selection. Consisting of a strict subset of control units, $\mathcal{S} \subseteq \mathcal{N}_0$, with cardinality $|\mathcal{S}| = k$ where $k < N_0$, this subset induces a subsimplex of the original simplex of donor units, defined as:
+Now, consider a restricted donor pool chosen by forward selection. This consists of a strict subset of control units, $\mathcal{S} \subseteq \mathcal{N}_0$, with cardinality $|\mathcal{S}| = k$, where $k < N_0$. This subset induces a subsimplex of the original probability simplex, defined as:  
 
 $$
 \Delta^{k - 1}(\mathcal{S}) \coloneqq \left\{ \mathbf{w}' \in \mathbb{R}_{\geq 0}^{k} : \|\mathbf{w}'\|_1 = 1 \right\}.
@@ -24,25 +24,27 @@ $$
 \Delta^{k - 1}(\mathcal{S}) \subseteq \Delta^{N_0 - 1}.
 $$
 
-Now we can discuss how we choose our donor pool. At each iteration we identify the optimal subset of control units that minimize the mean squared error (MSE) in the pre-treatment period. First, each donor $j \in \mathcal{N}_0$ is evaluated independently by solving the program:
+Now, we describe the iterative donor selection process. At each iteration, we identify the optimal subset of control units that minimizes the mean squared error (MSE) in the pre-treatment period. First, each donor $j \in \mathcal{N}_0$ is evaluated independently by solving:
 
 $$
 \mathbf{w}^{(j)} = \arg\min_{\mathbf{w} \in \Delta^0(\{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
-We compute 1 MSE per donor unit (effectively this is searching for the nearest neighbor and uses it as the optimal donor). The donor with the lowest MSE, denoted as $j^\ast$, is selected as the initial candidate control unit:
+This computes one MSE per donor unit (essentially identifying the nearest neighbor in terms of pre-treatment fit). The donor with the lowest MSE, denoted as $j^\ast$, is selected as the initial control unit:
 
 $$
  j^\ast = \arg\min_{j \in \mathcal{N}_0} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
 $$
 
-Next, we iteratively expand the selected donor pool by adding each of the control units in the control group, or $j \in \mathcal{N}_0 \setminus \mathcal{S}$, to a new synthetic control model. As before, our criteria for donor selection is the two units which together minimizes the MSE over the new subsimplex:
+Next, we iteratively expand the donor pool by adding an additional control unit at each step. Specifically, for each $j \in \mathcal{N}_0 \setminus \mathcal{S}$, we update the synthetic control model and select the unit that minimizes the MSE over the expanded subsimplex:
 
 $$
  j^\ast = \arg\min_{j \in \mathcal{N}_0 \setminus \mathcal{S}} \min_{\mathbf{w} \in \Delta^{k}(\mathcal{S} \cup \{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
-This equation represents the greedy step where the next donor $j^\ast$ is selected based on the optimization over the subsimplex formed by the current set $\mathcal{S}$ and the candidate donor $j$. To generalize, we can define a tuple of sets of donor selections,  $\mathcal{S}$, and their corresponding MSE values. Let $\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K$ represent the different sets of donors chosen during the iterative process, and let their corresponding MSE values be denoted as $MSE(\mathcal{S}_1), MSE(\mathcal{S}_2), \dots, MSE(\mathcal{S}_K)$. Then, the final optimal set $\mathcal{S}^\ast$ is the set that minimizes the MSE, which can be expressed as:
+This represents the greedy step where the next donor $j^\ast$ is chosen based on the best pre-treatment fit within the expanded donor pool. 
+
+To generalize, let $\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K$ denote the donor sets selected at each iteration, with corresponding MSE values $MSE(\mathcal{S}_1), MSE(\mathcal{S}_2), \dots, MSE(\mathcal{S}_K)$. The final optimal donor set $\mathcal{S}^\ast$ is then:
 
 $$
 \mathcal{S}^\ast = \arg\min_{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}} MSE(\mathcal{S}_i).

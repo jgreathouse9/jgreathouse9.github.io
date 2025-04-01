@@ -48,37 +48,48 @@ $$
 \Delta^{k - 1}(\mathcal{S}) \subseteq \Delta^{N_0 - 1}.
 $$
 
-The forward selection procedure begins by choosing a single donor unit. Each donor $j \in \mathcal{N}_0$ is evaluated independently by solving:
+The forward selection procedure iteratively constructs the donor pool by selecting control units that minimize pre-treatment mean squared error ($\text{MSE}$).
+
+At each step, a new control unit is selected based on its contribution to reducing $\text{MSE}$, and the procedure terminates when no additional unit improves the fit.
+
+The procedure begins by evaluating each donor unit $j \in \mathcal{N}_0$ independently. For each donor, we solve:
 
 $$
 \underset{\mathbf{w} \in \Delta^0(\{j\})}{\operatorname*{argmin}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
-This computes one mean squared error (MSE) per donor unit. The donor with the lowest MSE, denoted as $j^\ast$, is selected as the first element of the donor set:
+This computes one $\text{MSE}$ per donor unit. The donor with the lowest $\text{MSE}$, denoted as $j^\ast$, is selected as the first element of the donor set:
 
 $$
  j^\ast = \underset{j \in \mathcal{N}_0}{\operatorname*{argmin}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
 $$
 
-We define this initial set as $\mathcal{S}_1 = \{j^\ast\}$, consisting of one control unit and one MSE. At each subsequent iteration $K$, we expand the donor pool by adding a new unit $j^\ast$ to the previous set $\mathcal{S}_{K-1}$. Specifically, for each candidate donor $j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}$, we update the synthetic control model and select the unit that minimizes the MSE over the expanded subsimplex:
+We define the initial donor set as:
+
+$$
+\mathcal{S}_1 = \{j^\ast\}.
+$$
+
+At each subsequent iteration $K$, we expand the donor pool by selecting an additional control unit. For each candidate donor $j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}$, we solve:
 
 $$
  j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \underset{\mathbf{w} \in \Delta^{K}(\mathcal{S}_{K-1} \cup \{j\})}{\operatorname*{min}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
-The updated donor set is:
+The selected unit $j^\ast$ is added to the donor pool:
 
 $$
-\mathcal{S}_K = \mathcal{S}_{K-1} \cup \{j^*\}.
+\mathcal{S}_K = \mathcal{S}_{K-1} \cup \{j^{\ast}\}.
 $$
 
-Finally, the donor pool is chosen as the set that minimizes MSE:
+The procedure terminates when $K= N_0$. The final donor pool is chosen as:
 
 $$
-\mathcal{S}^* = \underset{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}}{\operatorname*{argmin}} \ MSE(\mathcal{S}_i).
+\mathcal{S}^{\ast} = \underset{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_i),
 $$
 
-Note that not all donors in $\mathcal{S}^*$ necessarily receive positive weight in the final synthetic control solution.
+or the subsimplex that minmizes the pre-treatment MSE. Note that not all donors in $\mathcal{S}^{\ast}$ necessarily receive positive weight in the final solution! These are just the units that are selected dor inclusion in the donor pool.
+
 
 ## Estimation in ```mlsynth```
 

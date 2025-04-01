@@ -27,19 +27,19 @@ $$
 Now, we describe the iterative donor selection process. At each iteration, we identify the optimal subset of control units that minimizes the mean squared error (MSE) in the pre-treatment period. First, each donor $j \in \mathcal{N}_0$ is evaluated independently by solving:
 
 $$
-\mathbf{w}^{(j)} = \arg\min_{\mathbf{w} \in \Delta^0(\{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
+\underset{\mathbf{w} \in \Delta^0(\{j\})}{\operatorname*{argmin}} \, \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
 This computes one MSE per donor unit (essentially identifying the nearest neighbor in terms of pre-treatment fit). The donor with the lowest MSE, denoted as $j^\ast$, is selected as the initial control unit:
 
 $$
- j^\ast = \arg\min_{j \in \mathcal{N}_0} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
+ j^\ast = \underset{j \in \mathcal{N}_0}{\operatorname*{argmin}} \, \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w}^{(j)} \|_2^2.
 $$
 
 Next, we iteratively expand the donor pool by adding an additional control unit at each step. Specifically, for each $j \in \mathcal{N}_0 \setminus \mathcal{S}$, we update the synthetic control model and select the unit that minimizes the MSE over the expanded subsimplex:
 
 $$
- j^\ast = \arg\min_{j \in \mathcal{N}_0 \setminus \mathcal{S}} \min_{\mathbf{w} \in \Delta^{k}(\mathcal{S} \cup \{j\})} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
+ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \, \underset{\mathbf{w} \in \Delta^{k}(\mathcal{S} \cup \{j\})}{\operatorname*{min}} \| \mathbf{y}_{1,\mathcal{T}_1} - \mathbf{Y}_{0,\mathcal{T}_1} \mathbf{w} \|_2^2.
 $$
 
 This represents the greedy step where the next donor $j^\ast$ is chosen based on the best pre-treatment fit within the expanded donor pool. 
@@ -47,7 +47,7 @@ This represents the greedy step where the next donor $j^\ast$ is chosen based on
 To generalize, let $\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K$ denote the donor sets selected at each iteration, with corresponding MSE values $MSE(\mathcal{S}_1), MSE(\mathcal{S}_2), \dots, MSE(\mathcal{S}_K)$. The final optimal donor set $\mathcal{S}^\ast$ is then:
 
 $$
-\mathcal{S}^\ast = \arg\min_{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}} MSE(\mathcal{S}_i).
+\mathcal{S}^\ast = \underset{\mathcal{S}_i \in \{\mathcal{S}_1, \mathcal{S}_2, \dots, \mathcal{S}_K\}}{\operatorname*{argmin}} \, MSE(\mathcal{S}_i).
 $$
 
 ## Estimation in ```mlsynth```

@@ -254,7 +254,7 @@ window.Quarto = {
 <section id="intro" class="level1">
 <h1>Intro</h1>
 <p>Interpolation bias is a known issue in synthetic control methods. For valid counterfactual prediction, the donor units should be as similar as possible to the treated unit in the pre-treatment period. Selecting an appropriate donor pool is therefore critical, but this can be challenging in settings with many potential controls. This post introduces the <a href="https://doi.org/10.1016/j.econlet.2024.111976">Forward Selected Synthetic Control Method</a>, which applies Forward Selection to choose the donor pool for a synthetic control model before estimating out-of-sample predictions.</p>
-<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(t \in \mathbb{N}\)</span> and <span class="math inline">\(i \in \mathbb{N}\)</span> represent indices for <span class="math inline">\(T\)</span> time periods and <span class="math inline">\(N\)</span> units, respectively. The pre-treatment period consists of consecutive time periods <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span>, with cardinality <span class="math inline">\(T_1\)</span>, while the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span>, with cardinality <span class="math inline">\(T_2\)</span>. The treated unit is indexed by <span class="math inline">\(i = 1\)</span>, while the remaining control units are indexed as <span class="math inline">\(\mathcal{N}_0 = \{2, \dots, N\}\)</span>, with cardinality <span class="math inline">\(N_0 = N - 1\)</span>. The observed outcome for unit <span class="math inline">\(i\)</span> at time <span class="math inline">\(t\)</span> is denoted by <span class="math inline">\(y_{it}\)</span>. The outcome vector for the treated unit is <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{11} &amp; y_{12} &amp; \cdots &amp; y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T\)</span>, where each entry corresponds to the outcome of the treated unit at time <span class="math inline">\(t\)</span>. The donor pool matrix, which concatenates the control unit outcome vectors, is defined as <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span>. The space of synthetic control weights is the <span class="math inline">\(N_0\)</span>-dimensional probability simplex: <span class="math inline">\(\Delta^{N_0} = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.\)</span></p>
+<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(t \in \mathbb{N}\)</span> and <span class="math inline">\(i \in \mathbb{N}\)</span> represent indices for <span class="math inline">\(T\)</span> time periods and <span class="math inline">\(N\)</span> units, respectively. The pre-treatment period consists of consecutive time periods <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span>, with cardinality <span class="math inline">\(T_1\)</span>, while the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span>, with cardinality <span class="math inline">\(T_2\)</span>. The treated unit is indexed by <span class="math inline">\(i = 1\)</span>, while the remaining control units are indexed as <span class="math inline">\(\mathcal{N}_0 = \{2, \dots, N\}\)</span>, with cardinality <span class="math inline">\(N_0 = N - 1\)</span>. The observed outcome for unit <span class="math inline">\(i\)</span> at time <span class="math inline">\(t\)</span> is denoted by <span class="math inline">\(y_{it}\)</span>, where a generic outcome vector for a given unit at time <span class="math inline">\(t\)</span> is <span class="math inline">\(\mathbf{y}_{j}^\top \in \mathbb{R}^T\)</span>. The outcome vector for the treated unit is <span class="math inline">\(\mathbf{y}_1\)</span>, and the donor matrix, similarly, is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \mathbf{y}_{j \in \mathcal{N}_0 }\in \mathbb{R}^{T \times N_0}\)</span>. The space of synthetic control weights is the <span class="math inline">\(N_0\)</span>-dimensional probability simplex: <span class="math inline">\(\Delta^{N_0} = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.\)</span></p>
 <p>Now, consider a restricted donor pool chosen by forward selection. This consists of a strict subset of control units, <span class="math inline">\(\mathcal{S} \subseteq \mathcal{N}_0\)</span>, with cardinality <span class="math inline">\(k = |\mathcal{S}|\)</span> where <span class="math inline">\(k \leq N_0\)</span>. This subset induces a subsimplex <span class="math inline">\(\Delta^{k}(\mathcal{S}) = \left\{ \mathbf{w}^\prime \in \mathbb{R}_{\geq 0}^{k} : \|\mathbf{w}^{\prime}\|_1 = 1 \right\}\)</span>. Now we discuss how the donor pool for the synthetic control estimator is chosen.</p>
 <p>The forward selection algorithm builds a sequence of tuples, <span class="math inline">\((\mathcal{S}_K, \text{MSE}_K)\)</span> after each <span class="math inline">\(K\)</span>-th iteration of forward selection. The tuple contains <span class="math inline">\(\text{MSE}_K\)</span> (or the pre-treatment mean squared error) and its corresponding donor set <span class="math inline">\(\mathcal{S}_K\)</span> for that iteration.</p>
 <p>We begin by minimizing</p>
@@ -279,7 +279,7 @@ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatornam
 <p>As ususal, we begin by installing <code>mlsynth</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>And then we load the Prop 99 data and fit the model in the ususal <code>mlsynth</code> fashion.</p>
-<div id="677cd0e6" class="cell" data-execution_count="1">
+<div id="bfdc742a" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> FSCM</span>
@@ -305,7 +305,7 @@ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatornam
 </div>
 </div>
 <p>After estimating, we can get the weights like</p>
-<div id="731bf343" class="cell" data-execution_count="2">
+<div id="7854556f" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>weights_dict <span class="op">=</span> arco[<span class="st">'Weights'</span>][<span class="dv">0</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(<span class="bu">list</span>(weights_dict.items()), columns<span class="op">=</span>[<span class="st">'State'</span>, <span class="st">'Weight'</span>])</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>display(Markdown(df.to_markdown(index<span class="op">=</span><span class="va">False</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -399,7 +399,7 @@ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatornam
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743516169588" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743516679716" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -423,7 +423,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743516169585" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743516679713" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2404">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -447,7 +447,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743516169586" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743516679714" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1758">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -471,7 +471,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743516169586" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743516679714" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On the Use of Clustering for Synthetic Controls</a>
@@ -495,7 +495,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743516169586" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743516679713" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2995">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -521,7 +521,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743516169586" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743516679714" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -547,7 +547,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743516169586" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3498">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743516679714" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3498">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -573,7 +573,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1743516213115" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1743516723616" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

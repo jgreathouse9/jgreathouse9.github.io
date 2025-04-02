@@ -1,8 +1,9 @@
 name: Quarto Blog
 
 on:
-  schedule:
-    - cron: '0 * * * *'  # Runs every hour on the hour
+  push:
+    paths:
+      - 'qdocs/**'  # Trigger on any file change within the qdocs directory
   workflow_dispatch:
 jobs:
   render:
@@ -37,7 +38,7 @@ jobs:
           echo "docs/ directory found. Deleting..."
           rm -rf docs
           echo "docs/ directory deleted."
-        else:
+        else
           echo "No existing docs/ directory found. Skipping deletion."
         fi
 
@@ -46,7 +47,7 @@ jobs:
         if [ -d docs ]; then
           echo "ERROR: docs/ directory still exists after deletion attempt."
           exit 1
-        else:
+        else
           echo "docs/ directory successfully removed."
         fi
 

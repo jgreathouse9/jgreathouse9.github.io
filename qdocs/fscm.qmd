@@ -33,25 +33,25 @@ Consider a restricted donor pool chosen by the forward selection algorithm. This
 $$
 \Delta^{k}(\mathcal{S}) = \left\{ \mathbf{w}^\prime \in \mathbb{R}_{\geq 0}^{k} : \|\mathbf{w}^{\prime}\|_1 = 1 \right\},
 $$
-where ideally some control units will be more relevant to the treated unit than others. The forward selection algorithm, over $K \in \mathbb{N}$ iterations, builds a sequence of tuples, $(\mathcal{S}_K, \text{MSE}_K)$. The tuple contains the selected donor set for the $K$-th iteration and its corresponding $\text{MSE}_K$ (or the pre-treatment mean squared error). We begin in the first step by minimizing:
+where ideally some control units will be more relevant to the treated unit than others. The forward selection algorithm, over $K \in \mathbb{N}$ iterations, builds a sequence of tuples, $(\mathcal{S}_K, \text{MSE}_K)$. The tuple contains the selected donor set for the $K$-th iteration and its corresponding $\text{MSE}_K$ (or the pre-treatment mean squared error). We begin in the first step by minimizing the SCM objective function as above, cycling through each donor unit one at a time. This returns $N_0$ one unit SCM submodels. We choose the single unit (the nearest neighbor in this specific case) that minimizes the MSE with respect to the treated unit. Our first tuple, then, is this single unit and its corresponding MSE
 
 $$
 \mathcal{S}_1 = \{j^\ast\}, \quad \text{where} \quad j^\ast = \underset{j \in \mathcal{N}_0}{\operatorname*{argmin}} \ \text{MSE}(\{j\}).
 $$
 
-according to the SCM optimization above, estimating $N_0$ one unit SCM submodels. We choose the single unit (the nearest neighbor) that minimizes the MSE with respect to the treated unit. We select a single control unit that minimizes the $\text{MSE}$ when combined with the previously selected set:
+This process continues for the rest of the donor pool. For $K=2$, we see which set of two donor units, the first one included, minimizes the $\text{MSE}$. As before, this becomes our second donor unit and MSE selected
 
 $$
- j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_{K-1} \cup \{j\}).
+ j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_{K-1} \cup \{j\}),
 $$
 
-The updated tuple is:
+with the updated tuple taking the form of
 
 $$
 (\mathcal{S}_K, \text{MSE}_K) = (\mathcal{S}_{K-1} \cup \{j^\ast\}, \text{MSE}(\mathcal{S}_{K-1} \cup \{j^\ast\})).
 $$
 
-This process continues, where iteration1 has 1 donor, $K=2$ has 2 donors, and so on until all $N_0$ donors have been evaluated. The final donor set we use for analysis is the tuple with the lowest $\text{MSE}$:
+This process continues until all $N_0$ donors have been included in the SCM model. The final donor set we use for analysis is the tuple with the lowest $\text{MSE}$:
 
 $$
 \mathcal{S}^{\ast} = \underset{(\mathcal{S}_K, \text{MSE}_K) \in \mathbb{T}}{\operatorname*{argmin}} \ \text{MSE}_K.

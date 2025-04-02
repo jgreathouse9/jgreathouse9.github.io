@@ -6,7 +6,7 @@ Interpolation bias is a known issue with synthetic control methods. For valid co
 
 ## Notation
 
-Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ represent indices for a total of $N$ units and $t \in \mathbb{N}$ index time. Let $j = 1$ be the treated unit, with the set of controls being $\mathcal{N}_0 = \mathcal{N} \setminus 1$, with cardinality $N_0$. The pre-treatment period consists of consecutive time periods indexed by the set  $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \},$ where $T_0$ is the final period before treatment. Similarly, the post-treatment period is given by  $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \.$ 
+Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ represent indices for a total of $N$ units and $t \in \mathbb{N}$ index time. Let $j = 1$ be the treated unit, with the set of controls being $\mathcal{N}_0 = \mathcal{N} \setminus 1$, with cardinality $N_0$. The pre-treatment period consists of consecutive time periods indexed by the set  $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \},$ where $T_0$ is the final period before treatment. Similarly, the post-treatment period is given by  $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}.$ 
 
 The observed outcome for unit $j$ at time $t$ is denoted by $y_{jt}$, where a generic outcome vector for a given unit at time $t$ is $\mathbf{y}_j \in \mathbb{R}^T$, where $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T \times 1}$. The outcome vector for the treated unit is $\mathbf{y}_1$, and the donor matrix, similarly, is defined as $\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$, where each column denotes a donor unit and each row is indexed to a time period.
 
@@ -18,50 +18,39 @@ $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2.
 $$
 
-We find the weight vector, $\mathbf{w}$, that minimizes the mean squared error between the treated unit's pre-treatment outcomes and the in-sample weighted average of control units. For our purposes, the space of synthetic control weights is the $N_0$-dimensional probability simplex:
-
-$$
-\Delta^{N_0} = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.
-$$
-
-Practically this means that the predictions will never be outside the donor pool's outcome values. The key thing is choosing the right donor units such that we have better in-sample fit.
+We seek the weight vector, $\mathbf{w}$, that minimizes the mean squared error between the treated unit's pre-treatment outcomes and the in-sample weighted average of control units. For our purposes, the space of synthetic control weights is the $N_0$-dimensional probability simplex $\Delta^{N_0} = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}.$ Practically this means that the post-intervention predictions will never be outside the donor pool's outcome values. The key thing is choosing the right donor units such that we have better in-sample fit.
 
 ## Forward Selection for Donor Pool Choice
 
-Consider a restricted donor pool chosen by the forward selection algorithm. This consists of a subset of control units, $\mathcal{S} \subseteq \mathcal{N}_0$, with cardinality $k = |\mathcal{S}|$ where $k \leq N_0$. This subset induces a subsimplex of weights:
-
-$$
-\Delta^{k}(\mathcal{S}) = \left\{ \mathbf{w}^\prime \in \mathbb{R}_{\geq 0}^{k} : \|\mathbf{w}^{\prime}\|_1 = 1 \right\},
-$$
-where ideally some control units will be more relevant to the treated unit than others. The forward selection algorithm, over $K \in \mathbb{N}$ iterations, builds a sequence of tuples, $\mathbb{T} = \{(\mathcal{S}_K, \text{MSE}_K) \}_{K=1}^{N_0}$. The tuple contains the selected donor set for the $K$-th iteration and its corresponding $\text{MSE}_K$ (or the pre-treatment mean squared error). We begin in the first step by minimizing the SCM objective function as above, cycling through each donor unit one at a time. This returns $N_0$ one unit SCM submodels. We choose the single unit (the nearest neighbor in this specific case) that minimizes the MSE with respect to the treated unit. Our first tuple, then, is this single unit and its corresponding MSE
+Consider a restricted donor pool chosen by the forward selection algorithm. This consists of a subset of control units, $\mathcal{S} \subseteq \mathcal{N}_0$, with cardinality $k = |\mathcal{S}|$ where $k \leq N_0$. This subset induces a subsimplex of weights $\Delta^{k}(\mathcal{S}) = \left\{ \mathbf{w}^\prime \in \mathbb{R}_{\geq 0}^{k} : \|\mathbf{w}^{\prime}\|_1 = 1 \right\}$, where ideally some control units will be more relevant to the treated unit than others. The forward selection algorithm, proceeding over $K \in \mathbb{N}$ iterations, builds a sequence of tuples, $\mathbb{T} = \{(\mathcal{S}_K, \text{MSE}_K) \}_{K=1}^{N_0}$. The tuple contains the selected donor set for the $K$-th iteration and its corresponding $\text{MSE}_K$ (or the pre-treatment mean squared error). We begin in the first step by minimizing the SCM objective function as above, cycling through each donor unit one at a time. This returns $N_0$ one unit SCM submodels. We choose the single unit (the nearest neighbor in this specific case) that minimizes the MSE with respect to the treated unit. Our first tuple, then, is this single unit and its corresponding MSE
 
 $$
 \mathcal{S}_1 = \{j^\ast\}, \quad \text{where} \quad j^\ast = \underset{j \in \mathcal{N}_0}{\operatorname*{argmin}} \ \text{MSE}(\{j\}).
 $$
 
-This process continues for the rest of the donor pool. For $K=2$, we see which set of two donor units, the first one included, minimizes the $\text{MSE}$. As before, this becomes our second selected donor unit and MSE
+This process continues for the rest of the donor pool. For $K=2$, we see which of the remaining donor units, in conjunction with the first selected donor, minimizes the $\text{MSE}$. As before, this second optimal donor and pre-treatment MSE forms the second tuple
 
 $$
- \mathcal{S}_2 = \mathcal{S}_1 \cup \{j^\ast\},\quad j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_{K-1} \cup \{j\}),
+ \mathcal{S}_2 = \mathcal{S}_1 \cup \{j^\ast\},\quad \text{where} \quad j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_{K-1} \cup \{j\}),
 $$
 
-with the updated tuple taking the form of
+This process generalizes to the rest of the iterations
 
 $$
-(\mathcal{S}_K, \text{MSE}_K) = (\mathcal{S}_{K-1} \cup \{j^\ast\}, \text{MSE}(\mathcal{S}_{K-1} \cup \{j^\ast\})).
+(\mathcal{S}_K, \text{MSE}_K) = (\mathcal{S}_{K-1} \cup \{j^\ast\}, \text{MSE}(\mathcal{S}_{K-1} \cup \{j^\ast\})),
 $$
 
-This process continues until all $N_0$ donors have been included in the SCM model. The final donor set we use for analysis is the tuple with the lowest $\text{MSE}$:
+continuing until all $N_0$ donors have been included in the SCM model. The final donor set we use for analysis is the tuple with the lowest $\text{MSE}$:
 
 $$
-\mathcal{S}^{\ast} = \underset{(\mathcal{S}_K, \text{MSE}_K) \in \mathbb{T}}{\operatorname*{argmin}} \ \text{MSE}_K.
+\mathcal{S}^{\ast} = \underset{(\mathcal{S}_K, \text{MSE}_K) \in \mathbb{T}}{\operatorname*{argmin}} \ \text{MSE}_K,
 $$
 
-$\mathcal{S}^{\ast}$ is the optimal donor pool by forward selection. Note that even within $\mathcal{S}^{\ast}$, some donors may receive zero weight in the final solution, as these are just the units selected for inclusion in the donor pool. They are not necessarily the ones that will actually get weight, in contrast to methods such as [Forward Difference-in-Differences](https://doi.org/10.1287/mksc.2022.0212) or the [forward selection panel data method](https://doi.org/10.1016/j.jeconom.2021.04.009), both of which are available in `mlsynth`.
+where $\mathcal{S}^{\ast}$ is the optimal donor pool by forward selection. Note that even within $\mathcal{S}^{\ast}$, some donors may receive zero weight in the final solution, as these are just the units selected for inclusion in the donor pool. They are not necessarily the ones that will actually get weight, in contrast to methods such as [Forward Difference-in-Differences](https://doi.org/10.1287/mksc.2022.0212) or the [forward selection panel data method](https://doi.org/10.1016/j.jeconom.2021.04.009), both of which are available in `mlsynth`.
 
-## Estimation in ```mlsynth```
+## FSCM in ```mlsynth```
 
-As ususal, we begin by installing ```mlsynth```.
+As ususal, in order to properly implement this, we begin by installing ```mlsynth``` from my Github
 
 ```bash
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git

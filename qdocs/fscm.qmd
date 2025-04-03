@@ -32,37 +32,40 @@ $$
 
 ## Step 2
 
-For $K=2$, we see which of the remaining donor units, in conjunction with the first selected donor, minimizes the $\text{MSE}$. We now estimate $N_0-1$ two-unit SCMs. As before, this second optimal donor (along with the first selected one) and pre-treatment MSE forms the first and second elements of the second tuple, respectively
+For $K=2$, we now estimate $N_0-1$ two-unit SCMs.  We include the originally selected donor along with the remaining controls, one remaining donor at a time. As above, the first and second elements of the second tuple, respectively, are
 
 $$
  \mathcal{S}_2 = \mathcal{S}_1 \cup \{j^\ast\},\quad \text{where} \quad j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}_{K-1}}{\operatorname*{argmin}} \ \text{MSE}(\mathcal{S}_{K-1} \cup \{j\}).
 $$
 
+
+Now, we have two tuples and two MSEs to choose from.
+
 ## Generalizing
 
-This process generalizes to the rest of the iterations. This process continues for the rest of the donor pool, taking the form
+This process generalizes, continuing for the rest of the donor pool. The general form for this algorithm, then, is
 
 $$
 (\mathcal{S}_K, \text{MSE}_K) = (\mathcal{S}_{K-1} \cup \{j^\ast\}, \text{MSE}(\mathcal{S}_{K-1} \cup \{j^\ast\})).
 $$
 
-The algorithm continues until all $S_K=N_0$. The final donor set we use for analysis is the tuple with the lowest $\text{MSE}$:
+The algorithm continues until $S_K=N_0$, when there are no more donors to add. ```FSCM``` chooses the tuple with the lowest $\text{MSE}$:
 
 $$
 \mathcal{S}^{\ast} = \underset{(\mathcal{S}_K, \text{MSE}_K) \in \mathbb{T}}{\operatorname*{argmin}} \ \text{MSE}_K.
 $$
 
-Here, $\mathcal{S}^{\ast}$ is the optimal donor pool by FS. Note that even within $\mathcal{S}^{\ast}$ (as we will see below), some donors may receive zero weight in the final solution, as these are just the units selected for inclusion in the donor pool. They are not necessarily the ones that will actually get weight, in contrast to methods such as [Forward Difference-in-Differences](https://doi.org/10.1287/mksc.2022.0212) or the [FS panel data method](https://doi.org/10.1016/j.jeconom.2021.04.009). Both of these designs are available in `mlsynth` too, in the ```FDID``` class and ```PDA``` class with the method of ```fs``` (the default). The main difference here is that FDID can never overfit because it estimates only one parameter, whereas (in theory) FSCM and fsPDA can overfit if they end up including too many parameters in the regression model.
+as the optimal donor set, $\mathcal{S}^{\ast}$. Note that even within $\mathcal{S}^{\ast}$ (as we will see below), some donors may receive zero weight in the final solution. The selected donors are just the units selected for inclusion in the donor pool in the first place, they are no guarantee of the unit having positive weight. This is in contrast to methods such as [Forward Difference-in-Differences](https://doi.org/10.1287/mksc.2022.0212) or the [FS panel data method](https://doi.org/10.1016/j.jeconom.2021.04.009). Both of these designs are available in `mlsynth` too, in the ```FDID``` class and ```PDA``` class with the method of ```fs``` (the default). The main difference here is that FDID can never overfit because it estimates only one parameter, whereas (in theory) FSCM and fsPDA can overfit if they end up including too many parameters in the regression model. Unclear how likely this is, since as we see below, teh FS method reduces the full donor pool to just under half of the originally selected donor units.
 
 ## FSCM in ```mlsynth```
 
-As ususal, in order to properly implement this, we begin by installing ```mlsynth``` from my Github
+Now I will give an example of how to use FSCM for your own applied work. As ususal, in order to properly implement this, we begin by installing ```mlsynth``` from my Github
 
 ```bash
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 ```
 
-And then we load the Proposition 99 dataset and fit the model in the ususal ```mlsynth``` fashion.
+And then we load the Proposition 99 dataset and fit the model in the ususal ```mlsynth``` fashion. As per the ususal, we have a single unit name column which has the names of the donors, a time column (the year in this case), a numeric outcome column, and an indicator column which denotes the treatment when it is active and the unit is the name of the treated unit, else 0.
 
 ```{python}
 #| fig-align: center
@@ -74,6 +77,8 @@ from IPython.display import display, Markdown # To create the table
 from mlsynth.mlsynth import FSCM # The method of interest
 
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+
+# Feel free to change "smoking" with "basque" above in the URL
 
 data = pd.read_csv(url)
 
@@ -102,6 +107,6 @@ display(Markdown(df.to_markdown(index=False)))
 These are the weights for all 17 units that were selected by the algorithm. As we can see, all of these even did not ultimately contribute to the SC, with only 6 being assigned positive weight. Our ATT of Prop 99 is -19.51 and the pre-treatment Root Mean Squared Error for the FSCM is 1.66. I compared these results to the same results we get in the Stata help file, which includes the covariates that Abadie, Diamond, and Hainmuller originally adjusted for as well as customizes the period over which to minimize the MSE. The ATT using the original method is -18.97, and the RMSE for the pre-treatment period is 1.75. The corresponding weights, using the full donor pool, are 0.335 for Utah, 0.236 for Nevada, 0.2 for Montana, 0.16 for Colorado, 0.068 for Connecticut, and 0.001 for New Mexico. So as we can see, the ATTs are very similar, and the pre-treatment prediction errors are pretty much the same. By comparison, when we estimate this in Stata (omitting the auxilary covariate predictors and estimate ``` synth2 cigsale cigsale(1988) cigsale(1980) cigsale(1975) , trunit(3) trperiod(1989) xperiod(1980(1)1988) nested fig```, we get a RMSE of 4.33 and an ATT of -22.88. Furthermore, with this specification, the weights are no longer a sparse vector.
 
 The point of this article is very simple. The original SCM works well, however it can be very sensitive to the inclusion of covariates, which covariates are included, what their lags are, and so on and so forth. Furthermore, there is also an issue of [covariate selection](
-https://doi.org/10.48550/arXiv.2203.11576) in settings where we have multiple covariates that can potentially inform our selection of the donor pool. In situations where we have many donors, without some obvious pre-existing valid donor pool, analysts may apply the FSCM to guard against interpolation biases. At least with the California example (and West Germany and Basque datasets, which I also tested), we can sometimes get comparable results to the baseline estimates which generally to require fitting to multiple covariates for acceptable results. In this example, we select some of the same donor units, get a slightly better MSE and a very similar ATT without needing to fit to the covariates originally specified. The promise of machine-learning methods in this space is to automate away donor/predictor selection (to some degree). The key thing is interest is which methods are best suited for this, when, and why. For example, it might be useful to derive bias bounds for this estimator to quantify how much the MSE should improve by compared to the original SCM and Forward DID.
+https://doi.org/10.48550/arXiv.2203.11576) in settings where we have multiple covariates that can potentially inform our selection of the donor pool. In situations where we have many donors, without some obvious pre-existing valid donor pool, analysts may apply the FSCM algorithm to guard against interpolation biases. At least with the California example (and West Germany and Basque datasets, which I also tested), we can sometimes get comparable results to the baseline estimates which generally to require fitting to multiple covariates for acceptable results. In this example, we select some of the same donor units, get a slightly better MSE and a very similar ATT without needing to fit to the covariates originally specified. The promise of machine-learning methods in this space is to automate away donor/predictor selection (to some degree). The key thing is interest is which methods are best suited for this, when, and why. For example, it might be useful to derive bias bounds for this estimator to quantify how much the MSE should improve by compared to the original SCM and Forward DID.
 
 In the [original paper](https://doi.org/10.1016/j.econlet.2024.111976), Giovanni uses cross-validation to estimate this model. I have not done this yet, but I will very soon. As ususal, email me with questions or comments.

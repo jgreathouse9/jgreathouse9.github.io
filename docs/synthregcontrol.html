@@ -7,9 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2025-01-31">
 
-<title>Data Science for Policy Analysts: A Simple Introduction to Github Actions – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -171,24 +170,20 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#defining-a-github-action" id="toc-defining-a-github-action" class="nav-link active" data-scroll-target="#defining-a-github-action">Defining a Github Action</a>
+  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a>
   <ul class="collapse">
-  <li><a href="#a-simple-yml-file" id="toc-a-simple-yml-file" class="nav-link" data-scroll-target="#a-simple-yml-file">A Simple yml file</a></li>
+  <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
   </ul></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(9)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(5)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(9)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(5)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Data Science for Policy Analysts: A Simple Introduction to Github Actions</h1>
-  <div class="quarto-categories">
-    <div class="quarto-category">Github</div>
-    <div class="quarto-category">Automation</div>
-  </div>
-  </div>
+<h1 class="title">Policy Analysis, Data Science, and Causal Inference</h1>
+</div>
 
 
 
@@ -201,12 +196,6 @@ window.Quarto = {
           </div>
   </div>
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">January 31, 2025</p>
-    </div>
-  </div>
   
     
   </div>
@@ -216,123 +205,29 @@ window.Quarto = {
 </header>
 
 
-<p>Life is full of repititive actions and work in data science is no exception to this. Perhaps you must produce a plot of some form to clean a specific dataset/set of datasets each week, say revenue data. Or perhaps, some files must be managed or cleaned, or a researcher wishes to collect the public housing data from Zillow each month when it updates. On one hand, we could physically do this ourselves, but this leaves us open to errors: for one, if we’re scraping a dataset from a website, what if the data are only there temporarily? What if it only exists for today, and then tomorrow it is updated with the then current data? What if we are away from our computers, and cannot be there to run script on our local machine? Surely, there must be a solution to this, and one such solution is Github Actions, which I learned about as an intern at Gainwell Technologies.</p>
-<p>This post explains Github Actions in a very short, simple to intuit example. Of course, their applications are so vast that I cannot cover everything about them here, but they are still very useful to people who do a repetitive/very similar set of tasks over and over again.</p>
-<section id="defining-a-github-action" class="level1">
-<h1>Defining a Github Action</h1>
-<p>As the name sounds, a Github Action is a set of instructions designed to be performed by a virtual machine on Github. The list of things it may do is very expansive and context dependent, so I focus on the case of pulling in a dataset from the internet on a regularly scheduled interval. The first thing we need to get started with this, however, is for one, a Github Account, and two, a repo to test this with. You also need to ensure that the settings for your current repo allow actions to write to your current repo, which can be found in the Settings tab.</p>
-<p>Github Actions are organized and executed via what we call a <code>yml</code> (yeah mill) file. A <code>yml</code> file is simply a kind of configuration file that we use to set up GitHub Actions. <code>yml</code> files MUST be defined at the <code>.github/workflows</code> directory that is in the root of ones project</p>
-<section id="a-simple-yml-file" class="level2">
-<h2 class="anchored" data-anchor-id="a-simple-yml-file">A Simple yml file</h2>
-<pre class="{yml}"><code>name: City Level Gas Price Scraper
-
-on:
-  schedule:
-    - cron: '30 9 * * *'
-  workflow_dispatch:
-
-jobs:
-  scrape:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Run gas scraper
-      run: |
-        python "City Scrape/cityscrape.py"
-
-    - name: Ensure directory exists
-      run: |
-        mkdir -p "City Scrape/Data/"
-
-    - name: Commit and push updated CSV to repository
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Check if there are changes before committing
-        if git diff --quiet &amp;&amp; git diff --staged --quiet; then
-          echo "No changes detected, skipping commit."
-          exit 0
-        fi
-        
-        git add "City Scrape/Data/City_*.csv"
-        git commit -m "Update gas prices data for $(date +'%Y-%m-%d')"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-</code></pre>
-<p>Here is a <code>yml</code> file we can find in my <a href="https://github.com/jgreathouse9/AAAGas/tree/main">AAA repo</a>. It begins by naming the action to be performed, which is to <a href="https://jgreathouse9.github.io/qdocs/aaascrape.html">scrape</a> some city level gas price data. It is <a href="https://adminschoice.com/crontab-quick-reference/">scheduled</a> to run at 9:30 UTC time, or at 4:30 each morning Eastern Standard Time, with the cron time. It may also run whenever I wish for it to run; alternatively, we can specify that some actions run on push to a repo, branch, or even a certain working directory.</p>
-<pre class="{yml}"><code>name: City Level Gas Price Scraper
-
-on:
-  schedule:
-    - cron: '30 9 * * *'
-  workflow_dispatch:</code></pre>
-<p>Actions proceed by defining a set of <em>jobs</em> for the workflow to excecute. In this case, it’s just “scrape”, but you can define more jobs that are interdependent on one another. The job runs on a virtual computer, in this case Ubuntu. Jobs proceeds with a list of <em>steps</em>, or an order that the job proceeds in os the action can function. Step one is to checkout the repo, which <a href="https://git-scm.com/docs/git-checkout">essentially</a> just clones the current repo on to the virtual machine.</p>
-<pre class="{yml}"><code>jobs:
-  scrape:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
-</code></pre>
-<p>Step two here is to set up Python, since that’s the language I use, but I’m certain this may be done with R and other langauges (in fact, this entire blog is written in Quarto, which the action must install before working with each post). Note how we specify the version of Python here, too. We then install <code>pip</code> and the requirements that the Python code needs to run the scrape.</p>
-<pre class="{yml}"><code>    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-</code></pre>
-<p>Now, we simply run the code, which is no different practically speaking from running the code from our command line. Note that how the file is defined within a driectory, which must be specified if the python file is not at the root (different ways of doing this).</p>
-<pre class="{yml}"><code>
-    - name: Run gas scraper
-      run: |
-        python "City Scrape/cityscrape.py"
-</code></pre>
-<p>Next, I make the directory for the data if it does not exist.</p>
-<pre class="{yml}"><code>
-    - name: Ensure directory exists
-      run: |
-        mkdir -p "City Scrape/Data/"
-</code></pre>
-<p>And finally, we commit the csv file my code creates to the directory at the repo. We use the Github Actions bot to do the commit. <a href="https://git-scm.com/docs/git-diff">If there are no changes</a> between any of the files before and after committing, we don’t add them and then the job ends (this is what happens if I try to run the action after it’s ran already that day). If not, the files are pushed. In my case, the files are named things like <code>City_2025-01-31.csv</code>. These files are staged, or prepared for being committed, with the addition of the commit message that I’m updating the data for that day. Then we push them to the directory of interest, and then job complete.</p>
-<pre class="{yml}"><code>    - name: Commit and push updated CSV to repository
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Check if there are changes before committing
-        if git diff --quiet &amp;&amp; git diff --staged --quiet; then
-          echo "No changes detected, skipping commit."
-          exit 0
-        fi
-        
-        git add "City Scrape/Data/City_*.csv"
-        git commit -m "Update gas prices data for $(date +'%Y-%m-%d')"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-</code></pre>
-<p>The real value of this is not the data I’m scraping (unless you’re a fuel economist/policy scholar). The value is that this job runs independent of my will. I do not have to be at my computer for this to run. I do not need to worry about whether my computer has power or whether I’m home to personally oversee it. The value here is that I’ve manually gotten my computer to do a specific task every single day, the correct way (assuming you’ve coded everything right!!!), every time. Of course, this job is so insignificant such that I did not feel the need to run additional safechecks (say AAA’s site is down, I could have the action restart in 6 hours, or have it <code>curl</code> the website on the hour until it does respond), but obviously you can do plenty more here if the task matters enough. This is also a very partial list of what may be done. You can also place lots of parameters around your actions that may make life easier, or employ pre-commit hooks which can do checks for the quality of the code and other tasks before anything is committed, which will fail if they are not satisfied.</p>
-<p>Also, it’s worth noting that Actions <a href="https://andrewpwheeler.com/2023/02/02/setting-up-pyspark-to-run-sql-tests/">may run</a> in conjunction with cloud computing for larger-scale jobs. So, if you’re a policy researcher, and your org uses Github but <em>not</em> using Actions for all kinds of process automation tasks, these provide a very useful tool to handle repetitive actions that free up your time to do other things. After all, a key benefit of script is to <a href="https://automatetheboringstuff.com/">automate the boring stuff</a>, provided that we’ve automated our tasks correctly.</p>
+<section id="notation" class="level1">
+<h1>Notation</h1>
+<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>. The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, where <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}\)</span>. The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix, similarly, is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, where each column indexes a donor unit and each row is indexed to a time period.</p>
+<section id="synthetic-controls" class="level2">
+<h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
+<p>Before I get to the SRC, I review synthetic controls. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^T\)</span> represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted sum of the donor units’ outcome vectors <span class="math inline">\(\mathbf{y}_j\)</span>, where <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
+<p><span class="math display">\[
+\mathbf{y}_1^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{y}_1^{\text{SC}}\)</span> is the predicted counterfactual outcome for the treated unit, <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> is the matrix of outcome vectors for the donor units, and <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> is the vector of weights applied to each donor unit. The goal is to find <span class="math inline">\(\mathbf{w}\)</span> that best approximates the outcome vector of the treated unit during the pre-treatment period.</p>
+<p>The weights are estimated by minimizing the distance between the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_{1,\text{pre}}\)</span> and the weighted average of the donor units’ pre-treatment outcomes. This can be expressed as</p>
+<p><span class="math display">\[
+\min_{\mathbf{w}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}\)</span> is the pre-treatment outcome vector for the treated unit and <span class="math inline">\(\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> is the pre-treatment outcome matrix for the donor units. The objective is to minimize the mean squared error (MSE) between the pre-treatment outcomes of the treated unit and the synthetic control.</p>
+<p><span class="math display">\[
+\mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} : \mathbf{w} \geq 0, \|\mathbf{w}\|_1 = 1 \right\}
+\]</span></p>
+<p>Once the weights <span class="math inline">\(\mathbf{w}\)</span> are estimated, the counterfactual outcome for the treated unit during the post-treatment period is given by</p>
+<p><span class="math display">\[
+\mathbf{y}_{1,t}^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}, \quad \text{for } t &gt; T_0
+\]</span></p>
+<p>Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units’ outcomes, with the weights derived from the pre-treatment period.</p>
 
 
 
@@ -389,7 +284,31 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743887135143" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('R2l0aHVi'); return false;">Github</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('QXV0b21hdGlvbg=='); return false;">Automation</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./gitact.html" class="no-external">
+<div class="listing-date">
+Jan 31, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -413,7 +332,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2994">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2994">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -439,7 +358,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -465,7 +384,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -491,7 +410,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="7" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -515,7 +434,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1743887184461" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1743887184461" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>
@@ -523,20 +442,6 @@ Jared Greathouse
 </div>
 <div class="metadata">
 <a href="./index.html" class="no-external">
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1743887135147" data-listing-reading-time-sort="3" data-listing-word-count-sort="486">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./synthregcontrol.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
-</h3>
-</div>
-<div class="metadata">
-<a href="./synthregcontrol.html" class="no-external">
 <div class="listing-author">
 Jared Greathouse
 </div>

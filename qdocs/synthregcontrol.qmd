@@ -53,28 +53,26 @@ Thus, the counterfactual outcome for each time period in the post-treatment peri
 
 # Synthetic Regression Control (SRC)
 
-SRC is a penalized regression approach to synthetic control estimation that operates in the demeaned outcome space. We first compute an in-sample projection of the treated unit onto the donor space via ridge regression using an inverse-diagonal approximation. The demeaned outcome for the treated unit is then $\widetilde{\mathbf{y}}_1$ and the demeaned donor matrix is $\widetilde{\mathbf{Y}}_0$.  Specifically, we estimate
+SRC is a penalized regression approach to synthetic control estimation. We first compute an in-sample projection of the treated unit onto the donor pool via an inverse-diagonal approximation. The demeaned outcome for the treated unit is then $\widetilde{\mathbf{y}}_1$ and the demeaned donor matrix is $\widetilde{\mathbf{Y}}_0$. This projection takes the form of a weighted sum
 
 $$
 \widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1,
 $$
 
-and use the resulting fit to compute the residual variance:
+and serves to realign the donor units to resemble the target unit. We then use this projection to compute the residual variance between the target unit and the projection:
 
 $$
 \widehat{\sigma}^2 = \frac{1}{T_0} \left\| \widetilde{\mathbf{y}}_1 - \widehat{\mathbf{y}}_1 \right\|_2^2.
 $$
 
-This variance estimate captures how well the treated unit’s pre-treatment outcomes can be explained by the donor pool and is later used to scale the regularization term in the main optimization. The key step of SRC is to solve for the donor weights $ \mathbf{w} \in \mathbb{R}^J $ by minimizing a penalized least squares criterion that balances in-sample fit with model complexity. The optimization problem is:
+This variance estimate captures how well the treated unit’s pre-treatment outcomes can be explained by the individual donor pool units. This adjusted variance statistic is used to solve for the donor pool weights. We solve for the donor weights by minimizing a penalized least squares criterion with an $\ell_1$ norm upon the donor weights
 
 $$
-\min_{\mathbf{w} \in \mathcal{W}} \quad \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2 + 2 \widehat{\sigma}^2 \|\mathbf{w}\|_1
+\min_{\mathbf{w} \in \mathcal{W}} \quad \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2 + 2 \widehat{\sigma}^2 \|\mathbf{w}\|_1. 
 $$
 
-After solving for the optimal weights, we compute the synthetic control’s counterfactual prediction over all $T$ periods. To ensure that the synthetic control matches the treated unit’s level during the pre-treatment period, we apply a level correction. The final predicted counterfactual for the treated unit is
+After solving for the optimal weights, we compute the synthetic control’s counterfactual prediction over all $T$ periods. Because we demeaned our outcome earlier, we must re-mean our predictions
 
 $$
-\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \mathbf{w} + \left( \frac{1}{T} \mathbf{1}_T^\top \mathbf{y}_1 - \frac{1}{T} \mathbf{1}_T^\top \mathbf{Y}_0 \mathbf{w} \right)
+\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \mathbf{w} + \left( \frac{1}{T} \mathbf{1}_T^\top \mathbf{y}_1 - \frac{1}{T} \mathbf{1}_T^\top \mathbf{Y}_0 \mathbf{w} \right).
 $$
-
-where the second term aligns the synthetic control to the treated unit’s average pre-treatment level.

@@ -51,14 +51,6 @@ $$
 
 Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units' outcomes, with the weights derived from the pre-treatment period.
 
-##
-
-The synthetic regression control method (SynthRegControl) is a synthetic control approach that estimates the counterfactual outcome for a treated unit by constructing a weighted combination of donor units. The weights are derived through a regression procedure that centers the donor units around their pre-treatment means and fits donor-specific regressions. For each donor unit $j = 1, \dots, J$, we run a separate Ordinary Least Squares (OLS) regression to estimate the alignment coefficient $\theta_j$. Specifically, we model the pre-treatment outcome vector of the treated unit $\mathbf{y}_{1,\text{pre}}$ as a linear combination of the pre-treatment outcome vector for each donor unit $\mathbf{y}_{j,\text{pre}}$, plus an error term $\varepsilon_j$. The alignment coefficients $\theta_1, \dots, \theta_J$ are stored in a vector $\boldsymbol{\theta}^{\text{align}} \in \mathbb{R}^J$.
-
-Next, we demean our target vector and donor matrix, $\widetilde{y}_1$ and $\widetilde{Y}_0$. Now, we estimate the weights $\mathbf{w} \in \mathbb{R}^J$ by solving an optimization problem that minimizes the squared difference between the pre-treatment outcome of the treated unit (after centering) and the weighted sum of the centered donor units. The objective function is given by the sum of squared differences, where each term represents the difference between the actual and predicted pre-treatment outcomes for each time period. The optimal weights are the ones that minimize this sum.
-
-Finally, once the weights are estimated, we can predict the post-treatment counterfactual outcome for the treated unit. The counterfactual outcome $\hat{y}_{1,t}$ at any time $t > T_0$ is given by the weighted sum of the differences between each donor's outcome and its mean, scaled by the respective weights.
-
 # Synthetic Regression Control (SRC)
 
 SRC is a penalized regression approach to synthetic control estimation that operates in the demeaned outcome space. We first compute an in-sample projection of the treated unit onto the donor space via ridge regression using an inverse-diagonal approximation. The demeaned outcome for the treated unit is then $ \widetilde{\mathbf{y}}_1$ and the demeaned donor matrix is $ \widetilde{\mathbf{Y}}_0$.  Specifically, we estimate

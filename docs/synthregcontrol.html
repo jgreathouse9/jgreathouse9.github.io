@@ -207,7 +207,15 @@ window.Quarto = {
 
 <section id="notation" class="level1">
 <h1>Notation</h1>
-<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>. The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, where <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}\)</span>. The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix, similarly, is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, where each column indexes a donor unit and each row is indexed to a time period.</p>
+<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(\mathbf{C}_T \in \mathbb{R}^{T \times T}\)</span> represent the centering matrix defined as:</p>
+<p><span class="math display">\[
+\mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
+\]</span></p>
+<p>Where <span class="math inline">\(\mathbf{I}_T\)</span> is the identity matrix of size <span class="math inline">\(T\)</span>, and <span class="math inline">\(\mathbf{1}_T \in \mathbb{R}^T\)</span> is the vector of ones of length <span class="math inline">\(T\)</span>.For any vector <span class="math inline">\(\mathbf{x} \in \mathbb{R}^T\)</span>, the demeaned version is:</p>
+<p><span class="math display">\[
+\widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
+\]</span></p>
+<p>Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>. The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, where <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}\)</span>. The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix, similarly, is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, where each column indexes a donor unit and each row is indexed to a time period.</p>
 <section id="synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
 <p>Before I get to the SRC, I review synthetic controls. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^T\)</span> represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted sum of the donor units’ outcome vectors <span class="math inline">\(\mathbf{y}_j\)</span>, where <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
@@ -236,7 +244,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743887135145" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743887812834" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -260,7 +268,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -284,7 +292,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743887135143" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -308,7 +316,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -332,7 +340,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2994">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2994">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -358,7 +366,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -384,7 +392,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -410,7 +418,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1743887135142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="7" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1743887812831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -434,7 +442,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1743887184461" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1743887858568" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

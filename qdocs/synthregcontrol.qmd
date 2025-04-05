@@ -1,3 +1,10 @@
+---
+title: 'Synthetic Regressing Control Method in Python'
+date: 2025-04-06
+categories: [Causal Inference, Econometrics]
+---
+
+
 # Notation
 
 Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $\mathbf{C}_T \in \mathbb{R}^{T \times T}$ represent the centering matrix defined as:
@@ -51,4 +58,35 @@ The synthetic regression control method (SynthRegControl) is a synthetic control
 Next, we demean our target vector and donor matrix, $\widetilde{y}_1$ and $\widetilde{Y}_0$. Now, we estimate the weights $\mathbf{w} \in \mathbb{R}^J$ by solving an optimization problem that minimizes the squared difference between the pre-treatment outcome of the treated unit (after centering) and the weighted sum of the centered donor units. The objective function is given by the sum of squared differences, where each term represents the difference between the actual and predicted pre-treatment outcomes for each time period. The optimal weights are the ones that minimize this sum.
 
 Finally, once the weights are estimated, we can predict the post-treatment counterfactual outcome for the treated unit. The counterfactual outcome $\hat{y}_{1,t}$ at any time $t > T_0$ is given by the weighted sum of the differences between each donor's outcome and its mean, scaled by the respective weights.
+
+# Synthetic Regression Control (SRC)
+
+SRC is a penalized regression approach to synthetic control estimation that operates in the demeaned outcome space. We first compute an in-sample projection of the treated unit onto the donor space via ridge regression using an inverse-diagonal approximation. The demeaned outcome for the treated unit is then $ \widetilde{\mathbf{y}}_1$ and the demeaned donor matrix is $ \widetilde{\mathbf{Y}}_0$.  Specifically, we estimate
+
+$$
+\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1,
+$$
+
+and use the resulting fit to compute the residual variance:
+
+$$
+\widehat{\sigma}^2 = \frac{1}{T_0} \left\| \widetilde{\mathbf{y}}_1 - \widehat{\mathbf{y}}_1 \right\|_2^2.
+$$
+
+This variance estimate captures how well the treated unit’s pre-treatment outcomes can be explained by the donor pool and is later used to scale the regularization term in the main optimization. The key step of SRC is to solve for the donor weights $ \mathbf{w} \in \mathbb{R}^J $ by minimizing a penalized least squares criterion that balances in-sample fit with model complexity. The optimization problem is:
+
+$$
+\min_{\mathbf{w} \in \mathbb{R}^J} \quad & \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2 + 2 \widehat{\sigma}^2 \left\| \mathbf{w} \right\|_1 \\
+\text{s.t.} \quad & \sum_{j=1}^J w_j = 1, \quad w_j \ge 0 \forall j.
+$$
+
+This formulation induces sparsity in the weights when $\widehat{\sigma}^2$ is large. After solving for the optimal weights, we compute the synthetic control’s counterfactual prediction over all $T$ periods. To ensure that the synthetic control matches the treated unit’s level during the pre-treatment period, we apply a level correction. The final predicted counterfactual for the treated unit is
+
+$$
+\widehat{\mathbf{y}}_1^{(0)} = \mathbf{Y}_0 \mathbf{w} + \left( \overline{\mathbf{y}}_{\text{pre}} - \overline{\mathbf{Y}}_{0,\text{pre}} \mathbf{w} \right),
+$$
+
+where the second term aligns the synthetic control to the treated unit’s average pre-treatment level.
+
+The SRC method is robust to overfitting and multicollinearity in the donor pool, particularly in high-dimensional settings. By working in the demeaned space and using an adaptively scaled $L_1$ penalty, SRC provides a flexible alternative to classical synthetic control while preserving interpretability and causal identifiability.
 

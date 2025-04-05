@@ -1,0 +1,33 @@
+# Notation
+
+Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ represent indices for a total of $N$ units and $t \in \mathbb{N}$ index time. Let $j = 1$ be the treated unit, with the set of controls being $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, with cardinality $N_0$. The pre-treatment period consists of the set $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0$ is the final period before treatment. Similarly, the post-treatment period is given by $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is $y_{jt}$, where a generic outcome vector for a given unit in the dataset is $\mathbf{y}_j \in \mathbb{R}^T$, where $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}$. The outcome vector for the treated unit specifically is $\mathbf{y}_1$. The donor matrix, similarly, is defined as $\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$, where each column indexes a donor unit and each row is indexed to a time period.
+
+## Synthetic Controls
+
+Before I get to the SRC, I review synthetic controls. Let $\mathbf{y}_1 \in \mathbb{R}^T$ represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$). We define the synthetic control as a weighted sum of the donor units' outcome vectors $\mathbf{y}_j$, where $j \in \mathcal{N}_0$. Specifically, we use a weight vector $\mathbf{w} \in \mathbb{R}^{N_0}$ to form the synthetic control, such that the counterfactual outcome for the treated unit is
+
+$$
+\mathbf{y}_1^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}
+$$
+
+where $\mathbf{y}_1^{\text{SC}}$ is the predicted counterfactual outcome for the treated unit, $\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}$ is the matrix of outcome vectors for the donor units, and $\mathbf{w} \in \mathbb{R}^{N_0}$ is the vector of weights applied to each donor unit. The goal is to find $\mathbf{w}$ that best approximates the outcome vector of the treated unit during the pre-treatment period.
+
+The weights are estimated by minimizing the distance between the treated unit's pre-treatment outcomes $\mathbf{y}_{1,\text{pre}}$ and the weighted average of the donor units' pre-treatment outcomes. This can be expressed as
+
+$$
+\min_{\mathbf{w}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
+$$
+
+where $\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}$ is the pre-treatment outcome vector for the treated unit and $\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}$ is the pre-treatment outcome matrix for the donor units. The objective is to minimize the mean squared error (MSE) between the pre-treatment outcomes of the treated unit and the synthetic control.
+
+$$
+\mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} : \mathbf{w} \geq 0, \|\mathbf{w}\|_1 = 1 \right\}
+$$
+
+Once the weights $\mathbf{w}$ are estimated, the counterfactual outcome for the treated unit during the post-treatment period is given by
+
+$$
+\mathbf{y}_{1,t}^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}, \quad \text{for } t > T_0
+$$
+
+Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units' outcomes, with the weights derived from the pre-treatment period.

@@ -252,23 +252,22 @@ window.Quarto = {
 </section>
 <section id="synthetic-regression-control-src" class="level1">
 <h1>Synthetic Regression Control (SRC)</h1>
-<p>SRC is a penalized regression approach to synthetic control estimation that operates in the demeaned outcome space. We first compute an in-sample projection of the treated unit onto the donor space via ridge regression using an inverse-diagonal approximation. The demeaned outcome for the treated unit is then <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> and the demeaned donor matrix is <span class="math inline">\(\widetilde{\mathbf{Y}}_0\)</span>. Specifically, we estimate</p>
+<p>SRC is a penalized regression approach to synthetic control estimation. We first compute an in-sample projection of the treated unit onto the donor pool via an inverse-diagonal approximation. The demeaned outcome for the treated unit is then <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> and the demeaned donor matrix is <span class="math inline">\(\widetilde{\mathbf{Y}}_0\)</span>. This projection takes the form of a weighted sum</p>
 <p><span class="math display">\[
 \widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1,
 \]</span></p>
-<p>and use the resulting fit to compute the residual variance:</p>
+<p>and serves to realign the donor units to resemble the target unit. We then use this projection to compute the residual variance between the target unit and the projection:</p>
 <p><span class="math display">\[
 \widehat{\sigma}^2 = \frac{1}{T_0} \left\| \widetilde{\mathbf{y}}_1 - \widehat{\mathbf{y}}_1 \right\|_2^2.
 \]</span></p>
-<p>This variance estimate captures how well the treated unit’s pre-treatment outcomes can be explained by the donor pool and is later used to scale the regularization term in the main optimization. The key step of SRC is to solve for the donor weights $ ^J $ by minimizing a penalized least squares criterion that balances in-sample fit with model complexity. The optimization problem is:</p>
+<p>This variance estimate captures how well the treated unit’s pre-treatment outcomes can be explained by the individual donor pool units. This adjusted variance statistic is used to solve for the donor pool weights. We solve for the donor weights by minimizing a penalized least squares criterion with an <span class="math inline">\(\ell_1\)</span> norm upon the donor weights</p>
 <p><span class="math display">\[
-\min_{\mathbf{w} \in \mathcal{W}} \quad \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2 + 2 \widehat{\sigma}^2 \|\mathbf{w}\|_1
+\min_{\mathbf{w} \in \mathcal{W}} \quad \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2 + 2 \widehat{\sigma}^2 \|\mathbf{w}\|_1.
 \]</span></p>
-<p>After solving for the optimal weights, we compute the synthetic control’s counterfactual prediction over all <span class="math inline">\(T\)</span> periods. To ensure that the synthetic control matches the treated unit’s level during the pre-treatment period, we apply a level correction. The final predicted counterfactual for the treated unit is</p>
+<p>After solving for the optimal weights, we compute the synthetic control’s counterfactual prediction over all <span class="math inline">\(T\)</span> periods. Because we demeaned our outcome earlier, we must re-mean our predictions</p>
 <p><span class="math display">\[
-\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \mathbf{w} + \left( \frac{1}{T} \mathbf{1}_T^\top \mathbf{y}_1 - \frac{1}{T} \mathbf{1}_T^\top \mathbf{Y}_0 \mathbf{w} \right)
+\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \mathbf{w} + \left( \frac{1}{T} \mathbf{1}_T^\top \mathbf{y}_1 - \frac{1}{T} \mathbf{1}_T^\top \mathbf{Y}_0 \mathbf{w} \right).
 \]</span></p>
-<p>where the second term aligns the synthetic control to the treated unit’s average pre-treatment level.</p>
 
 
 
@@ -276,7 +275,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743893021529" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1743896556807" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -300,7 +299,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -324,7 +323,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -348,7 +347,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -372,7 +371,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2994">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNFY29ub21ldHJpY3MlMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1739491200000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2994">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./acene.html" class="no-external">Why Data Generating Processes Matter for Causal Infernece</a>
@@ -398,7 +397,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -424,7 +423,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -450,7 +449,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1743893021526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="7" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1743896556804" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -474,7 +473,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1743893063743" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1743896598434" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

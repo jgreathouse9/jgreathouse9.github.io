@@ -160,13 +160,17 @@ y_1_pre = y_1[:T_pre]           # (T_pre,)
 Y_0_pre_means = Y_0_pre.mean(axis=0)  # (J,)
 y_1_pre_mean = y_1_pre.mean()       # scalar
 Y_0_demeaned = Y_0_pre - Y_0_pre_means  # (T_pre, J)
+y_1_demeaned = y_1_pre - y_1_pre_mean   # (T_pre,)
 
-# --- Alignment coefficients (theta) ---
+# --- Correctly Compute the Alignment Coefficients (theta) ---
+# Step 1: Compute the demeaned matrices
+# Step 2: Apply the formula: theta = (Y_0_demeaned.T @ Y_0_demeaned)^(-1) @ (Y_0_demeaned.T @ y_1_demeaned)
+
 theta_hat = np.linalg.inv(Y_0_demeaned.T @ Y_0_demeaned) @ (Y_0_demeaned.T @ y_1_demeaned)  # (J,)
 
 # --- Optimize weights (w) ---
 w = cp.Variable(J)
-objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_pre, 2))  # Use raw pre-treatment target
+objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_demeaned-y_1_pre, 2))  # Use demeaned target
 constraints = [cp.sum(w) == 1, w >= 0]
 problem = cp.Problem(objective, constraints)
 problem.solve()
@@ -198,6 +202,7 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+
 
 
 ```

@@ -53,21 +53,21 @@ Thus, the counterfactual outcome for each time period in the post-treatment peri
 
 # Synthetic Regression Control (SRC)
 
-SRC is a penalized regression approach to In the synthetic control method, we begin by estimating the alignment coefficients $\hat{\boldsymbol{\theta}}_j$ for each donor unit. These coefficients quantify how well each donor unit’s demeaned outcome aligns with the treated unit’s demeaned outcome. This is done through an ordinary least squares (OLS) regression, where the alignment coefficients are computed as
+SRC is a penalized regression approach to estimating synthetic control models. In the first step, we begin by estimating what the original paper calls the alignment coefficients $\hat{\boldsymbol{\theta}}_j$ for each donor unit. Often, we believe that some control units may have level differences between the target unit and donor units. So, we first demean our target vector and donor pool in the pre-treatment period. This is done through via univariate OLS. We use the outcome vector of each donor unit in univariate regression to precict the pre-treatment outcomes of the treated unit. Because we've demeaned everything, the constant by definition is 0, leaving is with this result:
 
 $$
 \hat{\boldsymbol{\theta}} = \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1
 $$
 
-where $\widetilde{\mathbf{Y}}_0$ is the matrix of demeaned donor unit outcomes and $\widetilde{\mathbf{y}}_1$ is the demeaned outcome of the treated unit. The resulting $\hat{\boldsymbol{\theta}}$ values represent how closely each donor unit’s trajectory matches that of the treated unit in the pre-treatment period. 
+where $\widetilde{\mathbf{Y}}_0$ is the matrix of demeaned donor unit outcomes and $\widetilde{\mathbf{y}}_1$ is the demeaned outcome of the treated unit. The resulting $\hat{\boldsymbol{\theta}}$ values represent how closely each donor unit’s trajectory matches that of the treated unit in the pre-treatment period. These coefficients quantify how well each donor unit’s demeaned outcome aligns with the treated unit’s demeaned outcome. Naturally, a higher theta suggests that the donor unit is more aligned with the target unit. Importantly, the whole point is this step is to reduce interpolation biases by penalizing poor fitting donors.
 
-In the second stage, we determine the unit weights $\hat{\mathbf{w}}_j$ that define the synthetic control. These weights are found by minimizing the squared difference between the demeaned outcome of the treated unit and the weighted sum of the demeaned donor units’ outcomes, adjusted by the alignment coefficients. The optimization problem for the unit weights is given by
+In the second stage, we determine the unit weights $\hat{\mathbf{w}}_j$ that define the synthetic control using the vector of thetas we've estimated above. These unit weights are found by minimizing the squared difference between the demeaned outcome of the treated unit, its baseline mean, and the weighted average of the demeaned donor units’ outcomes. Importantly, the donor matrix is adjusted by the alignment coefficients. The more predictive the donor unit is of the target unit un the demeaned space, the higher the weight it will be assigned by the synthetic control optimization. The optimization problem for the unit weights is given by
 
 $$
-\hat{\mathbf{w}} = \arg\min_{\hat{\mathbf{w}}} \left\| \widetilde{\mathbf{y}}_1 - \hat{\mathbf{w}}^\top \hat{\boldsymbol{\theta}}^\top \widetilde{\mathbf{Y}}_0 \right\|^2
+\hat{\mathbf{w}} = \arg\min_{\hat{\mathbf{w}}\in \mathcal{W}} \left\| \widetilde{\mathbf{y}}_1 - \hat{\mathbf{w}}^\top \hat{\boldsymbol{\theta}}^\top \widetilde{\mathbf{Y}}_0 \right\|^2
 $$
 
-Donor units with higher alignment coefficients are assigned more weight in the synthetic control, as they are more similar to the treated unit’s trajectory. Through this two-stage process, the synthetic control is constructed by combining donor units in a way that most closely replicates the counterfactual outcome of the treated unit.
+As before, our weights are restricted to lie in on the donor simplex. Through this two-stage process, the synthetic control is constructed by combining donor units in a way that most closely replicates the counterfactual outcome of the treated unit. The counterfactual is the intercept (the baseline difference) plus the dot product of the unit weights and the demeaned donor matrix.
 
 # Implementing SRC in Python
 

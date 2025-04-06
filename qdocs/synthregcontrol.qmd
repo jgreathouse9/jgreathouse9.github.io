@@ -102,3 +102,103 @@ config = {
 
 arco = SRC(config).fit()
 ```
+
+and another
+
+```{python}
+
+import numpy as np
+import cvxpy as cp
+import matplotlib.pyplot as plt
+
+# --- Simulation Parameters ---
+n_units = 100
+n_periods = 104
+n_factors = 12
+rho = 0.85
+sigma = 1.25
+
+treated_unit = 54
+treatment_period = 76
+treatment_effect = 15
+
+# --- Simulate latent factors ---
+np.random.seed(42)
+common_factors = np.zeros((n_periods, n_factors))
+common_factors[0, :] = np.random.normal(0, 1, n_factors)
+
+for t in range(1, n_periods):
+    common_factors[t, :] = rho * common_factors[t - 1, :] + np.random.normal(0, 1, n_factors)
+
+factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
+error_terms = np.random.normal(0, sigma, (n_periods, n_units))
+
+# --- Generate data ---
+data = np.zeros((n_periods, n_units))
+for i in range(n_units):
+    base_level = np.random.randint(40, 80)
+    data[:, i] = common_factors @ factor_loadings[i, :] + error_terms[:, i] + base_level
+
+# Introduce treatment effect
+data[treatment_period:, treated_unit] += treatment_effect
+
+# --- Prepare synthetic control estimation ---
+
+Y = data  # shape (T, J)
+y_1 = Y[:, treated_unit]  # Treated unit
+donor_mask = np.arange(n_units) != treated_unit
+Y_0 = Y[:, donor_mask]    # Donor pool
+
+T_pre = treatment_period
+T_post = n_periods - T_pre
+J = Y_0.shape[1]
+
+# --- Pre-treatment data ---
+Y_0_pre = Y_0[:T_pre, :]        # (T_pre, J)
+y_1_pre = y_1[:T_pre]           # (T_pre,)
+Y_0_pre_means = Y_0_pre.mean(axis=0)  # (J,)
+y_1_pre_mean = y_1_pre.mean()       # scalar
+Y_0_demeaned = Y_0_pre - Y_0_pre_means  # (T_pre, J)
+y_1_demeaned = y_1_pre - y_1_pre_mean   # (T_pre,)
+
+# --- Alignment coefficients (theta) ---
+theta_hat = np.linalg.pinv(Y_0_demeaned) @ y_1_demeaned  # (J,)
+
+# --- Optimize weights (w) ---
+w = cp.Variable(J)
+objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_demeaned, 2))
+constraints = [cp.sum(w) == 1, w >= 0]
+problem = cp.Problem(objective, constraints)
+problem.solve()
+
+w_opt = w.value  # Optimal weights (J,)
+
+# --- Construct counterfactual ---
+
+# --- Step 5a: Construct post-treatment counterfactual ---
+Y_0_post = Y_0[T_pre:, :]  # (T_post, J)
+Y_0_post_demeaned = Y_0_post - Y_0_pre_means  # demean with pre-treatment means
+y_1_counterfactual_post = y_1_pre_mean + Y_0_post_demeaned @ (w_opt * theta_hat)  # post-treatment counterfactual
+
+# --- Step 5b: Construct pre-treatment counterfactual ---
+y_1_counterfactual_pre = y_1_pre_mean + Y_0_demeaned @ (w_opt * theta_hat)  # pre-treatment counterfactual
+
+# Combine both periods
+y_1_synthetic = np.concatenate([y_1_counterfactual_pre, y_1_counterfactual_post])  # (T,)
+
+# --- Plot results ---
+plt.figure(figsize=(12, 6))
+plt.plot(range(n_periods), y_1, label="Treated Unit (Observed)", color='blue')
+plt.plot(range(n_periods), y_1_synthetic, label="Synthetic Control", color='red', linestyle='--')
+plt.axvline(treatment_period, linestyle=':', color='gray', label="Treatment Starts")
+plt.title("Synthetic Control with Alignment (Known DGP)")
+plt.xlabel("Time")
+plt.ylabel("Outcome")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+
+
+```

@@ -162,11 +162,11 @@ y_1_pre_mean = y_1_pre.mean()       # scalar
 Y_0_demeaned = Y_0_pre - Y_0_pre_means  # (T_pre, J)
 
 # --- Alignment coefficients (theta) ---
-theta_hat = np.linalg.pinv(Y_0_demeaned) @ y_1_pre - y_1_pre_mean  # (J,)
+theta_hat = np.linalg.inv(Y_0_demeaned.T @ Y_0_demeaned) @ (Y_0_demeaned.T @ y_1_demeaned)  # (J,)
 
 # --- Optimize weights (w) ---
 w = cp.Variable(J)
-objective = cp.Minimize(cp.norm(Y_0_pre @ cp.multiply(theta_hat, w) - y_1_pre, 2))  # Use raw pre-treatment target
+objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_pre, 2))  # Use raw pre-treatment target
 constraints = [cp.sum(w) == 1, w >= 0]
 problem = cp.Problem(objective, constraints)
 problem.solve()

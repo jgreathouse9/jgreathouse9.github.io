@@ -53,29 +53,21 @@ Thus, the counterfactual outcome for each time period in the post-treatment peri
 
 # Synthetic Regression Control (SRC)
 
-SRC is a penalized regression approach to synthetic control estimation. We first compute an in-sample projection of the treated unit onto the donor pool via an inverse-diagonal approximation. The demeaned outcome for the treated unit is then $\widetilde{\mathbf{y}}_1$ and the demeaned donor matrix is $\widetilde{\mathbf{Y}}_0$. This projection takes the form of a weighted sum
+SRC is a penalized regression approach to In the synthetic control method, we begin by estimating the alignment coefficients $\hat{\boldsymbol{\theta}}_j$ for each donor unit. These coefficients quantify how well each donor unit’s demeaned outcome aligns with the treated unit’s demeaned outcome. This is done through an ordinary least squares (OLS) regression, where the alignment coefficients are computed as
 
 $$
-\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1,
+\hat{\boldsymbol{\theta}} = \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1
 $$
 
-and serves to realign the donor units to resemble the target unit. We then use this projection to compute the residual variance between the target unit and the projection:
+where $\widetilde{\mathbf{Y}}_0$ is the matrix of demeaned donor unit outcomes and $\widetilde{\mathbf{y}}_1$ is the demeaned outcome of the treated unit. The resulting $\hat{\boldsymbol{\theta}}$ values represent how closely each donor unit’s trajectory matches that of the treated unit in the pre-treatment period. 
+
+In the second stage, we determine the unit weights $\hat{\mathbf{w}}_j$ that define the synthetic control. These weights are found by minimizing the squared difference between the demeaned outcome of the treated unit and the weighted sum of the demeaned donor units’ outcomes, adjusted by the alignment coefficients. The optimization problem for the unit weights is given by
 
 $$
-\widehat{\sigma}^2 = \frac{1}{T_0} \left\| \widetilde{\mathbf{y}}_1 - \widehat{\mathbf{y}}_1 \right\|_2^2.
+\hat{\mathbf{w}} = \arg\min_{\hat{\mathbf{w}}} \left\| \widetilde{\mathbf{y}}_1 - \hat{\mathbf{w}}^\top \hat{\boldsymbol{\theta}}^\top \widetilde{\mathbf{Y}}_0 \right\|^2
 $$
 
-This variance estimate captures how well the treated unit’s pre-treatment outcomes can be explained by the individual donor pool units. This adjusted variance statistic is used to solve for the donor pool weights. We solve for the donor weights by minimizing a penalized least squares criterion with an $\ell_1$ norm upon the donor weights
-
-$$
-\min_{\mathbf{w} \in \mathcal{W}} \quad \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2 + 2 \widehat{\sigma}^2 \|\mathbf{w}\|_1. 
-$$
-
-After solving for the optimal weights, we compute the synthetic control’s counterfactual prediction over all $T$ periods. Because we demeaned our outcome earlier, we must re-mean our predictions
-
-$$
-\widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \mathbf{w} + \left( \frac{1}{T} \mathbf{1}_T^\top \mathbf{y}_1 - \frac{1}{T} \mathbf{1}_T^\top \mathbf{Y}_0 \mathbf{w} \right).
-$$
+Donor units with higher alignment coefficients are assigned more weight in the synthetic control, as they are more similar to the treated unit’s trajectory. Through this two-stage process, the synthetic control is constructed by combining donor units in a way that most closely replicates the counterfactual outcome of the treated unit.
 
 # Implementing SRC in Python
 

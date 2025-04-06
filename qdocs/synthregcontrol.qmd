@@ -76,3 +76,31 @@ After solving for the optimal weights, we compute the synthetic control’s coun
 $$
 \widehat{\mathbf{y}}_1 = \widetilde{\mathbf{Y}}_0 \mathbf{w} + \left( \frac{1}{T} \mathbf{1}_T^\top \mathbf{y}_1 - \frac{1}{T} \mathbf{1}_T^\top \mathbf{Y}_0 \mathbf{w} \right).
 $$
+
+# Implementing SRC in Python
+
+```{python}
+#| fig-align: center
+
+import pandas as pd
+
+from mlsynth.mlsynth import SRC
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+
+# Feel free to change "smoking" with "basque" above in the URL
+
+data = pd.read_csv(url)
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": "#1034A6"}
+
+arco = SRC(config).fit()
+```

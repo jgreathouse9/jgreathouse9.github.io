@@ -170,7 +170,7 @@ theta_hat = np.linalg.inv(Y_0_demeaned.T @ Y_0_demeaned) @ (Y_0_demeaned.T @ y_1
 
 # --- Optimize weights (w) ---
 w = cp.Variable(J)
-objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_demeaned-y_1_pre, 2)**2)  # Use demeaned target
+objective = cp.Minimize(cp.norm(w @ Y_0_demeaned @ cp.multiply(theta_hat, y_1_demeaned-y_1_pre), 2)**2)  # Use demeaned target
 constraints = [cp.sum(w) == 1, w >= 0]
 problem = cp.Problem(objective, constraints)
 problem.solve()

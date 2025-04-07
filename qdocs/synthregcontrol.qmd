@@ -63,20 +63,54 @@ Thus, the counterfactual outcome for each time period in the post-treatment peri
 
 # Synthetic Regression Control (SRC)
 
----
-title: "Synthetic Regularized Control (SRC) Estimation Procedure"
-format: html
----
+The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. To account for level differences, we first demean both the treated and donor series using the centering matrix. The demeaned treated outcome vector is given by
+$$
+\widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
+$$
 
-The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. Let $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$ denote the pre-treatment outcomes of the treated unit, and let $\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times J}$ denote the corresponding outcomes for the $J$ donor units. To account for level differences, we first demean both the treated and donor series. The demeaned treated outcome vector is given by $\widetilde{\mathbf{y}}_1 = \mathbf{y}_1^{\text{pre}} - \frac{1}{T_0} \mathbf{1}^\top \mathbf{y}_1^{\text{pre}} \cdot \mathbf{1}$, and the demeaned donor matrix is $\widetilde{\mathbf{Y}}_0 = \mathbf{Y}_0^{\text{pre}} - \frac{1}{T_0} \mathbf{1} \mathbf{1}^\top \mathbf{Y}_0^{\text{pre}}$.
+For $\forall \: j \in \mathcal{N}$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix:
+$$
+\hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \text{for each } j \in \mathcal{N}_0.
+$$
+These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. We then define the alignment-adjusted donor matrix as
+$$
+\mathbf{Y}_{\boldsymbol{\theta}} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}}),
+$$
+which rescales each donor column by its alignment with the treated unit.
 
-For each donor unit $j$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix. This yields $\hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}$ for $j = 1, \dots, J$. These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^J$. We then define the alignment-adjusted donor matrix $\mathbf{Y}_\boldsymbol{\theta} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}})$, which rescales each donor column by its alignment with the treated unit.
+To estimate the residual noise variance $\hat{\sigma}^2$, we use the centering matrix $\mathbf{C}_{T_0}$ and define
+$$
+\mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
+$$
+We extract its diagonal to normalize the projection, forming the operator
+$$
+\mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
+$$
+The residual is then computed as
+$$
+\mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
+$$
+and the estimated noise variance is
+$$
+\hat{\sigma}^2 = \| \mathbf{r} \|^2.
+$$
 
-To estimate the residual noise variance $\hat{\sigma}^2$, we define the centering matrix $\mathbf{Q} = \mathbf{I}_{T_0} - \frac{1}{T_0} \mathbf{1} \mathbf{1}^\top$. We then form the matrix $\mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{Q} \mathbf{Y}_0^{\text{pre}}$ and extract its diagonal to normalize the projection. This gives the projection operator $\mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\mathrm{diag}(\mathbf{G})^{-1}) \cdot \mathbf{Y}_0^{\text{pre}^\top}$. The residual is then computed as $\mathbf{r} = \mathbf{Q} \mathbf{y}_1^{\text{pre}} - \mathbf{Q} \mathbf{Z} \mathbf{Q} \mathbf{y}_1^{\text{pre}}$, and the estimated noise variance is $\hat{\sigma}^2 = \| \mathbf{r} \|^2$.
-
-With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective $\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_\boldsymbol{\theta} \mathbf{w} \|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}^\top \mathbf{w}$, subject to the constraints $\mathbf{1}^\top \mathbf{w} = 1$ and $\mathbf{w} \geq \mathbf{0}$. The solution $\hat{\mathbf{w}}$ balances goodness-of-fit with regularization based on the estimated noise.
-
-Finally, we construct predictions. Let $\bar{y}_1 = \frac{1}{T_0} \mathbf{1}^\top \mathbf{y}_1^{\text{pre}}$ be the mean of the treated unit in the pre-treatment period, and let $\bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}$ be the vector of donor means. Define $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times J}$ as the donor outcomes in the post-treatment period. The in-sample fit is given by $\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}})$, and the post-treatment counterfactual is constructed as $\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1} + (\mathbf{Y}_0^{\text{post}} - \mathbf{1} \bar{\mathbf{y}}_0^\top)(\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}})$, where $\odot$ denotes element-wise multiplication.
+With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective
+$$
+\left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
+$$
+subject to the constraints $\mathbf{1}_{N_0}^\top \mathbf{w} = 1$ and $\mathbf{w} \geq \mathbf{0}$. The solution $\hat{\mathbf{w}}$ balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let
+$$
+\bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
+$$
+be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}$ denote the donor outcomes in the post-treatment period. The in-sample fit is given by
+$$
+\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}}),
+$$
+and the post-treatment counterfactual is constructed as
+$$
+\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}}).
+$$
 
 ```{python}
 

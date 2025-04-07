@@ -209,7 +209,10 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
   </ul></li>
-  <li><a href="#synthetic-regression-control-src" id="toc-synthetic-regression-control-src" class="nav-link" data-scroll-target="#synthetic-regression-control-src">Synthetic Regression Control (SRC)</a></li>
+  <li><a href="#synthetic-regression-control-src" id="toc-synthetic-regression-control-src" class="nav-link" data-scroll-target="#synthetic-regression-control-src">Synthetic Regression Control (SRC)</a>
+  <ul class="collapse">
+  <li><a href="#estimating-src-in-mlsynth" id="toc-estimating-src-in-mlsynth" class="nav-link" data-scroll-target="#estimating-src-in-mlsynth">Estimating SRC in <code>mlsynth</code></a></li>
+  </ul></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(8)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(4)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(4)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -262,7 +265,17 @@ window.Quarto = {
 <p><span class="math display">\[
 \widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
 \]</span></p>
-<p>For any pair of vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, we define the Hadamard (elementwise) product as <span class="math inline">\((\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad \text{for each } j \in \mathcal{N}_0\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>.</p>
+<p>For any pair of vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, we define the Hadamard (elementwise) product as <span class="math inline">\((\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad\forall j \in \mathcal{N}_0\)</span>. Depending on orientation, there are two dot products we work with. For column vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, <span class="math display">\[
+  \mathbf{a}^\top \mathbf{b} \coloneqq \sum_{j \in \mathcal{N}_0} a_j b_j \in \mathbb{R}
+  \]</span></p>
+<p>This is equivalent to viewing <span class="math inline">\(\mathbf{a}^\top \in \mathbb{R}^{1 \times N_0}\)</span> as a row vector and multiplying it by the column vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>. The result is a scalar:</p>
+<p><span class="math display">\[
+  \mathbf{a}^\top \mathbf{b} \in \mathbb{R}
+  \]</span></p>
+<p>More generally, when multiplying a matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{T \times N_0}\)</span> by a vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>, the result is a new vector in <span class="math inline">\(\mathbb{R}^T\)</span>, formed as a linear combination of the columns of <span class="math inline">\(\mathbf{A}\)</span>: <span class="math display">\[
+\mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
+\]</span></p>
+<p>Here, each entry in the resulting vector is a dot product between a row of <span class="math inline">\(\mathbf{A}\)</span> and the vector <span class="math inline">\(\mathbf{b}\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>.</p>
 <p>The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, with <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}\)</span>. The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, where each column indexes a donor unit and each row is indexed to a time period. We denote by <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> the subvector of outcomes for unit <span class="math inline">\(j\)</span> in the pre-treatment period, and by <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T_1}\)</span> the corresponding post-treatment vector, where <span class="math inline">\(T_1 = T - T_0\)</span>. Then, we define our pre and post intervention analogs for the data:</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{pre}} = (y_{1t})_{t \in \mathcal{T}_1} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{\text{post}} = (y_{1t})_{t \in \mathcal{T}_2} \in \mathbb{R}^{T_1}
@@ -272,14 +285,14 @@ window.Quarto = {
 \]</span></p>
 <section id="synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
-<p>Before I get to the SRC, I review synthetic controls. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^T\)</span> represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted sum of the donor units’ outcome vectors <span class="math inline">\(\mathbf{y}_j\)</span>, where <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
+<p>Before I get to the SRC, I review basic synthetic controls. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^T\)</span> represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted average of the donor units’ outcome vectors <span class="math inline">\(\mathbf{y}_j\)</span>, where <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}
 \]</span></p>
 <p>where <span class="math inline">\(\mathbf{y}_1^{\text{SC}}\)</span> is the predicted counterfactual outcome for the treated unit, <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> is the matrix of outcome vectors for the donor units, and <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> is the vector of weights applied to each donor unit. The goal is to find <span class="math inline">\(\mathbf{w}\)</span> that best approximates the outcome vector of the treated unit during the pre-treatment period.</p>
 <p>The weights are estimated by minimizing the distance between the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_{1,\text{pre}}\)</span> and the weighted average of the donor units’ pre-treatment outcomes. This can be expressed as</p>
 <p><span class="math display">\[
-\min_{\mathbf{w}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
+\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
 \]</span></p>
 <p>where <span class="math inline">\(\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}\)</span> is the pre-treatment outcome vector for the treated unit and <span class="math inline">\(\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> is the pre-treatment outcome matrix for the donor units. The objective is to minimize the mean squared error (MSE) between the pre-treatment outcomes of the treated unit and the synthetic control.</p>
 <p><span class="math display">\[
@@ -287,7 +300,7 @@ window.Quarto = {
 \]</span></p>
 <p>Once the weights <span class="math inline">\(\mathbf{w}\)</span> are estimated, the counterfactual outcome for the treated unit during the post-treatment period is given by</p>
 <p><span class="math display">\[
-\mathbf{y}_{1,t}^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}, \quad \text{for } t &gt; T_0
+\mathbf{y}^{\text{SC}}_1 = \mathbf{Y}_0 \mathbf{w}, \quad \text{for } t &gt; T_0
 \]</span></p>
 <p>Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units’ outcomes, with the weights derived from the pre-treatment period.</p>
 </section>
@@ -314,77 +327,85 @@ window.Quarto = {
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
 \]</span> The solution <span class="math inline">\(\mathbf{w}\)</span> balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let <span class="math display">\[
 \bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
-\]</span> be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}\)</span> denote the donor outcomes in the post-treatment period. The in-sample fit is given by <span class="math display">\[
-\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}),
-\]</span> and the post-treatment counterfactual is constructed as <span class="math display">\[
-\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w}).
+\]</span> be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}\)</span> denote the donor outcomes in the post-treatment period. Our SRC predictions take the form of</p>
+<p><span class="math display">\[
+\mathbf{y}^{\text{SRC}}_1 = \begin{bmatrix} \hat{\mathbf{y}}_1^{\text{pre}} \\ \hat{\mathbf{y}}_1^{\text{post}} \end{bmatrix}
+= \begin{bmatrix}
+\mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}) \\
+\bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w})
+\end{bmatrix}
 \]</span></p>
-<div id="5725bb2f" class="cell" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SRC, FSCM</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># matplotlib theme</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>jaredplot <span class="op">=</span> {<span class="st">'axes.grid'</span>: <span class="va">True</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>              <span class="st">'grid.linestyle'</span>: <span class="st">'--'</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.framealpha'</span>: <span class="dv">1</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.facecolor'</span>: <span class="st">'white'</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.shadow'</span>: <span class="va">True</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.fontsize'</span>: <span class="dv">14</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.title_fontsize'</span>: <span class="dv">16</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>              <span class="st">'xtick.labelsize'</span>: <span class="dv">14</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>              <span class="st">'ytick.labelsize'</span>: <span class="dv">14</span>,</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>              <span class="st">'axes.labelsize'</span>: <span class="dv">16</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>              <span class="st">'axes.titlesize'</span>: <span class="dv">20</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>              <span class="st">'figure.dpi'</span>: <span class="dv">100</span>}</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams.update(jaredplot)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># URL to fetch the dataset</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>treat <span class="op">=</span> df.columns[<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>outcome <span class="op">=</span> df.columns[<span class="dv">2</span>]</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>unitid <span class="op">=</span> df.columns[<span class="dv">0</span>]</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: time,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: outcome,</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: unitid,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Create instances of each model with the config dictionary</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>models <span class="op">=</span> [SRC(config), FSCM(config)]</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> []</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model <span class="kw">in</span> models:</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> model.fit()</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    results.append((<span class="bu">type</span>(model).<span class="va">__name__</span>, result))  <span class="co"># Store the model name and result as a tuple</span></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">20</span>, color<span class="op">=</span><span class="st">'red'</span>, linestyle<span class="op">=</span><span class="st">':'</span>, label<span class="op">=</span><span class="st">"Terrorism"</span>)</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model_name, result <span class="kw">in</span> results:</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    counterfactual <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>]</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Plot the Counterfactual vs Observed Unit with dynamic labels</span></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    plt.plot(counterfactual, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss"> Basque"</span>, linestyle<span class="op">=</span><span class="st">'--'</span>)</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>observed_unit <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Observed Unit"</span>]</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>plt.plot(observed_unit, label<span class="op">=</span><span class="ss">f"Basque"</span>, color<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Time Periods'</span>)</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'GDP per Capita'</span>)</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Synthetic Regression Control Versus Forward SCM'</span>)</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="estimating-src-in-mlsynth" class="level2">
+<h2 class="anchored" data-anchor-id="estimating-src-in-mlsynth">Estimating SRC in <code>mlsynth</code></h2>
+<p>Now I will give an example of how to use SRC for your own applied work. We begin by installing <code>mlsynth</code> from my Github</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>For comparison sake, I use the Basque data since that’s what the author uses.</p>
+<div id="f0baabfe" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SRC, FSCM</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># matplotlib theme</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>jaredplot <span class="op">=</span> {<span class="st">'axes.grid'</span>: <span class="va">True</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>              <span class="st">'grid.linestyle'</span>: <span class="st">'--'</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.framealpha'</span>: <span class="dv">1</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.facecolor'</span>: <span class="st">'white'</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.shadow'</span>: <span class="va">True</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.fontsize'</span>: <span class="dv">14</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.title_fontsize'</span>: <span class="dv">16</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>              <span class="st">'xtick.labelsize'</span>: <span class="dv">14</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>              <span class="st">'ytick.labelsize'</span>: <span class="dv">14</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>              <span class="st">'axes.labelsize'</span>: <span class="dv">16</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>              <span class="st">'axes.titlesize'</span>: <span class="dv">20</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>              <span class="st">'figure.dpi'</span>: <span class="dv">100</span>}</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams.update(jaredplot)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># URL to fetch the dataset</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>treat <span class="op">=</span> df.columns[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>outcome <span class="op">=</span> df.columns[<span class="dv">2</span>]</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>unitid <span class="op">=</span> df.columns[<span class="dv">0</span>]</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: time,</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: outcome,</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: unitid,</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Create instances of each model with the config dictionary</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>models <span class="op">=</span> [SRC(config), FSCM(config)]</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> []</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model <span class="kw">in</span> models:</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> model.fit()</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    results.append((<span class="bu">type</span>(model).<span class="va">__name__</span>, result))  <span class="co"># Store the model name and result as a tuple</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">20</span>, color<span class="op">=</span><span class="st">'red'</span>, linestyle<span class="op">=</span><span class="st">':'</span>, label<span class="op">=</span><span class="st">"Terrorism"</span>)</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model_name, result <span class="kw">in</span> results:</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    counterfactual <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>]</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Plot the Counterfactual vs Observed Unit with dynamic labels</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    plt.plot(counterfactual, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss"> Basque"</span>, linestyle<span class="op">=</span><span class="st">'--'</span>)</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>observed_unit <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Observed Unit"</span>]</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>plt.plot(observed_unit, label<span class="op">=</span><span class="ss">f"Basque"</span>, color<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Time Periods'</span>)</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'GDP per Capita'</span>)</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Synthetic Regression Control Versus Forward SCM'</span>)</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -397,10 +418,11 @@ window.Quarto = {
 
 
 </section>
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744056421365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744057962619" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -424,7 +446,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744056421362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -448,7 +470,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744056421362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -472,7 +494,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744056421362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -496,7 +518,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744056421362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -522,7 +544,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744056421362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -548,7 +570,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744056421362" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -572,7 +594,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744056467766" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744058008347" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

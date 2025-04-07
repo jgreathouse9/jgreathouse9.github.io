@@ -209,7 +209,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
   </ul></li>
-  <li><a href="#synthetic-regression-control-src" id="toc-synthetic-regression-control-src" class="nav-link" data-scroll-target="#synthetic-regression-control-src">Synthetic Regression Control (SRC)</a>
+  <li><a href="#synthetic-regression-control" id="toc-synthetic-regression-control" class="nav-link" data-scroll-target="#synthetic-regression-control">Synthetic Regression Control</a>
   <ul class="collapse">
   <li><a href="#estimating-src-in-mlsynth" id="toc-estimating-src-in-mlsynth" class="nav-link" data-scroll-target="#estimating-src-in-mlsynth">Estimating SRC in <code>mlsynth</code></a></li>
   </ul></li>
@@ -254,7 +254,7 @@ window.Quarto = {
 </header>
 
 
-<p>I define.</p>
+<p>This blog post covers <a href="https://arxiv.org/pdf/2306.02584">the synthetic regression control method</a>. It is a new SCM that was once only available in <code>R</code>. The paper itself is so notation dense that it’s honestly hard for me to get through, and only after reading it and its notations many times did I understand how the estimator was supposed to work.</p>
 <section id="notation" class="level1">
 <h1>Notation</h1>
 <p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(\mathbf{C}_T \in \mathbb{R}^{T \times T}\)</span> represent the centering matrix defined as:</p>
@@ -285,16 +285,15 @@ window.Quarto = {
 \]</span></p>
 <section id="synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
-<p>Before I get to the SRC, I review basic synthetic controls. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^T\)</span> represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted average of the donor units’ outcome vectors <span class="math inline">\(\mathbf{y}_j\)</span>, where <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
+<p>Before I get to the SRC, I review basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted average of the donor units. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}
 \]</span></p>
-<p>where <span class="math inline">\(\mathbf{y}_1^{\text{SC}}\)</span> is the predicted counterfactual outcome for the treated unit, <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> is the matrix of outcome vectors for the donor units, and <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> is the vector of weights applied to each donor unit. The goal is to find <span class="math inline">\(\mathbf{w}\)</span> that best approximates the outcome vector of the treated unit during the pre-treatment period.</p>
-<p>The weights are estimated by minimizing the distance between the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_{1,\text{pre}}\)</span> and the weighted average of the donor units’ pre-treatment outcomes. This can be expressed as</p>
+<p>where <span class="math inline">\(\mathbf{y}_1^{\text{SC}}\)</span> is the predicted counterfactual outcome for the treated unit, <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> is the matrix of outcome vectors for the donor units, and <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> is the vector of weights applied to each donor unit. The goal is to find <span class="math inline">\(\mathbf{w}\)</span> that best approximates the outcome vector of the treated unit during the pre-treatment period. The weights are estimated by minimizing the distance between the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_{1,\text{pre}}\)</span> and the weighted average of the donor units’ pre-treatment outcomes. This can be expressed as</p>
 <p><span class="math display">\[
-\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
+\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
 \]</span></p>
-<p>where <span class="math inline">\(\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}\)</span> is the pre-treatment outcome vector for the treated unit and <span class="math inline">\(\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> is the pre-treatment outcome matrix for the donor units. The objective is to minimize the mean squared error (MSE) between the pre-treatment outcomes of the treated unit and the synthetic control.</p>
+<p>where <span class="math inline">\(\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}\)</span> is the pre-treatment outcome vector for the treated unit and <span class="math inline">\(\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> is the pre-treatment outcome matrix for the donor units. The entries for the weight vector live on the simplex:</p>
 <p><span class="math display">\[
 \mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} : \mathbf{w} \geq 0, \|\mathbf{w}\|_1 = 1 \right\}
 \]</span></p>
@@ -305,18 +304,18 @@ window.Quarto = {
 <p>Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units’ outcomes, with the weights derived from the pre-treatment period.</p>
 </section>
 </section>
-<section id="synthetic-regression-control-src" class="level1">
-<h1>Synthetic Regression Control (SRC)</h1>
+<section id="synthetic-regression-control" class="level1">
+<h1>Synthetic Regression Control</h1>
 <p>The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. To account for level differences, we first demean both the treated and donor series using the centering matrix. The demeaned treated outcome vector is given by <span class="math display">\[
 \widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 \]</span></p>
-<p>For <span class="math inline">\(\forall \: j \in \mathcal{N}\)</span>, an alignment coefficient <span class="math inline">\(\hat{\theta}_j\)</span> is computed by projecting <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> onto the corresponding column <span class="math inline">\(\widetilde{\mathbf{Y}}_{0,j}\)</span> of the demeaned donor matrix: <span class="math display">\[
+<p>For <span class="math inline">\(\forall \: j \in \mathcal{N}\)</span>, an alignment coefficient <span class="math inline">\(\hat{\theta}_j\)</span> is computed by projecting <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> onto the corresponding column <span class="math inline">\(\widetilde{\mathbf{Y}}_{0,j}\)</span> of the demeaned donor matrix. In plain English, all this is doing is it estimates <span class="math inline">\(N_0\)</span> singel unit OLS models using the outome vector each donor as a predictor column: <span class="math display">\[
 \hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \text{for each } j \in \mathcal{N}_0.
-\]</span> These coefficients collectively form the vector <span class="math inline">\(\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}\)</span>. We then define the alignment-adjusted donor matrix as <span class="math display">\[
+\]</span> These coefficients collectively form the vector <span class="math inline">\(\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}\)</span>. We then define the alignment-adjusted donor matrix (which we will later use in optimization) as <span class="math display">\[
 \mathbf{Y}_{\boldsymbol{\theta}} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}}),
-\]</span> which rescales each donor column by its alignment with the treated unit. To estimate the residual noise varianceof the donor projection with the target unit’s demeaned values, <span class="math inline">\(\hat{\sigma}^2\)</span>, we use the centering matrix <span class="math inline">\(\mathbf{C}_{T_0}\)</span> and define <span class="math display">\[
+\]</span> which rescales each donor column by its alignment with the treated unit. The SRC method needs to estimate the residual noise variance of the donor projection (or, our donor matrix multiplied by the theta values) with the target unit’s demeaned values. We call this variance term <span class="math inline">\(\hat{\sigma}^2\)</span>. Using the centering matrix <span class="math inline">\(\mathbf{C}_{T_0}\)</span>, we define <span class="math display">\[
 \mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
-\]</span> We extract its diagonal to normalize the projection, forming the operator <span class="math display">\[
+\]</span> We extract its diagonal to normalize the donor projection, forming the operator <span class="math display">\[
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
 \]</span> The residual itself then is computed as <span class="math display">\[
 \mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
@@ -340,7 +339,7 @@ window.Quarto = {
 <p>Now I will give an example of how to use SRC for your own applied work. We begin by installing <code>mlsynth</code> from my Github</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>For comparison sake, I use the Basque data since that’s what the author uses.</p>
-<div id="f0baabfe" class="cell" data-execution_count="1">
+<div id="375be8e7" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SRC, FSCM</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -422,7 +421,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744057962619" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744058788054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -446,7 +445,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -470,7 +469,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -494,7 +493,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -518,7 +517,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -544,7 +543,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -570,7 +569,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744057962616" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -594,7 +593,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744058008347" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744058833300" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

@@ -19,7 +19,23 @@ $$
 \widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
 $$ 
 
-For any pair of vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$, we define the Hadamard (elementwise) product as $(\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad \text{for each } j \in \mathcal{N}_0$. Let $j \in \mathbb{N}$ represent indices for a total of $N$ units and $t \in \mathbb{N}$ index time. Let $j = 1$ be the treated unit, with the set of controls being $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, with cardinality $N_0$. The pre-treatment period consists of the set $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0$ is the final period before treatment. Similarly, the post-treatment period is given by $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$.
+For any pair of vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$, we define the Hadamard (elementwise) product as $(\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad\forall j \in \mathcal{N}_0$. Depending on orientation, there are two dot products we work with. For column vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$,
+  $$
+  \mathbf{a}^\top \mathbf{b} \coloneqq \sum_{j \in \mathcal{N}_0} a_j b_j \in \mathbb{R}
+  $$
+
+This is equivalent to viewing $\mathbf{a}^\top \in \mathbb{R}^{1 \times N_0}$ as a row vector and multiplying it by the column vector $\mathbf{b} \in \mathbb{R}^{N_0}$. The result is a scalar:
+
+  $$
+  \mathbf{a}^\top \mathbf{b} \in \mathbb{R}
+  $$
+
+More generally, when multiplying a matrix $\mathbf{A} \in \mathbb{R}^{T \times N_0}$ by a vector $\mathbf{b} \in \mathbb{R}^{N_0}$, the result is a new vector in $\mathbb{R}^T$, formed as a linear combination of the columns of $\mathbf{A}$:
+$$
+\mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
+$$
+
+Here, each entry in the resulting vector is a dot product between a row of $\mathbf{A}$ and the vector $\mathbf{b}$. Let $j \in \mathbb{N}$ represent indices for a total of $N$ units and $t \in \mathbb{N}$ index time. Let $j = 1$ be the treated unit, with the set of controls being $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, with cardinality $N_0$. The pre-treatment period consists of the set $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0$ is the final period before treatment. Similarly, the post-treatment period is given by $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$.
 
 The observed outcome for unit $j$ at time $t$ is $y_{jt}$, where a generic outcome vector for a given unit in the dataset is $\mathbf{y}_j \in \mathbb{R}^T$, with $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}$. The outcome vector for the treated unit specifically is $\mathbf{y}_1$. The donor matrix is defined as $\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$, where each column indexes a donor unit and each row is indexed to a time period. We denote by $\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}$ the subvector of outcomes for unit $j$ in the pre-treatment period, and by $\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T_1}$ the corresponding post-treatment vector, where $T_1 = T - T_0$. Then, we define our pre and post intervention analogs for the data:
 
@@ -33,7 +49,7 @@ $$
 
 ## Synthetic Controls
 
-Before I get to the SRC, I review synthetic controls. Let $\mathbf{y}_1 \in \mathbb{R}^T$ represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$). We define the synthetic control as a weighted sum of the donor units' outcome vectors $\mathbf{y}_j$, where $j \in \mathcal{N}_0$. Specifically, we use a weight vector $\mathbf{w} \in \mathbb{R}^{N_0}$ to form the synthetic control, such that the counterfactual outcome for the treated unit is
+Before I get to the SRC, I review basic synthetic controls. Let $\mathbf{y}_1 \in \mathbb{R}^T$ represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$). We define the synthetic control as a weighted average of the donor units' outcome vectors $\mathbf{y}_j$, where $j \in \mathcal{N}_0$. Specifically, we use a weight vector $\mathbf{w} \in \mathbb{R}^{N_0}$ to form the synthetic control, such that the counterfactual outcome for the treated unit is
 
 $$
 \mathbf{y}_1^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}
@@ -44,7 +60,7 @@ where $\mathbf{y}_1^{\text{SC}}$ is the predicted counterfactual outcome for the
 The weights are estimated by minimizing the distance between the treated unit's pre-treatment outcomes $\mathbf{y}_{1,\text{pre}}$ and the weighted average of the donor units' pre-treatment outcomes. This can be expressed as
 
 $$
-\min_{\mathbf{w}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
+\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
 $$
 
 where $\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}$ is the pre-treatment outcome vector for the treated unit and $\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}$ is the pre-treatment outcome matrix for the donor units. The objective is to minimize the mean squared error (MSE) between the pre-treatment outcomes of the treated unit and the synthetic control.
@@ -56,7 +72,7 @@ $$
 Once the weights $\mathbf{w}$ are estimated, the counterfactual outcome for the treated unit during the post-treatment period is given by
 
 $$
-\mathbf{y}_{1,t}^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}, \quad \text{for } t > T_0
+\mathbf{y}^{\text{SC}}_1 = \mathbf{Y}_0 \mathbf{w}, \quad \text{for } t > T_0
 $$
 
 Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units' outcomes, with the weights derived from the pre-treatment period.
@@ -101,14 +117,25 @@ The solution $\mathbf{w}$ balances goodness-of-fit with regularization based on 
 $$
 \bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
 $$
-be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}$ denote the donor outcomes in the post-treatment period. The in-sample fit is given by
+be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}$ denote the donor outcomes in the post-treatment period. Our SRC predictions take the form of
+
 $$
-\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}),
+\mathbf{y}^{\text{SRC}}_1 = \begin{bmatrix} \hat{\mathbf{y}}_1^{\text{pre}} \\ \hat{\mathbf{y}}_1^{\text{post}} \end{bmatrix}
+= \begin{bmatrix} 
+\mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}) \\ 
+\bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w})
+\end{bmatrix}
 $$
-and the post-treatment counterfactual is constructed as
-$$
-\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w}).
-$$
+
+## Estimating SRC in ```mlsynth```
+
+Now I will give an example of how to use SRC for your own applied work. We begin by installing ```mlsynth``` from my Github
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+For comparison sake, I use the Basque data since that's what the author uses.
 
 ```{python}
 

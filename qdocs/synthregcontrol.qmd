@@ -53,156 +53,86 @@ Thus, the counterfactual outcome for each time period in the post-treatment peri
 
 # Synthetic Regression Control (SRC)
 
-SRC is a penalized regression approach to estimating synthetic control models. In the first step, we begin by estimating what the original paper calls the alignment coefficients $\hat{\boldsymbol{\theta}}_j$ for each donor unit. Often, we believe that some control units may have level differences between the target unit and donor units. So, we first demean our target vector and donor pool in the pre-treatment period. This is done through via univariate OLS. We use the outcome vector of each donor unit in univariate regression to precict the pre-treatment outcomes of the treated unit. Because we've demeaned everything, the constant by definition is 0, leaving is with this result:
+---
+title: "Synthetic Regularized Control (SRC) Estimation Procedure"
+format: html
+---
 
-$$
-\hat{\boldsymbol{\theta}} = \left( \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{Y}}_0 \right)^{-1} \widetilde{\mathbf{Y}}_0^\top \widetilde{\mathbf{y}}_1
-$$
+The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. Let $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$ denote the pre-treatment outcomes of the treated unit, and let $\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times J}$ denote the corresponding outcomes for the $J$ donor units. To account for level differences, we first demean both the treated and donor series. The demeaned treated outcome vector is given by $\widetilde{\mathbf{y}}_1 = \mathbf{y}_1^{\text{pre}} - \frac{1}{T_0} \mathbf{1}^\top \mathbf{y}_1^{\text{pre}} \cdot \mathbf{1}$, and the demeaned donor matrix is $\widetilde{\mathbf{Y}}_0 = \mathbf{Y}_0^{\text{pre}} - \frac{1}{T_0} \mathbf{1} \mathbf{1}^\top \mathbf{Y}_0^{\text{pre}}$.
 
-where $\widetilde{\mathbf{Y}}_0$ is the matrix of demeaned donor unit outcomes and $\widetilde{\mathbf{y}}_1$ is the demeaned outcome of the treated unit. The resulting $\hat{\boldsymbol{\theta}}$ values represent how closely each donor unit’s trajectory matches that of the treated unit in the pre-treatment period. These coefficients quantify how well each donor unit’s demeaned outcome aligns with the treated unit’s demeaned outcome. Naturally, a higher theta suggests that the donor unit is more aligned with the target unit. Importantly, the whole point is this step is to reduce interpolation biases by penalizing poor fitting donors.
+For each donor unit $j$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix. This yields $\hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}$ for $j = 1, \dots, J$. These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^J$. We then define the alignment-adjusted donor matrix $\mathbf{Y}_\boldsymbol{\theta} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}})$, which rescales each donor column by its alignment with the treated unit.
 
-In the second stage, we determine the unit weights $\hat{\mathbf{w}}_j$ that define the synthetic control using the vector of thetas we've estimated above. These unit weights are found by minimizing the squared difference between the demeaned outcome of the treated unit, its baseline mean, and the weighted average of the demeaned donor units’ outcomes. Importantly, the donor matrix is adjusted by the alignment coefficients. The more predictive the donor unit is of the target unit un the demeaned space, the higher the weight it will be assigned by the synthetic control optimization. The optimization problem for the unit weights is given by
+To estimate the residual noise variance $\hat{\sigma}^2$, we define the centering matrix $\mathbf{Q} = \mathbf{I}_{T_0} - \frac{1}{T_0} \mathbf{1} \mathbf{1}^\top$. We then form the matrix $\mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{Q} \mathbf{Y}_0^{\text{pre}}$ and extract its diagonal to normalize the projection. This gives the projection operator $\mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\mathrm{diag}(\mathbf{G})^{-1}) \cdot \mathbf{Y}_0^{\text{pre}^\top}$. The residual is then computed as $\mathbf{r} = \mathbf{Q} \mathbf{y}_1^{\text{pre}} - \mathbf{Q} \mathbf{Z} \mathbf{Q} \mathbf{y}_1^{\text{pre}}$, and the estimated noise variance is $\hat{\sigma}^2 = \| \mathbf{r} \|^2$.
 
-$$
-\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \left( \mathbf{y}_1 - \bar{y}_1 \mathbf{1}_T \right) - \widetilde{\mathbf{Y}}_0 (\mathbf{w} \circ \boldsymbol{\theta}) \right\|^2
-$$
+With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective $\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_\boldsymbol{\theta} \mathbf{w} \|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}^\top \mathbf{w}$, subject to the constraints $\mathbf{1}^\top \mathbf{w} = 1$ and $\mathbf{w} \geq \mathbf{0}$. The solution $\hat{\mathbf{w}}$ balances goodness-of-fit with regularization based on the estimated noise.
 
-As before, our weights are restricted to lie in on the donor simplex. Through this two-stage process, the synthetic control is constructed by combining donor units in a way that most closely replicates the counterfactual outcome of the treated unit. The counterfactual is the intercept (the baseline difference) plus the dot product of the unit weights and the demeaned donor matrix.
-
-The counterfactual is computed like
-
-$$
-\mathbf{y}_{1}^{\text{SRC}}(0) = \widetilde{\mathbf{Y}}_0 \cdot \mathbf{w} + \frac{1}{T_0} \left( \mathbf{1}^\top \mathbf{y}_1 - \mathbf{1}^\top \left( \widetilde{\mathbf{Y}}_0 \cdot \mathbf{w} \right) \right)
-$$
-
-# Implementing SRC in Python
+Finally, we construct predictions. Let $\bar{y}_1 = \frac{1}{T_0} \mathbf{1}^\top \mathbf{y}_1^{\text{pre}}$ be the mean of the treated unit in the pre-treatment period, and let $\bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}$ be the vector of donor means. Define $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times J}$ as the donor outcomes in the post-treatment period. The in-sample fit is given by $\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}})$, and the post-treatment counterfactual is constructed as $\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1} + (\mathbf{Y}_0^{\text{post}} - \mathbf{1} \bar{\mathbf{y}}_0^\top)(\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}})$, where $\odot$ denotes element-wise multiplication.
 
 ```{python}
-#| fig-align: center
 
 import pandas as pd
+from mlsynth.mlsynth import SRC, FSCM
+import matplotlib.pyplot as plt
+import matplotlib
 
-from mlsynth.mlsynth import SRC
+# matplotlib theme
+jaredplot = {'axes.grid': True,
+              'grid.linestyle': '--',
+              'legend.framealpha': 1,
+              'legend.facecolor': 'white',
+              'legend.shadow': True,
+              'legend.fontsize': 14,
+              'legend.title_fontsize': 16,
+              'xtick.labelsize': 14,
+              'ytick.labelsize': 14,
+              'axes.labelsize': 16,
+              'axes.titlesize': 20,
+              'figure.dpi': 100}
 
-url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+matplotlib.rcParams.update(jaredplot)
 
-# Feel free to change "smoking" with "basque" above in the URL
+# URL to fetch the dataset
+url = 'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'
+df = pd.read_csv(url)
 
-data = pd.read_csv(url)
+treat = df.columns[-1]
+time = df.columns[1]
+outcome = df.columns[2]
+unitid = df.columns[0]
 
 config = {
-    "df": data,
-    "outcome": data.columns[2],
-    "treat": data.columns[-1],
-    "unitid": data.columns[0],
-    "time": data.columns[1],
-    "display_graphs": True,
-    "save": False,
-    "counterfactual_color": "blue"}
+    "df": df,
+    "treat": treat,
+    "time": time,
+    "outcome": outcome,
+    "unitid": unitid,
+    "display_graphs": False,
+    "counterfactual_color": "blue"
+}
 
-arco = SRC(config).fit()
-```
-
-and another
-
-```{python}
+# Create instances of each model with the config dictionary
+models = [SRC(config), FSCM(config)]
 
 
-import numpy as np
-import cvxpy as cp
-import matplotlib.pyplot as plt
+results = []
+for model in models:
+    result = model.fit()
+    results.append((type(model).__name__, result))  # Store the model name and result as a tuple
 
-# --- Simulation Parameters ---
-n_units = 100
-n_periods = 104
-n_factors = 12
-rho = 0.85
-sigma = 1.25
+plt.figure(figsize=(10, 6))
+plt.axvline(x=20, color='red', linestyle=':', label="Terrorism")
 
-treated_unit = 54
-treatment_period = 76
-treatment_effect = 15
+for model_name, result in results:
+    counterfactual = result["Vectors"]["Counterfactual"]
+    # Plot the Counterfactual vs Observed Unit with dynamic labels
+    plt.plot(counterfactual, label=f"{model_name} Basque", linestyle='--')
+observed_unit = result["Vectors"]["Observed Unit"]
+plt.plot(observed_unit, label=f"Basque", color='black', linewidth=2)
 
-# --- Simulate latent factors ---
-np.random.seed(42)
-common_factors = np.zeros((n_periods, n_factors))
-common_factors[0, :] = np.random.normal(0, 1, n_factors)
-
-for t in range(1, n_periods):
-    common_factors[t, :] = rho * common_factors[t - 1, :] + np.random.normal(0, 1, n_factors)
-
-factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
-error_terms = np.random.normal(0, sigma, (n_periods, n_units))
-
-# --- Generate data ---
-data = np.zeros((n_periods, n_units))
-for i in range(n_units):
-    base_level = np.random.randint(40, 80)
-    data[:, i] = common_factors @ factor_loadings[i, :] + error_terms[:, i] + base_level
-
-# Introduce treatment effect
-data[treatment_period:, treated_unit] += treatment_effect
-
-# --- Prepare synthetic control estimation ---
-
-Y = data  # shape (T, J)
-y_1 = Y[:, treated_unit]  # Treated unit
-donor_mask = np.arange(n_units) != treated_unit
-Y_0 = Y[:, donor_mask]    # Donor pool
-
-T_pre = treatment_period
-T_post = n_periods - T_pre
-J = Y_0.shape[1]
-
-# --- Pre-treatment data ---
-Y_0_pre = Y_0[:T_pre, :]        # (T_pre, J)
-y_1_pre = y_1[:T_pre]           # (T_pre,)
-Y_0_pre_means = Y_0_pre.mean(axis=0)  # (J,)
-y_1_pre_mean = y_1_pre.mean()       # scalar
-Y_0_demeaned = Y_0_pre - Y_0_pre_means  # (T_pre, J)
-y_1_demeaned = y_1_pre - y_1_pre_mean   # (T_pre,)
-
-# --- Correctly Compute the Alignment Coefficients (theta) ---
-# Step 1: Compute the demeaned matrices
-# Step 2: Apply the formula: theta = (Y_0_demeaned.T @ Y_0_demeaned)^(-1) @ (Y_0_demeaned.T @ y_1_demeaned)
-
-theta_hat = np.linalg.inv(Y_0_demeaned.T @ Y_0_demeaned) @ (Y_0_demeaned.T @ y_1_demeaned)  # (J,)
-
-# --- Optimize weights (w) ---
-w = cp.Variable(J)
-objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_pre, 2)**2)  # Use demeaned target
-constraints = [cp.sum(w) == 1, w >= 0]
-problem = cp.Problem(objective, constraints)
-problem.solve()
-
-w_opt = w.value  # Optimal weights (J,)
-
-# --- Construct counterfactual ---
-
-# --- Step 5a: Construct post-treatment counterfactual ---
-Y_0_post = Y_0[T_pre:, :]  # (T_post, J)
-Y_0_post_demeaned = Y_0_post - Y_0_pre_means  # demean with pre-treatment means
-y_1_counterfactual_post = y_1_pre_mean + Y_0_post_demeaned @ (w_opt * theta_hat)  # post-treatment counterfactual
-
-# --- Step 5b: Construct pre-treatment counterfactual ---
-y_1_counterfactual_pre = y_1_pre_mean + Y_0_demeaned @ (w_opt * theta_hat)  # pre-treatment counterfactual
-
-# Combine both periods
-y_1_synthetic = np.concatenate([y_1_counterfactual_pre, y_1_counterfactual_post])  # (T,)
-
-# --- Plot results ---
-plt.figure(figsize=(12, 6))
-plt.plot(range(n_periods), y_1, label="Treated Unit (Observed)", color='blue')
-plt.plot(range(n_periods), y_1_synthetic, label="Synthetic Control", color='red', linestyle='--')
-plt.axvline(treatment_period, linestyle=':', color='gray', label="Treatment Starts")
-plt.title("Synthetic Control with Alignment (Known DGP)")
-plt.xlabel("Time")
-plt.ylabel("Outcome")
+plt.xlabel('Time Periods')
+plt.ylabel('GDP per Capita')
+plt.title('Synthetic Regression Control Versus Forward SCM')
 plt.legend()
-plt.grid(True)
-plt.tight_layout()
+
 plt.show()
-
-
-
 ```

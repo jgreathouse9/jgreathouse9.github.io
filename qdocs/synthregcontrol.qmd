@@ -170,7 +170,7 @@ theta_hat = np.linalg.inv(Y_0_demeaned.T @ Y_0_demeaned) @ (Y_0_demeaned.T @ y_1
 
 # --- Optimize weights (w) ---
 w = cp.Variable(J)
-objective = cp.Minimize(cp.norm(w @ Y_0_demeaned @ cp.multiply(theta_hat, y_1_demeaned-y_1_pre), 2)**2)  # Use demeaned target
+objective = cp.Minimize(cp.norm(Y_0_demeaned @ cp.multiply(theta_hat, w) - y_1_pre, 2)**2)  # Use demeaned target
 constraints = [cp.sum(w) == 1, w >= 0]
 problem = cp.Problem(objective, constraints)
 problem.solve()
@@ -182,10 +182,10 @@ w_opt = w.value  # Optimal weights (J,)
 # --- Step 5a: Construct post-treatment counterfactual ---
 Y_0_post = Y_0[T_pre:, :]  # (T_post, J)
 Y_0_post_demeaned = Y_0_post - Y_0_pre_means  # demean with pre-treatment means
-y_1_counterfactual_post = y_1_pre_mean + Y_0_post_demeaned @ (w_opt)  # post-treatment counterfactual
+y_1_counterfactual_post = y_1_pre_mean + Y_0_post_demeaned @ (w_opt * theta_hat)  # post-treatment counterfactual
 
 # --- Step 5b: Construct pre-treatment counterfactual ---
-y_1_counterfactual_pre = y_1_pre_mean + Y_0_demeaned @ (w_opt)  # pre-treatment counterfactual
+y_1_counterfactual_pre = y_1_pre_mean + Y_0_demeaned @ (w_opt * theta_hat)  # pre-treatment counterfactual
 
 # Combine both periods
 y_1_synthetic = np.concatenate([y_1_counterfactual_pre, y_1_counterfactual_post])  # (T,)

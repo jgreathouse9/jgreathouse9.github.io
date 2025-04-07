@@ -76,9 +76,7 @@ These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \
 $$
 \mathbf{Y}_{\boldsymbol{\theta}} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}}),
 $$
-which rescales each donor column by its alignment with the treated unit.
-
-To estimate the residual noise variance $\hat{\sigma}^2$, we use the centering matrix $\mathbf{C}_{T_0}$ and define
+which rescales each donor column by its alignment with the treated unit. To estimate the residual noise varianceof the donor projection with the target unit's demeaned values, $\hat{\sigma}^2$, we use the centering matrix $\mathbf{C}_{T_0}$ and define
 $$
 \mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 $$
@@ -86,7 +84,7 @@ We extract its diagonal to normalize the projection, forming the operator
 $$
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
 $$
-The residual is then computed as
+The residual itself then is computed as
 $$
 \mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
 $$
@@ -97,19 +95,19 @@ $$
 
 With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective
 $$
-\left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
+\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
 $$
-subject to the constraints $\mathbf{1}_{N_0}^\top \mathbf{w} = 1$ and $\mathbf{w} \geq \mathbf{0}$. The solution $\hat{\mathbf{w}}$ balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let
+The solution $\mathbf{w}$ balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let
 $$
 \bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
 $$
 be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}$ denote the donor outcomes in the post-treatment period. The in-sample fit is given by
 $$
-\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}}),
+\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}),
 $$
 and the post-treatment counterfactual is constructed as
 $$
-\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}}).
+\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w}).
 $$
 
 ```{python}

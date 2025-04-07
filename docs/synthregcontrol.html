@@ -258,11 +258,18 @@ window.Quarto = {
 <p><span class="math display">\[
 \mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
 \]</span></p>
-<p>Where <span class="math inline">\(\mathbf{I}_T\)</span> is the identity matrix of size <span class="math inline">\(T\)</span>, and <span class="math inline">\(\mathbf{1}_T \in \mathbb{R}^T\)</span> is the vector of ones of length <span class="math inline">\(T\)</span>.For any vector <span class="math inline">\(\mathbf{x} \in \mathbb{R}^T\)</span>, the demeaned version is:</p>
+<p>Where <span class="math inline">\(\mathbf{I}_T\)</span> is the identity matrix of size <span class="math inline">\(T\)</span>, and <span class="math inline">\(\mathbf{1}_T \in \mathbb{R}^T\)</span> is the vector of ones of length <span class="math inline">\(T\)</span>. For any vector <span class="math inline">\(\mathbf{x} \in \mathbb{R}^T\)</span>, the demeaned version is:</p>
 <p><span class="math display">\[
 \widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
 \]</span></p>
-<p>Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>. The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, where <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}\)</span>. The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix, similarly, is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, where each column indexes a donor unit and each row is indexed to a time period.</p>
+<p>For any pair of vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, we define the Hadamard (elementwise) product as <span class="math inline">\((\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad \text{for each } j \in \mathcal{N}_0\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>.</p>
+<p>The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, with <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^{T}\)</span>. The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, where each column indexes a donor unit and each row is indexed to a time period. We denote by <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> the subvector of outcomes for unit <span class="math inline">\(j\)</span> in the pre-treatment period, and by <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T_1}\)</span> the corresponding post-treatment vector, where <span class="math inline">\(T_1 = T - T_0\)</span>. Then, we define our pre and post intervention analogs for the data:</p>
+<p><span class="math display">\[
+\mathbf{y}_1^{\text{pre}} = (y_{1t})_{t \in \mathcal{T}_1} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{\text{post}} = (y_{1t})_{t \in \mathcal{T}_2} \in \mathbb{R}^{T_1}
+\]</span></p>
+<p><span class="math display">\[
+\mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
+\]</span></p>
 <section id="synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
 <p>Before I get to the SRC, I review synthetic controls. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^T\)</span> represent the outcome vector of the treated unit, where we seek to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted sum of the donor units’ outcome vectors <span class="math inline">\(\mathbf{y}_j\)</span>, where <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Specifically, we use a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> to form the synthetic control, such that the counterfactual outcome for the treated unit is</p>
@@ -292,7 +299,7 @@ window.Quarto = {
 <p>To estimate the residual noise variance <span class="math inline">\(\hat{\sigma}^2\)</span>, we define the centering matrix <span class="math inline">\(\mathbf{Q} = \mathbf{I}_{T_0} - \frac{1}{T_0} \mathbf{1} \mathbf{1}^\top\)</span>. We then form the matrix <span class="math inline">\(\mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{Q} \mathbf{Y}_0^{\text{pre}}\)</span> and extract its diagonal to normalize the projection. This gives the projection operator <span class="math inline">\(\mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\mathrm{diag}(\mathbf{G})^{-1}) \cdot \mathbf{Y}_0^{\text{pre}^\top}\)</span>. The residual is then computed as <span class="math inline">\(\mathbf{r} = \mathbf{Q} \mathbf{y}_1^{\text{pre}} - \mathbf{Q} \mathbf{Z} \mathbf{Q} \mathbf{y}_1^{\text{pre}}\)</span>, and the estimated noise variance is <span class="math inline">\(\hat{\sigma}^2 = \| \mathbf{r} \|^2\)</span>.</p>
 <p>With <span class="math inline">\(\hat{\boldsymbol{\theta}}\)</span> and <span class="math inline">\(\hat{\sigma}^2\)</span> in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective <span class="math inline">\(\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_\boldsymbol{\theta} \mathbf{w} \|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}^\top \mathbf{w}\)</span>, subject to the constraints <span class="math inline">\(\mathbf{1}^\top \mathbf{w} = 1\)</span> and <span class="math inline">\(\mathbf{w} \geq \mathbf{0}\)</span>. The solution <span class="math inline">\(\hat{\mathbf{w}}\)</span> balances goodness-of-fit with regularization based on the estimated noise.</p>
 <p>Finally, we construct predictions. Let <span class="math inline">\(\bar{y}_1 = \frac{1}{T_0} \mathbf{1}^\top \mathbf{y}_1^{\text{pre}}\)</span> be the mean of the treated unit in the pre-treatment period, and let <span class="math inline">\(\bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}\)</span> be the vector of donor means. Define <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times J}\)</span> as the donor outcomes in the post-treatment period. The in-sample fit is given by <span class="math inline">\(\hat{\mathbf{y}}_1^{\text{pre}} = \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}})\)</span>, and the post-treatment counterfactual is constructed as <span class="math inline">\(\hat{\mathbf{y}}_1^{\text{post}} = \bar{y}_1 \cdot \mathbf{1} + (\mathbf{Y}_0^{\text{post}} - \mathbf{1} \bar{\mathbf{y}}_0^\top)(\hat{\boldsymbol{\theta}} \odot \hat{\mathbf{w}})\)</span>, where <span class="math inline">\(\odot\)</span> denotes element-wise multiplication.</p>
-<div id="e635f428" class="cell" data-execution_count="1">
+<div id="efba2b68" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SRC, FSCM</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -373,7 +380,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744054456415" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744054908294" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -397,7 +404,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744054456412" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744054908291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -421,7 +428,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744054456412" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744054908291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -445,7 +452,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744054456412" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744054908291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -469,7 +476,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744054456412" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744054908291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -495,7 +502,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744054456412" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744054908291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -521,7 +528,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744054456412" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744054908291" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -545,7 +552,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744054503535" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744054950546" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

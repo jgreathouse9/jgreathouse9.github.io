@@ -77,26 +77,26 @@ $$
 
 Thus, the counterfactual outcome for each time period in the post-treatment period is the weighted sum of the donor units' outcomes, with the weights derived from the pre-treatment period.
 
-# Synthetic Regression Control (SRC)
+# Synthetic Regression Control
 
 The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. To account for level differences, we first demean both the treated and donor series using the centering matrix. The demeaned treated outcome vector is given by
 $$
 \widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 $$
 
-For $\forall \: j \in \mathcal{N}$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix:
+For $\forall \: j \in \mathcal{N}$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix. In plain English, all this is doing is it estimates $N_0$ singel unit OLS models using the outome vector each donor as a predictor column:
 $$
 \hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \text{for each } j \in \mathcal{N}_0.
 $$
-These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. We then define the alignment-adjusted donor matrix as
+These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. We then define the alignment-adjusted donor matrix (which we will later use in optimization) as
 $$
 \mathbf{Y}_{\boldsymbol{\theta}} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}}),
 $$
-which rescales each donor column by its alignment with the treated unit. To estimate the residual noise varianceof the donor projection with the target unit's demeaned values, $\hat{\sigma}^2$, we use the centering matrix $\mathbf{C}_{T_0}$ and define
+which rescales each donor column by its alignment with the treated unit. The SRC method needs to estimate the residual noise variance of the donor projection (or, our donor matrix multiplied by the theta values) with the target unit's demeaned values. We call this variance term $\hat{\sigma}^2$. Using the centering matrix $\mathbf{C}_{T_0}$, we define
 $$
 \mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 $$
-We extract its diagonal to normalize the projection, forming the operator
+We extract its diagonal to normalize the donor projection, forming the operator
 $$
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
 $$

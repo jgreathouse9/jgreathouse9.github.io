@@ -309,20 +309,22 @@ window.Quarto = {
 <p>The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. To account for level differences, we first demean both the treated and donor series using the centering matrix. The demeaned treated outcome vector is given by <span class="math display">\[
 \widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 \]</span></p>
-<p>For <span class="math inline">\(\forall \: j \in \mathcal{N}\)</span>, an alignment coefficient <span class="math inline">\(\hat{\theta}_j\)</span> is computed by projecting <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> onto the corresponding column <span class="math inline">\(\widetilde{\mathbf{Y}}_{0,j}\)</span> of the demeaned donor matrix. In plain English, all this is doing is it estimates <span class="math inline">\(N_0\)</span> singel unit OLS models using the outome vector each donor as a predictor column: <span class="math display">\[
+<p>For <span class="math inline">\(\forall \: j \in \mathcal{N}\)</span>, an alignment coefficient <span class="math inline">\(\hat{\theta}_j\)</span> is computed by projecting <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> onto the corresponding column <span class="math inline">\(\widetilde{\mathbf{Y}}_{0,j}\)</span> of the demeaned donor matrix. In plain English, all this is doing is estimating <span class="math inline">\(N_0\)</span> single unit OLS models using the outome vector of each donor as a predictor column: <span class="math display">\[
 \hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \text{for each } j \in \mathcal{N}_0.
-\]</span> These coefficients collectively form the vector <span class="math inline">\(\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}\)</span>. We then define the alignment-adjusted donor matrix (which we will later use in optimization) as <span class="math display">\[
+\]</span> These coefficients collectively form the vector <span class="math inline">\(\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}\)</span>. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific patterns in the data, after adjusting for broader trends (i.e., after demeaning). If the coefficient for a donor is high, it means that unit’s behavior is closely aligned with the treated unit in this adjusted space. it is the equivalent of running univariate regression for each donor unit.</p>
+<p>We then define the alignment-adjusted donor matrix (which we will later use in optimization) as <span class="math display">\[
 \mathbf{Y}_{\boldsymbol{\theta}} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}}),
-\]</span> which rescales each donor column by its alignment with the treated unit. The SRC method needs to estimate the residual noise variance of the donor projection (or, our donor matrix multiplied by the theta values) with the target unit’s demeaned values. We call this variance term <span class="math inline">\(\hat{\sigma}^2\)</span>. Using the centering matrix <span class="math inline">\(\mathbf{C}_{T_0}\)</span>, we define <span class="math display">\[
+\]</span> which rescales each donor column by its alignment with the treated unit.</p>
+<p>The SRC method needs to estimate the residual noise variance of the donor projection (or, our donor matrix multiplied by the theta values) with the target unit’s demeaned values. We call this variance term <span class="math inline">\(\hat{\sigma}^2\)</span>. Using the centering matrix <span class="math inline">\(\mathbf{C}_{T_0}\)</span>, we define <span class="math display">\[
 \mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
-\]</span> We extract its diagonal to normalize the donor projection, forming the operator <span class="math display">\[
+\]</span> <span class="math inline">\(\mathbf{G}\)</span> tells us how similar each donor unit’s behavior is to the others, but with the broad, common time trends removed. It is similar to a demeaned correlation matrix showing how the donor units’ patterns align with each other in terms of their unique behaviors in the pre-treatment period. We extract its diagonal to normalize the donor projection, forming the operator <span class="math display">\[
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
-\]</span> The residual itself then is computed as <span class="math display">\[
+\]</span> is like a weighted version of the donor data, where the “importance” of each donor unit is based on its relationship to the others (measured by <span class="math inline">\(\mathbf{G}\)</span>). Donors that are more similar to the others (in the demeaned space) get less adjustment, and donors that are less similar are adjusted more. We care about how well these demeaned adjusted donors are related to the target unit. we measure this by estimating a residual, which is constructed like <span class="math display">\[
 \mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
 \]</span> and the estimated noise variance is <span class="math display">\[
 \hat{\sigma}^2 = \| \mathbf{r} \|^2.
 \]</span></p>
-<p>With <span class="math inline">\(\hat{\boldsymbol{\theta}}\)</span> and <span class="math inline">\(\hat{\sigma}^2\)</span> in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective <span class="math display">\[
+<p>The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, we penalize their discrepancies with the sigma statistic. With <span class="math inline">\(\hat{\boldsymbol{\theta}}\)</span> and <span class="math inline">\(\hat{\sigma}^2\)</span> in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective <span class="math display">\[
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
 \]</span> The solution <span class="math inline">\(\mathbf{w}\)</span> balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let <span class="math display">\[
 \bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
@@ -339,7 +341,7 @@ window.Quarto = {
 <p>Now I will give an example of how to use SRC for your own applied work. We begin by installing <code>mlsynth</code> from my Github</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>For comparison sake, I use the Basque data since that’s what the author uses.</p>
-<div id="375be8e7" class="cell" data-execution_count="1">
+<div id="ddbcc57e" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SRC, FSCM</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -421,7 +423,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744058788054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744077013334" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -445,7 +447,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744077013331" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -469,7 +471,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744077013332" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -493,7 +495,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744077013331" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -517,7 +519,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744077013331" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -543,7 +545,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744077013331" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -569,7 +571,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744058788051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744077013332" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -593,7 +595,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744058833300" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744077056276" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

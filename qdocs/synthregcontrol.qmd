@@ -1,14 +1,16 @@
 ---
-title: 'A Novel Two Stage Synthetic Control Method'
+title: 'The Synthetic Regressing Control Method for Python'
 date: 2025-04-06
 categories: [Causal Inference, Econometrics]
 ---
 
-This blog post covers [the synthetic regression control method](https://arxiv.org/pdf/2306.02584). It is a new SCM that was once only available in ```R```. The paper itself is so notation dense that it's honestly hard for me to get through, and only after reading it and its notations many times did I understand how the estimator was supposed to work.
+# A New Penalized Synthetic Control
+
+This blog post covers [the synthetic regression control method](https://arxiv.org/pdf/2306.02584). It is a new flavor of SCM that was once only available in ```R```. The basic innovation method is to penalize poor donors who do not predict the target vector in a demeaned space. The paper itself is extremely notationally dense. The writing is all over the place, and I literally put off coding the estimator for a year because of how complicated of a read the paper is (not the econometric theory, I mean the literal description of the estimator). But, I think I've finally figured it out. This post introduces and hopefully simplifies the explication of the estimator, and allows for people to use it for their own work.
 
 # Notation
 
-Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $\mathbf{C}_T \in \mathbb{R}^{T \times T}$ represent the centering matrix defined as:
+As usual, I begin with notations. Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $\mathbf{C}_T \in \mathbb{R}^{T \times T}$ represent the centering matrix defined as:
 
 $$
 \mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
@@ -20,18 +22,7 @@ $$
 \widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
 $$ 
 
-For any pair of vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$, we define the Hadamard (elementwise) product as $(\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad\forall j \in \mathcal{N}_0$. Depending on orientation, there are two dot products we work with. For column vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$,
-  $$
-  \mathbf{a}^\top \mathbf{b} \coloneqq \sum_{j \in \mathcal{N}_0} a_j b_j \in \mathbb{R}
-  $$
-
-This is equivalent to viewing $\mathbf{a}^\top \in \mathbb{R}^{1 \times N_0}$ as a row vector and multiplying it by the column vector $\mathbf{b} \in \mathbb{R}^{N_0}$. The result is a scalar:
-
-  $$
-  \mathbf{a}^\top \mathbf{b} \in \mathbb{R}
-  $$
-
-More generally, when multiplying a matrix $\mathbf{A} \in \mathbb{R}^{T \times N_0}$ by a vector $\mathbf{b} \in \mathbb{R}^{N_0}$, the result is a new vector in $\mathbb{R}^T$, formed as a linear combination of the columns of $\mathbf{A}$:
+For any pair of vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$, we define the Hadamard (elementwise) product as $(\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad\forall j \in \mathcal{N}_0$. When multiplying a matrix $\mathbf{A} \in \mathbb{R}^{T \times N_0}$ by a vector $\mathbf{b} \in \mathbb{R}^{N_0}$, the result is a new vector in $\mathbb{R}^T$, formed as a linear combination of the columns of $\mathbf{A}$:
 $$
 \mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
 $$
@@ -48,15 +39,17 @@ $$
 \mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
 $$
 
+These elements are used in the learning step and the counterfactual prediction step.
+
 ## Synthetic Controls
 
-Before I get to the SRC, I review basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$). We define the synthetic control as a weighted average of the donor units. The goal is to find the weight vector $\mathbf{w}$ that best approximates the outcome vector of the treated unit during the pre-treatment period. We minimize
+I begin by reviewing basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$), whose accuracy is guaranteed only on the basis of quality fit in the pre-intervention period. We define the synthetic control as a weighted average of the donor units. The goal is to find the weight vector $\mathbf{w}$ that best approximates the outcome vector of the treated unit during the pre-treatment period. We minimize
 
 $$
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_2^2
 $$
 
-where $\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}$ is the pre-treatment outcome vector for the treated unit and $\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}$ is the pre-treatment outcome matrix for the donor units. The entries for the weight vector live on the simplex:
+where the entries for the weight vector live on the simplex:
 
 $$
 \mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} : \mathbf{w} \geq 0, \|\mathbf{w}\|_1 = 1 \right\}
@@ -77,11 +70,13 @@ $$
 \widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 $$
 
+## Step 1: Computing the Alignment
+
 For $\forall \: j \in \mathcal{N}$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix. In plain English, this amounts to running $N_0$ separate OLS regressions, each using one donor to predict the treated unit:
 $$
 \hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \forall \: j \in \mathcal{N}_0.
 $$
-These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific trends (not levels, trends) in the data, after adjusting for broader trends via the original demeaning. If the coefficient for a donor is high, it means that unit's behavior is closely aligned with the treated unit in this adjusted space. it is the equivalent of running univariate regression for each donor unit.
+These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific trends (not levels, trends) in the data, after adjusting for broader trends via the original demeaning. If the coefficient for a donor is high, it means that unit's behavior is closely aligned with the treated unit in this adjusted space. It is the equivalent of running univariate regression for each donor unit.
 
 We then define the alignment-adjusted donor matrix (which we will later use in optimization) as
 $$
@@ -89,28 +84,37 @@ $$
 $$
 which rescales each donor column by its alignment with the treated unit. 
 
+## Estimating the Noise Variance
+
 The SRC method needs to estimate the residual noise variance of the donor projection (or, our donor matrix multiplied by the theta values) with the target unit's demeaned values. We call this variance term $\hat{\sigma}^2$. Using the centering matrix $\mathbf{C}_{T_0}$, we define
 $$
 \mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 $$
-$\mathbf{G}$ tells us how similar each donor unit's behavior is to the others, but with the broad, common time trends removed. It is similar to a demeaned correlation matrix showing how the donor units’ patterns align with each other in terms of their unique behaviors in the pre-treatment period. We extract its diagonal to normalize the donor projection, forming the operator
+$\mathbf{G}$ is what we call a centered [Gram matrix](https://www.youtube.com/watch?v=nokLWUK9dwM). It tells us how similar each donor unit's behavior is to the others, but with the broad, common time trends removed (that's what makes it demeaned). Think of it as a covairance matrix showing how the donor units’ patterns align with each other in terms of their behaviors in the pre-treatment period. We extract its diagonal to normalize the donor projection, forming the operator
 $$
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
 $$
-is like a weighted version of the donor data, where the "importance" of each donor unit is based on its relationship to the others (measured by $\mathbf{G}$). Donors whose behavior is more idiosyncratic (in the demeaned space) are weighted more heavily, reflecting their unique explanatory power for the treated unit. We care about how well these demeaned adjusted donors are related to the target unit. we measure this by estimating a residual, which is constructed like
+is like a weighted version of the donor data, where the "importance" of each donor unit is based on its relationship to the others (measured by $\mathbf{G}$). Donors whose behavior is more idiosyncratic (in the demeaned space) are weighted more heavily in this matrix, reflecting their unique explanatory power for the treated unit. We care about how well these demeaned adjusted donors are related to the target unit. We measure this by estimating a residual (equation 14 from the paper), which is constructed like
 $$
-\mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
+\mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}.
 $$
-and the estimated noise variance is
+The equation intimidated me at first, but the left hand term is just the demeaned target vector and the right hand term projects the demeaned, normalized version of the donor matrix on to the target unit. The estimated noise variance is
 $$
 \hat{\sigma}^2 = \| \mathbf{r} \|^2.
 $$
 
-The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, we penalize their discrepancies with the estimated noise variance $\hat{\sigma}^2$. With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective
+In English, this tells us how much of the treated unit's unique behavior cannot be explained by the normalized, centered donor pool's projection on to the treated unit. The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, the higher the variance will be. Why did I explain any of this? Because this sets up the main equations from the paper, equations 15 and 16.  In these equations, we penalize their discrepancies using the estimated noise variance $\hat{\sigma}^2$. 
+
+## Solving the Optimization Problem
+
+With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve the program
+
 $$
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
 $$
-The solution $\mathbf{w}$ balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let
+
+The left term on the RHS is the standard convex optimization of SCM (except we use the theta-adjusted donor matrix, ```Y0_pre * theta_hat```). The right term is the penalization term upon the weighted for donors that are dissimilar to the target unit. After we estimate the weights, we can compute the in-sample and out of sampl predictions. Let
+
 $$
 \bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
 $$
@@ -121,8 +125,10 @@ $$
 = \begin{bmatrix} 
 \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}) \\ 
 \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w})
-\end{bmatrix}
+\end{bmatrix},
 $$
+
+using the coefficients we just calculated. 
 
 ## Estimating SRC in ```mlsynth```
 
@@ -141,21 +147,43 @@ from mlsynth.mlsynth import SRC, FSCM
 import matplotlib.pyplot as plt
 import matplotlib
 
-# matplotlib theme
-jaredplot = {'axes.grid': True,
-              'grid.linestyle': '--',
-              'legend.framealpha': 1,
-              'legend.facecolor': 'white',
-              'legend.shadow': True,
-              'legend.fontsize': 14,
-              'legend.title_fontsize': 16,
-              'xtick.labelsize': 14,
-              'ytick.labelsize': 14,
-              'axes.labelsize': 16,
-              'axes.titlesize': 20,
-              'figure.dpi': 100}
+ubertheme = {
+    "figure.facecolor": "white",
+    "figure.figsize": (11,5),
+    "figure.dpi": 100,
+    "figure.titlesize": 16,
+    "figure.titleweight": "bold",
+    "lines.linewidth": 1.2,
+    "patch.facecolor": "#0072B2",  # Blue shade for patches
+    "xtick.direction": "out",
+    "ytick.direction": "out",
+    "font.size": 14,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["DejaVu Sans"],
+    "axes.grid": True,
+    "axes.facecolor": "white",
+    "axes.linewidth": 0.1,
+    "axes.titlesize": "large",
+    "axes.titleweight": "bold",
+    "axes.labelsize": "medium",
+    "axes.labelweight": "bold",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.spines.left": False,
+    "axes.spines.bottom": False,
+    "axes.titlepad": 25,
+    "axes.labelpad": 20,
+    "grid.alpha": 0.1,
+    "grid.linewidth": 0.5,
+    "grid.color": "#000000",
+    "legend.framealpha": 0.5,
+    "legend.fancybox": True,
+    "legend.borderpad": 0.5,
+    "legend.loc": "best",
+    "legend.fontsize": "small",
+}
 
-matplotlib.rcParams.update(jaredplot)
+matplotlib.rcParams.update(ubertheme)
 
 # URL to fetch the dataset
 url = 'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'
@@ -185,13 +213,14 @@ for model in models:
     result = model.fit()
     results.append((type(model).__name__, result))  # Store the model name and result as a tuple
 
-plt.figure(figsize=(10, 6))
-plt.axvline(x=20, color='red', linestyle=':', label="Terrorism")
+plt.axvline(x=20, color='grey', linestyle='--', label="Terrorism Begins")
 
-for model_name, result in results:
+colors = ['red', 'blue']
+
+for i, (model_name, result) in enumerate(results):
     counterfactual = result["Vectors"]["Counterfactual"]
-    # Plot the Counterfactual vs Observed Unit with dynamic labels
-    plt.plot(counterfactual, label=f"{model_name} Basque", linestyle='--')
+    plt.plot(counterfactual, label=f"{model_name} Basque", linestyle='-', color=colors[i])
+
 observed_unit = result["Vectors"]["Observed Unit"]
 plt.plot(observed_unit, label=f"Basque", color='black', linewidth=2)
 
@@ -202,3 +231,7 @@ plt.legend()
 
 plt.show()
 ```
+
+Here we plot the counterfactuals for each method versus the observed donor units. The donor weights for the SRC are Aragon (0.044), Cantabria (0.13), Cataluna (0.241), Madrid (0.348), Navarra, Asturias (0.128), and Rioja (La) (0.104). These are not the same weights from the paper, since the paper incorporates the covariates from the orginal paper. In the paper, Austurias got 0.001, Cantabria got 0.311, Cataluna has 0.028, Madrid has 0.276, and La Rioja has 0.587. The ATT is -0.647, and the pre-treatment is 0.087. Forward SCM gets an ATT of -0.692 and an RMSE of 0.084. The FSCM algorithm selected 9 weights of the 16 donor units, Cataluna (0.826), Madrid (Comunidad De) (0.168), and Asturias (0.005). So, while the methods differ, they attain similar ATTs and reach similar practical conclusions. In the paper, the author also allows the donors to be screened via sure independent ranking and screening (PDF page 17). I didn't implement this myself, but it seems to be a way to reduce the donor pool so that our estimates are improved because our donor pool has improved. I'll include this as an option for SRC in the future, so users can implement it and maybe compare it to Forward Selection or the other methods ```mlsynth``` offers.
+
+As ususal, [email me](https://jgreathouse9.github.io/) with comments or questions, and share the post on LinkedIn should others find this helpful.

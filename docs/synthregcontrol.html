@@ -9,7 +9,7 @@
 <meta name="author" content="Jared Greathouse">
 <meta name="dcterms.date" content="2025-04-06">
 
-<title>A Novel Two Stage Synthetic Control Method – Policy Analysis, Data Science, and Causal Inference</title>
+<title>The Synthetic Regressing Control Method for Python – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -205,12 +205,16 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a>
+  <li><a href="#a-new-penalized-synthetic-control" id="toc-a-new-penalized-synthetic-control" class="nav-link active" data-scroll-target="#a-new-penalized-synthetic-control">A New Penalized Synthetic Control</a></li>
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation">Notation</a>
   <ul class="collapse">
   <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
   </ul></li>
   <li><a href="#synthetic-regression-control" id="toc-synthetic-regression-control" class="nav-link" data-scroll-target="#synthetic-regression-control">Synthetic Regression Control</a>
   <ul class="collapse">
+  <li><a href="#step-1-computing-the-alignment" id="toc-step-1-computing-the-alignment" class="nav-link" data-scroll-target="#step-1-computing-the-alignment">Step 1: Computing the Alignment</a></li>
+  <li><a href="#estimating-the-noise-variance" id="toc-estimating-the-noise-variance" class="nav-link" data-scroll-target="#estimating-the-noise-variance">Estimating the Noise Variance</a></li>
+  <li><a href="#solving-the-optimization-problem" id="toc-solving-the-optimization-problem" class="nav-link" data-scroll-target="#solving-the-optimization-problem">Solving the Optimization Problem</a></li>
   <li><a href="#estimating-src-in-mlsynth" id="toc-estimating-src-in-mlsynth" class="nav-link" data-scroll-target="#estimating-src-in-mlsynth">Estimating SRC in <code>mlsynth</code></a></li>
   </ul></li>
   </ul>
@@ -221,7 +225,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">A Novel Two Stage Synthetic Control Method</h1>
+<h1 class="title">The Synthetic Regressing Control Method for Python</h1>
   <div class="quarto-categories">
     <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Econometrics</div>
@@ -254,10 +258,13 @@ window.Quarto = {
 </header>
 
 
-<p>This blog post covers <a href="https://arxiv.org/pdf/2306.02584">the synthetic regression control method</a>. It is a new SCM that was once only available in <code>R</code>. The paper itself is so notation dense that it’s honestly hard for me to get through, and only after reading it and its notations many times did I understand how the estimator was supposed to work.</p>
+<section id="a-new-penalized-synthetic-control" class="level1">
+<h1>A New Penalized Synthetic Control</h1>
+<p>This blog post covers <a href="https://arxiv.org/pdf/2306.02584">the synthetic regressing control method</a>. It is a new flavor of SCM that was once only available in <code>R</code>. The basic innovation method is to penalize poor donors who do not predict the target vector in a demeaned space. The paper itself is extremely notationally dense. The writing is all over the place, and I literally put off coding the estimator for a year because of how complicated of a read the paper is (not the econometric theory, I mean the literal description of the estimator). But, I think I’ve finally figured it out. This post introduces and hopefully simplifies the explication of the estimator, and allows for people to use it for their own work.</p>
+</section>
 <section id="notation" class="level1">
 <h1>Notation</h1>
-<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(\mathbf{C}_T \in \mathbb{R}^{T \times T}\)</span> represent the centering matrix defined as:</p>
+<p>As usual, I begin with notations. Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(\mathbf{C}_T \in \mathbb{R}^{T \times T}\)</span> represent the centering matrix defined as:</p>
 <p><span class="math display">\[
 \mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
 \]</span></p>
@@ -265,14 +272,7 @@ window.Quarto = {
 <p><span class="math display">\[
 \widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
 \]</span></p>
-<p>For any pair of vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, we define the Hadamard (elementwise) product as <span class="math inline">\((\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad\forall j \in \mathcal{N}_0\)</span>. Depending on orientation, there are two dot products we work with. For column vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, <span class="math display">\[
-  \mathbf{a}^\top \mathbf{b} \coloneqq \sum_{j \in \mathcal{N}_0} a_j b_j \in \mathbb{R}
-  \]</span></p>
-<p>This is equivalent to viewing <span class="math inline">\(\mathbf{a}^\top \in \mathbb{R}^{1 \times N_0}\)</span> as a row vector and multiplying it by the column vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>. The result is a scalar:</p>
-<p><span class="math display">\[
-  \mathbf{a}^\top \mathbf{b} \in \mathbb{R}
-  \]</span></p>
-<p>More generally, when multiplying a matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{T \times N_0}\)</span> by a vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>, the result is a new vector in <span class="math inline">\(\mathbb{R}^T\)</span>, formed as a linear combination of the columns of <span class="math inline">\(\mathbf{A}\)</span>: <span class="math display">\[
+<p>For any pair of vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, we define the Hadamard (elementwise) product as <span class="math inline">\((\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad\forall j \in \mathcal{N}_0\)</span>. When multiplying a matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{T \times N_0}\)</span> by a vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>, the result is a new vector in <span class="math inline">\(\mathbb{R}^T\)</span>, formed as a linear combination of the columns of <span class="math inline">\(\mathbf{A}\)</span>: <span class="math display">\[
 \mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
 \]</span></p>
 <p>Here, each entry in the resulting vector is a dot product between a row of <span class="math inline">\(\mathbf{A}\)</span> and the vector <span class="math inline">\(\mathbf{b}\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> be the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>.</p>
@@ -283,13 +283,14 @@ window.Quarto = {
 <p><span class="math display">\[
 \mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
 \]</span></p>
+<p>These elements are used in the learning step and the counterfactual prediction step.</p>
 <section id="synthetic-controls" class="level2">
 <h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
-<p>Before I get to the SRC, I review basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>). We define the synthetic control as a weighted average of the donor units. The goal is to find the weight vector <span class="math inline">\(\mathbf{w}\)</span> that best approximates the outcome vector of the treated unit during the pre-treatment period. We minimize</p>
+<p>I begin by reviewing basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for <span class="math inline">\(t &gt; T_0\)</span>), whose accuracy is guaranteed only on the basis of quality fit in the pre-intervention period. We define the synthetic control as a weighted average of the donor units. The goal is to find the weight vector <span class="math inline">\(\mathbf{w}\)</span> that best approximates the outcome vector of the treated unit during the pre-treatment period. We minimize</p>
 <p><span class="math display">\[
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_2^2
 \]</span></p>
-<p>where <span class="math inline">\(\mathbf{y}_{1,\text{pre}} \in \mathbb{R}^{T_0}\)</span> is the pre-treatment outcome vector for the treated unit and <span class="math inline">\(\mathbf{Y}_{0,\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> is the pre-treatment outcome matrix for the donor units. The entries for the weight vector live on the simplex:</p>
+<p>where the entries for the weight vector live on the simplex:</p>
 <p><span class="math display">\[
 \mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} : \mathbf{w} \geq 0, \|\mathbf{w}\|_1 = 1 \right\}
 \]</span></p>
@@ -305,24 +306,36 @@ window.Quarto = {
 <p>The SRC estimation procedure consists of three stages: estimation of alignment coefficients, estimation of the noise variance, and penalized optimization of donor weights. To account for level differences, we first demean both the treated and donor series using the centering matrix. The demeaned treated outcome vector is given by <span class="math display">\[
 \widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 \]</span></p>
+<section id="step-1-computing-the-alignment" class="level2">
+<h2 class="anchored" data-anchor-id="step-1-computing-the-alignment">Step 1: Computing the Alignment</h2>
 <p>For <span class="math inline">\(\forall \: j \in \mathcal{N}\)</span>, an alignment coefficient <span class="math inline">\(\hat{\theta}_j\)</span> is computed by projecting <span class="math inline">\(\widetilde{\mathbf{y}}_1\)</span> onto the corresponding column <span class="math inline">\(\widetilde{\mathbf{Y}}_{0,j}\)</span> of the demeaned donor matrix. In plain English, this amounts to running <span class="math inline">\(N_0\)</span> separate OLS regressions, each using one donor to predict the treated unit: <span class="math display">\[
 \hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \forall \: j \in \mathcal{N}_0.
-\]</span> These coefficients collectively form the vector <span class="math inline">\(\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}\)</span>. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific trends (not levels, trends) in the data, after adjusting for broader trends via the original demeaning. If the coefficient for a donor is high, it means that unit’s behavior is closely aligned with the treated unit in this adjusted space. it is the equivalent of running univariate regression for each donor unit.</p>
+\]</span> These coefficients collectively form the vector <span class="math inline">\(\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}\)</span>. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific trends (not levels, trends) in the data, after adjusting for broader trends via the original demeaning. If the coefficient for a donor is high, it means that unit’s behavior is closely aligned with the treated unit in this adjusted space. It is the equivalent of running univariate regression for each donor unit.</p>
 <p>We then define the alignment-adjusted donor matrix (which we will later use in optimization) as <span class="math display">\[
 \mathbf{Y}_{\boldsymbol{\theta}} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}(\hat{\boldsymbol{\theta}}),
 \]</span> which rescales each donor column by its alignment with the treated unit.</p>
+</section>
+<section id="estimating-the-noise-variance" class="level2">
+<h2 class="anchored" data-anchor-id="estimating-the-noise-variance">Estimating the Noise Variance</h2>
 <p>The SRC method needs to estimate the residual noise variance of the donor projection (or, our donor matrix multiplied by the theta values) with the target unit’s demeaned values. We call this variance term <span class="math inline">\(\hat{\sigma}^2\)</span>. Using the centering matrix <span class="math inline">\(\mathbf{C}_{T_0}\)</span>, we define <span class="math display">\[
 \mathbf{G} = \mathbf{Y}_0^{\text{pre}^\top} \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
-\]</span> <span class="math inline">\(\mathbf{G}\)</span> tells us how similar each donor unit’s behavior is to the others, but with the broad, common time trends removed. It is similar to a demeaned correlation matrix showing how the donor units’ patterns align with each other in terms of their unique behaviors in the pre-treatment period. We extract its diagonal to normalize the donor projection, forming the operator <span class="math display">\[
+\]</span> <span class="math inline">\(\mathbf{G}\)</span> is what we call a centered <a href="https://www.youtube.com/watch?v=nokLWUK9dwM">Gram matrix</a>. It tells us how similar each donor unit’s behavior is to the others, but with the broad, common time trends removed (that’s what makes it demeaned). Think of it as a covairance matrix showing how the donor units’ patterns align with each other in terms of their behaviors in the pre-treatment period. We extract its diagonal to normalize the donor projection, forming the operator <span class="math display">\[
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
-\]</span> is like a weighted version of the donor data, where the “importance” of each donor unit is based on its relationship to the others (measured by <span class="math inline">\(\mathbf{G}\)</span>). Donors whose behavior is more idiosyncratic (in the demeaned space) are weighted more heavily, reflecting their unique explanatory power for the treated unit. We care about how well these demeaned adjusted donors are related to the target unit. we measure this by estimating a residual, which is constructed like <span class="math display">\[
-\mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
-\]</span> and the estimated noise variance is <span class="math display">\[
+\]</span> is like a weighted version of the donor data, where the “importance” of each donor unit is based on its relationship to the others (measured by <span class="math inline">\(\mathbf{G}\)</span>). Donors whose behavior is more idiosyncratic (in the demeaned space) are weighted more heavily in this matrix, reflecting their unique explanatory power for the treated unit. We care about how well these demeaned adjusted donors are related to the target unit. We measure this by estimating a residual (equation 14 from the paper), which is constructed like <span class="math display">\[
+\mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}.
+\]</span> The equation intimidated me at first, but the left hand term is just the demeaned target vector and the right hand term projects the demeaned, normalized version of the donor matrix on to the target unit. The estimated noise variance is <span class="math display">\[
 \hat{\sigma}^2 = \| \mathbf{r} \|^2.
 \]</span></p>
-<p>The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, we penalize their discrepancies with the estimated noise variance <span class="math inline">\(\hat{\sigma}^2\)</span>. With <span class="math inline">\(\hat{\boldsymbol{\theta}}\)</span> and <span class="math inline">\(\hat{\sigma}^2\)</span> in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective <span class="math display">\[
+<p>In English, this tells us how much of the treated unit’s unique behavior cannot be explained by the normalized, centered donor pool’s projection on to the treated unit. The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, the higher the variance will be. Why did I explain any of this? Because this sets up the main equations from the paper, equations 15 and 16. In these equations, we penalize their discrepancies using the estimated noise variance <span class="math inline">\(\hat{\sigma}^2\)</span>.</p>
+</section>
+<section id="solving-the-optimization-problem" class="level2">
+<h2 class="anchored" data-anchor-id="solving-the-optimization-problem">Solving the Optimization Problem</h2>
+<p>With <span class="math inline">\(\hat{\boldsymbol{\theta}}\)</span> and <span class="math inline">\(\hat{\sigma}^2\)</span> in hand, we solve the program</p>
+<p><span class="math display">\[
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
-\]</span> The solution <span class="math inline">\(\mathbf{w}\)</span> balances goodness-of-fit with regularization based on the estimated noise. Finally, we construct predictions. Let <span class="math display">\[
+\]</span></p>
+<p>The left term on the RHS is the standard convex optimization of SCM (except we use the theta-adjusted donor matrix, <code>Y0_pre * theta_hat</code>). The right term is the penalization term upon the weighted for donors that are dissimilar to the target unit. After we estimate the weights, we can compute the in-sample and out of sampl predictions. Let</p>
+<p><span class="math display">\[
 \bar{y}_1 = \frac{1}{T_0} \mathbf{1}_{T_0}^\top \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \bar{\mathbf{y}}_0 = \frac{1}{T_0} \mathbf{Y}_0^{\text{pre}^\top} \mathbf{1}_{T_0}
 \]</span> be the mean of the treated unit and the vector of donor means, respectively, in the pre-treatment period. Let <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{T_1 \times N_0}\)</span> denote the donor outcomes in the post-treatment period. Our SRC predictions take the form of</p>
 <p><span class="math display">\[
@@ -330,79 +343,104 @@ window.Quarto = {
 = \begin{bmatrix}
 \mathbf{Y}_0^{\text{pre}} (\hat{\boldsymbol{\theta}} \odot \mathbf{w}) \\
 \bar{y}_1 \cdot \mathbf{1}_{T_1} + \left( \mathbf{Y}_0^{\text{post}} - \mathbf{1}_{T_1} \bar{\mathbf{y}}_0^\top \right)(\hat{\boldsymbol{\theta}} \odot \mathbf{w})
-\end{bmatrix}
+\end{bmatrix},
 \]</span></p>
+<p>using the coefficients we just calculated.</p>
+</section>
 <section id="estimating-src-in-mlsynth" class="level2">
 <h2 class="anchored" data-anchor-id="estimating-src-in-mlsynth">Estimating SRC in <code>mlsynth</code></h2>
 <p>Now I will give an example of how to use SRC for your own applied work. We begin by installing <code>mlsynth</code> from my Github</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>For comparison sake, I use the Basque data since that’s what the author uses.</p>
-<div id="a0b5134f" class="cell" data-execution_count="1">
+<div id="8535950c" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SRC, FSCM</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># matplotlib theme</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>jaredplot <span class="op">=</span> {<span class="st">'axes.grid'</span>: <span class="va">True</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>              <span class="st">'grid.linestyle'</span>: <span class="st">'--'</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.framealpha'</span>: <span class="dv">1</span>,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.facecolor'</span>: <span class="st">'white'</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.shadow'</span>: <span class="va">True</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.fontsize'</span>: <span class="dv">14</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>              <span class="st">'legend.title_fontsize'</span>: <span class="dv">16</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>              <span class="st">'xtick.labelsize'</span>: <span class="dv">14</span>,</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>              <span class="st">'ytick.labelsize'</span>: <span class="dv">14</span>,</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>              <span class="st">'axes.labelsize'</span>: <span class="dv">16</span>,</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>              <span class="st">'axes.titlesize'</span>: <span class="dv">20</span>,</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>              <span class="st">'figure.dpi'</span>: <span class="dv">100</span>}</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams.update(jaredplot)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># URL to fetch the dataset</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>treat <span class="op">=</span> df.columns[<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>outcome <span class="op">=</span> df.columns[<span class="dv">2</span>]</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>unitid <span class="op">=</span> df.columns[<span class="dv">0</span>]</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: time,</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: outcome,</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: unitid,</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Create instances of each model with the config dictionary</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>models <span class="op">=</span> [SRC(config), FSCM(config)]</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ubertheme <span class="op">=</span> {</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.facecolor"</span>: <span class="st">"white"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">11</span>,<span class="dv">5</span>),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">100</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.titlesize"</span>: <span class="dv">16</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.titleweight"</span>: <span class="st">"bold"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"lines.linewidth"</span>: <span class="fl">1.2</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"patch.facecolor"</span>: <span class="st">"#0072B2"</span>,  <span class="co"># Blue shade for patches</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.direction"</span>: <span class="st">"out"</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.direction"</span>: <span class="st">"out"</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"font.size"</span>: <span class="dv">14</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"font.family"</span>: <span class="st">"sans-serif"</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"font.sans-serif"</span>: [<span class="st">"DejaVu Sans"</span>],</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.facecolor"</span>: <span class="st">"white"</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.linewidth"</span>: <span class="fl">0.1</span>,</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="st">"large"</span>,</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titleweight"</span>: <span class="st">"bold"</span>,</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="st">"medium"</span>,</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelweight"</span>: <span class="st">"bold"</span>,</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.left"</span>: <span class="va">False</span>,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.bottom"</span>: <span class="va">False</span>,</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlepad"</span>: <span class="dv">25</span>,</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelpad"</span>: <span class="dv">20</span>,</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.1</span>,</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.linewidth"</span>: <span class="fl">0.5</span>,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.color"</span>: <span class="st">"#000000"</span>,</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.framealpha"</span>: <span class="fl">0.5</span>,</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fancybox"</span>: <span class="va">True</span>,</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.borderpad"</span>: <span class="fl">0.5</span>,</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.loc"</span>: <span class="st">"best"</span>,</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="st">"small"</span>,</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>matplotlib.rcParams.update(ubertheme)</span>
 <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> []</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model <span class="kw">in</span> models:</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> model.fit()</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    results.append((<span class="bu">type</span>(model).<span class="va">__name__</span>, result))  <span class="co"># Store the model name and result as a tuple</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">20</span>, color<span class="op">=</span><span class="st">'red'</span>, linestyle<span class="op">=</span><span class="st">':'</span>, label<span class="op">=</span><span class="st">"Terrorism"</span>)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># URL to fetch the dataset</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">'https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv'</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>treat <span class="op">=</span> df.columns[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>outcome <span class="op">=</span> df.columns[<span class="dv">2</span>]</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>unitid <span class="op">=</span> df.columns[<span class="dv">0</span>]</span>
 <span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model_name, result <span class="kw">in</span> results:</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    counterfactual <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>]</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Plot the Counterfactual vs Observed Unit with dynamic labels</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    plt.plot(counterfactual, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss"> Basque"</span>, linestyle<span class="op">=</span><span class="st">'--'</span>)</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>observed_unit <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Observed Unit"</span>]</span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>plt.plot(observed_unit, label<span class="op">=</span><span class="ss">f"Basque"</span>, color<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Time Periods'</span>)</span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'GDP per Capita'</span>)</span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Synthetic Regression Control Versus Forward SCM'</span>)</span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: treat,</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: time,</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: outcome,</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: unitid,</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Create instances of each model with the config dictionary</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>models <span class="op">=</span> [SRC(config), FSCM(config)]</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> []</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model <span class="kw">in</span> models:</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> model.fit()</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    results.append((<span class="bu">type</span>(model).<span class="va">__name__</span>, result))  <span class="co"># Store the model name and result as a tuple</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">20</span>, color<span class="op">=</span><span class="st">'grey'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="st">"Terrorism Begins"</span>)</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">'red'</span>, <span class="st">'blue'</span>]</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, (model_name, result) <span class="kw">in</span> <span class="bu">enumerate</span>(results):</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>    counterfactual <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Counterfactual"</span>]</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>    plt.plot(counterfactual, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss"> Basque"</span>, linestyle<span class="op">=</span><span class="st">'-'</span>, color<span class="op">=</span>colors[i])</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>observed_unit <span class="op">=</span> result[<span class="st">"Vectors"</span>][<span class="st">"Observed Unit"</span>]</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>plt.plot(observed_unit, label<span class="op">=</span><span class="ss">f"Basque"</span>, color<span class="op">=</span><span class="st">'black'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Time Periods'</span>)</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'GDP per Capita'</span>)</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Synthetic Regression Control Versus Forward SCM'</span>)</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -411,6 +449,8 @@ window.Quarto = {
 </div>
 </div>
 </div>
+<p>Here we plot the counterfactuals for each method versus the observed donor units. The donor weights for the SRC are Aragon (0.044), Cantabria (0.13), Cataluna (0.241), Madrid (0.348), Navarra, Asturias (0.128), and Rioja (La) (0.104). These are not the same weights from the paper, since the paper incorporates the covariates from the orginal paper. In the paper, Austurias got 0.001, Cantabria got 0.311, Cataluna has 0.028, Madrid has 0.276, and La Rioja has 0.587. The ATT is -0.647, and the pre-treatment is 0.087. Forward SCM gets an ATT of -0.692 and an RMSE of 0.084. The FSCM algorithm selected 9 weights of the 16 donor units, Cataluna (0.826), Madrid (Comunidad De) (0.168), and Asturias (0.005). So, while the methods differ, they attain similar ATTs and reach similar practical conclusions. In the paper, the author also allows the donors to be screened via sure independent ranking and screening (PDF page 17). I didn’t implement this myself, but it seems to be a way to reduce the donor pool so that our estimates are improved because our donor pool has improved. I’ll include this as an option for SRC in the future, so users can implement it and maybe compare it to Forward Selection or the other methods <code>mlsynth</code> offers.</p>
+<p>As ususal, <a href="https://jgreathouse9.github.io/">email me</a> with comments or questions, and share the post on LinkedIn should others find this helpful.</p>
 
 
 
@@ -419,7 +459,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744084057750" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744119292832" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -443,7 +483,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744084057747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744119292829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -467,7 +507,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744084057748" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744119292829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -491,7 +531,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744084057748" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744119292829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -515,7 +555,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744084057748" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744119292829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -541,7 +581,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744084057748" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744119292829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -567,7 +607,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744084057748" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744119292829" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -591,7 +631,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744084103323" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1744119339964" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

@@ -50,13 +50,7 @@ $$
 
 ## Synthetic Controls
 
-Before I get to the SRC, I review basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$). We define the synthetic control as a weighted average of the donor units. Specifically, we use a weight vector $\mathbf{w} \in \mathbb{R}^{N_0}$ to form the synthetic control, such that the counterfactual outcome for the treated unit is
-
-$$
-\mathbf{y}_1^{\text{SC}} = \mathbf{Y}_0 \mathbf{w}
-$$
-
-where $\mathbf{y}_1^{\text{SC}}$ is the predicted counterfactual outcome for the treated unit, $\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}$ is the matrix of outcome vectors for the donor units, and $\mathbf{w} \in \mathbb{R}^{N_0}$ is the vector of weights applied to each donor unit. The goal is to find $\mathbf{w}$ that best approximates the outcome vector of the treated unit during the pre-treatment period. The weights are estimated by minimizing the distance between the treated unit's pre-treatment outcomes $\mathbf{y}_{1,\text{pre}}$ and the weighted average of the donor units' pre-treatment outcomes. This can be expressed as
+Before I get to the SRC, I review basic synthetic controls. Our main goal is to estimate the counterfactual outcomes in the post-treatment period (i.e., for $t > T_0$). We define the synthetic control as a weighted average of the donor units. The goal is to find the weight vector $\mathbf{w}$ that best approximates the outcome vector of the treated unit during the pre-treatment period. We minimize
 
 $$
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_{1,\text{pre}} - \mathbf{Y}_{0,\text{pre}} \mathbf{w} \right\|_2^2
@@ -83,11 +77,11 @@ $$
 \widetilde{\mathbf{y}}_1 = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}}, \quad \text{and} \quad \widetilde{\mathbf{Y}}_0 = \mathbf{C}_{T_0} \mathbf{Y}_0^{\text{pre}}.
 $$
 
-For $\forall \: j \in \mathcal{N}$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix. In plain English, all this is doing is estimating $N_0$ single unit OLS models using the outome vector of each donor as a predictor column:
+For $\forall \: j \in \mathcal{N}$, an alignment coefficient $\hat{\theta}_j$ is computed by projecting $\widetilde{\mathbf{y}}_1$ onto the corresponding column $\widetilde{\mathbf{Y}}_{0,j}$ of the demeaned donor matrix. In plain English, this amounts to running $N_0$ separate OLS regressions, each using one donor to predict the treated unit:
 $$
 \hat{\theta}_j = \frac{\widetilde{\mathbf{y}}_1^\top \widetilde{\mathbf{Y}}_{0,j}}{\| \widetilde{\mathbf{Y}}_{0,j} \|^2}, \quad \text{for each } j \in \mathcal{N}_0.
 $$
-These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific patterns in the data, after adjusting for broader trends (i.e., after demeaning). If the coefficient for a donor is high, it means that unit's behavior is closely aligned with the treated unit in this adjusted space. it is the equivalent of running univariate regression for each donor unit.
+These coefficients collectively form the vector $\hat{\boldsymbol{\theta}} \in \mathbb{R}^{N_0}$. In plain English, these coefficients tell us how well each donor unit matches the treated unit in terms of specific trends (not levels, trends) in the data, after adjusting for broader trends via the original demeaning. If the coefficient for a donor is high, it means that unit's behavior is closely aligned with the treated unit in this adjusted space. it is the equivalent of running univariate regression for each donor unit.
 
 We then define the alignment-adjusted donor matrix (which we will later use in optimization) as
 $$
@@ -103,7 +97,7 @@ $\mathbf{G}$ tells us how similar each donor unit's behavior is to the others, b
 $$
 \mathbf{Z} = \mathbf{Y}_0^{\text{pre}} \cdot \mathrm{diag}\left( \mathrm{diag}(\mathbf{G})^{-1} \right) \cdot \mathbf{Y}_0^{\text{pre}^\top}.
 $$
-is like a weighted version of the donor data, where the "importance" of each donor unit is based on its relationship to the others (measured by $\mathbf{G}$). Donors that are more similar to the others (in the demeaned space) get less adjustment, and donors that are less similar are adjusted more. We care about how well these demeaned adjusted donors are related to the target unit. we measure this by estimating a residual, which is constructed like
+is like a weighted version of the donor data, where the "importance" of each donor unit is based on its relationship to the others (measured by $\mathbf{G}$). Donors whose behavior is more idiosyncratic (in the demeaned space) are weighted more heavily, reflecting their unique explanatory power for the treated unit. We care about how well these demeaned adjusted donors are related to the target unit. we measure this by estimating a residual, which is constructed like
 $$
 \mathbf{r} = \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}} - \mathbf{C}_{T_0} \mathbf{Z} \mathbf{C}_{T_0} \mathbf{y}_1^{\text{pre}},
 $$
@@ -112,7 +106,7 @@ $$
 \hat{\sigma}^2 = \| \mathbf{r} \|^2.
 $$
 
-The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, we penalize their discrepancies with the sigma statistic. With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective
+The closer the residual is to 0, the better fitting the demeaned adjusted donors will be to the target unit. The more dissimilar they are, we penalize their discrepancies with the estimated noise variance $\hat{\sigma}^2$. With $\hat{\boldsymbol{\theta}}$ and $\hat{\sigma}^2$ in hand, we solve a penalized least squares problem to obtain donor weights. Specifically, we minimize the objective
 $$
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_{\boldsymbol{\theta}} \mathbf{w} \right\|^2 + 2 \hat{\sigma}^2 \cdot \mathbf{1}_{N_0}^\top \mathbf{w},
 $$

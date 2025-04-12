@@ -77,3 +77,127 @@ and
 $$
 \mathbf{y}_1^{(m), \text{pre}} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{(m), \text{post}} \in \mathbb{R}^{T_1}
 $$
+
+Here are our objective functions (I use an intercept practically, but I'm just showing what's going on under the hood)
+
+$$
+\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix} \right\|^2 \quad \text{vs.} \quad \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \widetilde{\mathbf{Y}}_0^{(1)} \\ \widetilde{\mathbf{Y}}_0^{(2)} \\ \vdots \\ \widetilde{\mathbf{Y}}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \widetilde{\mathbf{y}}_1^{(1)} \\ \widetilde{\mathbf{y}}_1^{(2)} \\ \vdots \\ \widetilde{\mathbf{y}}_1^{(k)} \end{bmatrix} \right\|^2.
+$$
+
+
+# Estimation in Python
+
+```{python}
+
+#| fig-align: center
+#| echo: false
+
+from mlsynth.mlsynth import SCMO, FSCM, TSSC
+import numpy as np
+import pandas as pd
+
+def simulate(
+    seed=2001,
+    n_units=100,
+    n_periods=156,
+    n_factors=15,
+    rho=0.85,
+    sigma=1.05,
+    treated_unit=-19,
+    treatment_period=104,
+    treatment_effect=15,
+    seasonal_strength=0.15  # Weak seasonal common factor
+):
+    np.random.seed(seed)
+
+    cities = [
+        "São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
+        "Bogotá", "Santiago", "Caracas", "Guayaquil", "Quito",
+        "Brasília", "Bocas del Toro", "Asunción", "Cabo San Lucas", "Playa del Carmen",
+        "Medellín", "Porto Alegre", "Placencia", "Recife", "Salvador",
+        "Zihuatanejo", "San José", "Panama City", "Montevidio", "Tegucigalpa",
+        "Foz do Iguaçu", "Maracaibo", "Rosario", "Maracay", "Antofagasta",
+        "San Pedro Sula", "San Juan", "Chihuahua", "Cayo District", "Maturín",
+        "Buzios", "Puebla", "Mar del Plata", "Arequipa", "Fernando de Noronha", "Guatemala City",
+        "Zacatecas", "Mérida", "Córdoba", "Cozumel", "Trujillo",
+        "Corozal Town", "Santa Cruz de la Sierra", "San Luis Potosí", "Jalapão", "Potosí",
+        "Tucumán", "Neuquén", "La Plata", "Viña del Mar", "Florianópolis", "Lagos de Moreno",
+        "La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
+        "Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
+        "San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
+        "Iquique", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
+        "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Vallarta", "Chiclayo", "Ambato",
+        "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
+        "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
+        "Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
+    ][:n_units]
+
+    common_factors = np.zeros((n_periods, n_factors))
+    common_factors[0] = np.random.normal(0, 1, n_factors)
+    for t in range(1, n_periods):
+        common_factors[t] = rho * common_factors[t - 1] + np.random.normal(0, 1, n_factors)
+
+    # Weak seasonal common factor added to the common_factors matrix
+    weeks = np.arange(n_periods)
+    seasonal = seasonal_strength * np.sin(4 * np.pi * weeks / 52)  # Weak seasonal component
+    common_factors += seasonal[:, None]  # Broadcasting seasonal factor to all common factors
+
+    factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
+    errors = np.random.normal(0, sigma, (n_periods, n_units))
+
+    bookingvalue = np.zeros((n_periods, n_units))
+    for i in range(n_units):
+        bookingvalue[:, i] = (
+            common_factors @ factor_loadings[i] + errors[:, i] + np.random.uniform(100, 250)
+        )
+
+    bookingvalue[treatment_period:, treated_unit] += treatment_effect
+
+    temperature = np.tile(seasonal[:, None], (1, n_units)) + np.random.normal(20, 3, (n_periods, n_units))
+    arrivals = 0.09 * (bookingvalue // 1.5) + np.random.normal(10, 3, (n_periods, n_units))
+    search_volume = 0.02 * bookingvalue + np.random.normal(0, 3, (n_periods, n_units))
+    search_volume = np.clip(search_volume, 0, None)
+
+    exchange = np.zeros((n_periods, n_units))
+    initial_rates = np.random.uniform(2, 6, size=n_units)
+    for i in range(n_units):
+        exchange[:, i] = initial_rates[i] + np.cumsum(np.random.normal(0, 0.02, n_periods))
+
+    raw_employment = 10 + 0.01 * bookingvalue + np.random.normal(0, 0.7, (n_periods, n_units))
+    employment = np.clip(raw_employment, 3, 15)
+
+    time = np.repeat(np.arange(1, n_periods + 1), n_units)
+    markets = np.tile(cities, n_periods)
+
+    df = pd.DataFrame({
+        "Market": markets,
+        "Time": time,
+        "Gross Booking Value": bookingvalue.flatten(),
+        "Experiences": np.where((markets == cities[treated_unit]) & (time >= treatment_period), 1, 0),
+        "Temperature": temperature.flatten(),
+        "Airport Arrivals (000s)": arrivals.flatten(),
+        "Search Volume": search_volume.flatten(),
+        "Exchange Rate (USD)": exchange.flatten(),
+        "Hospitality Employment (%)": employment.flatten()
+    }).sort_values(["Market", "Time"]).reset_index(drop=True)
+
+    return df
+
+# Simulate with weak seasonal factor
+df = simulate(treated_unit=54, treatment_effect=10, n_factors=5)  ## 44 Cozumel
+
+
+config = {
+    "df": df,
+    "outcome": df.columns[2],
+    "treat": df.columns[3],
+    "unitid": df.columns[0],
+    "time": df.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"], "addout": list(df.columns[4:]),
+"method": "sbmf", "objective": "OLS", "cluster": True}
+
+arco = SCMO(config).fit()
+
+```

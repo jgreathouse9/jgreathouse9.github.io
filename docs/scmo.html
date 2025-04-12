@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
+<meta name="dcterms.date" content="2025-04-14">
 
-<title>Posts – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Synthetic Control Methods With Multiple Outcomes – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -166,15 +167,26 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(9)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(6)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(6)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#multiple-outcomes-notation" id="toc-multiple-outcomes-notation" class="nav-link" data-scroll-target="#multiple-outcomes-notation">Multiple Outcomes Notation</a></li>
+  </ul>
+</nav>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(9)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(5)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Posts</h1>
-</div>
+<h1 class="title">Synthetic Control Methods With Multiple Outcomes</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Causal Inference</div>
+    <div class="quarto-category">Econometrics</div>
+  </div>
+  </div>
 
 
 
@@ -187,6 +199,12 @@ window.Quarto = {
           </div>
   </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 14, 2025</p>
+    </div>
+  </div>
   
     
   </div>
@@ -196,10 +214,61 @@ window.Quarto = {
 </header>
 
 
-<p>Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics.</p>
+<p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict…</p>
+<section id="notation" class="level3">
+<h3 class="anchored" data-anchor-id="notation">Notation</h3>
+<p>Let $ $ denote the set of real numbers. A calligraphic letter, such as $ $, represents a discrete set with cardinality $ S = || $. Let $ _T ^{T T} $ represent the centering matrix, defined as:</p>
+<p><span class="math display">\[
+\mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
+\]</span></p>
+<p>where $ _T $ is the identity matrix of size $ T $, and $ _T ^T $ is the vector of ones of length $ T $. For any vector $ ^T $, the demeaned version is:</p>
+<p><span class="math display">\[
+\widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
+\]</span></p>
+<p>For any pair of vectors $ , ^{N_0} $, we define the Hadamard (elementwise) product as:</p>
+<p><span class="math display">\[
+(\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad \forall j \in \mathcal{N}_0
+\]</span></p>
+<p>When multiplying a matrix $ ^{T N_0} $ by a vector $ ^{N_0} $, the result is a new vector in $ ^T $, formed as a linear combination of the columns of $ $:</p>
+<p><span class="math display">\[
+\mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
+\]</span></p>
+<p>Here, each entry in the resulting vector is a dot product between a row of $ $ and the vector $ $.</p>
+<p>Let $ j $ represent indices for a total of $ N $ units and $ t $ index time. Let $ j = 1 $ denote the treated unit, with the set of controls being $ _0 = {1} $, with cardinality $ N_0 $. The pre-treatment period consists of the set $ _1 = { t : t T_0 } $, where $ T_0 $ is the final period before treatment. Similarly, the post-treatment period is given by $ _2 = { t : t &gt; T_0 } $.</p>
+<p>The observed outcome for unit $ j $ at time $ t $ is $ y_{jt} $, where a generic outcome vector for a given unit in the dataset is:</p>
+<p><span class="math display">\[
+\mathbf{y}_j \in \mathbb{R}^T, \quad \mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^T
+\]</span></p>
+<p>The outcome vector for the treated unit specifically is $ _1 $. The donor matrix is defined as:</p>
+<p><span class="math display">\[
+\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}
+\]</span></p>
+<p>where each column indexes a donor unit and each row corresponds to a time period. We denote by $ _j^{} ^{T_0} $ the subvector of outcomes for unit $ j $ in the pre-treatment period, and by $ _j^{} ^{T_1} $ the corresponding post-treatment vector, where $ T_1 = T - T_0 $. Then, we define our pre- and post-intervention analogs for the data:</p>
+<p><span class="math display">\[
+\mathbf{y}_1^{\text{pre}} = (y_{1t})_{t \in \mathcal{T}_1} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{\text{post}} = (y_{1t})_{t \in \mathcal{T}_2} \in \mathbb{R}^{T_1}
+\]</span></p>
+<p><span class="math display">\[
+\mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
+\]</span></p>
+</section>
+<section id="multiple-outcomes-notation" class="level3">
+<h3 class="anchored" data-anchor-id="multiple-outcomes-notation">Multiple Outcomes Notation</h3>
+<p>For the case of multiple outcomes, let $ k $ denote the number of outcomes being used. For each outcome $ m {1, 2, , k} $, we have:</p>
+<p><span class="math display">\[
+\mathbf{Y}_0^{(m)} \in \mathbb{R}^{T \times N_0} \quad \text{and} \quad \mathbf{y}_1^{(m)} \in \mathbb{R}^{T}
+\]</span></p>
+<p>where $ _0^{(m)} $ is the donor matrix for outcome $ m $, and $ _1^{(m)} $ is the outcome vector for the treated unit for the $ m $-th outcome. Similarly, for the pre-treatment and post-treatment periods, we define:</p>
+<p><span class="math display">\[
+\mathbf{Y}_0^{(m), \text{pre}} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{(m), \text{post}} \in \mathbb{R}^{T_1 \times N_0}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\mathbf{y}_1^{(m), \text{pre}} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{(m), \text{post}} \in \mathbb{R}^{T_1}
+\]</span></p>
 
 
 
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
@@ -399,24 +468,14 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744588800000" data-listing-file-modified-sort="1744480113147" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="583">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744480161540" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./scmo.html" class="no-external">Synthetic Control Methods With Multiple Outcomes</a>
+<a href="./index.html" class="no-external">Posts</a>
 </h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
 </div>
 <div class="metadata">
-<a href="./scmo.html" class="no-external">
-<div class="listing-date">
-Apr 14, 2025
-</div>
+<a href="./index.html" class="no-external">
 <div class="listing-author">
 Jared Greathouse
 </div>

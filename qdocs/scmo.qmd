@@ -6,27 +6,7 @@ categories: [Causal Inference, Econometrics]
 
 Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict...
 
-### Notation
-
-Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $\mathbf{C}_T \in \mathbb{R}^{T \times T}$ represent the centering matrix, defined as:
-
-$$
-\mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
-$$
-
-where $\mathbf{I}_T$ is the identity matrix of size $T$, and $\mathbf{1}_T \in \mathbb{R}^T$ is the vector of ones of length $T$. For any vector $\mathbf{x} \in \mathbb{R}^T$, the demeaned version is:
-
-$$
-\widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
-$$
-
-For any pair of vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}$, we define the Hadamard (elementwise) product as:
-
-$$
-(\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad \forall j \in \mathcal{N}_0
-$$
-
-When multiplying a matrix $\mathbf{A} \in \mathbb{R}^{T \times N_0}$ by a vector $\mathbf{b} \in \mathbb{R}^{N_0}$, the result is a new vector in $\mathbb{R}^T$, formed as a linear combination of the columns of $\mathbf{A}$:
+Let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. When multiplying a matrix $\mathbf{A} \in \mathbb{R}^{T \times N_0}$ by a vector $\mathbf{b} \in \mathbb{R}^{N_0}$, the result is a new vector in $\mathbb{R}^T$, formed as a linear combination of the columns of $\mathbf{A}$:
 
 $$
 \mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
@@ -58,7 +38,11 @@ $$
 \mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
 $$
 
-### Multiple Outcomes Notation
+We aim to find weights $\mathbf{w} \in \mathbb{R}^{N_0}$, subject to the constraint that the weights sum to 1. The weights are constrained as follows:
+
+$$
+\mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} \quad \text{and} \quad \|\mathbf{w}\|_1 = 1.
+$$
 
 For the case of multiple outcomes, let $k$ denote the number of outcomes being used. For each outcome $m \in \{1, 2, \dots, k\}$, we have:
 
@@ -78,12 +62,17 @@ $$
 \mathbf{y}_1^{(m), \text{pre}} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{(m), \text{post}} \in \mathbb{R}^{T_1}
 $$
 
-Here are our objective functions (I use an intercept practically, but I'm just showing what's going on under the hood)
+In the multiple outcomes case, we solve the following objective function across all outcomes jointly:
 
 $$
-\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix} \right\|^2 \quad \text{vs.} \quad \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \widetilde{\mathbf{Y}}_0^{(1)} \\ \widetilde{\mathbf{Y}}_0^{(2)} \\ \vdots \\ \widetilde{\mathbf{Y}}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \widetilde{\mathbf{y}}_1^{(1)} \\ \widetilde{\mathbf{y}}_1^{(2)} \\ \vdots \\ \widetilde{\mathbf{y}}_1^{(k)} \end{bmatrix} \right\|^2.
+\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix} \right\|^2
 $$
 
+In the case where we demean the data, we similarly minimize the following:
+
+$$
+\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \widetilde{\mathbf{Y}}_0^{(1)} \\ \widetilde{\mathbf{Y}}_0^{(2)} \\ \vdots \\ \widetilde{\mathbf{Y}}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \widetilde{\mathbf{y}}_1^{(1)} \\ \widetilde{\mathbf{y}}_1^{(2)} \\ \vdots \\ \widetilde{\mathbf{y}}_1^{(k)} \end{bmatrix} \right\|^2
+$$
 
 # Estimation in Python
 

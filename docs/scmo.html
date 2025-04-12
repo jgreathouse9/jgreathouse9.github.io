@@ -217,33 +217,33 @@ window.Quarto = {
 <p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict…</p>
 <section id="notation" class="level3">
 <h3 class="anchored" data-anchor-id="notation">Notation</h3>
-<p>Let $ $ denote the set of real numbers. A calligraphic letter, such as $ $, represents a discrete set with cardinality $ S = || $. Let $ _T ^{T T} $ represent the centering matrix, defined as:</p>
+<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(\mathbf{C}_T \in \mathbb{R}^{T \times T}\)</span> represent the centering matrix, defined as:</p>
 <p><span class="math display">\[
 \mathbf{C}_T \coloneqq \mathbf{I}_T - \frac{1}{T} \mathbf{1}_T \mathbf{1}_T^\top
 \]</span></p>
-<p>where $ _T $ is the identity matrix of size $ T $, and $ _T ^T $ is the vector of ones of length $ T $. For any vector $ ^T $, the demeaned version is:</p>
+<p>where <span class="math inline">\(\mathbf{I}_T\)</span> is the identity matrix of size <span class="math inline">\(T\)</span>, and <span class="math inline">\(\mathbf{1}_T \in \mathbb{R}^T\)</span> is the vector of ones of length <span class="math inline">\(T\)</span>. For any vector <span class="math inline">\(\mathbf{x} \in \mathbb{R}^T\)</span>, the demeaned version is:</p>
 <p><span class="math display">\[
 \widetilde{\mathbf{x}} \coloneqq \mathbf{C}_T \mathbf{x}
 \]</span></p>
-<p>For any pair of vectors $ , ^{N_0} $, we define the Hadamard (elementwise) product as:</p>
+<p>For any pair of vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^{N_0}\)</span>, we define the Hadamard (elementwise) product as:</p>
 <p><span class="math display">\[
 (\mathbf{a} \odot \mathbf{b})_j \coloneqq a_j b_j \quad \forall j \in \mathcal{N}_0
 \]</span></p>
-<p>When multiplying a matrix $ ^{T N_0} $ by a vector $ ^{N_0} $, the result is a new vector in $ ^T $, formed as a linear combination of the columns of $ $:</p>
+<p>When multiplying a matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{T \times N_0}\)</span> by a vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>, the result is a new vector in <span class="math inline">\(\mathbb{R}^T\)</span>, formed as a linear combination of the columns of <span class="math inline">\(\mathbf{A}\)</span>:</p>
 <p><span class="math display">\[
 \mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
 \]</span></p>
-<p>Here, each entry in the resulting vector is a dot product between a row of $ $ and the vector $ $.</p>
-<p>Let $ j $ represent indices for a total of $ N $ units and $ t $ index time. Let $ j = 1 $ denote the treated unit, with the set of controls being $ _0 = {1} $, with cardinality $ N_0 $. The pre-treatment period consists of the set $ _1 = { t : t T_0 } $, where $ T_0 $ is the final period before treatment. Similarly, the post-treatment period is given by $ _2 = { t : t &gt; T_0 } $.</p>
-<p>The observed outcome for unit $ j $ at time $ t $ is $ y_{jt} $, where a generic outcome vector for a given unit in the dataset is:</p>
+<p>Here, each entry in the resulting vector is a dot product between a row of <span class="math inline">\(\mathbf{A}\)</span> and the vector <span class="math inline">\(\mathbf{b}\)</span>.</p>
+<p>Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> denote the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>.</p>
+<p>The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is:</p>
 <p><span class="math display">\[
 \mathbf{y}_j \in \mathbb{R}^T, \quad \mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^T
 \]</span></p>
-<p>The outcome vector for the treated unit specifically is $ _1 $. The donor matrix is defined as:</p>
+<p>The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix is defined as:</p>
 <p><span class="math display">\[
 \mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}
 \]</span></p>
-<p>where each column indexes a donor unit and each row corresponds to a time period. We denote by $ _j^{} ^{T_0} $ the subvector of outcomes for unit $ j $ in the pre-treatment period, and by $ _j^{} ^{T_1} $ the corresponding post-treatment vector, where $ T_1 = T - T_0 $. Then, we define our pre- and post-intervention analogs for the data:</p>
+<p>where each column indexes a donor unit and each row corresponds to a time period. We denote by <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> the subvector of outcomes for unit <span class="math inline">\(j\)</span> in the pre-treatment period, and by <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T_1}\)</span> the corresponding post-treatment vector, where <span class="math inline">\(T_1 = T - T_0\)</span>. Then, we define our pre- and post-intervention analogs for the data:</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{pre}} = (y_{1t})_{t \in \mathcal{T}_1} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{\text{post}} = (y_{1t})_{t \in \mathcal{T}_2} \in \mathbb{R}^{T_1}
 \]</span></p>
@@ -253,11 +253,11 @@ window.Quarto = {
 </section>
 <section id="multiple-outcomes-notation" class="level3">
 <h3 class="anchored" data-anchor-id="multiple-outcomes-notation">Multiple Outcomes Notation</h3>
-<p>For the case of multiple outcomes, let $ k $ denote the number of outcomes being used. For each outcome $ m {1, 2, , k} $, we have:</p>
+<p>For the case of multiple outcomes, let <span class="math inline">\(k\)</span> denote the number of outcomes being used. For each outcome <span class="math inline">\(m \in \{1, 2, \dots, k\}\)</span>, we have:</p>
 <p><span class="math display">\[
 \mathbf{Y}_0^{(m)} \in \mathbb{R}^{T \times N_0} \quad \text{and} \quad \mathbf{y}_1^{(m)} \in \mathbb{R}^{T}
 \]</span></p>
-<p>where $ _0^{(m)} $ is the donor matrix for outcome $ m $, and $ _1^{(m)} $ is the outcome vector for the treated unit for the $ m $-th outcome. Similarly, for the pre-treatment and post-treatment periods, we define:</p>
+<p>where <span class="math inline">\(\mathbf{Y}_0^{(m)}\)</span> is the donor matrix for outcome <span class="math inline">\(m\)</span>, and <span class="math inline">\(\mathbf{y}_1^{(m)}\)</span> is the outcome vector for the treated unit for the <span class="math inline">\(m\)</span>-th outcome. Similarly, for the pre-treatment and post-treatment periods, we define:</p>
 <p><span class="math display">\[
 \mathbf{Y}_0^{(m), \text{pre}} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{(m), \text{post}} \in \mathbb{R}^{T_1 \times N_0}
 \]</span></p>
@@ -272,7 +272,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744480113145" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744491012722" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -296,7 +296,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744480113142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744491012719" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -320,7 +320,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744480113142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744491012719" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -344,7 +344,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744480113142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744491012719" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -368,7 +368,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744480113142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744491012719" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -394,7 +394,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744480113142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744491012719" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3499">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -420,7 +420,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744480113142" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744491012719" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -444,7 +444,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744480113147" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744491012724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -468,7 +468,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744480161540" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744491056141" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

@@ -235,11 +235,12 @@ window.Quarto = {
 <p><span class="math display">\[
 \mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
 \]</span></p>
-<p>We aim to find weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span>, subject to the constraint that the weights sum to 1. The weights are constrained as follows:</p>
+<p>We aim to find weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> subject to</p>
 <p><span class="math display">\[
-\mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} \quad \text{and} \quad \|\mathbf{w}\|_1 = 1.
+\mathbf{w} \in \mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}
 \]</span></p>
-<p>For the case of multiple outcomes, let <span class="math inline">\(k\)</span> denote the number of outcomes being used. For each outcome <span class="math inline">\(m \in \{1, 2, \dots, k\}\)</span>, we have:</p>
+<p>which minimize the mean squared error between the target vector and pre-intervention fit.</p>
+<p>The exact same notations apply for the case of multiple outcomes. Let <span class="math inline">\(k\)</span> denote the number of outcomes aside from the main one being used. For each outcome <span class="math inline">\(m \in \{1, 2, \dots, k\}\)</span>, we have:</p>
 <p><span class="math display">\[
 \mathbf{Y}_0^{(m)} \in \mathbb{R}^{T \times N_0} \quad \text{and} \quad \mathbf{y}_1^{(m)} \in \mathbb{R}^{T}
 \]</span></p>
@@ -251,17 +252,17 @@ window.Quarto = {
 <p><span class="math display">\[
 \mathbf{y}_1^{(m), \text{pre}} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{(m), \text{post}} \in \mathbb{R}^{T_1}
 \]</span></p>
-<p>In the multiple outcomes case, we solve the following objective function across all outcomes jointly:</p>
+<p>At first, the multiple outcomes setup may seem intimidating. In every application of synthetic control I have worked with, along with most analysts I imagine, we have worked with a single outcome at a time. However, best way to think about it is that we are simply horizontally stacking matrices and vectors atop one another and using the latent factors embedded within each of those outcomes to predict the pre-intervention time series for the main metric we do care about. We solve the following objective function:</p>
 <p><span class="math display">\[
 \underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix} \right\|^2
 \]</span></p>
-<p>In the case where we demean the data, we similarly minimize the following:</p>
+<p>To account for intercept shifts, we similarly minimize the following:</p>
 <p><span class="math display">\[
-\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \widetilde{\mathbf{Y}}_0^{(1)} \\ \widetilde{\mathbf{Y}}_0^{(2)} \\ \vdots \\ \widetilde{\mathbf{Y}}_0^{(k)} \end{bmatrix} \mathbf{w} - \begin{bmatrix} \widetilde{\mathbf{y}}_1^{(1)} \\ \widetilde{\mathbf{y}}_1^{(2)} \\ \vdots \\ \widetilde{\mathbf{y}}_1^{(k)} \end{bmatrix} \right\|^2
+\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix} \mathbf{w} - \boldsymbol{\beta} \mathbf{1}_T - \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix} \right\|^2
 \]</span></p>
 <section id="estimation-in-python" class="level1">
 <h1>Estimation in Python</h1>
-<div id="d2e18e96" class="cell" data-execution_count="1">
+<div id="a0e776ac" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -277,7 +278,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744500108559" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744500945495" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -301,7 +302,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744500108556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744500945492" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -325,7 +326,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744500108557" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744500945493" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -349,7 +350,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744500108556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744500945492" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -373,7 +374,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744500108557" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744500945492" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -399,7 +400,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744500108556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744500945492" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -425,7 +426,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744500108557" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744500945492" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -449,7 +450,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744500108562" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744500945498" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -473,7 +474,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744500151067" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744500990669" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

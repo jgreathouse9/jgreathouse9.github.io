@@ -109,23 +109,25 @@ In this case, $\boldsymbol{\beta}$ represents a vector of intercepts, and $\math
 #| fig-align: center
 #| echo: false
 
-from mlsynth.mlsynth import SCMO, FSCM, TSSC
+from mlsynth.mlsynth import SCMO, FSCM, FDID
 import numpy as np
 import pandas as pd
 
 def simulate(
-    seed=2001,
+    seed=1677,
     n_units=100,
     n_periods=156,
     n_factors=15,
     rho=0.85,
-    sigma=1.05,
+    sigma=.2,
     treated_unit=-19,
     treatment_period=104,
     treatment_effect=15,
-    seasonal_strength=0.15  # Weak seasonal common factor
+    seasonal_strength=0.6
 ):
     np.random.seed(seed)
+
+    # 1. Setup
 
     cities = [
         "São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
@@ -149,40 +151,61 @@ def simulate(
         "Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
     ][:n_units]
 
+    # 2. Generate latent factors (AR(1) + seasonality)
     common_factors = np.zeros((n_periods, n_factors))
     common_factors[0] = np.random.normal(0, 1, n_factors)
     for t in range(1, n_periods):
         common_factors[t] = rho * common_factors[t - 1] + np.random.normal(0, 1, n_factors)
 
-    # Weak seasonal common factor added to the common_factors matrix
     weeks = np.arange(n_periods)
-    seasonal = seasonal_strength * np.sin(4 * np.pi * weeks / 52)  # Weak seasonal component
-    common_factors += seasonal[:, None]  # Broadcasting seasonal factor to all common factors
+    seasonal = seasonal_strength * np.sin(4 * np.pi * weeks / 52)
+    common_factors += seasonal[:, None]
 
     factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
-    errors = np.random.normal(0, sigma, (n_periods, n_units))
 
-    bookingvalue = np.zeros((n_periods, n_units))
-    for i in range(n_units):
-        bookingvalue[:, i] = (
-            common_factors @ factor_loadings[i] + errors[:, i] + np.random.uniform(100, 250)
-        )
+    # 3. Generate covariates first
+    temperature = seasonal[:, None] + np.random.normal(40, 1.5, (n_periods, n_units))
+    temperature = np.clip(temperature, 10, 45)  # realistic bounds
 
-    bookingvalue[treatment_period:, treated_unit] += treatment_effect
-
-    temperature = np.tile(seasonal[:, None], (1, n_units)) + np.random.normal(20, 3, (n_periods, n_units))
-    arrivals = 0.09 * (bookingvalue // 1.5) + np.random.normal(10, 3, (n_periods, n_units))
-    search_volume = 0.02 * bookingvalue + np.random.normal(0, 3, (n_periods, n_units))
+    search_volume = .75 * (temperature - 10) + np.random.normal(0, 1.5, (n_periods, n_units))
     search_volume = np.clip(search_volume, 0, None)
+
+    arrivals = 5 + .6 * (search_volume) + np.random.normal(0, 2, (n_periods, n_units))
 
     exchange = np.zeros((n_periods, n_units))
     initial_rates = np.random.uniform(2, 6, size=n_units)
     for i in range(n_units):
         exchange[:, i] = initial_rates[i] + np.cumsum(np.random.normal(0, 0.02, n_periods))
 
-    raw_employment = 10 + 0.01 * bookingvalue + np.random.normal(0, 0.7, (n_periods, n_units))
+    raw_employment = 10 + 0.1 * (temperature - 20) + np.random.normal(0, 0.8, (n_periods, n_units))
     employment = np.clip(raw_employment, 3, 15)
 
+    # 4. Coefficients for covariates (unit-specific, with realistic signs)
+    beta_temp = np.random.normal(0.8, 0.2, n_units)
+    beta_arrivals = np.random.normal(0.4, 0.1, n_units)
+    beta_search = np.random.normal(0.3, 0.1, n_units)
+    beta_exchange = np.random.normal(-0.2, 0.05, n_units)  # weaker currency = more bookings
+    beta_employment = np.random.normal(0.1, 0.05, n_units)
+
+    # 5. Generate booking value using latent + observed + random offset + noise
+    bookingvalue = np.zeros((n_periods, n_units))
+    for i in range(n_units):
+        latent_component = common_factors @ factor_loadings[i]
+        covariate_component = (
+            beta_temp[i] * temperature[:, i] +
+            beta_arrivals[i] * arrivals[:, i] +
+            beta_search[i] * search_volume[:, i] +
+            beta_exchange[i] * exchange[:, i] +
+            beta_employment[i] * employment[:, i]
+        )
+        offset = np.random.uniform(100, 250)
+        noise = np.random.normal(0, sigma, n_periods)
+        bookingvalue[:, i] = latent_component + covariate_component + offset + noise
+
+    # 6. Treatment effect
+    bookingvalue[treatment_period:, treated_unit] += treatment_effect
+
+    # 7. Pack into DataFrame
     time = np.repeat(np.arange(1, n_periods + 1), n_units)
     markets = np.tile(cities, n_periods)
 
@@ -201,7 +224,7 @@ def simulate(
     return df
 
 # Simulate with weak seasonal factor
-df = simulate(treated_unit=54, treatment_effect=10, n_factors=5)  ## 44 Cozumel
+df = simulate(treated_unit=33, treatment_effect=20, n_factors=6)
 
 
 config = {
@@ -212,9 +235,10 @@ config = {
     "time": df.columns[1],
     "display_graphs": True,
     "save": False,
-    "counterfactual_color": ["red"], "addout": list(df.columns[4:]),
-"method": "sbmf", "objective": "OLS", "cluster": True}
+    "counterfactual_color": ["red", "blue"], "addout": list(df.columns[4:]),
+"method": "tlp"}
 
-arco = SCMO(config).fit()
+arco = FSCM(config).fit()
+
 
 ```

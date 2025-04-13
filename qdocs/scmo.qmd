@@ -4,7 +4,7 @@ date: 2025-04-14
 categories: [Causal Inference, Econometrics]
 ---
 
-Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target variable. There are [recent](https://doi.org/10.48550/arXiv.2311.16260) [papers](https://doi.org/10.48550/arXiv.2304.02272) that have advocated for this in applied settings.
+Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target/outcome variable that we care about. However, most people who use synthetic controls use only a single outcome in their analyses. Recent papers by econometricians have extended the standard model to incorporating multiple outcomes into the objective function, and a few recent [recent](https://doi.org/10.48550/arXiv.2311.16260) [papers](https://doi.org/10.48550/arXiv.2304.02272) have advocated for this in applied settings. This blog demonstrates this apporach for ```mlsynth```.
 
 # Notation
 
@@ -87,12 +87,10 @@ $$
 where $\mathbf{Y}_0'$ is the stacked matrix of donor unit outcomes across all outcomes, and $\mathbf{y}_1'$ is the stacked vector of treated unit outcomes across all outcomes. More specifically:
 
 $$
-\mathbf{Y}_0' = \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix}
-$$
-
-$$
+\mathbf{Y}_0' = \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix}, \quad
 \mathbf{y}_1' = \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix}
 $$
+
 
 To account for intercept shifts, we similarly minimize the following:
 
@@ -109,12 +107,12 @@ In this case, $\boldsymbol{\beta}$ represents a vector of intercepts, and $\math
 #| fig-align: center
 #| echo: false
 
-from mlsynth.mlsynth import SCMO, FSCM, FDID
+from mlsynth.mlsynth import SCMO, FSCM, FDID, TSSC
 import numpy as np
 import pandas as pd
 
 def simulate(
-    seed=1677,
+    seed=1879,
     n_units=100,
     n_periods=156,
     n_factors=15,
@@ -224,7 +222,7 @@ def simulate(
     return df
 
 # Simulate with weak seasonal factor
-df = simulate(treated_unit=33, treatment_effect=20, n_factors=6)
+df = simulate(treated_unit=33, treatment_effect=20, n_factors=6, treatment_period=130)
 
 
 config = {
@@ -236,9 +234,10 @@ config = {
     "display_graphs": True,
     "save": False,
     "counterfactual_color": ["red", "blue"], "addout": list(df.columns[4:]),
-"method": "tlp"}
+"method": "TLP"}
 
-arco = FSCM(config).fit()
+arco = FDID(config).fit()
+
 
 
 ```

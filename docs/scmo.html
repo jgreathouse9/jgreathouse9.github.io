@@ -171,10 +171,9 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a>
-  <ul class="collapse">
-  <li><a href="#model-averaging" id="toc-model-averaging" class="nav-link" data-scroll-target="#model-averaging">Model Averaging</a></li>
-  </ul></li>
+  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#standard-synthetic-control" id="toc-standard-synthetic-control" class="nav-link" data-scroll-target="#standard-synthetic-control">Standard Synthetic Control</a></li>
+  <li><a href="#stacked-scm-with-multiple-outcomes" id="toc-stacked-scm-with-multiple-outcomes" class="nav-link" data-scroll-target="#stacked-scm-with-multiple-outcomes">Stacked SCM with Multiple Outcomes</a></li>
   <li><a href="#estimation-in-python" id="toc-estimation-in-python" class="nav-link" data-scroll-target="#estimation-in-python">Estimation in Python</a></li>
   </ul>
 </nav>
@@ -218,89 +217,87 @@ window.Quarto = {
 
 
 <p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target/outcome variable that we care about. However, most people who use synthetic controls use only a single outcome in their analyses. Recent papers by econometricians have extended the standard model to incorporating multiple outcomes into the objective function, and a few recent <a href="https://doi.org/10.48550/arXiv.2311.16260">recent</a> <a href="https://doi.org/10.48550/arXiv.2304.02272">papers</a> have advocated for this in applied settings. This blog demonstrates this apporach for <code>mlsynth</code>.</p>
-<section id="notation" class="level1">
-<h1>Notation</h1>
-<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. When multiplying a matrix <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{T \times N_0}\)</span> by a vector <span class="math inline">\(\mathbf{b} \in \mathbb{R}^{N_0}\)</span>, the result is a new vector in <span class="math inline">\(\mathbb{R}^T\)</span>, formed as a linear combination of the columns of <span class="math inline">\(\mathbf{A}\)</span>:</p>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<p>We adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as <span class="math inline">\(g\)</span>, vectors are denoted by bold lowercase letters such as <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>, and matrices are denoted by bold uppercase letters such as <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters, such as <span class="math inline">\(\mathcal{N}\)</span> or <span class="math inline">\(\mathcal{T}\)</span>, and the cardinality of a finite set <span class="math inline">\(\mathcal{A}\)</span> is written <span class="math inline">\(|\mathcal{A}|\)</span>. The dot product between vectors <span class="math inline">\(\mathbf{a}, \mathbf{b} \in \mathbb{R}^T\)</span> is written as <span class="math inline">\(\langle \mathbf{a}, \mathbf{b} \rangle = \sum_{t=1}^T a_t b_t\)</span>, and the squared Euclidean norm is <span class="math inline">\(\| \mathbf{a} \|^2 = \langle \mathbf{a}, \mathbf{a} \rangle\)</span>. For a matrix <span class="math inline">\(\mathbf{A}\)</span>, we write <span class="math inline">\(\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2\)</span> for the squared Frobenius norm and <span class="math inline">\(\| \mathbf{A} \|_2\)</span> for its spectral norm. For any <span class="math inline">\(n \in \mathbb{N}\)</span>, we define the <span class="math inline">\(n\)</span>-dimensional probability simplex by</p>
 <p><span class="math display">\[
-\mathbf{A} \mathbf{b} = \sum_{j \in \mathcal{N}_0} b_j \mathbf{A}_{:,j} \in \mathbb{R}^T
+\Delta^{n} = \left\{ \mathbf{w} \in \mathbb{R}^{n+1} \mid w_i \geq 0 \text{ for all } i, \sum_{i=1}^{n+1} w_i = 1 \right\}.
 \]</span></p>
-<p>Here, each entry in the resulting vector is a dot product between a row of <span class="math inline">\(\mathbf{A}\)</span> and the vector <span class="math inline">\(\mathbf{b}\)</span>.</p>
-<p>Let <span class="math inline">\(j \in \mathbb{N}\)</span> represent indices for a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Let <span class="math inline">\(j = 1\)</span> denote the treated unit, with the set of controls being <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, with cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period consists of the set <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the final period before treatment. Similarly, the post-treatment period is given by <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>.</p>
-<p>The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, where a generic outcome vector for a given unit in the dataset is:</p>
+<p>Matrix multiplication is written in the usual way; when dimensions are compatible, products like <span class="math inline">\(\mathbf{A}^\top \mathbf{b}\)</span>, <span class="math inline">\(\mathbf{A} \mathbf{B}\)</span>, or <span class="math inline">\(\mathbf{b}^\top \mathbf{c}\)</span> denote standard matrix-vector or matrix-matrix products. Elementwise operations (e.g., <span class="math inline">\(\mathbf{a} \odot \mathbf{b}\)</span>) are avoided unless explicitly defined.</p>
+<p>Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units in the panel, with unit <span class="math inline">\(1\)</span> denoting the treated unit and <span class="math inline">\(\mathcal{N}_0 = \{2, 3, \dots, N\}\)</span> denoting the set of control units. We write <span class="math inline">\(N_0 = |\mathcal{N}_0| = N - 1\)</span> for its cardinality. Let <span class="math inline">\(\mathcal{T} \subset \mathbb{N}\)</span> be a finite set of time periods with <span class="math inline">\(|\mathcal{T}| = T\)</span>. Let <span class="math inline">\(T_0 &lt; T\)</span> denote the final pre-treatment period, and define <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span> and <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span> as the pre-treatment and post-treatment periods, respectively.</p>
+<p>Let <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span> denote the time series for outcome zero (our main outcome of interest) for unit <span class="math inline">\(j \in \mathcal{N}\)</span>. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks these vectors for all control units <span class="math inline">\(j \in \mathcal{N}_0\)</span>. We write <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{1,1} &amp; \cdots &amp; y_{1,T} \end{bmatrix}^\top\)</span> for the treated unit’s outcome vector. We partition each <span class="math inline">\(\mathbf{y}_j\)</span> into a pre-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{|\mathcal{T}_1|}\)</span> and post-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{|\mathcal{T}_2|}\)</span>, and likewise for <span class="math inline">\(\mathbf{Y}_0\)</span>, defining <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{|\mathcal{T}_1| \times N_0}\)</span> and <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{|\mathcal{T}_2| \times N_0}\)</span>.</p>
+<p>Let <span class="math inline">\(K\)</span> denote the number of auxiliary outcomes (excluding the main one). For each outcome <span class="math inline">\(\ell \in \{1, 2, \dots, K\}\)</span>, let <span class="math inline">\(\mathbf{y}_j^{(\ell)} \in \mathbb{R}^T\)</span> denote the <span class="math inline">\(\ell\)</span>-th outcome vector for unit <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{(\ell)} \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix collecting the <span class="math inline">\(\ell\)</span>-th outcome across all controls. These are also split into pre- and post-treatment periods in the usual way.</p>
+<p>We define the “stacking” operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let <span class="math inline">\(\mathbf{Y}_0' \in \mathbb{R}^{K |\mathcal{T}_1| \times N_0}\)</span> denote the vertically stacked matrix:</p>
 <p><span class="math display">\[
-\mathbf{y}_j \in \mathbb{R}^T, \quad \mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^T
+\mathbf{Y}_0' = \begin{bmatrix}
+\mathbf{Y}_0^{(1), \text{pre}} \\
+\mathbf{Y}_0^{(2), \text{pre}} \\
+\vdots \\
+\mathbf{Y}_0^{(K), \text{pre}}
+\end{bmatrix},
+\quad
+\mathbf{y}_1' = \begin{bmatrix}
+\mathbf{y}_1^{(1), \text{pre}} \\
+\mathbf{y}_1^{(2), \text{pre}} \\
+\vdots \\
+\mathbf{y}_1^{(K), \text{pre}}
+\end{bmatrix}.
 \]</span></p>
-<p>The outcome vector for the treated unit specifically is <span class="math inline">\(\mathbf{y}_1\)</span>. The donor matrix is defined as:</p>
-<p><span class="math display">\[
-\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}
-\]</span></p>
-<p>where each column indexes a donor unit and each row corresponds to a time period. We denote by <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> the subvector of outcomes for unit <span class="math inline">\(j\)</span> in the pre-treatment period, and by <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T_1}\)</span> the corresponding post-treatment vector, where <span class="math inline">\(T_1 = T - T_0\)</span>. Then, we define our pre- and post-intervention analogs for the data:</p>
-<p><span class="math display">\[
-\mathbf{y}_1^{\text{pre}} = (y_{1t})_{t \in \mathcal{T}_1} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{\text{post}} = (y_{1t})_{t \in \mathcal{T}_2} \in \mathbb{R}^{T_1}
-\]</span></p>
-<p><span class="math display">\[
-\mathbf{Y}_0^{\text{pre}} = \left[ \mathbf{y}_j^{\text{pre}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{\text{post}} = \left[ \mathbf{y}_j^{\text{post}} \right]_{j \in \mathcal{N}_0} \in \mathbb{R}^{T_1 \times N_0}
-\]</span></p>
-<p>We aim to find weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> subject to</p>
-<p><span class="math display">\[
-\mathbf{w} \in \mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0} : \|\mathbf{w}\|_1 = 1 \right\}
-\]</span></p>
-<p>which minimize the mean squared error between the target vector and pre-intervention fit.</p>
-<p>The exact same notations apply for the case of multiple outcomes. Let <span class="math inline">\(k\)</span> denote the number of outcomes aside from the main one being used. For each outcome <span class="math inline">\(m \in \{1, 2, \dots, k\}\)</span>, we have:</p>
-<p><span class="math display">\[
-\mathbf{Y}_0^{(m)} \in \mathbb{R}^{T \times N_0} \quad \text{and} \quad \mathbf{y}_1^{(m)} \in \mathbb{R}^{T}
-\]</span></p>
-<p>where <span class="math inline">\(\mathbf{Y}_0^{(m)}\)</span> is the donor matrix for outcome <span class="math inline">\(m\)</span>, and <span class="math inline">\(\mathbf{y}_1^{(m)}\)</span> is the outcome vector for the treated unit for the <span class="math inline">\(m\)</span>-th outcome. Similarly, for the pre-treatment and post-treatment periods, we define:</p>
-<p><span class="math display">\[
-\mathbf{Y}_0^{(m), \text{pre}} \in \mathbb{R}^{T_0 \times N_0}, \quad \mathbf{Y}_0^{(m), \text{post}} \in \mathbb{R}^{T_1 \times N_0}
-\]</span></p>
-<p>and</p>
-<p><span class="math display">\[
-\mathbf{y}_1^{(m), \text{pre}} \in \mathbb{R}^{T_0}, \quad \mathbf{y}_1^{(m), \text{post}} \in \mathbb{R}^{T_1}
-\]</span></p>
-<p>At first, the multiple outcomes setup may seem intimidating. In every application of synthetic control I have worked with, along with most analysts I imagine, we have worked with a single outcome at a time. However, best way to think about it is that we are simply horizontally stacking matrices and vectors atop one another and using the latent factors embedded within each of those outcomes to predict the pre-intervention time series for the main metric we do care about. I define the “stacking” operation, denoted by the prime notation, as the concatenation of matrices or vectors along their rows. Specifically, the stacked version of a matrix is given by:</p>
-<p><span class="math display">\[
-\mathbf{A}' = \begin{bmatrix} \mathbf{A}_1 \\ \mathbf{A}_2 \\ \vdots \\ \mathbf{A}_k \end{bmatrix}
-\]</span> where <span class="math inline">\(\mathbf{A}_i\)</span> are matrices or vectors to be stacked, and the resulting matrix <span class="math inline">\(\mathbf{A}'\)</span> has rows corresponding to each of the matrices being stacked. Similarly, for vectors we have</p>
-<p><span class="math display">\[
-\mathbf{v}' = \begin{bmatrix} \mathbf{v}_1 \\ \mathbf{v}_2 \\ \vdots \\ \mathbf{v}_k \end{bmatrix}
-\]</span> where each <span class="math inline">\(\mathbf{v}_i\)</span> is a vector to be stacked, and the resulting vector <span class="math inline">\(\mathbf{v}'\)</span> is formed by stacking these vectors.</p>
-<p>We solve the following objective function for the stacked synthetic control:</p>
-<p><span class="math display">\[
-\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{Y}_0' \mathbf{w} - \mathbf{y}_1' \right\|^2
-\]</span></p>
-<p>where <span class="math inline">\(\mathbf{Y}_0'\)</span> is the stacked matrix of donor unit outcomes across all outcomes, and <span class="math inline">\(\mathbf{y}_1'\)</span> is the stacked vector of treated unit outcomes across all outcomes. More specifically:</p>
-<p><span class="math display">\[
-\mathbf{Y}_0' = \begin{bmatrix} \mathbf{Y}_0^{(1)} \\ \mathbf{Y}_0^{(2)} \\ \vdots \\ \mathbf{Y}_0^{(k)} \end{bmatrix}, \quad
-\mathbf{y}_1' = \begin{bmatrix} \mathbf{y}_1^{(1)} \\ \mathbf{y}_1^{(2)} \\ \vdots \\ \mathbf{y}_1^{(k)} \end{bmatrix}
-\]</span></p>
-<p>To account for intercept shifts, we similarly minimize the following:</p>
-<p><span class="math display">\[
-\underset{\mathbf{w} \in \mathcal{W}}{\operatorname*{argmin}} \left\| \mathbf{Y}_0' \mathbf{w} - \boldsymbol{\beta} \mathbf{1}_T - \mathbf{y}_1' \right\|^2
-\]</span></p>
-<p>In this case, <span class="math inline">\(\boldsymbol{\beta}\)</span> represents a vector of intercepts, and <span class="math inline">\(\mathbf{1}_T\)</span> is a vector of ones with length <span class="math inline">\(T\)</span>. The term <span class="math inline">\(\mathbf{Y}_0'\)</span> is the stacked matrix of donor outcomes, and <span class="math inline">\(\mathbf{y}_1'\)</span> is the stacked vector of treated unit outcomes, as defined earlier.</p>
-<section id="model-averaging" class="level2">
-<h2 class="anchored" data-anchor-id="model-averaging">Model Averaging</h2>
-<p>Ben Michael and co advocate for a model average between these two, and that is what <code>mlsynth</code> defaults to when both is specified.</p>
-<p>We have the following components:</p>
-<p>Let <span class="math inline">\(\mathbf{W} \in \mathbb{R}^{N_0 \times M}\)</span> be a matrix of stacked weights from the <span class="math inline">\(M\)</span> models. Let <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> denote the pre-treatment outcome vector of the treated unit, where <span class="math inline">\(T_0\)</span> denotes the number of pre-treatment time periods. The donor matrix for the pre-treatment period is <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times N_0}\)</span>. The vector of model weights is <span class="math inline">\(\boldsymbol{\lambda} \in \mathbb{R}^M\)</span>, subject to the simplex constraint:</p>
-<p><span class="math display">\[
-\boldsymbol{\lambda} \in \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0}^M : \|\boldsymbol{\lambda}\|_1 = 1 \right\}
-\]</span></p>
-<p>The model-averaged weights are given by:</p>
-<p><span class="math display">\[
-\mathbf{w}_{\text{MA}} = \mathbf{W} \boldsymbol{\lambda}
-\]</span></p>
-<p>The objective function to minimize is:</p>
-<p><span class="math display">\[
-\min_{\boldsymbol{\lambda} \in \Delta^{M-1}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0 \cdot \mathbf{W} \boldsymbol{\lambda} \right\|_2
-\]</span></p>
-<p>Boop.</p>
+<p>This stacking procedure will allow us to define synthetic control weights that balance auxiliary outcomes as well as the main outcome.</p>
 </section>
+<section id="standard-synthetic-control" class="level2">
+<h2 class="anchored" data-anchor-id="standard-synthetic-control">Standard Synthetic Control</h2>
+<p>Before introducing our new estimator, we begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator selects weights <span class="math inline">\(\mathbf{w} \in \Delta^{N_0}\)</span> to minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_2^2.
+\]</span></p>
+<p>This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that <span class="math inline">\(\mathbf{w}\)</span> lies in the simplex <span class="math inline">\(\Delta^{N_0}\)</span>. That is, the synthetic control estimator builds a linear approximation to <span class="math inline">\(\mathbf{y}_1^{\text{pre}}\)</span> using a weighted average of the control outcomes, where the weights are non-negative and sum to one. This corresponds to restricting attention to points in the convex hull of the control units.</p>
+<p>Once the optimal weights <span class="math inline">\(\mathbf{w}^\ast\)</span> are selected, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:</p>
+<p><span class="math display">\[
+\hat{\mathbf{y}}_1^{\text{post}} = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast.
+\]</span></p>
+<p>The estimated treatment effect at each post-treatment time point is then given by the difference between observed and counterfactual outcomes: <span class="math inline">\(\hat{\tau}_{1,t} = y_{1,t} - \hat{y}_{1,t}\)</span> for <span class="math inline">\(t \in \mathcal{T}_2\)</span>.</p>
+</section>
+<section id="stacked-scm-with-multiple-outcomes" class="level2">
+<h2 class="anchored" data-anchor-id="stacked-scm-with-multiple-outcomes">Stacked SCM with Multiple Outcomes</h2>
+<p>When multiple outcomes are present, we have two primary approaches to adapt the SCM. The first approach is to concatenate the outcomes for each unit (including the treated unit and the control units) into a single stacked matrix. This method treats all the outcomes as if they are part of a single vector and optimizes the weights accordingly. The stacking procedure is expressed as:</p>
+<p><span class="math display">\[
+\mathbf{Y}_0' = \begin{bmatrix}
+\mathbf{Y}_0^{(1), \text{pre}} \\
+\mathbf{Y}_0^{(2), \text{pre}} \\
+\vdots \\
+\mathbf{Y}_0^{(K), \text{pre}}
+\end{bmatrix},
+\quad
+\mathbf{y}_1' = \begin{bmatrix}
+\mathbf{y}_1^{(1), \text{pre}} \\
+\mathbf{y}_1^{(2), \text{pre}} \\
+\vdots \\
+\mathbf{y}_1^{(K), \text{pre}}
+\end{bmatrix}.
+\]</span></p>
+<p>In this approach, we essentially treat the set of outcomes as a concatenated vector and apply the standard SCM optimization problem to the stacked data. The objective function for this optimization is:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1' - \mathbf{Y}_0' \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\]</span></p>
+<p>Here, the vector (_1’) is the stacked pre-treatment outcomes of the treated unit, and (_0’) is the stacked matrix of control outcomes. The weights (^*) are found such that the counterfactual outcomes for the treated unit (in the pre-treatment period) are as close as possible to the weighted combination of the control outcomes. The counterfactual prediction for the treated unit during the post-treatment period is then computed as:</p>
+<p><span class="math display">\[
+\mathbf{y}_1^{\text{counterfactual}} = \mathbf{Y}_0' \mathbf{w}^*.
+\]</span></p>
+<p>The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes manually, we add an intercept (a constant term) to the optimization, which effectively adjusts for any systematic shifts in the data. This approach ensures that the model captures any baseline differences between the outcomes.</p>
+<p>The objective function in this case is:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \beta \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\]</span></p>
+<p>Here, () represents the intercept term, which accounts for baseline shifts between the treated and control units. The weights (^*) are determined by solving this optimization, which adjusts the outcomes for the intercept term while finding the best fit for the counterfactual prediction. The counterfactual for the treated unit is then computed as:</p>
+<p><span class="math display">\[
+\mathbf{y}_1^{\text{counterfactual}} = \mathbf{Y}_0 \mathbf{w}^* + \beta.
+\]</span></p>
+<p>This extension of the SCM can be understood as solving multiple systems of equations simultaneously. By including auxiliary outcomes such as local hotel prices, tourist arrivals, or any other relevant metrics, we allow the model to capture the factors that contribute to the outcome of interest—such as Gross Booking Revenue (GBV). These auxiliary outcomes provide additional information about the latent factors that influence the main outcome, thereby improving the match of the synthetic control. In essence, by solving for the weights <span class="math inline">\(\mathbf{w}^\ast\)</span> that best fit the pre-treatment data, we are not just matching the treated unit on the outcome of interest (GBV), but we are also matching on the auxiliary factors that influence the outcome. This process ensures that the synthetic control reflects the underlying dynamics of the treated unit in a more nuanced way, leading to a better counterfactual prediction. The optimization framework effectively allows us to match on both the main outcome and the auxiliary factors, capturing the factor loadings that generate the observed data. Thus, stacking the outcomes or including an intercept term aligns the model with the idea that multiple systems of equations, representing different outcomes or contributing factors, must be solved simultaneously. This yields a more accurate synthetic control by aligning the underlying factor loadings of both the treatment and control units.</p>
 </section>
 <section id="estimation-in-python" class="level1">
 <h1>Estimation in Python</h1>
-<div id="1d98c287" class="cell" data-execution_count="1">
+<div id="11540762" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -316,7 +313,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744646421282" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744650776250" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -340,7 +337,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744646421279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744650776247" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -364,7 +361,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744646421280" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744650776248" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -388,7 +385,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744646421279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744650776248" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -412,7 +409,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744646421279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744650776248" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -438,7 +435,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744646421279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744650776247" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -464,7 +461,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744646421279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744650776248" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -488,7 +485,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744646421285" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744650776253" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -512,7 +509,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744646471389" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744650818366" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

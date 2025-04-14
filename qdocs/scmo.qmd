@@ -4,11 +4,13 @@ date: 2025-04-15
 categories: [Causal Inference, Econometrics]
 ---
 
-Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target/outcome variable that we care about. However, most people who use synthetic controls use only a single outcome in their analyses. Recent papers by econometricians have extended the standard model to incorporating multiple outcomes into the objective function, and a few recent [recent](https://doi.org/10.48550/arXiv.2311.16260) [papers](https://doi.org/10.48550/arXiv.2304.02272) have advocated for this in applied settings. This blog demonstrates this approach for ```mlsynth```.
+Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target/outcome variable that we care about, and [plenty](https://doi.org/10.1016/j.ecosta.2017.08.002) of other papers have commented on this fact before.
+
+However as it turns out, most people who use synthetic controls use only a single outcome in their analyses; perhaps they will adjust their unit weighted by some diagonal matrix, $V$ in most applications, to assist in choosing the unit weights, but this is limited by the number of pretreatment periods you have (if you have more covariates than you have pretreatment periods, you cannot estimate the regression). Recent papers by econometricians have tried to get around this, though. In particular, this blog post covers a few recent [recent](https://doi.org/10.48550/arXiv.2311.16260) [papers](https://doi.org/10.48550/arXiv.2304.02272) which have advocated for this in applied settings. Of course, I use the ```SCMO``` class of ```mlsynth``` to show how this may be used in simulated and applied settings.
 
 ## Notation
 
-We adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as $g$, vectors are denoted by bold lowercase letters such as $\mathbf{v} \in \mathbb{R}^n$, and matrices are denoted by bold uppercase letters such as $\mathbf{A} \in \mathbb{R}^{m \times n}$. Sets are denoted by calligraphic letters, such as $\mathcal{N}$ or $\mathcal{T}$, and the cardinality of a finite set $\mathcal{A}$ is written $|\mathcal{A}|$. The dot product between vectors $\mathbf{a}, \mathbf{b} \in \mathbb{R}^T$ is written as $\langle \mathbf{a}, \mathbf{b} \rangle = \sum_{t=1}^T a_t b_t$, and the squared Euclidean norm is $\| \mathbf{a} \|^2 = \langle \mathbf{a}, \mathbf{a} \rangle$. For a matrix $\mathbf{A}$, we write $\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2$ for the squared Frobenius norm and $\| \mathbf{A} \|_2$ for its spectral norm. For any $n \in \mathbb{N}$, we define the $n$-dimensional probability simplex by
+I adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as $g$, vectors are denoted by bold lowercase letters such as $\mathbf{v} \in \mathbb{R}^n$, and matrices are denoted by bold uppercase letters such as $\mathbf{A} \in \mathbb{R}^{m \times n}$. Sets are denoted by calligraphic letters, such as $\mathcal{N}$ or $\mathcal{T}$, and the cardinality of a finite set $\mathcal{A}$ is written $|\mathcal{A}|$. For a matrix $\mathbf{A}$, we write $\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2$ for the squared Frobenius norm and $\| \mathbf{A} \|_2$ for its spectral norm. For any $n \in \mathbb{N}$, we define the $n$-dimensional probability simplex by
 
 $$
 \Delta^{n} = \left\{ \mathbf{w} \in \mathbb{R}^{n+1} \mid w_i \geq 0 \text{ for all } i, \sum_{i=1}^{n+1} w_i = 1 \right\}.
@@ -47,7 +49,7 @@ This is simply stacking the pre-intervention period metrics atop one another. If
 Before introducing the stacked estimator however, I begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator selects weights $\mathbf{w} \in \Delta^{N_0}$ to minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls:
 
 $$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_2^2.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2.
 $$
 
 This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. That is, the synthetic control estimator builds a linear approximation to $\mathbf{y}_1^{\text{pre}}$ using a weighted average of the control outcomes, where the weights are non-negative and sum to one. This corresponds to restricting attention to points in the convex hull of the control units. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:
@@ -60,42 +62,22 @@ The estimated treatment effect at each post-treatment time point is then given b
 
 ## Stacked SCM with Multiple Outcomes
 
-When multiple outcomes are present, we have two primary approaches to adapt the SCM. The first approach is to concatenate the outcomes for each unit (including the treated unit and the control units) into a single stacked matrix. This method treats all the outcomes as if they are part of a single vector and optimizes the weights accordingly. The stacking procedure is expressed as:
+When multiple outcomes are present, there are three choices we can make: do we use the concatenated approachh a demeaning approach, or do we combine them as a model average? The first approach stacks all the outcomes as we've discussed above into a big matrix/big vector. We then apply the standard SCM optimization problem to the stacked data. The objective function for this optimization is:
 
 $$
-\mathbf{Y}_0' = \begin{bmatrix}
-\mathbf{Y}_0^{(1), \text{pre}} \\
-\mathbf{Y}_0^{(2), \text{pre}} \\
-\vdots \\
-\mathbf{Y}_0^{(K), \text{pre}}
-\end{bmatrix},
-\quad
-\mathbf{y}_1' = \begin{bmatrix}
-\mathbf{y}_1^{(1), \text{pre}} \\
-\mathbf{y}_1^{(2), \text{pre}} \\
-\vdots \\
-\mathbf{y}_1^{(K), \text{pre}}
-\end{bmatrix}.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-In this approach, we essentially treat the set of outcomes as a concatenated vector and apply the standard SCM optimization problem to the stacked data. The objective function for this optimization is:
-
-$$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
-$$
-
-Here, the vector $\mathbf{y}_1^{\prime}$ is the stacked pre-treatment outcomes of the treated unit, and $\mathbf{Y}_0^{\prime}$ is the stacked matrix of control outcomes. The weights $\mathbf{w}^\ast$ are found such that the counterfactual outcomes for the treated unit (in the pre-treatment period) are as close as possible to the weighted combination of the control outcomes. The counterfactual prediction for the treated unit during the post-treatment period is then computed as:
+Here, the vector $\mathbf{y}_1^{\prime}$ is the stacked pre-treatment outcomes of the treated unit, including at least the main target unit and at least one other outcome. Similarly, and $\mathbf{Y}_0^{\prime}$ is the stacked matrix of control outcomes. The weights $\mathbf{w}^\ast$ are found such that the counterfactual outcomes for the treated unit (in the pre-treatment period) are as close as possible to the weighted combination of the control outcomes- all of them. The counterfactual prediction for the treated unit during the post-treatment period is then computed as:
 
 $$
 \mathbf{y}_1^{\text{cat}} = \mathbf{Y}_0 \mathbf{w}^\ast.
 $$
 
-The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes manually, we add an intercept (a constant term) to the optimization, which effectively adjusts for any systematic shifts in the data. This approach ensures that the model captures any baseline differences between the outcomes.
-
-The objective function in this case is:
+The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes ourselves, we add an intercept to the optimization, which effectively adjusts for any systematic shifts in the data (the estimator from Sun, Ben-Michael, and Feller's paper I cited above). This approach captures baseline trends between the outcomes, should they exist in the outcomes of interest. The objective function in this case is:
 
 $$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} - \beta \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} - \beta \|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
 Here, $\beta$ represents the intercept term, which accounts for baseline shifts between the treated and control units. The weights $\mathbf{w}^\ast$ are determined by solving this optimization, which adjusts the outcomes for the intercept term while finding the best fit for the counterfactual prediction. The counterfactual for the treated unit is then computed as:
@@ -104,7 +86,11 @@ $$
 \mathbf{y}_1^{\text{avg}} = \mathbf{Y}_0 \mathbf{w}^\ast + \beta.
 $$
 
-This extension of the SCM can be understood as solving multiple systems of equations simultaneously. By including auxiliary outcomes such as local hotel prices, tourist arrivals, or any other relevant metrics, we allow the model to capture the factors that contribute to the outcome of interest—such as Gross Booking Revenue (GBV). These auxiliary outcomes provide additional information about the latent factors that influence the main outcome, thereby improving the match of the synthetic control. In essence, by solving for the weights $\mathbf{w}^\ast$ that best fit the pre-treatment data, we are not just matching the treated unit on the outcome of interest (GBV), but we are also matching on the auxiliary factors that influence the outcome. This process ensures that the synthetic control reflects the underlying dynamics of the treated unit in a more nuanced way, leading to a better counterfactual prediction. The optimization framework effectively allows us to match on both the main outcome and the auxiliary factors, capturing the factor loadings that generate the observed data. Thus, stacking the outcomes or including an intercept term aligns the model with the idea that multiple systems of equations, representing different outcomes or contributing factors, must be solved simultaneously. This yields a more accurate synthetic control by aligning the underlying factor loadings of both the treatment and control units.
+When I first read about this apporach, I was confused as to what was going on, until I considered them as the solution to a system of multiple equations. To have a better sense of what's going on, we typically consider our outcomes in data science or econoemtrics to be generated by some process that we never see. A common assumption is that they are generated by a [low-rank model](https://jmlr.org/papers/volume19/17-777/17-777.pdf), which essentially formulates our outcomes as a byproduct of the interaction between unit specific fixed effects that are idiosyncratic to each unit (that are not expected to change over time) and time effects that are common across all units of interest. Well, more than one outcome exists in the world that may plausibly have a similar factor structure to the metric that we do care about.
+
+Suppose we are Airbnb, and we wish to see the causal effect of the introduction of [Airbnb Experiences](https://news.airbnb.com/airbnb-partners-with-art-basel-miami-beach/) on [Gross Booking Value](https://www.lodgify.com/encyclopedia/gross-booking-revenue/) (GBV), a metric which is defined as ''the total revenue generated by room or property rentals before any costs or expenses are subtracted''. Well, in theory, Airbnb Expereinces may make the use of the Airbnb more attractive to tourists, since now tourists no longer need use Viator or other booking services to find stuff to do locally. In other words, it makes it an attraction to that city specifically, and we may see an increase in GBV as a result. Well, all sorts of things may be related to this metric, such as local hotel prices, preexisting level of tourist arrivals, temperature, and other relevant metrics.
+
+When we include these in our SCM, we now allow the model to better capture the latent factors that influence the main outcome, thereby improving the match of the synthetic control. The optimization framework effectively allows us to match on both the main outcome and the auxiliary factors, capturing the factor loadings that generate the observed data. Thus, stacking the outcomes together or including an intercept term aligns the model with the idea that multiple systems of equations, representing different outcomes or contributing factors, can provide a better counterfactual prediction than simply using one outcome.
 
 
 

@@ -107,25 +107,88 @@ In this case, $\boldsymbol{\beta}$ represents a vector of intercepts, and $\math
 #| fig-align: center
 #| echo: false
 
-from mlsynth.mlsynth import SCMO, FSCM, FDID, TSSC
 import numpy as np
 import pandas as pd
 
+from mlsynth.mlsynth import SCMO
+
 def simulate(
-    seed=1879,
-    n_units=100,
-    n_periods=156,
-    n_factors=15,
-    rho=0.85,
-    sigma=.2,
-    treated_unit=-19,
-    treatment_period=104,
-    treatment_effect=15,
-    seasonal_strength=0.6
+    N=99, T0=52*3, T1=52, K=4, r=3, sigma=.20,
+    max_gamma=.5, T_season=12, seed=34305
 ):
     np.random.seed(seed)
+    T = T0 + T1
 
-    # 1. Setup
+    # Latent factors
+    phi = np.random.normal(0, 1, size=(N, r))           # Market-specific latent factors
+    mu = np.random.normal(0, 1, size=(T, K, r))          # Time-and-outcome-specific latent factors
+
+    # Fixed effects
+    alpha = np.random.normal(0, 1, size=(N, K))          # Market fixed effects
+    beta = np.random.normal(0, 1, size=(T, K))           # Time fixed effects
+
+    # Market-specific seasonal parameters
+    gamma_i = np.random.uniform(0, max_gamma, size=N)    # amplitude of seasonal effect
+    tau_i = np.random.randint(0, T_season, size=N)       # phase shift (peak week)
+
+    # Construct seasonal matrix S (N x T): market-time-specific seasonality
+    t_grid = np.arange(T)
+    S = np.array([
+        gamma_i[i] * np.cos(4 * np.pi * (t_grid - tau_i[i]) / T_season)
+        for i in range(N)
+    ])
+
+    # Initialize outcome matrix
+    Y = np.zeros((N, T, K))
+
+    # Define baseline offsets for each outcome with random integers between 200 and 500
+    baseline_shift = [np.random.randint(200, 500) for _ in range(K)]  # Random base values for each outcome
+
+    # Autocorrelation coefficients for each outcome
+    rho = np.array([0.8, 0.6, 0.5, 0.3])  # AR(1) coefficients for each outcome
+
+    # Generate outcomes with autocorrelation
+    for k in range(K):
+        latent = phi @ mu[:, k, :].T  # N x T
+        base = (
+            alpha[:, [k]] +         # N x 1
+            beta[:, k] +            # T,
+            latent +                # N x T
+            S +                     # N x T
+            baseline_shift[k]       # scalar
+        )
+        noise = np.random.normal(0, sigma, size=(N, T))
+
+        # First time point initialization
+        Y[:, 0, k] = base[:, 0] + noise[:, 0]
+
+        # AR(1) recursion
+        for t in range(1, T):
+            Y[:, t, k] = (
+                rho[k] * Y[:, t-1, k] +
+                (1 - rho[k]) * base[:, t] +
+                noise[:, t]
+            )
+
+    # Identify treated market: second-highest on phi[:, 0]
+    treated_unit = np.argsort(phi[:, 0])[-2]
+
+    # Vectorized treatment assignment (N x T)
+    time = np.arange(T)
+    post_treatment = (time >= T0)
+    treat = np.zeros((N, T), dtype=int)
+    treat[treated_unit, post_treatment] = 1
+
+    # Inject treatment effect into Gross Booking Value for treated market
+    Y[treated_unit, post_treatment, 0] += 5  # add treatment effect of +5
+
+    # Construct the dataframe without loops
+    markets = np.arange(N)[:, None]           # shape (N, 1)
+    weeks = np.arange(T)[None, :]             # shape (1, T)
+
+    market_grid = np.repeat(markets, T, axis=1).flatten()  # shape (N*T,)
+    week_grid = np.tile(weeks, (N, 1)).flatten()           # shape (N*T,)
+
 
     cities = [
         "São Paulo", "Mexico City", "San Carlos de Bariloche", "Rio de Janeiro", "Ushuaia",
@@ -142,99 +205,48 @@ def simulate(
         "La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
         "Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
         "San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
-        "Iquique", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
-        "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Vallarta", "Chiclayo", "Ambato",
+        "Cartagena", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
+        "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Escondido", "Chiclayo", "Ambato",
         "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
         "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
-        "Cartagena", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
-    ][:n_units]
+        "Iquique", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
+    ]
 
-    # 2. Generate latent factors (AR(1) + seasonality)
-    common_factors = np.zeros((n_periods, n_factors))
-    common_factors[0] = np.random.normal(0, 1, n_factors)
-    for t in range(1, n_periods):
-        common_factors[t] = rho * common_factors[t - 1] + np.random.normal(0, 1, n_factors)
+    city_mapping = {i: cities[i] for i in range(N)}
 
-    weeks = np.arange(n_periods)
-    seasonal = seasonal_strength * np.sin(4 * np.pi * weeks / 52)
-    common_factors += seasonal[:, None]
+    data = {
+        'Market': [city_mapping[market] for market in market_grid],
+        'Week': week_grid,
+        'Experiences': treat.flatten()
+    }
 
-    factor_loadings = np.random.normal(0, 1, (n_units, n_factors))
+    for k in range(K):
+        if k == 0:
+            data['Gross Booking Value'] = Y[:, :, k].flatten()
+        elif k == 1:
+            data['Average Booking Price'] = Y[:, :, k].flatten()
+        elif k == 2:
+            data['Average Daily Visitors'] = Y[:, :, k].flatten()
+        elif k == 3:
+            data['Average Cost of Hotel Rooms'] = Y[:, :, k].flatten()
 
-    # 3. Generate covariates first
-    temperature = seasonal[:, None] + np.random.normal(40, 1.5, (n_periods, n_units))
-    temperature = np.clip(temperature, 10, 45)  # realistic bounds
+    return pd.DataFrame(data)
 
-    search_volume = .75 * (temperature - 10) + np.random.normal(0, 1.5, (n_periods, n_units))
-    search_volume = np.clip(search_volume, 0, None)
-
-    arrivals = 5 + .6 * (search_volume) + np.random.normal(0, 2, (n_periods, n_units))
-
-    exchange = np.zeros((n_periods, n_units))
-    initial_rates = np.random.uniform(2, 6, size=n_units)
-    for i in range(n_units):
-        exchange[:, i] = initial_rates[i] + np.cumsum(np.random.normal(0, 0.02, n_periods))
-
-    raw_employment = 10 + 0.1 * (temperature - 20) + np.random.normal(0, 0.8, (n_periods, n_units))
-    employment = np.clip(raw_employment, 3, 15)
-
-    # 4. Coefficients for covariates (unit-specific, with realistic signs)
-    beta_temp = np.random.normal(0.8, 0.2, n_units)
-    beta_arrivals = np.random.normal(0.4, 0.1, n_units)
-    beta_search = np.random.normal(0.3, 0.1, n_units)
-    beta_exchange = np.random.normal(-0.2, 0.05, n_units)  # weaker currency = more bookings
-    beta_employment = np.random.normal(0.1, 0.05, n_units)
-
-    # 5. Generate booking value using latent + observed + random offset + noise
-    bookingvalue = np.zeros((n_periods, n_units))
-    for i in range(n_units):
-        latent_component = common_factors @ factor_loadings[i]
-        covariate_component = (
-            beta_temp[i] * temperature[:, i] +
-            beta_arrivals[i] * arrivals[:, i] +
-            beta_search[i] * search_volume[:, i] +
-            beta_exchange[i] * exchange[:, i] +
-            beta_employment[i] * employment[:, i]
-        )
-        offset = np.random.uniform(100, 250)
-        noise = np.random.normal(0, sigma, n_periods)
-        bookingvalue[:, i] = latent_component + covariate_component + offset + noise
-
-    # 6. Treatment effect
-    bookingvalue[treatment_period:, treated_unit] += treatment_effect
-
-    # 7. Pack into DataFrame
-    time = np.repeat(np.arange(1, n_periods + 1), n_units)
-    markets = np.tile(cities, n_periods)
-
-    df = pd.DataFrame({
-        "Market": markets,
-        "Time": time,
-        "Gross Booking Value": bookingvalue.flatten(),
-        "Experiences": np.where((markets == cities[treated_unit]) & (time >= treatment_period), 1, 0),
-        "Temperature": temperature.flatten(),
-        "Airport Arrivals (000s)": arrivals.flatten(),
-        "Search Volume": search_volume.flatten(),
-        "Exchange Rate (USD)": exchange.flatten(),
-        "Hospitality Employment (%)": employment.flatten()
-    }).sort_values(["Market", "Time"]).reset_index(drop=True)
-
-    return df
-
-# Simulate with weak seasonal factor
-df = simulate(treated_unit=33, treatment_effect=20, n_factors=6, treatment_period=130)
+# Run simulation
+df = simulate()
 
 
 config = {
     "df": df,
-    "outcome": df.columns[2],
-    "treat": df.columns[3],
-    "unitid": df.columns[0],
-    "time": df.columns[1],
+    "outcome": 'Gross Booking Value',  # Update to the renamed KPI
+    "treat": 'Experiences',
+    "unitid": 'Market',
+    "time": 'Week',
     "display_graphs": True,
     "save": False,
     "counterfactual_color": ["red", "blue"], "addout": list(df.columns[4:]),
-"method": "TLP"}
+    "method": "both"
+}
 
 arco = SCMO(config).fit()
 

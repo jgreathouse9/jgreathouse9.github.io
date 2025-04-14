@@ -22,17 +22,17 @@ Let $\mathbf{y}_j \in \mathbb{R}^T$ denote the time series for outcome zero (our
 
 Let $K$ denote the number of auxiliary outcomes (excluding the main one). For each outcome $\ell \in \{1, 2, \dots, K\}$, let $\mathbf{y}_j^{(\ell)} \in \mathbb{R}^T$ denote the $\ell$-th outcome vector for unit $j$, and let $\mathbf{Y}_0^{(\ell)} \in \mathbb{R}^{T \times N_0}$ denote the matrix collecting the $\ell$-th outcome across all controls. These are also split into pre- and post-treatment periods in the usual way.
 
-We define the "stacking" operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let $\mathbf{Y}_0' \in \mathbb{R}^{K |\mathcal{T}_1| \times N_0}$ denote the vertically stacked matrix:
+We define the "stacking" operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let $\mathbf{Y}_0^{\prime} \in \mathbb{R}^{K |\mathcal{T}_1| \times N_0}$ denote the vertically stacked matrix (and vector):
 
 $$
-\mathbf{Y}_0' = \begin{bmatrix}
+\mathbf{Y}_0^{\prime} = \begin{bmatrix}
 \mathbf{Y}_0^{(1), \text{pre}} \\
 \mathbf{Y}_0^{(2), \text{pre}} \\
 \vdots \\
 \mathbf{Y}_0^{(K), \text{pre}}
 \end{bmatrix},
 \quad
-\mathbf{y}_1' = \begin{bmatrix}
+\mathbf{y}_1^{\prime} = \begin{bmatrix}
 \mathbf{y}_1^{(1), \text{pre}} \\
 \mathbf{y}_1^{(2), \text{pre}} \\
 \vdots \\
@@ -40,25 +40,23 @@ $$
 \end{bmatrix}.
 $$
 
-This stacking procedure will allow us to define synthetic control weights that balance auxiliary outcomes as well as the main outcome.
+This is simply stacking the pre-intervention period metrics atop one another. If we have two metrics and 19 pretreatment periods, we have a vector of 38 metrics across those two outcomes. This is done both for the matrices too: if we have 10 donors, 19 pretreatment periods, and two metrics (the main outcome and another one) we now have 10 columns and 38 rows for all the metrics across those same 19 pre-treatment periods.
 
 ## Standard Synthetic Control
 
-Before introducing our new estimator, we begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator selects weights $\mathbf{w} \in \Delta^{N_0}$ to minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls:
+Before introducing the stacked estimator however, I begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator selects weights $\mathbf{w} \in \Delta^{N_0}$ to minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls:
 
 $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_2^2.
 $$
 
-This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. That is, the synthetic control estimator builds a linear approximation to $\mathbf{y}_1^{\text{pre}}$ using a weighted average of the control outcomes, where the weights are non-negative and sum to one. This corresponds to restricting attention to points in the convex hull of the control units.
-
-Once the optimal weights $\mathbf{w}^\ast$ are selected, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:
+This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. That is, the synthetic control estimator builds a linear approximation to $\mathbf{y}_1^{\text{pre}}$ using a weighted average of the control outcomes, where the weights are non-negative and sum to one. This corresponds to restricting attention to points in the convex hull of the control units. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:
 
 $$
-\hat{\mathbf{y}}_1^{\text{post}} = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast.
+\hat{\mathbf{y}}_1^{\text{SC}} = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast.
 $$
 
-The estimated treatment effect at each post-treatment time point is then given by the difference between observed and counterfactual outcomes: $\hat{\tau}_{1,t} = y_{1,t} - \hat{y}_{1,t}$ for $t \in \mathcal{T}_2$.
+The estimated treatment effect at each post-treatment time point is then given by the difference between observed and counterfactual outcomes: $\hat{\tau}_{1,t} = y_{1,t} - \hat{y}_{1,t}$ for $t \in \mathcal{T}_2$. Of course, the method is predicated on good preatment fit, where the predictions in the pre-treatment period should ideally have a low root mean squared error with respect to the treatment unit's observed values.
 
 ## Stacked SCM with Multiple Outcomes
 
@@ -83,13 +81,13 @@ $$
 In this approach, we essentially treat the set of outcomes as a concatenated vector and apply the standard SCM optimization problem to the stacked data. The objective function for this optimization is:
 
 $$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1' - \mathbf{Y}_0' \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-Here, the vector \(\mathbf{y}_1'\) is the stacked pre-treatment outcomes of the treated unit, and \(\mathbf{Y}_0'\) is the stacked matrix of control outcomes. The weights \(\mathbf{w}^*\) are found such that the counterfactual outcomes for the treated unit (in the pre-treatment period) are as close as possible to the weighted combination of the control outcomes. The counterfactual prediction for the treated unit during the post-treatment period is then computed as:
+Here, the vector $\mathbf{y}_1^{\prime}$ is the stacked pre-treatment outcomes of the treated unit, and $\mathbf{Y}_0^{\prime}$ is the stacked matrix of control outcomes. The weights $\mathbf{w}^\ast$ are found such that the counterfactual outcomes for the treated unit (in the pre-treatment period) are as close as possible to the weighted combination of the control outcomes. The counterfactual prediction for the treated unit during the post-treatment period is then computed as:
 
 $$
-\mathbf{y}_1^{\text{counterfactual}} = \mathbf{Y}_0' \mathbf{w}^*.
+\mathbf{y}_1^{\text{cat}} = \mathbf{Y}_0 \mathbf{w}^\ast.
 $$
 
 The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes manually, we add an intercept (a constant term) to the optimization, which effectively adjusts for any systematic shifts in the data. This approach ensures that the model captures any baseline differences between the outcomes.
@@ -97,13 +95,13 @@ The second approach involves including an intercept term for each outcome to con
 The objective function in this case is:
 
 $$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \beta \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} - \beta \|_2^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-Here, \(\beta\) represents the intercept term, which accounts for baseline shifts between the treated and control units. The weights \(\mathbf{w}^*\) are determined by solving this optimization, which adjusts the outcomes for the intercept term while finding the best fit for the counterfactual prediction. The counterfactual for the treated unit is then computed as:
+Here, $\beta$ represents the intercept term, which accounts for baseline shifts between the treated and control units. The weights $\mathbf{w}^\ast$ are determined by solving this optimization, which adjusts the outcomes for the intercept term while finding the best fit for the counterfactual prediction. The counterfactual for the treated unit is then computed as:
 
 $$
-\mathbf{y}_1^{\text{counterfactual}} = \mathbf{Y}_0 \mathbf{w}^* + \beta.
+\mathbf{y}_1^{\text{avg}} = \mathbf{Y}_0 \mathbf{w}^\ast + \beta.
 $$
 
 This extension of the SCM can be understood as solving multiple systems of equations simultaneously. By including auxiliary outcomes such as local hotel prices, tourist arrivals, or any other relevant metrics, we allow the model to capture the factors that contribute to the outcome of interest—such as Gross Booking Revenue (GBV). These auxiliary outcomes provide additional information about the latent factors that influence the main outcome, thereby improving the match of the synthetic control. In essence, by solving for the weights $\mathbf{w}^\ast$ that best fit the pre-treatment data, we are not just matching the treated unit on the outcome of interest (GBV), but we are also matching on the auxiliary factors that influence the outcome. This process ensures that the synthetic control reflects the underlying dynamics of the treated unit in a more nuanced way, leading to a better counterfactual prediction. The optimization framework effectively allows us to match on both the main outcome and the auxiliary factors, capturing the factor loadings that generate the observed data. Thus, stacking the outcomes or including an intercept term aligns the model with the idea that multiple systems of equations, representing different outcomes or contributing factors, must be solved simultaneously. This yields a more accurate synthetic control by aligning the underlying factor loadings of both the treatment and control units.

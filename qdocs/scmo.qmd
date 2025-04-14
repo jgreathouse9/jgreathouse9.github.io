@@ -100,6 +100,32 @@ $$
 
 In this case, $\boldsymbol{\beta}$ represents a vector of intercepts, and $\mathbf{1}_T$ is a vector of ones with length $T$. The term $\mathbf{Y}_0'$ is the stacked matrix of donor outcomes, and $\mathbf{y}_1'$ is the stacked vector of treated unit outcomes, as defined earlier.
 
+## Model Averaging
+
+Ben Michael and co advocate for a model average between these two, and that is what ```mlsynth``` defaults to when both is specified.
+
+We have the following components:
+
+Let $\mathbf{W} \in \mathbb{R}^{N_0 \times M}$ be a matrix of stacked weights from the $M$ models. Let $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$ denote the pre-treatment outcome vector of the treated unit, where $T_0$ denotes the number of pre-treatment time periods. The donor matrix for the pre-treatment period is $\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times N_0}$. The vector of model weights is $\boldsymbol{\lambda} \in \mathbb{R}^M$, subject to the simplex constraint:
+
+$$
+\boldsymbol{\lambda} \in \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0}^M : \|\boldsymbol{\lambda}\|_1 = 1 \right\}
+$$
+
+The model-averaged weights are given by:
+
+$$
+\mathbf{w}_{\text{MA}} = \mathbf{W} \boldsymbol{\lambda}
+$$
+
+The objective function to minimize is:
+
+$$
+\min_{\boldsymbol{\lambda} \in \Delta^{M-1}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0 \cdot \mathbf{W} \boldsymbol{\lambda} \right\|_2
+$$
+
+Boop.
+
 # Estimation in Python
 
 ```{python}

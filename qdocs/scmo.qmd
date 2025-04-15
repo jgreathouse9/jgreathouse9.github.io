@@ -92,43 +92,54 @@ Suppose we are Airbnb, and we wish to see the causal effect of the introduction 
 
 When we include these in our SCM, we now allow the model to better capture the latent factors that influence the main outcome, thereby improving the match of the synthetic control. The optimization framework effectively allows us to match on both the main outcome and the auxiliary factors, capturing the factor loadings that generate the observed data. Thus, stacking the outcomes together or including an intercept term aligns the model with the idea that multiple systems of equations, representing different outcomes or contributing factors, can provide a better counterfactual prediction than simply using one outcome.
 
-## Model Averaging via Convex Combination of Counterfactuals
+## Model Averaging
 
+Sun, Ben-Michael, and Feller also advocate model averaging in this setting.   Suppose we are given two distinct estimators of the counterfactual outcome for the treated unit. On one hand, we have $\mathbf{y}_1^{\text{CAT}} \in \mathbb{R}^{T_0}$, which denotes the pre-treatment fit from the **concatenated model**, and on the other hand, we have $\mathbf{y}_1^{\text{AVG}} \in \mathbb{R}^{T_0}$, the corresponding fit from the **demeaned model**. As before, we also observe the treated unit’s actual pre-treatment trajectory, $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$. 
 
-Sun, Ben-Michael, and Feller also advocate to model average these together. This is easily implemented as well, arguably even easier than before. Suppose we are given two distinct estimators of the counterfactual outcome for the treated unit. On one hand, we have $\hat{\mathbf{y}}_1^{(1), \text{pre}} \in \mathbb{R}^{T_0}$ which denotes the pre-treatment fit from the concatenated model, and the analogous $\hat{\mathbf{y}}_1^{(2), \text{pre}} \in \mathbb{R}^{T_0}$ which is the same for the demeaned model. As beefore, we have the treated unit’s actual pre-treatment trajectory. With this in mind, let $\hat{\mathbf{Y}}^{\text{pre}} \in \mathbb{R}^{T_0 \times 2}$ denote the matrix stacking the two pre-treatment fits together as columns:
-
-$$
-\hat{\mathbf{Y}}^{\text{pre}} = \begin{bmatrix}
-\hat{\mathbf{y}}_1^{(1), \text{pre}} & \hat{\mathbf{y}}_1^{(2), \text{pre}}
-\end{bmatrix}.
-$$
-
-We then define the model-averaged pre-treatment fit as a convex combination of these two prediction vectors:
+We now stack the two counterfactuals into a single matrix:
 
 $$
-\hat{\mathbf{y}}_1^{\text{MA, pre}}(\boldsymbol{\lambda}) = \hat{\mathbf{Y}}^{\text{pre}} \boldsymbol{\lambda}, \quad \text{where } \boldsymbol{\lambda} \in \Delta^1,
+\mathbf{Y}^{\text{MA}} = \begin{bmatrix}
+\mathbf{y}_1^{\text{CAT}} & \mathbf{y}_1^{\text{AVG}}
+\end{bmatrix} \in \mathbb{R}^{T_0 \times 2}.
 $$
 
-The optimal $\boldsymbol{\lambda}^\ast$ is selected by minimizing the mean squared error between the treated unit’s true pre-treatment outcomes and the model-averaged fit:
+We define the model-averaged pre-treatment fit as a convex combination of the two predictions:
 
 $$
-\boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^1}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \hat{\mathbf{Y}}^{\text{pre}} \boldsymbol{\lambda} \right\|_F^2
+\mathbf{y}_1^{\text{MA}}(\boldsymbol{\lambda}) = \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda},
 $$
 
-where lambda also lives on the simplex 
+where $\boldsymbol{\lambda} \in \Delta^2$ is a **2-dimensional simplex weight vector**:
 
 $$
-\Delta^{2} = \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0} \: \forall \: i, \| \boldsymbol{\lambda} \| = 1 \right\}.
+\Delta^2 = \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0}^2 : \| \boldsymbol{\lambda} \|_1 = 1 \right\}.
 $$
 
-Note that the idea of the convex hull does not go anywhere, and it menas the same thing here as it does in normal SCM: the model averaged predictions cannot be greater than any outcome from any of the counterfactuals, and it cannot be lower than the lowest outcome estimated by either of the counterfactuals, either. Once the optimal $\boldsymbol{\lambda}^\ast$ is found, the post-treatment counterfactual is obtained analogously via:
+The optimal weights $\boldsymbol{\lambda}^\ast$ are chosen to minimize the mean squared error between the treated unit’s actual outcomes and the model-averaged prediction:
 
 $$
-\hat{\mathbf{Y}}^{\text{post}} = \begin{bmatrix}
-\hat{\mathbf{y}}_1^{(1), \text{post}} & \hat{\mathbf{y}}_1^{(2), \text{post}}
+\boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^2}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda} \right\|_F^2.
+$$
+
+The interpretation of the convex hull remains the same as in traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the minimum and maximum of the two individual estimators. That is,
+
+$$
+\mathbf{y}_1^{\text{MA}}(t) \in \left[
+\min\left(\mathbf{y}_1^{\text{CAT}}(t), \mathbf{y}_1^{\text{AVG}}(t)\right),
+\max\left(\mathbf{y}_1^{\text{CAT}}(t), \mathbf{y}_1^{\text{AVG}}(t)\right)
+\right]
+\quad \text{for all } t \in \{1, \dots, T_0\}.
+$$
+
+Once $\boldsymbol{\lambda}^\ast$ is found, the post-treatment counterfactual is computed analogously:
+
+$$
+\mathbf{Y}^{\text{MA, post}} = \begin{bmatrix}
+\mathbf{y}_1^{\text{CAT, post}} & \mathbf{y}_1^{\text{AVG, post}}
 \end{bmatrix},
 \quad
-\hat{\mathbf{y}}_1^{\text{MA, post}} = \hat{\mathbf{Y}}^{\text{post}} \boldsymbol{\lambda}^\ast.
+\mathbf{y}_1^{\text{MA, post}} = \mathbf{Y}^{\text{MA, post}} \boldsymbol{\lambda}^\ast.
 $$
 
 # Estimation in Python

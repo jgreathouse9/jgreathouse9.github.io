@@ -141,11 +141,11 @@ $$
 import numpy as np
 import pandas as pd
 
-from mlsynth.mlsynth import SCMO, CLUSTERSC
+from mlsynth.mlsynth import SCMO
 
 def simulate(
-    N=99, T0=52*3, T1=52, K=4, r=3, sigma=.20,
-    max_gamma=.5, T_season=12, seed=34305
+    N=99, T0=52*3, T1=52, K=4, r=2, sigma=.20,
+    max_gamma=0, T_season=12, seed=2000
 ):
     np.random.seed(seed)
     T = T0 + T1
@@ -230,14 +230,14 @@ def simulate(
         "Foz do Iguaçu", "Maracaibo", "Rosario", "Maracay", "Antofagasta",
         "San Pedro Sula", "San Juan", "Chihuahua", "Cayo District", "Maturín",
         "Buzios", "Puebla", "Mar del Plata", "Arequipa", "Fernando de Noronha", "Guatemala City",
-        "Zacatecas", "Mérida", "Córdoba", "Cozumel", "Trujillo",
+        "Mazatlán", "Mérida", "Córdoba", "Cozumel", "Trujillo",
         "Corozal Town", "Santa Cruz de la Sierra", "San Luis Potosí", "Jalapão", "Potosí",
         "Tucumán", "Neuquén", "La Plata", "Viña del Mar", "Florianópolis", "Lagos de Moreno",
         "La Paz", "Belém", "Venezuela", "Ribeirão Preto", "Valparaíso",
         "Marília", "Campinas", "Vitoria", "Sorocaba", "Santa Fe",
         "San Salvador", "Lima", "Buenos Aires", "Curitiba", "Maceió",
         "Cartagena", "La Ceiba", "Puerto La Cruz", "Olinda", "Monterrey",
-        "Ibagué", "Cúcuta", " Paraty", "Cancún", "Puerto Escondido", "Chiclayo", "Ambato",
+        "Ibagué", "Cúcuta", "Playa Venao", "Cancún", "Puerto Escondido", "Chiclayo", "Ambato",
         "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
         "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
         "Iquique", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
@@ -264,12 +264,10 @@ def simulate(
     return pd.DataFrame(data)
 
 # Run simulation
-df = simulate()
-
-
+df = simulate(seed=156, r=2) # r=2 seed 245 gives us maricelo
 config = {
     "df": df,
-    "outcome": 'Gross Booking Value',
+    "outcome": 'Gross Booking Value',  # Update to the renamed KPI
     "treat": 'Experiences',
     "unitid": 'Market',
     "time": 'Week',
@@ -280,6 +278,7 @@ config = {
 }
 
 arco = SCMO(config).fit()
+print(arco["Lambdas"])
 
 ```
 

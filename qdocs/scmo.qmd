@@ -162,7 +162,7 @@ def simulate(
     T = T0 + T1
 
     # Latent factors
-    phi = np.random.normal(0, 1, size=(N, r))           # Market-specific latent factors
+    phi = np.random.normal(0, 1, size=(N, r))           # Market-specific latent factors (loadings)
     mu = np.random.normal(0, 1, size=(T, K, r))          # Time-and-outcome-specific latent factors
 
     # Fixed effects
@@ -180,22 +180,21 @@ def simulate(
         for i in range(N)
     ])
 
-    # Initialize outcome matrix
+    # Outcome tensor
     Y = np.zeros((N, T, K))
 
-    # Define baseline offsets for each outcome with random integers between 200 and 500
+    # Base shift
     baseline_shift = [np.random.randint(200, 500) for _ in range(K)]  # Random base values for each outcome
 
     # Autocorrelation coefficients for each outcome
-    rho = np.array([0.8, 0.6, 0.5, 0.3])  # AR(1) coefficients for each outcome
+    rho = np.array([0.8, 0.6, 0.5, 0.3])  # AR(1) coefficients for each outcome, can we adjusted if we wish.
 
-    # Generate outcomes with autocorrelation
     for k in range(K):
         latent = phi @ mu[:, k, :].T  # N x T
         base = (
-            alpha[:, [k]] +         # N x 1
+            alpha[:, [k]] +         # N x 1,
             beta[:, k] +            # T,
-            latent +                # N x T
+            latent +                # N x T,
             S +                     # N x T
             baseline_shift[k]       # scalar
         )
@@ -204,7 +203,7 @@ def simulate(
         # First time point initialization
         Y[:, 0, k] = base[:, 0] + noise[:, 0]
 
-        # AR(1) recursion
+        # Autoregressive Factors
         for t in range(1, T):
             Y[:, t, k] = (
                 rho[k] * Y[:, t-1, k] +
@@ -212,17 +211,16 @@ def simulate(
                 noise[:, t]
             )
 
-    # Identify treated market: second-highest on phi[:, 0]
+    # Identify treated market: second-highest factor loading
     treated_unit = np.argsort(phi[:, 0])[-2]
 
-    # Vectorized treatment assignment (N x T)
     time = np.arange(T)
     post_treatment = (time >= T0)
     treat = np.zeros((N, T), dtype=int)
     treat[treated_unit, post_treatment] = 1
 
     # Inject treatment effect into Gross Booking Value for treated market
-    Y[treated_unit, post_treatment, 0] += 5  # add treatment effect of +5
+    Y[treated_unit, post_treatment, 0] += 5  # add treatment effect of +5, but can be whatever we like.
 
     # Construct the dataframe without loops
     markets = np.arange(N)[:, None]           # shape (N, 1)
@@ -251,7 +249,7 @@ def simulate(
         "Ibagué", "Cúcuta", "Playa Venao", "Cancún", "Puerto Escondido", "Chiclayo", "Ambato",
         "Pucallpa", "Santa Marta", "Villavicencio", "Paraná", "Cauca", "San Vicente",
         "Cali", "Tarija", "Manzanillo", "El Alto", "Santiago de Chile", "Cochabamba",
-        "Iquique", "Santo Domingo", "Durango", "Puerto Viejo de Talamanca"
+        "Punta del Este", "Iquique",  "Durango", "Puerto Viejo de Talamanca"
     ]
 
     city_mapping = {i: cities[i] for i in range(N)}
@@ -275,10 +273,10 @@ def simulate(
     return pd.DataFrame(data)
 
 # Run simulation
-df = simulate(seed=156, r=2) # r=2 seed 245 gives us maricelo
+df = simulate(seed=10000, r=3)
 config = {
     "df": df,
-    "outcome": 'Gross Booking Value',  # Update to the renamed KPI
+    "outcome": 'Gross Booking Value',
     "treat": 'Experiences',
     "unitid": 'Market',
     "time": 'Week',
@@ -289,7 +287,6 @@ config = {
 }
 
 arco = SCMO(config).fit()
-print(arco["Lambdas"])
 
 ```
 

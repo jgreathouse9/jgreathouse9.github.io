@@ -138,39 +138,9 @@ $$
 \mathbf{y}_1^{\text{MA, post}} = \mathbf{Y}^{\text{MA, post}} \boldsymbol{\lambda}^\ast.
 $$
 
-Now a final word on infernece. I use conformal prediction intervals to conduct inference here, develoepd in [this paper](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf). Precisely, I use the agnostic approach (yes, I know [other approaches](https://doi.org/10.1080/01621459.2021.1920957) exist; users of ```mlsynth``` will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as
-
-$$
-\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \mathbf{y}}_{1,\text{pre}}^{\text{SC}}.
-$$
-Let 
-$$
-\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2
-$$
-be the unbiased estimator of the residual variance, where 
-$$
-\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t
-$$
-is the mean residual.
-
-We seek prediction intervals for the counterfactual outcomes in the post-treatment period. Let 
-$$
-\mathbf{y}}_{1,\text{pre}}^{\text{SC}} \in \mathbb{R}^{T_1}
-$$
-be the post-treatment synthetic control predictions, where \( T_1 = T - T_0 \). Under the assumption of exchangeability or symmetry in the residuals, we define a symmetric conformal prediction interval around each post-treatment prediction:
-$$
-\epsilon_\alpha = \sqrt{ \frac{ \hat{\sigma}^2 }{ \alpha / 2 } }.
-$$
-
-The lower and upper conformal bounds are then given by
-$$
-\begin{aligned}
-\mathbf{l}_{\text{post}} &= \hat{\mathbf{y}}_{1,\text{post}} - \epsilon_\alpha \mathbf{1}, \\
-\mathbf{u}_{\text{post}} &= \hat{\mathbf{y}}_{1,\text{post}} + \epsilon_\alpha \mathbf{1}.
-\end{aligned}
-$$
-
-This result exploits 
+Now a final word on infernece. I use conformal prediction intervals to conduct inference here, develoepd in [this paper](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf). Precisely, I use the agnostic approach (yes, I know [other approaches](https://doi.org/10.1080/01621459.2021.1920957) exist; users of ```mlsynth``` will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as  
+$\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \hat{\mathbf{y}}_{1,\text{pre}}$.   Let $\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2$ be the unbiased estimator of the residual variance, where $\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t$ is the mean residual. We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period, accounting for uncertainty due to the unobserved post-treatment error term. Let $\hat{\mathbf{y}}_{1,\text{post}} \in \mathbb{R}^{T_1}$ be the post-treatment SC predictions, where $T_1 = T - T_0$. Assuming that the out-of-sample error is conditionally sub-Gaussian (in English, that large errors are unlikely) given the history $\mathscr{H}$, we obtain a valid non-asymptotic prediction interval via the concentration inequality:   $\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}$. The conformal-style prediction intervals are then defined as   $\mathbf{l}_{\text{post}} = \hat{\mathbf{y}}_{1,\text{post}} - \delta_\alpha \mathbf{1}$,   $\mathbf{u}_{\text{post}} = \hat{\mathbf{y}}_{1,\text{post}} + \delta_\alpha \mathbf{1}$. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error.
+ 
 
 # Estimation in Python
 

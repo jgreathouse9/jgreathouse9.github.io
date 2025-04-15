@@ -9,7 +9,7 @@
 <meta name="author" content="Jared Greathouse">
 <meta name="dcterms.date" content="2025-04-16">
 
-<title>Synthetic Control Methods With Multiple Outcomes – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Synthetic Controls With More Than One Outcome – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -219,6 +219,7 @@ window.Quarto = {
   <li><a href="#simulation" id="toc-simulation" class="nav-link" data-scroll-target="#simulation">Simulation</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
   </ul></li>
+  <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(9)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(5)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -227,7 +228,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Synthetic Control Methods With Multiple Outcomes</h1>
+<h1 class="title">Synthetic Controls With More Than One Outcome</h1>
   <div class="quarto-categories">
     <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Econometrics</div>
@@ -260,8 +261,8 @@ window.Quarto = {
 </header>
 
 
-<p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target/outcome variable that we care about, and <a href="https://doi.org/10.1016/j.ecosta.2017.08.002">plenty</a> of other papers have commented on this fact before.</p>
-<p>However as it turns out, most people who use synthetic controls use only a single outcome in their analyses; perhaps they will adjust their unit weighted by some diagonal matrix, <span class="math inline">\(V\)</span> in most applications, to assist in choosing the unit weights, but this is limited by the number of pretreatment periods you have (if you have more covariates than you have pretreatment periods, you cannot estimate the regression). Recent papers by econometricians have tried to get around this, though. In particular, this blog post covers a few recent <a href="https://doi.org/10.48550/arXiv.2311.16260">recent</a> <a href="https://doi.org/10.48550/arXiv.2304.02272">papers</a> which have advocated for this in applied settings. Of course, I use the <code>SCMO</code> class of <code>mlsynth</code> to show how this may be used in simulated and applied settings.</p>
+<p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a target/outcome variable that we care about, and <a href="https://doi.org/10.1016/j.ecosta.2017.08.002">plenty</a> of other papers have commented on this fact before. Some analysts even argue for a <a href="https://proceedings.mlr.press/v238/liu24a/liu24a.pdf">the surrogate approach</a>, where we treat other outcomes or affected units as a kind of instrument for the counterfactual trajcectory of the target unit.</p>
+<p>However, all of this is most uncommon. As it turns out, most people in academia and industry who use synthetic controls use only a single focal outcome in their analyses. Perhaps they will adjust their unit weights by some diagonal matrix, <span class="math inline">\(\mathbf{V}\)</span> in most applications. THe point of this is to assist in choosing the unit weights, but even this is limited by the number of pretreatment periods you have (if you have more covariates than you have pretreatment periods, you cannot estimate the regression). Even so, recent papers by econometricians have tried to get around this, though. In particular, this blog post covers a few recent <a href="https://doi.org/10.48550/arXiv.2311.16260">recent</a> <a href="https://doi.org/10.48550/arXiv.2304.02272">papers</a> which have advocated for this. I explain the econometric method and apply it in a simulated setting.</p>
 <section id="notation" class="level1">
 <h1>Notation</h1>
 <p>I adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as <span class="math inline">\(g\)</span>, vectors are denoted by bold lowercase letters such as <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>, and matrices are denoted by bold uppercase letters such as <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters, such as <span class="math inline">\(\mathcal{N}\)</span> or <span class="math inline">\(\mathcal{T}\)</span>, and the cardinality of a finite set <span class="math inline">\(\mathcal{A}\)</span> is written <span class="math inline">\(|\mathcal{A}|\)</span>. For a matrix <span class="math inline">\(\mathbf{A}\)</span>, we write <span class="math inline">\(\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2\)</span> for the squared Frobenius norm and <span class="math inline">\(\| \mathbf{A} \|_2\)</span> for its spectral norm. For any <span class="math inline">\(n \in \mathbb{N}\)</span>, we define the <span class="math inline">\(n\)</span>-dimensional probability simplex by</p>
@@ -377,6 +378,7 @@ window.Quarto = {
 <h1>Estimation in Python</h1>
 <p>In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version which automatically computes the conformal prediciton.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The format of the dataset is the same as we would expect for any other mlsynth dataset. The class expects: a long form dataset where we have one column for time, another for the unit, another dummy column for treatment, and some columns for the outcomes of interest, The way we import the class for this is by doing <code>from mlsynth.mlsynth import SCMO</code> at the top of one’s Python script.</p>
 <section id="simulation" class="level2">
 <h2 class="anchored" data-anchor-id="simulation">Simulation</h2>
 <p>Suppose we are working at Airbnb, and we wish to see the causal effect of the introduction of <a href="https://news.airbnb.com/airbnb-partners-with-art-basel-miami-beach/">Airbnb Experiences</a> on <a href="https://www.lodgify.com/encyclopedia/gross-booking-revenue/">Gross Booking Value</a> (GBV), a metric which is defined as ‘’the total revenue generated by room or property rentals before any costs or expenses are subtracted’’. Airbnb Experiences connects users of the platform to local tour guides or other local attractions. It serves as a kind of competition to Travelocity, Viator and other booking/ travel services. In other words, this program may make makes this city an attraction, and we may see an increase in GBV as a result.</p>
@@ -399,7 +401,7 @@ window.Quarto = {
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>When we run this estimator, we need to specify one of three estimators: <code>TLP</code>, <code>SBMF</code>, or <code>both</code>, where the abbreviations are obviouslyfor the surnames of the authors. We also need to supply a dictionary entry to <code>mlsynth</code> called <code>addout</code>. This is either a string or a list which lists the additional outcomes we care about in the dataframe. When we run the estimator, we get:</p>
-<div id="4e81e1b9" class="cell" data-execution_count="2">
+<div id="530b9221" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run simulation</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulate(seed<span class="op">=</span><span class="dv">10000</span>, r<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -423,15 +425,21 @@ window.Quarto = {
 </div>
 </div>
 </div>
-
-
-
+<p>Using the model averaging estimator, our pre-treatment Root Mean Squared Error is 0.276. The ATT is 5.046. The weights are also a sparse vector. The model averaged estimator returns Arequipa (0.237), Bogotá (0.232), San Salvador (0.218), Santiago de Chile (0.174), San Luis Potosí (0.081), Montevidio (0.032), and Manzanillo (0.026), as the contributing units or only 7 of the 98 donor units. The optimal mixing between the models is 0.538 for the intercept-shifted estimator and 0.461 for the concatenated method. For DID, the RMSE is 0.878 and the ATT is 5.2, meaning that the intercept adjusted average of all donor units is clearly a biased estimator.</p>
+<p>Compare to Forward DID, this is NOT true: we have an ATT of 5.063 and a pre-intervention RMSE of 0.289, selecting Antofagasta, Bocas del Toro, Punta del Este, San Pedro Sula, and Santiago as the intercept adjusted donor pool (this method uses no additional outcomes, only the GBV metric). When I compare to the clustered PCR method, the positively weighted donors are San Pedro Sula (0.296), Punta del Este (0.255), Santiago (0.199), Antofagasta (0.190), and La Plata (0.060).</p>
 </section>
+</section>
+<section id="caveats" class="level1">
+<h1>Caveats</h1>
+<p>So, a few comments are in order. One, this method is preciated on the selection of the right covariates to use. It would bve cool to have a method to select the relevant ones. Beyond this, the current method works very well, even when we have a short pretreatment period (in the original paper, it even works with 1 pretreatment period for the West Germany case, but unclear how well this generalizes). There are also <a href="https://arxiv.org/pdf/1905.06400">other methods</a> of combining multiple outcomes together, such as the PCR version of this (the multi-dimensional Robust SCM/PCR) which uses a diagonal matrix to weight the most relevant additional outcomes. I will program this in the future, maybe even comparing it to the current method. Anyways, this is the first method in <code>mlsynth</code> which directly incorporates addtional predictors/outcomes that may be similar to the latent factor structure. Please, do email me or comment on the LinkedIn post if you have any questions.</p>
+
+
+
 </section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744744975045" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744750432262" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -455,7 +463,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744744975042" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744750432259" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -479,7 +487,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744744975042" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744750432259" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -503,7 +511,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744744975042" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744750432259" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -527,7 +535,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744744975042" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744750432259" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -553,7 +561,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744744975042" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744750432259" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -579,7 +587,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744744975042" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744750432259" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -603,7 +611,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744744975047" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744750432265" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -627,7 +635,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744745026003" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744750475042" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

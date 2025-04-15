@@ -55,7 +55,7 @@ $$
 This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. That is, the synthetic control estimator builds a linear approximation to $\mathbf{y}_1^{\text{pre}}$ using a weighted average of the control outcomes, where the weights are non-negative and sum to one. This corresponds to restricting attention to points in the convex hull of the control units. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:
 
 $$
-\hat{\mathbf{y}}_1^{\text{SC}} = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast.
+\hat{\mathbf{y}}^{	ext{SC}}_1^{\text{SC}} = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast.
 $$
 
 The estimated treatment effect at each post-treatment time point is then given by the difference between observed and counterfactual outcomes: $\hat{\tau}_{1,t} = y_{1,t} - \hat{y}_{1,t}$ for $t \in \mathcal{T}_2$. Of course, the method is predicated on good preatment fit, where the predictions in the pre-treatment period should ideally have a low root mean squared error with respect to the treatment unit's observed values.
@@ -139,33 +139,35 @@ $$
 $$
 
 Now a final word on infernece. I use conformal prediction intervals to conduct inference here, develoepd in [this paper](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf). Precisely, I use the agnostic approach (yes, I know [other approaches](https://doi.org/10.1080/01621459.2021.1920957) exist; users of ```mlsynth``` will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as  
-$\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \hat{\mathbf{y}}_{1,\text{pre}}$.   Let $\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2$ be the unbiased estimator of the residual variance, where $\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t$ is the mean residual. We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period, accounting for uncertainty due to the unobserved post-treatment error term. Let $\hat{\mathbf{y}}_{1,\text{post}} \in \mathbb{R}^{T_1}$ be the post-treatment SC predictions, where $T_1 = T - T_0$. Assuming that the out-of-sample error is conditionally sub-Gaussian (in English, that large errors are unlikely) given the history $\mathscr{H}$, we obtain a valid non-asymptotic prediction interval via the concentration inequality:   $\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}$. The conformal-style prediction intervals are then defined as   $\mathbf{l}_{\text{post}} = \hat{\mathbf{y}}_{1,\text{post}} - \delta_\alpha \mathbf{1}$,   $\mathbf{u}_{\text{post}} = \hat{\mathbf{y}}_{1,\text{post}} + \delta_\alpha \mathbf{1}$. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error.
+$\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \hat{\mathbf{y}}^{\text{SC}}_{1,\text{pre}}$, or just the pretreatment error betwixt the actual observed values and its counterfactual. Furthermore, let $\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2$ be the unbiased estimator of the residual variance, where $\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t$ is the mean residual.
+
+We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period, accounting for uncertainty due to the unobserved post-treatment error term. Let $\hat{\mathbf{y}}^{\text{SC}}_{1,\text{post}} \in \mathbb{R}^{T_1}$ be the post-treatment SC predictions. Assuming that the out-of-sample error is conditionally sub-Gaussian given the history $\mathscr{H}$  (in English, that large errors are unlikely, given a well-fitting pre-intervention model), we obtain a valid non-asymptotic prediction interval via [concentration](https://arxiv.org/pdf/1910.02884) inequalities: $\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}$. The conformal-style prediction intervals are then defined as $\mathbf{l}_{\text{post}} = \hat{\mathbf{y}}^{\text{SC}}_{1,\text{post}} - \delta_\alpha \mathbf{1}$,   $\mathbf{u}_{\text{post}} = \hat{\mathbf{y}}^{\text{SC}}_{1,\text{post}} + \delta_\alpha \mathbf{1}$. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error. In the paper, the authors also provide two more methods, and these will liekly be incorporated in the future.
  
 
 # Estimation in Python
 
 ## Simulation
 
-To begin, I conduct a simple synthetic study. Suppose we are working at Airbnb, and we wish to see the causal effect of the introduction of [Airbnb Experiences](https://news.airbnb.com/airbnb-partners-with-art-basel-miami-beach/) on [Gross Booking Value](https://www.lodgify.com/encyclopedia/gross-booking-revenue/) (GBV), a metric which is defined as ''the total revenue generated by room or property rentals before any costs or expenses are subtracted''. Well, in theory, Airbnb Expereinces may make the use of the Airbnb more attractive to tourists, since now tourists no longer need use Viator or other booking services to find stuff to do locally. In other words, it makes it an attraction to that city specifically, and we may see an increase in GBV as a result. Well, all sorts of things may be related to this metric, such as local hotel prices, preexisting level of tourist arrivals, average city-specific booking price, and other relevant metrics. The goal is to see how the GBV would have evolve absent the policy.
+To begin, I conduct a simple synthetic study. Suppose we are working at Airbnb, and we wish to see the causal effect of the introduction of [Airbnb Experiences](https://news.airbnb.com/airbnb-partners-with-art-basel-miami-beach/) on [Gross Booking Value](https://www.lodgify.com/encyclopedia/gross-booking-revenue/) (GBV), a metric which is defined as ''the total revenue generated by room or property rentals before any costs or expenses are subtracted''. Well, in theory, Airbnb Expereinces may make the use of the Airbnb more attractive to tourists, since now tourists no longer need use Viator or other booking services to find stuff to do locally. In other words, it makes it an attraction to that city specifically, and we may see an increase in GBV as a result. Well, all sorts of things may be related to GBV, such as local hotel prices, pre-existing level of tourist arrivals, average city-specific booking price, and other relevant metrics. The goal is to see how the GBV would have evolve absent the policy.
 
-I simulate a panel dataset consisting of $N$ units each observed over $T = T_0 + T_1$ time periods, with $K$ distinct outcomes. For each unit $i \in \{1, \dots, N\}$, time $t \in \{1, \dots, T\}$, and outcome $k \in \{1, \dots, K\}$, the observed outcome $\mathbf{Y}_{i,t,k}$ evolves according to an autoregressive process with latent structure: 
+I simulate a panel dataset consisting of $N$ units each observed over $T = T_0 + T_1$ time periods, with $K$ distinct outcomes. For each unit $i \in \{1, \dots, N\}$, time $t \in \{1, \dots, T\}$, and outcome $k \in \{1, \dots, K\}$, the observed outcome $\mathbf{Y}_{jtk}$ evolves according to an autoregressive process with latent structure: 
 
 $$
-\mathbf{Y}_{i,t,k} = 
-\rho_k \mathbf{Y}_{i,t-1,k} +
+\mathbf{Y}_{jtk} = 
+\rho_k \mathbf{Y}_{jt-1,k} +
 (1 - \rho_k) \left( 
-\alpha_{i,k} + \beta_{t,k} + \boldsymbol{\phi}_i^\top \boldsymbol{\mu}_{t,k} + \mathbf{S}_{i,t} + \delta_k
-\right) + \varepsilon_{i,t,k}, \quad \text{for } t > 1,
+\alpha_{i,k} + \beta_{tk} + \boldsymbol{\phi}_i^\top \boldsymbol{\mu}_{tk} + \mathbf{S}_{jt} + \delta_k
+\right) + \varepsilon_{jtk}, \quad \text{for } t > 1,
 $$
 
 with initial condition
 
 $$
-\mathbf{Y}_{i,1,k} = 
-\alpha_{i,k} + \beta_{1,k} + \boldsymbol{\phi}_i^\top \boldsymbol{\mu}_{1,k} + \mathbf{S}_{i,1} + \delta_k + \varepsilon_{i,1,k}.
+\mathbf{Y}_{j1k} = 
+\alpha_{jk} + \beta_{1k} + \boldsymbol{\phi}_j^\top \boldsymbol{\mu}_{1k} + \mathbf{S}_{j1} + \delta_k + \varepsilon_{j1k}.
 $$
 
-Here, $\alpha_{i,k} \sim \mathcal{N}(0, 1)$ and $\beta_{t,k} \sim \mathcal{N}(0, 1)$ represent unit-outcome and time-outcome fixed effects, respectively. Each unit $i$ possesses latent attributes $\boldsymbol{\phi}_i \in \mathbb{R}^r \sim \mathcal{N}(0, \mathbf{I})$, while each time-outcome pair $(t, k)$ has associated latent loadings $\boldsymbol{\mu}_{t,k} \in \mathbb{R}^r \sim \mathcal{N}(0, \mathbf{I})$. The seasonal component $\mathbf{S}_{i,t}$ captures unit-specific periodicity and is defined as $\gamma_i \cos\left( \frac{4\pi(t - \tau_i)}{T_{\text{season}}} \right)$, with $\gamma_i \sim \text{Unif}(0, \bar{\gamma})$ representing the amplitude and $\tau_i \sim \text{Unif}\{0, \dots, T_{\text{season}} - 1\}$ the phase shift. Each outcome $k$ has a baseline shift $\delta_k \sim \text{Unif}(200, 500)$, an autocorrelation parameter $\rho_k \in (0, 1)$, and an idiosyncratic noise component $\varepsilon_{i,t,k} \sim \mathcal{N}(0, \sigma^2)$. One unit is designated as treated—specifically, the unit with the second-largest realization on the first latent factor dimension—and receives an additive treatment effect of $+5$ to the primary outcome (gross booking value) during all post-treatment periods $t > T_0$.
+Here, $\alpha_{jk} \sim \mathcal{N}(0, 1)$ and $\beta_{tk} \sim \mathcal{N}(0, 1)$ represent unit-outcome and time-outcome fixed effects, respectively. Each unit $i$ possesses latent attributes $\boldsymbol{\phi}_j \in \mathbb{R}^r \sim \mathcal{N}(0, \mathbf{I})$, while each time-outcome pair $(tk)$ has associated latent loadings $\boldsymbol{\mu}_{tk} \in \mathbb{R}^r \sim \mathcal{N}(0, \mathbf{I})$. The seasonal component $\mathbf{S}_{jt}$ captures unit-specific periodicity and is defined as $\gamma_j \cos\left( \frac{4\pi(t - \tau_j)}{T_{\text{season}}} \right)$, with $\gamma_j \sim \text{Unif}(0, \bar{\gamma})$ representing the amplitude and $\tau_i \sim \text{Unif}\{0, \dots, T_{\text{season}} - 1\}$ the phase shift. Each outcome $k$ has a baseline shift $\delta_k \sim \text{Unif}(200, 500)$, an autocorrelation parameter $\rho_k \in (0, 1)$, and an idiosyncratic noise component $\varepsilon_{jtk} \sim \mathcal{N}(0, \sigma^2)$. One unit is designated as treated—specifically, the unit with the second-largest realization on the first latent factor dimension—and receives an additive treatment effect of $+5$ to the primary outcome (gross booking value) during all post-treatment periods $t > T_0$.
 
 
 ```{python}

@@ -1,12 +1,12 @@
 ---
-title: "Synthetic Control Methods With Multiple Outcomes"
+title: "Synthetic Controls With More Than One Outcome"
 date: 2025-04-16
 categories: [Causal Inference, Econometrics]
 ---
 
-Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a single target/outcome variable that we care about, and [plenty](https://doi.org/10.1016/j.ecosta.2017.08.002) of other papers have commented on this fact before.
+Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a target/outcome variable that we care about, and [plenty](https://doi.org/10.1016/j.ecosta.2017.08.002) of other papers have commented on this fact before. Some analysts even argue for a [the surrogate approach](https://proceedings.mlr.press/v238/liu24a/liu24a.pdf), where we treat other outcomes or affected units as a kind of instrument for the counterfactual trajcectory of the target unit.
 
-However as it turns out, most people who use synthetic controls use only a single outcome in their analyses; perhaps they will adjust their unit weighted by some diagonal matrix, $V$ in most applications, to assist in choosing the unit weights, but this is limited by the number of pretreatment periods you have (if you have more covariates than you have pretreatment periods, you cannot estimate the regression). Recent papers by econometricians have tried to get around this, though. In particular, this blog post covers a few recent [recent](https://doi.org/10.48550/arXiv.2311.16260) [papers](https://doi.org/10.48550/arXiv.2304.02272) which have advocated for this in applied settings. Of course, I use the ```SCMO``` class of ```mlsynth``` to show how this may be used in simulated and applied settings.
+However, all of this is most uncommon. As it turns out, most people in academia and industry who use synthetic controls use only a single focal outcome in their analyses. Perhaps they will adjust their unit weights by some diagonal matrix, $\mathbf{V}$ in most applications. THe point of this is to assist in choosing the unit weights, but even this is limited by the number of pretreatment periods you have (if you have more covariates than you have pretreatment periods, you cannot estimate the regression). Even so, recent papers by econometricians have tried to get around this, though. In particular, this blog post covers a few recent [recent](https://doi.org/10.48550/arXiv.2311.16260) [papers](https://doi.org/10.48550/arXiv.2304.02272) which have advocated for this. I explain the econometric method and apply it in a simulated setting.
 
 # Notation
 
@@ -165,6 +165,8 @@ In order to get these results, you need Python (3.9 or greater) and ``mlsynth``,
 ```bash
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 ```
+
+The format of the dataset is the same as we would expect for any other mlsynth dataset. The class expects: a long form dataset where we have one column for time, another for the unit, another dummy column for treatment, and some columns for the outcomes of interest, The way we import the class for this is by doing ```from mlsynth.mlsynth import SCMO``` at the top of one's Python script.
 
 ## Simulation
 
@@ -345,4 +347,10 @@ config = {
 arco = SCMO(config).fit()
 
 ```
+Using the model averaging estimator, our pre-treatment Root Mean Squared Error is 0.276. The ATT is 5.046.  The weights are also a sparse vector. The model averaged estimator returns Arequipa (0.237), Bogotá (0.232), San Salvador (0.218), Santiago de Chile (0.174), San Luis Potosí (0.081), Montevidio (0.032), and Manzanillo (0.026), as the contributing units or only 7 of the 98 donor units. The optimal mixing between the models is 0.538 for the intercept-shifted estimator and 0.461 for the concatenated method. For DID, the RMSE is 0.878 and the ATT is 5.2, meaning that the intercept adjusted average of all donor units is clearly a biased estimator.
 
+Compare to Forward DID, this is NOT true: we have an ATT of 5.063 and a pre-intervention RMSE of 0.289, selecting Antofagasta, Bocas del Toro, Punta del Este, San Pedro Sula, and Santiago as the intercept adjusted donor pool (this method uses no additional outcomes, only the GBV metric). When I compare to the clustered PCR method, the positively weighted donors are San Pedro Sula (0.296), Punta del Este (0.255), Santiago (0.199), Antofagasta (0.190), and La Plata (0.060).
+
+# Caveats
+
+So, a few comments are in order. One, this method is preciated on the selection of the right covariates to use. It would bve cool to have a method to select the relevant ones. Beyond this, the current method works very well, even when we have a short pretreatment period (in the original paper, it even works with 1 pretreatment period for the West Germany case, but unclear how well this generalizes). There are also [other methods](https://arxiv.org/pdf/1905.06400) of combining multiple outcomes together, such as the PCR version of this (the multi-dimensional Robust SCM/PCR) which uses a diagonal matrix to weight the most relevant additional outcomes. I will program this in the future, maybe even comparing it to the current method. Anyways, this is the first method in ```mlsynth``` which directly incorporates addtional predictors/outcomes that may be similar to the latent factor structure. Please, do email me or comment on the LinkedIn post if you have any questions.

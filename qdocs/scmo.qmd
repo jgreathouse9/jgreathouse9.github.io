@@ -40,13 +40,13 @@ This is simply stacking the pre-intervention period metrics atop one another. If
 
 ## Standard Synthetic Control
 
-Before introducing the stacked estimator however, I begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator selects weights $\mathbf{w} \in \Delta^{N_0}$ to minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls:
+Before introducing the stacked estimator however, I begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator minimizes
 
 $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:
+This is a constrained least squares program in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the out-of-sample estimates are obtained by applying the same weights to the control matrix:
 
 $$
 \mathbf{y}^{\text{SC}}_1 = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast,

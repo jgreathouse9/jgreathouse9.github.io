@@ -361,8 +361,8 @@ window.Quarto = {
 </section>
 <section id="conformal-prediction-via-agnostic-means" class="level2">
 <h2 class="anchored" data-anchor-id="conformal-prediction-via-agnostic-means">Conformal Prediction via Agnostic Means</h2>
-<p>Now a final word on infernece. I use conformal prediction intervals to conduct inference here, developed in <a href="https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf">this paper</a>. Precisely, I use the agnostic approach (yes, I know <a href="https://doi.org/10.1080/01621459.2021.1920957">other approaches</a> exist; users of <code>mlsynth</code> will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as <span class="math inline">\(\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \mathbf{y}^{\text{SC}}_{1,\text{pre}}\)</span>, or just the pretreatment error betwixt the actual observed values and its counterfactual. Furthermore, let <span class="math inline">\(\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2\)</span> be the unbiased estimator of the residual variance, where <span class="math inline">\(\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t\)</span> is the mean residual.</p>
-<p>We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period <span class="math inline">\(\mathbf{y}^{\text{SC}}_{1,\text{post}} \in \mathbb{R}^{T_1}\)</span> be the post-treatment SC predictions for some generic estimator. Assuming that the out-of-sample error is sub-Gaussian given the history <span class="math inline">\(\mathscr{H}\)</span> (in plain English, this just means that large errors are unlikely, which makes sense given that SC is less biased in a well-fitting pre-intervention model), we obtain a valid non-asymptotic prediction interval via <a href="https://arxiv.org/pdf/1910.02884">concentration</a> inequalities. Specifically, we have <span class="math inline">\(\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}\)</span>. The conformal prediction intervals are then defined as <span class="math inline">\(\mathbf{p}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} - \delta_\alpha \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{u}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} + \delta_\alpha \mathbf{1}\)</span>. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error. In the paper, the authors also provide two more methods, and these will likely be incorporated in the future. However for now they perform well.</p>
+<p>Now a final word on infernece. I use conformal prediction intervals to conduct inference here, developed in <a href="https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf">this paper</a>. Precisely, I use the agnostic approach (yes, I know <a href="https://doi.org/10.1080/01621459.2021.1920957">other approaches</a> exist; users of <code>mlsynth</code> will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as <span class="math inline">\(\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \mathbf{y}^{\text{SC}}_{1,\text{pre}}\)</span>, or just the pretreatment difference betwixt the observed values and its counterfactual. Furthermore, let <span class="math inline">\(\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2\)</span> be the unbiased estimator of the residual variance, where <span class="math inline">\(\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t\)</span> is the mean residual.</p>
+<p>We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period <span class="math inline">\(\mathbf{y}^{\text{SC}}_{1,\text{post}} \in \mathbb{R}^{T_1}\)</span> be the post-treatment SC predictions for some generic estimator. Assuming that the out-of-sample error is sub-Gaussian given the history <span class="math inline">\(\mathscr{H}\)</span> (in plain English, this just means that large errors are unlikely, which makes sense given that SC is less biased in a well-fitting pre-intervention model), we obtain a valid non-asymptotic prediction interval via <a href="https://arxiv.org/pdf/1910.02884">concentration</a> inequalities. Specifically, we have <span class="math inline">\(\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}\)</span>. The conformal prediction intervals are then defined as <span class="math inline">\(\mathbf{p}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} - \delta_\alpha \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{u}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} + \delta_\alpha \mathbf{1}\)</span>. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error. In the paper, the authors also provide two more methods, and these will likely be incorporated in the future.</p>
 </section>
 </section>
 <section id="estimation-in-python" class="level1">
@@ -392,7 +392,7 @@ window.Quarto = {
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>When we run this estimator, we need to specify one of three estimators: <code>TLP</code>, <code>SBMF</code>, or <code>both</code>, where the abbreviations are obviouslyfor the surnames of the authors. We also need to supply a dictionary entry to <code>mlsynth</code> called <code>addout</code>. This is either a string or a list which lists the additional outcomes we care about in the dataframe. When we run the estimator, we get:</p>
-<div id="987f76cd" class="cell" data-execution_count="2">
+<div id="92f18259" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run simulation</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulate(seed<span class="op">=</span><span class="dv">10000</span>, r<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -417,12 +417,12 @@ window.Quarto = {
 </div>
 </div>
 <p>Using the model averaging estimator, our pre-treatment Root Mean Squared Error is 0.276. The ATT is 5.046. The weights are also a sparse vector. The model averaged estimator returns Arequipa (0.237), Bogotá (0.232), San Salvador (0.218), Santiago de Chile (0.174), San Luis Potosí (0.081), Montevidio (0.032), and Manzanillo (0.026), as the contributing units or only 7 of the 98 donor units. The optimal mixing between the models is 0.538 for the intercept-shifted estimator and 0.461 for the concatenated method. For DID, the RMSE is 0.878 and the ATT is 5.2, meaning that the intercept adjusted average of all donor units is clearly a biased estimator.</p>
-<p>Compare to Forward DID, this is NOT true: we have an ATT of 5.063 and a pre-intervention RMSE of 0.289, selecting Antofagasta, Bocas del Toro, Punta del Este, San Pedro Sula, and Santiago as the intercept adjusted donor pool (this method uses no additional outcomes, only the GBV metric). When I compare to the clustered PCR method, the positively weighted donors are San Pedro Sula (0.296), Punta del Este (0.255), Santiago (0.199), Antofagasta (0.190), and La Plata (0.060).</p>
+<p>Compare to Forward DID, this is NOT true: we have an ATT of 5.063 and a pre-intervention RMSE of 0.289, selecting Antofagasta, Bocas del Toro, Punta del Este, San Pedro Sula, and Santiago as the optimal donor pool (this method uses no additional outcomes, only the GBV metric). When I compare to the clustered PCR method, the positively weighted donors are San Pedro Sula (0.296), Punta del Este (0.255), Santiago (0.199), Antofagasta (0.190), and La Plata (0.060).</p>
 </section>
 </section>
 <section id="caveats" class="level1">
 <h1>Caveats</h1>
-<p>So, a few comments are in order. One, this method is preciated on the selection of the right covariates to use. It would bve cool to have a method to select the relevant ones. Beyond this, the current method works very well, even when we have a short pretreatment period (in the original paper, it even works with 1 pretreatment period for the West Germany case, but unclear how well this generalizes). There are also <a href="https://arxiv.org/pdf/1905.06400">other methods</a> of combining multiple outcomes together, such as the PCR version of this (the multi-dimensional Robust SCM/PCR) which uses a diagonal matrix to weight the most relevant additional outcomes. I will program this in the future, maybe even comparing it to the current method. Anyways, this is the first method in <code>mlsynth</code> which directly incorporates addtional predictors/outcomes that may be similar to the latent factor structure. Please, do email me or comment on the LinkedIn post if you have any questions.</p>
+<p>So, a few comments are in order. One, this method is preciated on the selection of the right covariates to use. In testing on other empirical datasets, I got different results depending on the outcomes I employed. It would be cool to have a method to select the relevant ones. There are also <a href="https://arxiv.org/pdf/1905.06400">other methods</a> of combining multiple outcomes together, such as the PCR version of this (the multi-dimensional Robust SCM/PCR). This method uses a diagonal matrix to weight the most relevant additional outcomes in a quadratic-programming style estimator. I will program this in the future, maybe even comparing it to the current method. Anyways, this is the first method in <code>mlsynth</code> which directly incorporates addtional predictors/outcomes that may be similar to the latent factor structure. Please, do email me or comment on the LinkedIn post if you have any questions.</p>
 
 
 
@@ -430,7 +430,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744902870108" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744903243820" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -454,7 +454,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744902870105" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -478,7 +478,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744902870106" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -502,7 +502,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744902870106" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -526,7 +526,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744902870106" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -552,7 +552,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744902870105" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -578,7 +578,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744902870106" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -602,7 +602,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744902870111" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744903243822" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -626,7 +626,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744902923218" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744903287878" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

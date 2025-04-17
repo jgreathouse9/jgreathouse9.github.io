@@ -293,7 +293,7 @@ window.Quarto = {
 <p><span class="math display">\[
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 \]</span></p>
-<p>This is a constrained least squares program in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that <span class="math inline">\(\mathbf{w}\)</span> lies in the simplex <span class="math inline">\(\Delta^{N_0}\)</span>. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights <span class="math inline">\(\mathbf{w}^\ast\)</span> are estimated, the out-of-sample estimates are obtained by applying the same weights to the control matrix:</p>
+<p>This is a constrained least squares program in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that <span class="math inline">\(\mathbf{w}\)</span> lies in the simplex <span class="math inline">\(\Delta^{N_0}\)</span>. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights <span class="math inline">\(\mathbf{w}^\ast\)</span> are estimated, the out-of-sample estimates are obtained by applying the same weights to the control matrix</p>
 <p><span class="math display">\[
 \mathbf{y}^{\text{SC}}_1 = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast,
 \]</span></p>
@@ -302,19 +302,19 @@ window.Quarto = {
 </section>
 <section id="stacked-scm-with-multiple-outcomes" class="level1">
 <h1>Stacked SCM with Multiple Outcomes</h1>
-<p>When multiple outcomes are present, there are three choices we can make: do we use the concatenated approach, a demeaning/intercept adjusted approach, or do we combine them as a model average? The first approach stacks all the outcomes as we’ve discussed above into a big matrix/big vector. We then apply the standard SCM optimization problem to the stacked data. The objective function is:</p>
+<p>When multiple outcomes are present, there are three choices we can make: do we use the concatenated approach, a demeaning/intercept adjusted approach, or do we combine them as a model average? The first approach stacks all the outcomes as we’ve discussed above into a big matrix/big vector. We then apply the standard SCM optimization problem to the stacked data. We minimize</p>
 <p><span class="math display">\[
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 \]</span></p>
-<p>Here, the vector <span class="math inline">\(\mathbf{y}_1^{\prime}\)</span> is the stacked pre-treatment outcomes of the treated unit, including at least the outcome of the main target unit and auxilary outcomes. Similarly, <span class="math inline">\(\mathbf{Y}_0^{\prime}\)</span> is the stacked donor matrix including the focal outcome and the same set of auxilary outcomes. The weight vector <span class="math inline">\(\mathbf{w}^\ast\)</span> is found such that the in-sample fit is as close as possible to the weighted stacked combination of the control outcomes. The out-of-sample prediction for the treated unit is then estimated as:</p>
+<p>Here, the vector <span class="math inline">\(\mathbf{y}_1^{\prime}\)</span> is the stacked pre-treatment outcomes of the treated unit, including at least the outcome of the main target unit and auxilary outcomes. Similarly, <span class="math inline">\(\mathbf{Y}_0^{\prime}\)</span> is the stacked donor matrix including the focal outcome and the same set of auxilary outcomes. The weight vector <span class="math inline">\(\mathbf{w}^\ast\)</span> is found such that the in-sample fit is as close as possible to the weighted stacked combination of the control outcomes. The out-of-sample prediction for the treated unit is then estimated as</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{CAT}} = \mathbf{Y}_0 \mathbf{w}^\ast.
 \]</span></p>
-<p>The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes ourselves, we add an intercept to the optimization. This approach <a href="https://doi.org/10.3982/QE1596">effectively</a> adjusts for any systematic differences between the target unit and the donor pool. The objective function in this case is:</p>
+<p>The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes ourselves, we add an intercept to the optimization. This approach <a href="https://doi.org/10.3982/QE1596">effectively</a> adjusts for any systematic differences between the target unit and the donor pool. The objective function in this case is</p>
 <p><span class="math display">\[
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} - \beta \|_F^2 \quad \forall t \in \mathcal{T}_1.
 \]</span></p>
-<p>Here, <span class="math inline">\(\beta\)</span> represents the unconstrained intercept term. The weight vector <span class="math inline">\(\mathbf{w}^\ast\)</span> is determined by solving this optimization, which adjusts the outcomes for the intercept term while returning the best in-sample fit. Technially, this is the same as MSCa, discussed <a href="https://doi.org/10.1287/mnsc.2023.4878">here</a>. The out-of-sample prediction for the treated unit, using this intercept adjusted estimator, is estimated:</p>
+<p>Here, <span class="math inline">\(\beta\)</span> represents the unconstrained intercept term, and the unit weight vector retains its initial interpretation. Technically, this is the same as the MSCa estimator, discussed <a href="https://doi.org/10.1287/mnsc.2023.4878">here</a>. The out-of-sample prediction is estimated as</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{AVG}} = \mathbf{Y}_0 \mathbf{w}^\ast + \beta.
 \]</span></p>
@@ -329,19 +329,19 @@ window.Quarto = {
 \mathbf{y}_1^{\text{CAT}} &amp; \mathbf{y}_1^{\text{AVG}}
 \end{bmatrix} \in \mathbb{R}^{T_0 \times 2}.
 \]</span></p>
-<p>We define the model-averaged pre-treatment fit as a convex combination of the two predictions:</p>
+<p>We define the model-averaged pre-treatment fit as a convex combination of the two predictions</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{MA}}(\boldsymbol{\lambda}) = \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda},
 \]</span></p>
-<p>where <span class="math inline">\(\boldsymbol{\lambda} \in \Delta^2\)</span> is a 2-dimensional simplex weight vector:</p>
+<p>where <span class="math inline">\(\boldsymbol{\lambda} \in \Delta^2\)</span> is a 2-dimensional simplex weight vector</p>
 <p><span class="math display">\[
 \Delta^2 = \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0}^2 : \| \boldsymbol{\lambda} \|_1 = 1 \right\}.
 \]</span></p>
-<p>The optimal simplex weights <span class="math inline">\(\boldsymbol{\lambda}^\ast\)</span> are chosen to minimize:</p>
+<p>The model averaged objective function minimizes</p>
 <p><span class="math display">\[
 \boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^2}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda} \right\|_F^2 \quad \forall t \in \mathcal{T}_1.
 \]</span></p>
-<p>The interpretation of the convex hull remains the same as in the traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the global minimum and maximum of the two individual estimators:</p>
+<p>The interpretation of the convex hull remains the same as in the traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the global minimum and maximum of the two individual estimators</p>
 <p><span class="math display">\[
 \mathbf{y}_1^{\text{MA}} \in \left[
 \min\left(\mathbf{y}_1^{\text{CAT}}, \mathbf{y}_1^{\text{AVG}}\right),
@@ -349,7 +349,7 @@ window.Quarto = {
 \right]
 \quad \forall t \in \mathcal{T}.
 \]</span></p>
-<p>Once <span class="math inline">\(\boldsymbol{\lambda}^\ast\)</span> is found, the model-averaged out-of-sample predictions are estimated like:</p>
+<p>Once <span class="math inline">\(\boldsymbol{\lambda}^\ast\)</span> is found, the model-averaged out-of-sample predictions are estimated like</p>
 <p><span class="math display">\[
 \mathbf{Y}^{\text{MA, post}} = \begin{bmatrix}
 \mathbf{y}_1^{\text{CAT, post}} &amp; \mathbf{y}_1^{\text{AVG, post}}
@@ -374,7 +374,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="simulation">Simulation</h2>
 <p>Suppose we are working at Airbnb, and we wish to see the causal effect of the introduction of <a href="https://news.airbnb.com/airbnb-partners-with-art-basel-miami-beach/">Airbnb Experiences</a> on <a href="https://www.lodgify.com/encyclopedia/gross-booking-revenue/">Gross Booking Value</a> (GBV), a metric which is defined as ‘’the total revenue generated by room or property rentals before any costs or expenses are subtracted’’. Airbnb Experiences connects users of the platform to local tour guides or other local attractions. It serves as a kind of competition to Travelocity, Viator and other booking/ travel services. In other words, this program may make makes this city an attraction, and we may see an increase in GBV as a result.</p>
 <p>Well, all sorts of things may be related to GBV, such as local hotel prices, pre-existing level of tourist arrivals, average city-specific booking price, and other relevant metrics. The goal is to see how the GBV would have evolve absent the policy. The point of this simulation is to use the <code>SCMO</code> (synthetic control multiple outcomes) estimator to measure the causal impact.</p>
-<p>For each unit, the observed outcome <span class="math inline">\(\mathbf{Y}_{jtk}\)</span> evolves according to an autoregressive process with latent structure for time, place, and seasonality:</p>
+<p>For each unit, the observed outcome <span class="math inline">\(\mathbf{Y}_{jtk}\)</span> evolves according to an autoregressive process with latent structure for time, place, and seasonality</p>
 <p><span class="math display">\[
 \mathbf{Y}_{jtk} =
 \rho_k \mathbf{Y}_{jt-1k} +
@@ -392,7 +392,7 @@ window.Quarto = {
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>When we run this estimator, we need to specify one of three estimators: <code>TLP</code>, <code>SBMF</code>, or <code>both</code>, where the abbreviations are obviouslyfor the surnames of the authors. We also need to supply a dictionary entry to <code>mlsynth</code> called <code>addout</code>. This is either a string or a list which lists the additional outcomes we care about in the dataframe. When we run the estimator, we get:</p>
-<div id="ae917a41" class="cell" data-execution_count="2">
+<div id="9535dc07" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run simulation</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulate(seed<span class="op">=</span><span class="dv">10000</span>, r<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -430,7 +430,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744904448628" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744904762855" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -454,7 +454,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744904448625" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744904762852" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -478,7 +478,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744904448625" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744904762852" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -502,7 +502,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744904448625" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744904762852" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -526,7 +526,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744904448625" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744904762852" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -552,7 +552,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744904448625" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744904762852" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -578,7 +578,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744904448625" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744904762852" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -602,7 +602,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744904448630" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744904762858" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -626,7 +626,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744904502597" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744904810189" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

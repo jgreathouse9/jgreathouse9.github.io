@@ -261,7 +261,7 @@ window.Quarto = {
 </header>
 
 
-<p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a target/outcome variable that we care about, and <a href="https://doi.org/10.1016/j.ecosta.2017.08.002">plenty</a> of other papers have commented on this fact before. Some analysts even argue for a <a href="https://proceedings.mlr.press/v238/liu24a/liu24a.pdf">the surrogate approach</a>, where we treat other outcomes or affected units as a kind of instrument for the counterfactual trajcectory of the target unit.</p>
+<p>Sometimes, analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may predict a target/outcome variable that we care about, and <a href="https://doi.org/10.1016/j.ecosta.2017.08.002">plenty</a> of other papers have commented on this fact before. Some analysts even argue for <a href="https://proceedings.mlr.press/v238/liu24a/liu24a.pdf">the surrogate approach</a>, where we treat other outcomes or affected units as a kind of instrument for the counterfactual trajcectory of the target unit.</p>
 <p>However, all of this is most uncommon. As it turns out, most people in academia and industry who use synthetic controls use only a single focal outcome in their analyses. Perhaps they will adjust their unit weights by some diagonal matrix, a diagonal matrix <span class="math inline">\(\mathbf{V}\)</span> in most applications. The point of this matrix is basically to assist the main optimization in choosing the unit weights. However, even this is limited by the number of pretreatment periods you have- if you have more covariates than you have pretreatment periods, you cannot estimate the regression. Recent papers by econometricians have tried to get around this, though. This blog post covers a few recent <a href="https://doi.org/10.48550/arXiv.2311.16260">recent</a> <a href="https://doi.org/10.48550/arXiv.2304.02272">papers</a> which have advocated for this. I explain the econometric method and apply it in a simulated setting.</p>
 <section id="notation" class="level1">
 <h1>Notation</h1>
@@ -269,7 +269,7 @@ window.Quarto = {
 <p><span class="math display">\[
 \Delta^{N_0 - 1} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid w_j \geq 0 \: \forall j \in \mathcal{N}_0, \sum_{j \in \mathcal{N}_0} w_j = 1 \right\}.
 \]</span></p>
-<p>Matrix multiplication is written in the usual way; products like <span class="math inline">\(\mathbf{A}^\top \mathbf{b}\)</span>, <span class="math inline">\(\mathbf{A} \mathbf{B}\)</span>, or <span class="math inline">\(\mathbf{b}^\top \mathbf{c}\)</span> denote standard matrix-vector or matrix-matrix products. Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units in the panel, with unit <span class="math inline">\(1\)</span> denoting the treated unit and <span class="math inline">\(\mathcal{N}_0 = \{2, 3, \dots, N\}\)</span> denoting the set of control units. We write <span class="math inline">\(N_0 = |\mathcal{N}_0| = N - 1\)</span> for its cardinality. Let <span class="math inline">\(\mathcal{T} \subset \mathbb{N}\)</span> be a finite set of time periods with <span class="math inline">\(|\mathcal{T}| = T\)</span>. Let <span class="math inline">\(T_0 &lt; T\)</span> denote the final pre-treatment period. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span> with <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span> with <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span>. Let <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^{T}\)</span> denote the time series for outcome zero (our main outcome of interest) for unit <span class="math inline">\(j \in \mathcal{N}\)</span>. We write <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{1,1} &amp; \cdots &amp; y_{1,T} \end{bmatrix}^\top \in \mathbb{R}^T\)</span> for the treated unit’s outcome vector. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks the outcome vectors for all control units <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Each time series <span class="math inline">\(\mathbf{y}_j\)</span> is partitioned into a pre-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> and a post-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span>. Likewise, the control matrix <span class="math inline">\(\mathbf{Y}_0\)</span> is partitioned into <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> and <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{(T - T_0) \times N_0}\)</span>.</p>
+<p>Matrix multiplication is written in the usual way; products like <span class="math inline">\(\mathbf{A}^\top \mathbf{b}\)</span>, <span class="math inline">\(\mathbf{A} \mathbf{B}\)</span>, or <span class="math inline">\(\mathbf{b}^\top \mathbf{c}\)</span> denote standard matrix-vector or matrix-matrix products. Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units in the panel, with unit <span class="math inline">\(1\)</span> denoting the treated unit and <span class="math inline">\(\mathcal{N}_0 = \{2, 3, \dots, N\}\)</span> denoting the set of control units. We write <span class="math inline">\(N_0 = |\mathcal{N}_0| = N - 1\)</span> for its cardinality. Let <span class="math inline">\(\mathcal{T} \subset \mathbb{N}\)</span> be a finite set of time periods with <span class="math inline">\(|\mathcal{T}| = T\)</span>. Let <span class="math inline">\(T_0 &lt; T\)</span> denote the final pre-treatment period. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span> with <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span> with <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span>. Let <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^{T}\)</span> denote the time series for our focal outcome of interest <span class="math inline">\(\forall \, j \in \mathcal{N}\)</span>. We write <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{1,1} &amp; \cdots &amp; y_{1,T} \end{bmatrix}^\top \in \mathbb{R}^T\)</span> for the treated unit’s outcome vector. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks the outcome vectors for all control units <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Each time series <span class="math inline">\(\mathbf{y}_j\)</span> is partitioned into a pre-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> and a post-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span>. Likewise, the control matrix <span class="math inline">\(\mathbf{Y}_0\)</span> is partitioned into <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> and <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{(T - T_0) \times N_0}\)</span>.</p>
 <p>Now, let <span class="math inline">\(K\)</span> denote the number of auxiliary outcomes (excluding the main one). For each outcome <span class="math inline">\(\ell \in \{1, 2, \dots, K\}\)</span>, let <span class="math inline">\(\mathbf{y}_j^{(\ell)} \in \mathbb{R}^T\)</span> denote the <span class="math inline">\(\ell\)</span>-th outcome vector for unit <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{(\ell)} \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix collecting the <span class="math inline">\(\ell\)</span>-th outcome across all controls. These are also split into pre- and post-treatment periods. We define the “stacking” operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let <span class="math inline">\(\mathbf{Y}_0^{\prime} \in \mathbb{R}^{KT_{0} \times N_0}\)</span> denote the vertically stacked matrix (and vector):</p>
 <p><span class="math display">\[
 \mathbf{Y}_0^{\prime} = \begin{bmatrix}
@@ -392,7 +392,7 @@ window.Quarto = {
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>When we run this estimator, we need to specify one of three estimators: <code>TLP</code>, <code>SBMF</code>, or <code>both</code>, where the abbreviations are obviouslyfor the surnames of the authors. We also need to supply a dictionary entry to <code>mlsynth</code> called <code>addout</code>. This is either a string or a list which lists the additional outcomes we care about in the dataframe. When we run the estimator, we get:</p>
-<div id="92f18259" class="cell" data-execution_count="2">
+<div id="e0a4fa7f" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run simulation</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulate(seed<span class="op">=</span><span class="dv">10000</span>, r<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -430,7 +430,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744903243820" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744904234479" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -454,7 +454,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744904234476" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -478,7 +478,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744904234477" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -502,7 +502,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744904234477" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -526,7 +526,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744904234477" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -552,7 +552,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744904234477" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -578,7 +578,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744903243817" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744904234477" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -602,7 +602,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744903243822" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744904234482" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -626,7 +626,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744903287878" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744904281823" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

@@ -270,7 +270,7 @@ window.Quarto = {
 \Delta^{N_0 - 1} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid w_j \geq 0 \: \forall j \in \mathcal{N}_0, \sum_{j \in \mathcal{N}_0} w_j = 1 \right\}.
 \]</span></p>
 <p>Matrix multiplication is written in the usual way; products like <span class="math inline">\(\mathbf{A}^\top \mathbf{b}\)</span>, <span class="math inline">\(\mathbf{A} \mathbf{B}\)</span>, or <span class="math inline">\(\mathbf{b}^\top \mathbf{c}\)</span> denote standard matrix-vector or matrix-matrix products. Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units in the panel, with unit <span class="math inline">\(1\)</span> denoting the treated unit and <span class="math inline">\(\mathcal{N}_0 = \{2, 3, \dots, N\}\)</span> denoting the set of control units. We write <span class="math inline">\(N_0 = |\mathcal{N}_0| = N - 1\)</span> for its cardinality. Let <span class="math inline">\(\mathcal{T} \subset \mathbb{N}\)</span> be a finite set of time periods with <span class="math inline">\(|\mathcal{T}| = T\)</span>. Let <span class="math inline">\(T_0 &lt; T\)</span> denote the final pre-treatment period. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span> with <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span> with <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span>. Let <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^{T}\)</span> denote the time series for outcome zero (our main outcome of interest) for unit <span class="math inline">\(j \in \mathcal{N}\)</span>. We write <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{1,1} &amp; \cdots &amp; y_{1,T} \end{bmatrix}^\top \in \mathbb{R}^T\)</span> for the treated unit’s outcome vector. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks the outcome vectors for all control units <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Each time series <span class="math inline">\(\mathbf{y}_j\)</span> is partitioned into a pre-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> and a post-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span>. Likewise, the control matrix <span class="math inline">\(\mathbf{Y}_0\)</span> is partitioned into <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> and <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{(T - T_0) \times N_0}\)</span>.</p>
-<p>Now, let <span class="math inline">\(K\)</span> denote the number of auxiliary outcomes (excluding the main one). For each outcome <span class="math inline">\(\ell \in \{1, 2, \dots, K\}\)</span>, let <span class="math inline">\(\mathbf{y}_j^{(\ell)} \in \mathbb{R}^T\)</span> denote the <span class="math inline">\(\ell\)</span>-th outcome vector for unit <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{(\ell)} \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix collecting the <span class="math inline">\(\ell\)</span>-th outcome across all controls. These are also split into pre- and post-treatment periods. We define the “stacking” operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let <span class="math inline">\(\mathbf{Y}_0^{\prime} \in \mathbb{R}^{K |\mathcal{T}_1| \times N_0}\)</span> denote the vertically stacked matrix (and vector):</p>
+<p>Now, let <span class="math inline">\(K\)</span> denote the number of auxiliary outcomes (excluding the main one). For each outcome <span class="math inline">\(\ell \in \{1, 2, \dots, K\}\)</span>, let <span class="math inline">\(\mathbf{y}_j^{(\ell)} \in \mathbb{R}^T\)</span> denote the <span class="math inline">\(\ell\)</span>-th outcome vector for unit <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{(\ell)} \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix collecting the <span class="math inline">\(\ell\)</span>-th outcome across all controls. These are also split into pre- and post-treatment periods. We define the “stacking” operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let <span class="math inline">\(\mathbf{Y}_0^{\prime} \in \mathbb{R}^{KT_{0} \times N_0}\)</span> denote the vertically stacked matrix (and vector):</p>
 <p><span class="math display">\[
 \mathbf{Y}_0^{\prime} = \begin{bmatrix}
 \mathbf{Y}_0^{(1), \text{pre}} \\
@@ -291,7 +291,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="standard-synthetic-control">Standard Synthetic Control</h2>
 <p>Before introducing the stacked estimator however, I begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator selects weights <span class="math inline">\(\mathbf{w} \in \Delta^{N_0}\)</span> to minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls:</p>
 <p><span class="math display">\[
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 \]</span></p>
 <p>This is a constrained least squares problem in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that <span class="math inline">\(\mathbf{w}\)</span> lies in the simplex <span class="math inline">\(\Delta^{N_0}\)</span>. That is, the synthetic control estimator builds a linear approximation to <span class="math inline">\(\mathbf{y}_1^{\text{pre}}\)</span> using a weighted average of the control outcomes, where the weights are non-negative and sum to one. This corresponds to restricting attention to points in the convex hull of the control units. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights <span class="math inline">\(\mathbf{w}^\ast\)</span> are estimated, the counterfactual trajectory for the treated unit in the post-treatment period is estimated by applying the same weights to the control matrix:</p>
 <p><span class="math display">\[
@@ -320,18 +320,14 @@ window.Quarto = {
 \]</span></p>
 <p>When I first read about this apporach, I was confused as to what was going on, until I considered them as the solution to a system of multiple equations. To have a better sense of what is going on, we typically consider our outcomes in data science or econoemtrics to be generated by some process that we never see.</p>
 <p>A common assumption is that they are generated by a <a href="https://jmlr.org/papers/volume19/17-777/17-777.pdf">low-rank model</a>, which essentially formulates our outcomes as a byproduct of the interaction between unit specific fixed effects that are idiosyncratic to each unit (that are not expected to change over time) and time effects that are common across all units of interest. Well, more than one outcome exists in the world that may plausibly have a similar factor structure to the metric that we do care about. When we include these in our SCM, we now allow the model to better capture the latent factors that influence the main outcome, thereby improving the match of the synthetic control. The optimization framework effectively allows us to match on both the main outcome and the auxiliary factors, capturing the factor loadings that generate the observed data. Thus, stacking the outcomes together or including an intercept term aligns the model with the idea that multiple systems of equations, representing different outcomes or contributing factors, can provide a better counterfactual prediction than simply using one outcome.</p>
-<p>Note that for estimation purposes, under the hood within <code>mlsynth</code>, both the outcome of interest and the auxiliary outcomes are normalized to 100 in the final pre-treatment period via</p>
-<p><span class="math display">\[
-\mathbf{Y}^{y,k}_{\text{norm}} := \frac{\mathbf{Y}^{y,k}{Y^{y,k}_{T_0}} \cdot 100
-\]</span></p>
-<p>This is to avoid the nasty solver issues we would get if we used the raw, untransfomred outcomes that may be on different scales from the target outcome of interest. Note that this is a legal move because this is a linear transformation of the outcome, so it has no effect on the optimality conditions. But it does affect the feasability region. Either way, the user of <code>mlsynth</code> does not need to manually normalize their outcome metrics.</p>
+<p>Note that for estimation purposes, under the hood within <code>mlsynth</code>, both the outcome of interest and the auxiliary outcomes are normalized to 100 in the final pre-treatment period. This is to avoid the truly nasty solver issues we would get if we used the raw, untransfomred outcomes that may be on different scales from the target outcome of interest. Note that this is a legal move because this is a linear transformation of the outcome, so it has no effect on the optimality conditions. But it does affect the feasability region. Either way, the user of <code>mlsynth</code> does not need to manually normalize their outcome metrics.</p>
 <section id="model-averaging" class="level2">
 <h2 class="anchored" data-anchor-id="model-averaging">Model Averaging</h2>
 <p>Sun, Ben-Michael, and Feller also advocate model averaging in this setting (see page 18/the end of section 4). Suppose we are given two distinct estimators of the counterfactual outcome for the treated unit. On one hand, we have <span class="math inline">\(\mathbf{y}_1^{\text{CAT}} \in \mathbb{R}^{T_0}\)</span>, which denotes the pre-treatment fit from the concatenated model, and on the other hand, we have <span class="math inline">\(\mathbf{y}_1^{\text{AVG}} \in \mathbb{R}^{T_0}\)</span>, the corresponding fit from the demeaned model. As before, we also observe the treated unit’s actual pre-treatment trajectory, <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span>.</p>
 <p>We now stack the two counterfactuals into a single matrix:</p>
 <p><span class="math display">\[
 \mathbf{Y}^{\text{MA}} = \begin{bmatrix}
-\mathbf{y}_1^{\text{CAT}} &amp; \mathbf{y}_1^{\ext{AVG}}
+\mathbf{y}_1^{\text{CAT}} &amp; \mathbf{y}_1^{\text{AVG}}
 \end{bmatrix} \in \mathbb{R}^{T_0 \times 2}.
 \]</span></p>
 <p>We define the model-averaged pre-treatment fit as a convex combination of the two predictions:</p>
@@ -344,15 +340,15 @@ window.Quarto = {
 \]</span></p>
 <p>The optimal weights <span class="math inline">\(\boldsymbol{\lambda}^\ast\)</span> are chosen to minimize the mean squared error between the treated unit’s actual outcomes and the model-averaged prediction:</p>
 <p><span class="math display">\[
-\boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^2}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda} \right\|_F^2.
+\boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^2}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda} \right\|_F^2 \quad \forall t \in \mathcal{T}_1.
 \]</span></p>
 <p>The interpretation of the convex hull remains the same as in traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the minimum and maximum of the two individual estimators. That is,</p>
 <p><span class="math display">\[
-\mathbf{y}_1^{\text{MA}}(t) \in \left[
-\min\left(\mathbf{y}_1^{\text{CAT}}(t), \mathbf{y}_1^{\text{AVG}}(t)\right),
-\max\left(\mathbf{y}_1^{\text{CAT}}(t), \mathbf{y}_1^{\text{AVG}}(t)\right)
+\mathbf{y}_1^{\text{MA}} \in \left[
+\min\left(\mathbf{y}_1^{\text{CAT}}, \mathbf{y}_1^{\text{AVG}}\right),
+\max\left(\mathbf{y}_1^{\text{CAT}}, \mathbf{y}_1^{\text{AVG}}\right)
 \right]
-\quad \text{for all } t \in \{1, \dots, T_0\}.
+\quad \forall t \in \mathcal{T}_1.
 \]</span></p>
 <p>Once <span class="math inline">\(\boldsymbol{\lambda}^\ast\)</span> is found, the post-treatment counterfactual is computed analogously:</p>
 <p><span class="math display">\[
@@ -366,8 +362,7 @@ window.Quarto = {
 </section>
 <section id="conformal-prediction-via-agnostic-means" class="level2">
 <h2 class="anchored" data-anchor-id="conformal-prediction-via-agnostic-means">Conformal Prediction via Agnostic Means</h2>
-<p>Now a final word on infernece. I use conformal prediction intervals to conduct inference here, developed in <a href="https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf">this paper</a>. Precisely, I use the agnostic approach (yes, I know <a href="https://doi.org/10.1080/01621459.2021.1920957">other approaches</a> exist; users of <code>mlsynth</code> will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as<br>
-<span class="math inline">\(\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \mathbf{y}^{\text{SC}}_{1,\text{pre}}\)</span>, or just the pretreatment error betwixt the actual observed values and its counterfactual. Furthermore, let <span class="math inline">\(\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2\)</span> be the unbiased estimator of the residual variance, where <span class="math inline">\(\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t\)</span> is the mean residual.</p>
+<p>Now a final word on infernece. I use conformal prediction intervals to conduct inference here, developed in <a href="https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf">this paper</a>. Precisely, I use the agnostic approach (yes, I know <a href="https://doi.org/10.1080/01621459.2021.1920957">other approaches</a> exist; users of <code>mlsynth</code> will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as <span class="math inline">\(\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \mathbf{y}^{\text{SC}}_{1,\text{pre}}\)</span>, or just the pretreatment error betwixt the actual observed values and its counterfactual. Furthermore, let <span class="math inline">\(\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2\)</span> be the unbiased estimator of the residual variance, where <span class="math inline">\(\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t\)</span> is the mean residual.</p>
 <p>We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period <span class="math inline">\(\mathbf{y}^{\text{SC}}_{1,\text{post}} \in \mathbb{R}^{T_1}\)</span> be the post-treatment SC predictions for some generic estimator. Assuming that the out-of-sample error is sub-Gaussian given the history <span class="math inline">\(\mathscr{H}\)</span> (in plain English, this just means that large errors are unlikely, which makes sense given that SC is less biased in a well-fitting pre-intervention model), we obtain a valid non-asymptotic prediction interval via <a href="https://arxiv.org/pdf/1910.02884">concentration</a> inequalities. Specifically, we have <span class="math inline">\(\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}\)</span>. The conformal prediction intervals are then defined as <span class="math inline">\(\mathbf{p}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} - \delta_\alpha \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{u}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} + \delta_\alpha \mathbf{1}\)</span>. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error. In the paper, the authors also provide two more methods, and these will likely be incorporated in the future. However for now they perform well.</p>
 </section>
 </section>
@@ -398,7 +393,7 @@ window.Quarto = {
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>When we run this estimator, we need to specify one of three estimators: <code>TLP</code>, <code>SBMF</code>, or <code>both</code>, where the abbreviations are obviouslyfor the surnames of the authors. We also need to supply a dictionary entry to <code>mlsynth</code> called <code>addout</code>. This is either a string or a list which lists the additional outcomes we care about in the dataframe. When we run the estimator, we get:</p>
-<div id="b764a5ba" class="cell" data-execution_count="2">
+<div id="937e59c7" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run simulation</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulate(seed<span class="op">=</span><span class="dv">10000</span>, r<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -436,7 +431,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744900202038" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1744901149881" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -460,7 +455,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744900202035" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1744901149878" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -484,7 +479,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744900202035" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1744901149879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -508,7 +503,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744900202035" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1744901149878" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -532,7 +527,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744900202035" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1744901149879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -558,7 +553,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744900202035" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1744901149878" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -584,7 +579,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744900202035" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1744901149879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -608,7 +603,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744900202041" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1744901149884" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -632,7 +627,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744900249354" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1744901207662" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

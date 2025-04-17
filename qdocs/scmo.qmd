@@ -46,7 +46,7 @@ $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-This is a constrained least squares program in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the out-of-sample estimates are obtained by applying the same weights to the control matrix:
+This is a constrained least squares program in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that $\mathbf{w}$ lies in the simplex $\Delta^{N_0}$. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights $\mathbf{w}^\ast$ are estimated, the out-of-sample estimates are obtained by applying the same weights to the control matrix
 
 $$
 \mathbf{y}^{\text{SC}}_1 = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast,
@@ -56,25 +56,25 @@ with the concatenation between the in and out of sample vectors corresponding to
 
 # Stacked SCM with Multiple Outcomes
 
-When multiple outcomes are present, there are three choices we can make: do we use the concatenated approach, a demeaning/intercept adjusted approach, or do we combine them as a model average? The first approach stacks all the outcomes as we've discussed above into a big matrix/big vector. We then apply the standard SCM optimization problem to the stacked data. The objective function is:
+When multiple outcomes are present, there are three choices we can make: do we use the concatenated approach, a demeaning/intercept adjusted approach, or do we combine them as a model average? The first approach stacks all the outcomes as we've discussed above into a big matrix/big vector. We then apply the standard SCM optimization problem to the stacked data. We minimize
 
 $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-Here, the vector $\mathbf{y}_1^{\prime}$ is the stacked pre-treatment outcomes of the treated unit, including at least the outcome of the main target unit and auxilary outcomes. Similarly, $\mathbf{Y}_0^{\prime}$ is the stacked donor matrix including the focal outcome and the same set of auxilary outcomes. The weight vector $\mathbf{w}^\ast$ is found such that the in-sample fit is as close as possible to the weighted stacked combination of the control outcomes. The out-of-sample prediction for the treated unit is then estimated as:
+Here, the vector $\mathbf{y}_1^{\prime}$ is the stacked pre-treatment outcomes of the treated unit, including at least the outcome of the main target unit and auxilary outcomes. Similarly, $\mathbf{Y}_0^{\prime}$ is the stacked donor matrix including the focal outcome and the same set of auxilary outcomes. The weight vector $\mathbf{w}^\ast$ is found such that the in-sample fit is as close as possible to the weighted stacked combination of the control outcomes. The out-of-sample prediction for the treated unit is then estimated as
 
 $$
 \mathbf{y}_1^{\text{CAT}} = \mathbf{Y}_0 \mathbf{w}^\ast.
 $$
 
-The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes ourselves, we add an intercept to the optimization. This approach [effectively](https://doi.org/10.3982/QE1596) adjusts for any systematic differences between the target unit and the donor pool. The objective function in this case is:
+The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes ourselves, we add an intercept to the optimization. This approach [effectively](https://doi.org/10.3982/QE1596) adjusts for any systematic differences between the target unit and the donor pool. The objective function in this case is
 
 $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} - \beta \|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-Here, $\beta$ represents the unconstrained intercept term. The weight vector $\mathbf{w}^\ast$ is determined by solving this optimization, which adjusts the outcomes for the intercept term while returning the best in-sample fit. Technially, this is the same as MSCa, discussed [here](https://doi.org/10.1287/mnsc.2023.4878). The out-of-sample prediction for the treated unit, using this intercept adjusted estimator, is estimated:
+Here, $\beta$ represents the unconstrained intercept term, and the unit weight vector retains its initial interpretation. Technically, this is the same as the MSCa estimator, discussed [here](https://doi.org/10.1287/mnsc.2023.4878). The out-of-sample prediction is estimated as
 
 $$
 \mathbf{y}_1^{\text{AVG}} = \mathbf{Y}_0 \mathbf{w}^\ast + \beta.
@@ -96,25 +96,25 @@ $$
 \end{bmatrix} \in \mathbb{R}^{T_0 \times 2}.
 $$
 
-We define the model-averaged pre-treatment fit as a convex combination of the two predictions:
+We define the model-averaged pre-treatment fit as a convex combination of the two predictions
 
 $$
 \mathbf{y}_1^{\text{MA}}(\boldsymbol{\lambda}) = \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda},
 $$
 
-where $\boldsymbol{\lambda} \in \Delta^2$ is a 2-dimensional simplex weight vector:
+where $\boldsymbol{\lambda} \in \Delta^2$ is a 2-dimensional simplex weight vector
 
 $$
 \Delta^2 = \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0}^2 : \| \boldsymbol{\lambda} \|_1 = 1 \right\}.
 $$
 
-The optimal simplex weights $\boldsymbol{\lambda}^\ast$ are chosen to minimize:
+The model averaged objective function minimizes
 
 $$
 \boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^2}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda} \right\|_F^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-The interpretation of the convex hull remains the same as in the traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the global minimum and maximum of the two individual estimators:
+The interpretation of the convex hull remains the same as in the traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the global minimum and maximum of the two individual estimators
 
 $$
 \mathbf{y}_1^{\text{MA}} \in \left[
@@ -124,7 +124,7 @@ $$
 \quad \forall t \in \mathcal{T}.
 $$
 
-Once $\boldsymbol{\lambda}^\ast$ is found, the model-averaged out-of-sample predictions are estimated like:
+Once $\boldsymbol{\lambda}^\ast$ is found, the model-averaged out-of-sample predictions are estimated like
 
 $$
 \mathbf{Y}^{\text{MA, post}} = \begin{bmatrix}
@@ -159,7 +159,7 @@ Suppose we are working at Airbnb, and we wish to see the causal effect of the in
 
 Well, all sorts of things may be related to GBV, such as local hotel prices, pre-existing level of tourist arrivals, average city-specific booking price, and other relevant metrics. The goal is to see how the GBV would have evolve absent the policy. The point of this simulation is to use the ```SCMO``` (synthetic control multiple outcomes) estimator to measure the causal impact.
 
-For each unit, the observed outcome $\mathbf{Y}_{jtk}$ evolves according to an autoregressive process with latent structure for time, place, and seasonality: 
+For each unit, the observed outcome $\mathbf{Y}_{jtk}$ evolves according to an autoregressive process with latent structure for time, place, and seasonality
 
 $$
 \mathbf{Y}_{jtk} = 

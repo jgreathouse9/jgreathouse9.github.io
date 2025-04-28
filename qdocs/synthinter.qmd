@@ -1,0 +1,27 @@
+---
+title: "Synthetic Interventions for Policy Analysis"
+date: 2025-04-16
+categories: [Causal Inference, Econometrics]
+---
+
+
+Synthetic interventions generalize synthetic control methods to settings with multiple treatment arms and counterfactual treatment effects. Rather than estimating what would have occurred under no intervention, synthetic interventions estimate what would have occurred under a different intervention. This is particularly useful in policy analysis, marketing science, and settings with overlapping or competing treatments.
+
+We work within a panel framework where units may receive different interventions at different times. Our goal is to estimate the effect of switching treatments, rather than simply estimating treatment versus control.
+
+## Notation
+
+Scalars are denoted by lowercase italic letters, e.g., $g$. Vectors are denoted by bold lowercase letters, e.g., $\mathbf{v} \in \mathbb{R}^n$. Matrices are denoted by bold uppercase letters, e.g., $\mathbf{A} \in \mathbb{R}^{m \times n}$. Sets are denoted by calligraphic letters, e.g., $\mathcal{N}$, $\mathcal{T}$. For a finite set $\mathcal{A}$, its cardinality is $|\mathcal{A}|$.
+
+Let $\mathcal{N} = \{1, 2, \dots, N\}$ index the units. Let $\mathcal{D} = \{0,1,\dots,D\}$ index the possible treatments, with $0$ denoting control. Let $\mathcal{T} = \{1,2,\dots,T\}$ index time periods. 
+
+Let $\mathbf{Y}^* \in \mathbb{R}^{T \times N \times (D+1)}$ denote the full potential outcomes tensor, where $Y^*_{t,i,d}$ is the potential outcome of unit $i$ at time $t$ under treatment $d$.
+
+At each $(i,t)$ pair, only one outcome is observed: if unit $i$ receives treatment $d(i,t)$ at time $t$, then we observe $Y_{t,i} = Y^*_{t,i,d(i,t)}$.
+
+Define $\mathcal{I}(d) = \{i \in \mathcal{N} : d(i,t) = d \, \forall t \in \mathcal{T}_1\}$ as the set of units assigned to treatment $d$ in the pre-treatment window $\mathcal{T}_1 \subset \mathcal{T}$.
+
+We seek to estimate the counterfactual trajectory $\{Y^*_{t,i,d'}\}_{t > T_0}$ for a unit $i$ that actually received treatment $d$.
+
+Synthetic interventions build unit-level estimators by solving a weight selection problem based on pre-treatment outcomes, then imputing post-treatment counterfactuals using observed outcomes of units that received $d'$.
+

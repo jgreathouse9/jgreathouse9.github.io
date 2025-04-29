@@ -4,24 +4,44 @@ date: 2025-04-16
 categories: [Causal Inference, Econometrics]
 ---
 
-
 Synthetic interventions generalize synthetic control methods to settings with multiple treatment arms and counterfactual treatment effects. Rather than estimating what would have occurred under no intervention, synthetic interventions estimate what would have occurred under a different intervention. This is particularly useful in policy analysis, marketing science, and settings with overlapping or competing treatments.
 
-We work within a panel framework where units may receive different interventions at different times. Our goal is to estimate the effect of switching treatments, rather than simply estimating treatment versus control.
+We work within a panel framework where units may receive different interventions at different times. The goal is to estimate the effect of switching treatments, rather than simply estimating treatment versus control.
 
-## Notation
+# Notation
 
-Scalars are denoted by lowercase italic letters, e.g., $g$. Vectors are denoted by bold lowercase letters, e.g., $\mathbf{v} \in \mathbb{R}^n$. Matrices are denoted by bold uppercase letters, e.g., $\mathbf{A} \in \mathbb{R}^{m \times n}$. Sets are denoted by calligraphic letters, e.g., $\mathcal{N}$, $\mathcal{T}$. For a finite set $\mathcal{A}$, its cardinality is $|\mathcal{A}|$.
+Scalars are denoted by lowercase italic letters such as $g$. Vectors are denoted by bold lowercase letters such as $\mathbf{v} \in \mathbb{R}^n$. Matrices are denoted by bold uppercase letters such as $\mathbf{A} \in \mathbb{R}^{m \times n}$. Sets are denoted by calligraphic letters such as $\mathcal{N}$ and $\mathcal{T}$. The cardinality of a finite set $\mathcal{A}$ is denoted $|\mathcal{A}|$.
 
-Let $\mathcal{N} = \{1, 2, \dots, N\}$ index the units. Let $\mathcal{D} = \{0,1,\dots,D\}$ index the possible treatments, with $0$ denoting control. Let $\mathcal{T} = \{1,2,\dots,T\}$ index time periods. 
+Let $\mathcal{N} = \{1, 2, \dots, N\}$ index the units and $\mathcal{T} = \{1, 2, \dots, T\}$ index time periods. Let $\mathcal{D} = \{0, 1, \dots, D\}$ index treatment statuses, with $0$ denoting the untreated condition. Each unit $j \in \mathcal{N}$ is assigned a treatment $d_j \in \mathcal{D}$. 
 
-Let $\mathbf{Y}^* \in \mathbb{R}^{T \times N \times (D+1)}$ denote the full potential outcomes tensor, where $Y^*_{t,i,d}$ is the potential outcome of unit $i$ at time $t$ under treatment $d$.
+Define $T_0 < T$ as the final pre-treatment period and partition $\mathcal{T}$ into pre-treatment periods $\mathcal{T}_{\text{pre}} = \{1, 2, \dots, T_0\}$ and post-treatment periods $\mathcal{T}_{\text{post}} = \{T_0 + 1, \dots, T\}$. Let $\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}$ denote the pre-treatment outcome vector for unit $j$ and $\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}$ denote its post-treatment outcomes. For a group of units assigned to treatment $d$, define $\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}$ as the matrix stacking the pre-treatment outcomes of units $j \in \mathcal{N}_d$, and $\mathbf{Y}_d^{\text{post}} \in \mathbb{R}^{T - T_0 \times N_d}$ as the corresponding post-treatment outcome matrix.
 
-At each $(i,t)$ pair, only one outcome is observed: if unit $i$ receives treatment $d(i,t)$ at time $t$, then we observe $Y_{t,i} = Y^*_{t,i,d(i,t)}$.
+Let $\mathcal{N}_d = \{ j \in \mathcal{N} \mid d_j = d \}$ denote the set of units exposed to treatment $d$. At each $(t, j)$ pair, we observe only $y_{t j} = y^*_{t j d_j}$, the realized outcome under the assigned treatment. Our goal is to estimate the counterfactual post-treatment trajectory $\{ y^*_{t 1 d} \}_{t \in \mathcal{T}_{\text{post}}}$ for a focal unit $j = 1$ that actually received treatment $d_1$, where $d \neq d_1$ represents an alternative treatment.
 
-Define $\mathcal{I}(d) = \{i \in \mathcal{N} : d(i,t) = d \, \forall t \in \mathcal{T}_1\}$ as the set of units assigned to treatment $d$ in the pre-treatment window $\mathcal{T}_1 \subset \mathcal{T}$.
+Although the framework models potential outcomes as forming a low-rank tensor across units, time, and treatments, estimation proceeds entirely through matrix methods. In practice, synthetic interventions reduce to applying principal components regression (PCR) to the pre-treatment donor matrix composed of units assigned to the alternative treatment $d$. There is no tensor decomposition step. The synthetic intervention estimator constructs a synthetic counterfactual trajectory by learning weights from pre-treatment data and then imputing post-treatment outcomes using observed outcomes from the alternative treatment group.
 
-We seek to estimate the counterfactual trajectory $\{Y^*_{t,i,d'}\}_{t > T_0}$ for a unit $i$ that actually received treatment $d$.
+# Recalling PCR
 
-Synthetic interventions build unit-level estimators by solving a weight selection problem based on pre-treatment outcomes, then imputing post-treatment counterfactuals using observed outcomes of units that received $d'$.
+To estimate the counterfactual trajectory under an alternative treatment $d \neq d_1$, we apply singular value decomposition (SVD) to the pre-treatment donor matrix $\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}$. This yields the decomposition
+$$
+\mathbf{Y}_d^{\text{pre}} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^\top,
+$$
+where $\mathbf{U} \in \mathbb{R}^{T_0 \times T_0}$ contains the left singular vectors, $\mathbf{\Sigma} \in \mathbb{R}^{T_0 \times N_d}$ is the diagonal matrix of singular values, and $\mathbf{V} \in \mathbb{R}^{N_d \times N_d}$ contains the right singular vectors.
+
+To obtain a low-dimensional representation, we truncate the decomposition at rank $r \leq T_0$. Let $\mathbf{U}_r \in \mathbb{R}^{T_0 \times r}$ denote the first $r$ columns of $\mathbf{U}$, and let $\mathbf{\Sigma}_r \in \mathbb{R}^{r \times r}$ denote the leading $r$ singular values on the diagonal. Define the reduced-rank basis
+$$
+\tilde{\mathbf{Y}}_d^{\text{pre}} = \mathbf{U}_r \mathbf{\Sigma}_r.
+$$
+
+We then project the treated unit's pre-treatment outcomes $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$ onto the donor space by solving the regression problem
+$$
+\mathbf{w}^\ast = \arg\min_{\mathbf{w} \in \mathbb{R}^{N_d}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_d^{\text{pre}} \mathbf{w} \right\|_2^2.
+$$
+
+This yields a weight vector $\mathbf{w}^*$ over the donor units in $\mathcal{N}_d$, constrained to lie in the subspace spanned by the leading principal components of the donor group. The estimated counterfactual trajectory for unit 1 under treatment $d$ is then constructed by applying these weights to the observed post-treatment outcomes:
+$$
+\hat{\mathbf{y}}_1^{\text{post}} = \mathbf{Y}_d^{\text{post}} \mathbf{w}^\ast.
+$$
+
+This quantity serves as an estimate for $\{y^*_{t 1 d}\}_{t \in \mathcal{T}_{\text{post}}}$, the counterfactual outcomes that unit 1 would have experienced had it received treatment $d$ instead of $d_1$.
 

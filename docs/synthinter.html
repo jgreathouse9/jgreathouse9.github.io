@@ -172,6 +172,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#recalling-pcr" id="toc-recalling-pcr" class="nav-link" data-scroll-target="#recalling-pcr">Recalling PCR</a></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(10)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(6)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(6)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -214,16 +215,30 @@ window.Quarto = {
 
 
 <p>Synthetic interventions generalize synthetic control methods to settings with multiple treatment arms and counterfactual treatment effects. Rather than estimating what would have occurred under no intervention, synthetic interventions estimate what would have occurred under a different intervention. This is particularly useful in policy analysis, marketing science, and settings with overlapping or competing treatments.</p>
-<p>We work within a panel framework where units may receive different interventions at different times. Our goal is to estimate the effect of switching treatments, rather than simply estimating treatment versus control.</p>
-<section id="notation" class="level2">
-<h2 class="anchored" data-anchor-id="notation">Notation</h2>
-<p>Scalars are denoted by lowercase italic letters, e.g., <span class="math inline">\(g\)</span>. Vectors are denoted by bold lowercase letters, e.g., <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>. Matrices are denoted by bold uppercase letters, e.g., <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters, e.g., <span class="math inline">\(\mathcal{N}\)</span>, <span class="math inline">\(\mathcal{T}\)</span>. For a finite set <span class="math inline">\(\mathcal{A}\)</span>, its cardinality is <span class="math inline">\(|\mathcal{A}|\)</span>.</p>
-<p>Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units. Let <span class="math inline">\(\mathcal{D} = \{0,1,\dots,D\}\)</span> index the possible treatments, with <span class="math inline">\(0\)</span> denoting control. Let <span class="math inline">\(\mathcal{T} = \{1,2,\dots,T\}\)</span> index time periods.</p>
-<p>Let <span class="math inline">\(\mathbf{Y}^* \in \mathbb{R}^{T \times N \times (D+1)}\)</span> denote the full potential outcomes tensor, where <span class="math inline">\(Y^*_{t,i,d}\)</span> is the potential outcome of unit <span class="math inline">\(i\)</span> at time <span class="math inline">\(t\)</span> under treatment <span class="math inline">\(d\)</span>.</p>
-<p>At each <span class="math inline">\((i,t)\)</span> pair, only one outcome is observed: if unit <span class="math inline">\(i\)</span> receives treatment <span class="math inline">\(d(i,t)\)</span> at time <span class="math inline">\(t\)</span>, then we observe <span class="math inline">\(Y_{t,i} = Y^*_{t,i,d(i,t)}\)</span>.</p>
-<p>Define <span class="math inline">\(\mathcal{I}(d) = \{i \in \mathcal{N} : d(i,t) = d \, \forall t \in \mathcal{T}_1\}\)</span> as the set of units assigned to treatment <span class="math inline">\(d\)</span> in the pre-treatment window <span class="math inline">\(\mathcal{T}_1 \subset \mathcal{T}\)</span>.</p>
-<p>We seek to estimate the counterfactual trajectory <span class="math inline">\(\{Y^*_{t,i,d'}\}_{t &gt; T_0}\)</span> for a unit <span class="math inline">\(i\)</span> that actually received treatment <span class="math inline">\(d\)</span>.</p>
-<p>Synthetic interventions build unit-level estimators by solving a weight selection problem based on pre-treatment outcomes, then imputing post-treatment counterfactuals using observed outcomes of units that received <span class="math inline">\(d'\)</span>.</p>
+<p>We work within a panel framework where units may receive different interventions at different times. The goal is to estimate the effect of switching treatments, rather than simply estimating treatment versus control.</p>
+<section id="notation" class="level1">
+<h1>Notation</h1>
+<p>Scalars are denoted by lowercase italic letters such as <span class="math inline">\(g\)</span>. Vectors are denoted by bold lowercase letters such as <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>. Matrices are denoted by bold uppercase letters such as <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters such as <span class="math inline">\(\mathcal{N}\)</span> and <span class="math inline">\(\mathcal{T}\)</span>. The cardinality of a finite set <span class="math inline">\(\mathcal{A}\)</span> is denoted <span class="math inline">\(|\mathcal{A}|\)</span>.</p>
+<p>Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units and <span class="math inline">\(\mathcal{T} = \{1, 2, \dots, T\}\)</span> index time periods. Let <span class="math inline">\(\mathcal{D} = \{0, 1, \dots, D\}\)</span> index treatment statuses, with <span class="math inline">\(0\)</span> denoting the untreated condition. Each unit <span class="math inline">\(j \in \mathcal{N}\)</span> is assigned a treatment <span class="math inline">\(d_j \in \mathcal{D}\)</span>.</p>
+<p>Define <span class="math inline">\(T_0 &lt; T\)</span> as the final pre-treatment period and partition <span class="math inline">\(\mathcal{T}\)</span> into pre-treatment periods <span class="math inline">\(\mathcal{T}_{\text{pre}} = \{1, 2, \dots, T_0\}\)</span> and post-treatment periods <span class="math inline">\(\mathcal{T}_{\text{post}} = \{T_0 + 1, \dots, T\}\)</span>. Let <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> denote the pre-treatment outcome vector for unit <span class="math inline">\(j\)</span> and <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span> denote its post-treatment outcomes. For a group of units assigned to treatment <span class="math inline">\(d\)</span>, define <span class="math inline">\(\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}\)</span> as the matrix stacking the pre-treatment outcomes of units <span class="math inline">\(j \in \mathcal{N}_d\)</span>, and <span class="math inline">\(\mathbf{Y}_d^{\text{post}} \in \mathbb{R}^{T - T_0 \times N_d}\)</span> as the corresponding post-treatment outcome matrix.</p>
+<p>Let <span class="math inline">\(\mathcal{N}_d = \{ j \in \mathcal{N} \mid d_j = d \}\)</span> denote the set of units exposed to treatment <span class="math inline">\(d\)</span>. At each <span class="math inline">\((t, j)\)</span> pair, we observe only <span class="math inline">\(y_{t j} = y^*_{t j d_j}\)</span>, the realized outcome under the assigned treatment. Our goal is to estimate the counterfactual post-treatment trajectory <span class="math inline">\(\{ y^*_{t 1 d} \}_{t \in \mathcal{T}_{\text{post}}}\)</span> for a focal unit <span class="math inline">\(j = 1\)</span> that actually received treatment <span class="math inline">\(d_1\)</span>, where <span class="math inline">\(d \neq d_1\)</span> represents an alternative treatment.</p>
+<p>Although the framework models potential outcomes as forming a low-rank tensor across units, time, and treatments, estimation proceeds entirely through matrix methods. In practice, synthetic interventions reduce to applying principal components regression (PCR) to the pre-treatment donor matrix composed of units assigned to the alternative treatment <span class="math inline">\(d\)</span>. There is no tensor decomposition step. The synthetic intervention estimator constructs a synthetic counterfactual trajectory by learning weights from pre-treatment data and then imputing post-treatment outcomes using observed outcomes from the alternative treatment group.</p>
+</section>
+<section id="recalling-pcr" class="level1">
+<h1>Recalling PCR</h1>
+<p>To estimate the counterfactual trajectory under an alternative treatment <span class="math inline">\(d \neq d_1\)</span>, we apply singular value decomposition (SVD) to the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}\)</span>. This yields the decomposition <span class="math display">\[
+\mathbf{Y}_d^{\text{pre}} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^\top,
+\]</span> where <span class="math inline">\(\mathbf{U} \in \mathbb{R}^{T_0 \times T_0}\)</span> contains the left singular vectors, <span class="math inline">\(\mathbf{\Sigma} \in \mathbb{R}^{T_0 \times N_d}\)</span> is the diagonal matrix of singular values, and <span class="math inline">\(\mathbf{V} \in \mathbb{R}^{N_d \times N_d}\)</span> contains the right singular vectors.</p>
+<p>To obtain a low-dimensional representation, we truncate the decomposition at rank <span class="math inline">\(r \leq T_0\)</span>. Let <span class="math inline">\(\mathbf{U}_r \in \mathbb{R}^{T_0 \times r}\)</span> denote the first <span class="math inline">\(r\)</span> columns of <span class="math inline">\(\mathbf{U}\)</span>, and let <span class="math inline">\(\mathbf{\Sigma}_r \in \mathbb{R}^{r \times r}\)</span> denote the leading <span class="math inline">\(r\)</span> singular values on the diagonal. Define the reduced-rank basis <span class="math display">\[
+\tilde{\mathbf{Y}}_d^{\text{pre}} = \mathbf{U}_r \mathbf{\Sigma}_r.
+\]</span></p>
+<p>We then project the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> onto the donor space by solving the regression problem <span class="math display">\[
+\mathbf{w}^\ast = \arg\min_{\mathbf{w} \in \mathbb{R}^{N_d}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_d^{\text{pre}} \mathbf{w} \right\|_2^2.
+\]</span></p>
+<p>This yields a weight vector <span class="math inline">\(\mathbf{w}^*\)</span> over the donor units in <span class="math inline">\(\mathcal{N}_d\)</span>, constrained to lie in the subspace spanned by the leading principal components of the donor group. The estimated counterfactual trajectory for unit 1 under treatment <span class="math inline">\(d\)</span> is then constructed by applying these weights to the observed post-treatment outcomes: <span class="math display">\[
+\hat{\mathbf{y}}_1^{\text{post}} = \mathbf{Y}_d^{\text{post}} \mathbf{w}^\ast.
+\]</span></p>
+<p>This quantity serves as an estimate for <span class="math inline">\(\{y^*_{t 1 d}\}_{t \in \mathcal{T}_{\text{post}}}\)</span>, the counterfactual outcomes that unit 1 would have experienced had it received treatment <span class="math inline">\(d\)</span> instead of <span class="math inline">\(d_1\)</span>.</p>
 
 
 
@@ -231,7 +246,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1745884440114" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1745885682407" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -255,7 +270,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1745884440111" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1745885682404" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -279,7 +294,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1745884440112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1745885682405" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -303,7 +318,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1745884440112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1745885682405" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -327,7 +342,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1745884440112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1745885682405" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -353,7 +368,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1745884440112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1745885682404" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -379,7 +394,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1745884440112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1745885682405" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -403,7 +418,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1745884440117" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1745885682410" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -427,7 +442,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1745884440116" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1745885682409" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -451,7 +466,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1745884491766" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1745885731912" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

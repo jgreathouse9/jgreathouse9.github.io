@@ -9,7 +9,7 @@
 <meta name="author" content="Jared Greathouse">
 <meta name="dcterms.date" content="2025-04-29">
 
-<title>Synthetic Interventions for Policy Analysis – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Synthetic Control Methods for Personalized Causal Inference – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -220,7 +220,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Synthetic Interventions for Policy Analysis</h1>
+<h1 class="title">Synthetic Control Methods for Personalized Causal Inference</h1>
   <div class="quarto-categories">
     <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Econometrics</div>
@@ -253,9 +253,9 @@ window.Quarto = {
 </header>
 
 
-<p>In standard synthetic control methods (SCM), we aim to estimate the outcome for a treated unit if it had not been treated at all. In fact, this is what most data scientsts who do causal inference are interested in, that is to say the counterfactual under no treatment. But very often, there are a grab bag of policies we concern ourselves with that oftentimes may affect the exact same outcome.</p>
-<p>A retail chain might roll out different loyalty programs across its stores. For instance, Store A adopts a cash-back program (Program A), Store B adopts a points-based program (Program B), and Store C adopts a discount coupon program (Program C). Observing outcomes like revenue and customer visits under each program, a natural question would be: <em>How would Store A have performed if it had adopted Program B instead of Program A?</em> In policy, cities or states implement different public health interventions targeting soda consumption. For example, City 1 bans the sale of large sodas, City 2 imposes a tax on sugary drinks, and City 3 mandates calorie labeling on menus. Observing health outcomes such as obesity rates and soda sales across these cities, we might ask: <em>What if City 1 had imposed a soda tax instead of banning large sodas?</em> How would these metrics have evolved in this scenario? <a href="https://doi.org/10.1177/0022243720936230">Plenty</a> <a href="https://doi.org/10.1186/s12889-025-22526-5">of</a> <a href="https://jamanetwork.com/journals/jama-health-forum/fullarticle/2813506">academic papers</a> have addressed this idea before, but only to assess the counerfactual scenario of no tax at all.</p>
-<p>A natrual question, then, is how we could know the impact of another policy, had it been applied to a unit that actually did another policy. Or, How a unit that did no policy would have evolved had it done <em>any</em> policy. Here, the standard SCM does not offer a satisfying answer. This is where the <a href="https://doi.org/10.48550/arXiv.2006.07691">Synthetic Interventions</a> estimator comes from. SI estimates how a treated unit would have performed under an alternative intervention it did not actually receive, using outcomes from units that did receive that intervention. Per the examples above, one could construct a synthetic version of Store A under Program B, based on observed outcomes from stores that actually implemented Program B. Similarly, we could construct a synthetic version of City/State 1 under the soda tax policy (instead of the ban), using observed outcomes from cities that actually taxed sugary drinks. SI <em>substantially expands</em> the range of counterfactual questions that can be credibly answered.</p>
+<p>Most data scientists who use synthetic control methods likely aim to estimate the counterfactual outcome for a treated unit if it had not been treated at all. This framework works quite neatly in the setting with a dummy treatment status (exposed or not exposed). But very often, there are a grab bag of policies we concern ourselves with that oftentimes may affect the exact same outcome. A retail chain might roll out different loyalty programs across its stores. For instance, Store A adopts a cash-back program (Program A), Store B adopts a points-based program (Program B), and Store C adopts a discount coupon program (Program C). Observing outcomes like revenue and customer visits under each program, we are typically concered with the outcome under the scenario of no treatment. A research question could be how the store with the cash backprogram would have fared had it done nothing at all. In policy, cities or states implement different public health interventions targeting soda consumption. For example, City 1 bans the sale of large sodas, City 2 imposes a tax on sugary drinks, and City 3 mandates calorie labeling on menus.</p>
+<p>But what if we wish to estimate the counterfactual for a given unit <em>as if it did another policy from what it actually did</em>. In other words, <em>How would Store A have performed if it had adopted Program B instead of Program A?</em> <em>What if City 1 had imposed a soda tax instead of banning large sodas?</em> How would health metrics evolved if the other policy was done instead? <a href="https://doi.org/10.1177/0022243720936230">Plenty</a> <a href="https://doi.org/10.1186/s12889-025-22526-5">of</a> <a href="https://jamanetwork.com/journals/jama-health-forum/fullarticle/2813506">academic papers</a> have addressed this idea before, but only to assess the counterfactual scenario of no tax at all.</p>
+<p>This is where the <a href="https://doi.org/10.48550/arXiv.2006.07691">Synthetic Interventions</a> estimator is useful. SI estimates how a treated unit (<strong>or even a never treated unit</strong>) would have performed under an intervention it did not actually receive. Per the examples above, one could construct a synthetic version of Store A under Program B, based on observed outcomes from stores that actually implemented Program B. Similarly, we could construct a synthetic version of City/State 1 under the soda tax policy (instead of the ban), using observed outcomes from cities that actually taxed sugary drinks. SI <em>substantially expands</em> the range of counterfactual questions that can be credibly answered.</p>
 <p>Before we get to business, I should note how this is a personal milestone for me. SI was likely the first estimator that really got me interested in the extensions to SCM. You see, I became a PHD student right around the time the pandemic began, and we began to see papers like <a href="https://arxiv.org/pdf/2009.09987">this</a> circulate that claimed to be able to estimate things like “what would NYC’s COVID rate look like had it locked down earlier than it actually did”. I had never heard of tensors, or really even matrices at the time, so I would always ask “wow, how can we even do this?” So, on my 4th year of school, it is very nice to not just understand the estimator, but be able to share it with others.</p>
 <section id="notation" class="level1">
 <h1>Notation</h1>
@@ -267,16 +267,17 @@ window.Quarto = {
 <p><a href="https://doi.org/10.48550/arXiv.2006.07691">The paper</a> assumes that potential outcomes admit a low-rank latent factor structure. Formally, each potential outcome <span class="math inline">\(y_{t j d}^{\ast}\)</span> for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> under treatment <span class="math inline">\(d\)</span> is generated by <span class="math display">\[
 y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 \]</span> where <span class="math inline">\(\mathbf{l}_t \in \mathbb{R}^r\)</span> is a vector of time-specific latent factors, <span class="math inline">\(\mathbf{f}_j^{(d)} \in \mathbb{R}^r\)</span> is a vector of unit- and treatment-specific loadings, and <span class="math inline">\(\varepsilon_{t j d}\)</span> is an idiosyncratic error term with mean zero. The dimension <span class="math inline">\(r\)</span> is assumed to be small relative to <span class="math inline">\(T\)</span> and <span class="math inline">\(N\)</span>.</p>
-<p>The interactive structure implies that the tensor of potential outcomes across <span class="math inline">\((t, j, d)\)</span> admits a low-rank decomposition. The principal components of the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}}\)</span> consistently estimate the column space of <span class="math inline">\(\{ \mathbf{l}_t \}\)</span> up to rotation. Consequently, by projecting pre-treatment outcomes onto this estimated subspace and regressing the treated unit onto the donors, we can recover consistent estimates of the treated unit’s counterfactual trajectory under alternative treatments. SI relies on assumptions similar to SCMs. First, the tensor of potential outcomes admits a low-rank decomposition. Practically, this means the number of latent factors <span class="math inline">\(r\)</span> is small relative to the number of time periods and units (which is usually true in the standard econ application). We also presume the latent factor structure is stable across treatments and over time. The factors <span class="math inline">\(\mathbf{l}_t\)</span> and loadings <span class="math inline">\(\mathbf{f}_j^{(d)}\)</span> do not change discontinuously due to treatment assignment. Third, the donor units assigned to the alternative treatment <span class="math inline">\(d\)</span> span the relevant factor space needed to approximate the treated unit’s pre-treatment outcomes. Fourth, the idiosyncratic error terms <span class="math inline">\(\varepsilon_{t j d}\)</span> are mean-zero and satisfy weak regularity conditions such as independence across units or bounded variance. Finally, there is sufficient pre-treatment data to accurately estimate the principal components of the donor matrix. As we can see, all of this is more or less pretty standard, so nothing too crazy is happening here in terms of assumptions.</p>
+<p>The interactive structure implies that the tensor of potential outcomes across <span class="math inline">\((t, j, d)\)</span> admits a low-rank decomposition. The principal components of the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}}\)</span> consistently estimate the column space of <span class="math inline">\(\{ \mathbf{l}_t \}\)</span> up to rotation. Consequently, by projecting pre-treatment outcomes onto this estimated subspace and regressing the treated unit onto the donors, we can recover consistent estimates of the treated unit’s counterfactual trajectory under alternative treatments. SI relies on assumptions similar to SCMs. Aside from low-rankness, we also presume the latent factor structure is stable across treatments and over time. The factors <span class="math inline">\(\mathbf{l}_t\)</span> and loadings <span class="math inline">\(\mathbf{f}_j^{(d)}\)</span> do not change discontinuously due to treatment assignment. Third, the donor units assigned to the alternative treatment <span class="math inline">\(d\)</span> span the relevant factor space needed to approximate the treated unit’s pre-treatment outcomes. Fourth, the idiosyncratic error terms <span class="math inline">\(\varepsilon_{t j d}\)</span> are mean-zero and satisfy weak regularity conditions such as independence across units or bounded variance. Finally, there is sufficient pre-treatment data to accurately estimate the principal components of the donor matrix.</p>
+<p>As we can see, all of this is more or less pretty standard.</p>
 </section>
 <section id="recalling-pcr" class="level1">
 <h1>Recalling PCR</h1>
-<p>The estimation (unlike the theoretical justification) proceeds entirely through matrices, and does not use any tensor decomposition. In practice, SI simply applies PCR to the pre-treatment matrix of units assigned to the alternative treatment <span class="math inline">\(d\)</span>. To estimate the counterfactual trajectory under an alternative treatment <span class="math inline">\(d \neq d_1\)</span>, we apply singular value decomposition SVD to the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}\)</span>. This yields the decomposition <span class="math display">\[
+<p>Practically, SI simply applies PCR to the pre-treatment matrix of units assigned to the alternative treatment <span class="math inline">\(d\)</span>. To estimate the counterfactual trajectory under an alternative treatment <span class="math inline">\(d \neq d_1\)</span>, we apply singular value decomposition SVD to the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}\)</span>. This yields the decomposition <span class="math display">\[
 \mathbf{Y}_d^{\text{pre}} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^\top,
-\]</span> where <span class="math inline">\(\mathbf{U} \in \mathbb{R}^{T_0 \times T_0}\)</span> contains the left singular vectors, <span class="math inline">\(\mathbf{\Sigma} \in \mathbb{R}^{T_0 \times N_d}\)</span> is the diagonal matrix of singular values, and <span class="math inline">\(\mathbf{V} \in \mathbb{R}^{N_d \times N_d}\)</span> contains the right singular vectors. To obtain a low-dimensional representation, we truncate the decomposition at rank <span class="math inline">\(r \leq T_0\)</span> via Universal Singular Value Thresholding. Let <span class="math inline">\(\mathbf{U}_r \in \mathbb{R}^{T_0 \times r}\)</span> denote the first <span class="math inline">\(r\)</span> columns of <span class="math inline">\(\mathbf{U}\)</span>, and let <span class="math inline">\(\mathbf{\Sigma}_r \in \mathbb{R}^{r \times r}\)</span> denote the leading <span class="math inline">\(r\)</span> singular values on the diagonal. Define the reduced-rank basis <span class="math display">\[
+\]</span> where <span class="math inline">\(\mathbf{U} \in \mathbb{R}^{T_0 \times T_0}\)</span> contains the left singular vectors, <span class="math inline">\(\mathbf{\Sigma} \in \mathbb{R}^{T_0 \times N_d}\)</span> is the diagonal matrix of singular values, and <span class="math inline">\(\mathbf{V} \in \mathbb{R}^{N_d \times N_d}\)</span> contains the right singular vectors. To obtain a low-dimensional representation, we truncate the decomposition at rank <span class="math inline">\(r \leq T_0\)</span> via <a href="https://www.jstor.org/stable/43556512">Universal Singular Value Thresholding</a>. Let <span class="math inline">\(\mathbf{U}_r \in \mathbb{R}^{T_0 \times r}\)</span> denote the first <span class="math inline">\(r\)</span> columns of <span class="math inline">\(\mathbf{U}\)</span>, and let <span class="math inline">\(\mathbf{\Sigma}_r \in \mathbb{R}^{r \times r}\)</span> denote the leading <span class="math inline">\(r\)</span> singular values on the diagonal. Define the reduced-rank basis <span class="math display">\[
 \tilde{\mathbf{Y}}_d^{\text{pre}} = \mathbf{U}_r \mathbf{\Sigma}_r.
 \]</span></p>
-<p>We then project the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> onto the donor space by solving the regression problem <span class="math display">\[
+<p>We then project the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> onto the reduced rank donor space by solving the program <span class="math display">\[
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \mathbb{R}^{N_d}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_d^{\text{pre}} \mathbf{w} \right\|_2^2.
 \]</span></p>
 <p>This yields a weight vector <span class="math inline">\(\mathbf{w}^{\ast}\)</span> over the donor units in <span class="math inline">\(\mathcal{N}_d\)</span>, constrained to lie in the subspace spanned by the leading principal components. The estimated counterfactual trajectory for the unit of interest under treatment <span class="math inline">\(d\)</span> is then constructed by applying these weights to the observed post-treatment outcomes: <span class="math display">\[
@@ -287,8 +288,8 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 <h2 class="anchored" data-anchor-id="si-in-mlsynth">SI in <code>mlsynth</code></h2>
 <p>Now I will give an example of how to use SI for your own applied work. As ususal, in order to properly implement this, we begin by installing <code>mlsynth</code> from my Github</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Next we load the Proposition 99 data, using the dataset that has all of the states in the United States.</p>
-<div id="60d1a314" class="cell" data-execution_count="1">
+<p>Next we load <a href="https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf">the Proposition 99 data</a>, using the dataset that has all of the states in the United States.</p>
+<div id="2d713191" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SI</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -319,7 +320,7 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 <span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.rename(columns<span class="op">=</span>{<span class="st">"Data_Value"</span>: <span class="st">"cigsale"</span>, <span class="st">"LocationDesc"</span>: <span class="st">"State"</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We begin with simple data cleaning. All we do is keep the relevant metrics, setting a treatment variable “SynthInter” to be 1 if the year is greater than or equal to 1992 and the unit of interest is Louisiana. I choose 1992 because this is the year Massachusetts passed its anti tobacco policy. Note that no policy in fact happened in Louisiana, so we will see the effect of keeping the status quo of no tobacco control policy at all. We then define as an indicator which states did the taxes. <a href="https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf">According to Abadie’s 2010 paper</a> those states are Massachusetts, Arizona, Oregon, and Florida. We also define an indicator for states that did an anti-tobacco statewide program. This way, we can see how per capita smoking would have evolved under either policy. Under the hood, we just loop through each of the different policies the user specifies.</p>
-<div id="16c64d28" class="cell" data-execution_count="2">
+<div id="6e8614b8" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.rename(columns<span class="op">=</span>{<span class="st">"Data_Value"</span>: <span class="st">"cigsale"</span>, <span class="st">"LocationDesc"</span>: <span class="st">"State"</span>})</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -330,11 +331,12 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: <span class="st">'Year'</span>,</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>, <span class="st">"blue"</span>], <span class="st">"inters"</span>: [<span class="st">"Taxes"</span>, <span class="st">"Program"</span>],</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"objective"</span>: <span class="st">"OLS"</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> SI(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>, <span class="st">"blue"</span>],</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inters"</span>: [<span class="st">"Taxes"</span>, <span class="st">"Program"</span>],</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"objective"</span>: <span class="st">"OLS"</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> SI(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -358,7 +360,7 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1745944318095" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1745948550292" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -382,7 +384,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1745944318092" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2400">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1745948550289" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -406,7 +408,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1745944318093" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1745948550290" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -430,7 +432,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1745944318092" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1745948550290" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -454,7 +456,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1745944318092" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1745948550290" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -480,7 +482,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1745944318092" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1745948550290" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -506,7 +508,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1745944318092" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1745948550290" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -530,7 +532,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1745944318098" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1745948550295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -554,7 +556,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1745944318097" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1745948550295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -578,7 +580,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1745944364649" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1745948603137" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

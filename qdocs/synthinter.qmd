@@ -51,5 +51,76 @@ $$
 
 This quantity serves as an estimate for $\{y^{\ast}_{t 1 d}\}_{t \in \mathcal{T}_{\text{post}}}$, the counterfactual outcomes that unit 1 would have experienced had it received treatment $d$ instead of $d_1$.
 
-# Estimating SI
+## SI in ```mlsynth```
 
+Now I will give an example of how to use SI for your own applied work. As ususal, in order to properly implement this, we begin by installing ```mlsynth``` from my Github
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+Next we load the Proposition 99 data, using the dataset that has all of the states in the United States.
+
+```{python}
+
+import pandas as pd
+from mlsynth.mlsynth import SI
+
+# Load the data
+url = "https://raw.githubusercontent.com/jehangiramjad/tslib/refs/heads/master/tests/testdata/prop99.csv"
+df = pd.read_csv(url)
+last_column = df.columns[-1]
+df_filtered = df[df[last_column] == 2]
+
+columns_to_keep = list(df.columns[0:4]) + [df.columns[7]]
+df_filtered = df_filtered[columns_to_keep]
+
+sort_columns = [df_filtered.columns[1], df_filtered.columns[2]]
+df_filtered = df_filtered.sort_values(by=sort_columns)
+
+df_filtered = df_filtered[df_filtered[df_filtered.columns[2]] < 2000]
+
+df_filtered['SynthInter'] = ((df_filtered[df_filtered.columns[0]] == 'LA') &
+                         (df_filtered[df_filtered.columns[2]] >= 1992)).astype(int)
+
+
+tax_states = ['MA', 'AZ', 'OR', 'FL']  # Massachusetts, Arizona, Oregon, Florida abbreviations
+df_filtered['Taxes'] = (df_filtered[df_filtered.columns[0]].isin(tax_states)).astype(int)
+
+program_states = ['AK', 'HI', 'MD', 'MI', 'NJ', 'NY', 'WA', 'CA']
+df_filtered['Program'] = (df_filtered[df_filtered.columns[0]].isin(program_states)).astype(int)
+
+df_filtered = df_filtered.rename(columns={"Data_Value": "cigsale", "LocationDesc": "State"})
+```
+
+We begin with simple data cleaning. All we do is keep the relevant metrics, setting a treatment variable "SynthInter" to be 1 if the year is greater than or equal to 1992 and the unit of interest is Louisiana. I choose 1992 because this is the year Massachusetts passed its anti tobacco policy. Note that no policy in fact happened in Louisiana, so we will see the effect of keeping the status quo of no tobacco control policy at all. We then define as an indicator which states did the taxes. [According to Abadie's 2010 paper](https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf) those states are Massachusetts, Arizona, Oregon, and Florida. We also define an indicator for states that did an anti-tobacco statewide program. This way, we can see how per capita smoking would have evolved under either policy. Under the hood, we just loop through each of the different policies the user specifies.
+
+```{python}
+#| fig-align: center
+
+df_filtered = df_filtered.rename(columns={"Data_Value": "cigsale", "LocationDesc": "State"})
+
+config = {
+    "df": df_filtered,
+    "outcome": 'cigsale',
+    "treat": 'SynthInter',
+    "unitid": 'State',
+    "time": 'Year',
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red", "blue"], "inters": ["Taxes", "Program"],
+    "objective": "OLS"
+}
+
+arco = SI(config).fit()
+```
+
+For Louisiana, the ATT of keeping the status quo relative to the state-wide tobacco program maintained per capita consumption 19.134 higher than what it would have been otherwise. The ATT of not passing taxes on tobacco, compared to taxes, mainatined the same at roughly 19.77 higher than what would have been otherwise. To me, these findings are not very surprising: "Anti tobacco programs/taxes reduce slightly tobacco consumption, wow, how shocking!" But now, we can actually *answer* these kinds of questions using econometric methods, instead of just speculating.
+
+When we look at the dictionary that the SI class returns, we see that the policies would have been pretty effective at reducing tobacco consumption. The dictionary is policy specific, one dictionary per policy the user chooses to consider. The SI estimator also only works for 1 treated unit, however analysts can easily make (say) a list of dataframes with an indicator for each synthetic treatment and loop over them. Once they have done this, we may extract the ATT per policy, per treated unit, and compute the sample average for an event-time ATT version for a given policy across units. I do not optimize the code to do this for a few reasons: one, the more policies and treated units we have, the less efficient it becomes to estimate tractably. Furthermore, the SI estimator is about personalized causal inference. So, I will likely leave this class for users to adapt to their own purposes (with some adjustments, if demand exists for something else).
+
+# Closing Remarks
+
+There are a few caveats to consider: for one, you likely need a lot of units that do the alternative treatment in order for SI to be effective. Again this is not voodoo or magic, it is just SCM applied using another set of treated units as our donor pool, meaning the other treated units must be informative about the pre-treatment trajectory of the target unit. This can only happen with a rich enough donor pool. We can also imagine cool extensions to this estimator, such as [incorporating additional outcomes](https://doi.org/10.48550/arXiv.1905.06400), making this into a sort of multi-dimensional SI (say, mSI-PCR) where we incorporate other outcomes into the SI objective function (maybe I'll add this as a kind of extension to the PCR method in my Python code). We also could likely do this with other estimators too, aside from just SCM (say, one of the panel data apporaches in ```mlsynth```).
+
+Either way, the benefits of this estimator should be pretty clear. I suspect with more fine tuning and in the right hands, this would be completely revolutionary for policy analysts, economists, and marketing scientists. We now need not limit ourselves to simply estimating counterfactuals where no treatment ever occurs in non-experimental settings. In advertising, we can simulate how the group shown 10 ads would have converted had they been shown 5, 4, or 2 ads. In public health, we can simulate whether masking mandates or vaccine mandates (or both) save more lives. The benefit of mlsynth's ```SI``` class is to provide these tools to the wider experimentation world so that they may be used and indeed improved more than they currently are.

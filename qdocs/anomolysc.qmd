@@ -4,26 +4,31 @@ date: 2025-05-01
 categories: [Causal Inference, Econometrics]
 ---
 
-To construct a robust synthetic control, we begin by pre-processing the data. For each control unit $j \in \mathcal{N}_0$, we define the normalized and detrended time series $\tilde{\mathbf{y}}_j \in \mathbb{R}^T$ by subtracting the mean over time: $\tilde{\mathbf{y}}_j = \mathbf{y}_j - \frac{1}{T} \sum_{t \in \mathcal{T}} y_{j,t}$. The treated unit $\mathbf{y}_1$ is normalized similarly. Let $\tilde{\mathbf{Y}}_0 \in \mathbb{R}^{T \times N_0}$ denote the matrix that stacks the $\tilde{\mathbf{y}}_j$ for all $j \in \mathcal{N}_0$.
+ 
+## Notation
 
-Next, we perform anomaly detection using two tests on the pre-treatment data $\mathcal{T}_1 = \{1, \dots, T_0\}$. The first is a Granger causality test, in which we regress $\tilde{y}_{1,t}$ on lagged values of $\tilde{y}_{j,t-1}$ and retain control unit $j$ only if the null hypothesis of no Granger causality is rejected at significance level $\alpha$. We define a binary indicator $g_j \in \{0, 1\}$, which equals $1$ if control $j$ passes the Granger test and $0$ otherwise.
+I adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as $g$, vectors are denoted by bold lowercase letters such as $\mathbf{v} \in \mathbb{R}^n$, and matrices are denoted by bold uppercase letters such as $\mathbf{A} \in \mathbb{R}^{m \times n}$. Sets are denoted by calligraphic letters, such as $\mathcal{N}$ or $\mathcal{T}$, and the cardinality of a finite set $\mathcal{A}$ is written $|\mathcal{A}|$. For a matrix $\mathbf{A}$, we write $\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2$ for the squared Frobenius norm and $\| \mathbf{A} \|_2$ for its spectral norm. For any $n \in \mathbb{N}$, we define the $n$-dimensional probability simplex by
 
-The second test is a proximity test, which measures how far each control unit's trajectory deviates from the average of the other control units. Let $\bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} = \frac{1}{N_0 - 1} \sum_{k \neq j} \tilde{\mathbf{y}}_k^{\text{pre}}$ denote the average pre-treatment path excluding unit $j$, and define the squared distance $d_j = \frac{1}{T_0} \left\| \tilde{\mathbf{y}}_j^{\text{pre}} - \bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} \right\|_2^2$. If $d_j$ exceeds the $(1 - \alpha)$ quantile of the chi-squared distribution with $T_0$ degrees of freedom, we flag control $j$ as an anomaly. Let $p_j \in \{0, 1\}$ indicate whether unit $j$ passes this proximity test.
-
-We then define the hybrid inclusion indicator $I_j = g_j \cdot p_j$, which equals $1$ if donor $j$ passes both tests and $0$ otherwise. For all units with $I_j = 1$, we compute a soft anomaly score using a Gaussian radial basis function: $s_j = \exp\left( -\frac{d_j^2}{2\sigma^2} \right)$, where $\sigma > 0$ controls the rate of decay in similarity-based weighting. These anomaly scores are used to define relative importance in the loss function of the synthetic control estimator.
-
-Let $\boldsymbol{\omega} = (\omega_j)_{j \in \mathcal{N}_0} \in \Delta^{N_0 - 1}$ be the vector of synthetic control weights, constrained to the probability simplex. Let $\mathbf{S} = \text{diag}(I_j \cdot s_j)$ be a diagonal matrix of anomaly-based reweighting factors. We then solve the following **weighted constrained least squares problem**:
-
-$$
-\min_{\boldsymbol{\omega} \in \Delta^{N_0 - 1}} \left\| \mathbf{S}^{1/2} \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \boldsymbol{\omega} \right) \right\|_2^2.
+$$ 
+\Delta^{N_0 - 1} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid w_j \geq 0 \: \forall j \in \mathcal{N}_0, \sum_{j \in \mathcal{N}_0} w_j = 1 \right\}. 
 $$
 
-Equivalently, we minimize a weighted residual sum of squares where each donor’s contribution to the fit is scaled by its anomaly-adjusted importance. Donors flagged as anomalous (i.e., $I_j = 0$) contribute nothing to the fit since their corresponding diagonal entry in $\mathbf{S}$ is zero.
+Matrix multiplication is written in the usual way; products like $\mathbf{A}^\top \mathbf{b}$, $\mathbf{A} \mathbf{B}$, or $\mathbf{b}^\top \mathbf{c}$ denote standard matrix-vector or matrix-matrix products. Let $\mathcal{N} = \{1, 2, \dots, N\}$ index the units in the panel, with unit $1$ denoting the treated unit and $\mathcal{N}_0 = \{2, 3, \dots, N\}$ denoting the set of control units. We write $N_0 = |\mathcal{N}_0| = N - 1$ for its cardinality. Let $\mathcal{T} \subset \mathbb{N}$ be a finite set of time periods with $|\mathcal{T}| = T$. Let $T_0 < T$ denote the final pre-treatment period. Define the pre-treatment period as $\mathcal{T}_1 = \{1, 2, \dots, T_0\}$ with $|\mathcal{T}_1| = T_0$ and the post-treatment period as $\mathcal{T}_2 = \{T_0 + 1, \dots, T\}$ with $|\mathcal{T}_2| = T - T_0$. Let $\mathbf{y}_j \in \mathbb{R}^{T}$ denote the time series for our focal outcome of interest $\forall \, j \in \mathcal{N}$. We write $\mathbf{y}_1 = \begin{bmatrix} y_{1,1} & \cdots & y_{1,T} \end{bmatrix}^\top \in \mathbb{R}^T$ for the treated unit’s outcome vector. Let $\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}$ denote the matrix that stacks the outcome vectors for all control units $j \in \mathcal{N}_0$. Each time series $\mathbf{y}_j$ is partitioned into a pre-treatment vector $\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}$ and a post-treatment vector $\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}$. Likewise, the control matrix $\mathbf{Y}_0$ is partitioned into $\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}$ and $\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{(T - T_0) \times N_0}$.
 
-The resulting solution $\hat{\boldsymbol{\omega}}$ defines the synthetic control for the treated unit as:
+# Stable SC
+
+To mitigate sensitivity to outlier and irrelevant control units, we apply a hybrid anomaly detection and weighting procedure that filters and scores donors before constructing the synthetic control. We begin by forming normalized, mean-centered versions of each time series. For each control unit $j \in \mathcal{N}_0$, we define $\tilde{\mathbf{y}}_j = \mathbf{y}_j - \frac{1}{T} \sum_{t \in \mathcal{T}} y_{j,t} \in \mathbb{R}^T$. The treated unit $\mathbf{y}_1$ is normalized analogously. Let $\tilde{\mathbf{Y}}_0 \in \mathbb{R}^{T \times N_0}$ stack the $\tilde{\mathbf{y}}_j$ for all $j \in \mathcal{N}_0$.
+
+Two diagnostic tests are applied to each control unit using pre-treatment data $\mathcal{T}_1$. The first is a Granger causality test that assesses whether the lagged values of $\tilde{\mathbf{y}}_j$ help predict $\tilde{\mathbf{y}}_1^{\text{pre}}$. If the null of no Granger causality is not rejected at level $\alpha$, control $j$ is flagged as uninformative. Let $g_j \in \{0,1\}$ denote the Granger inclusion indicator.
+
+The second test evaluates proximity. For each $j \in \mathcal{N}_0$, we compute the average pre-treatment trajectory of all other donors, denoted $\bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} = \frac{1}{N_0 - 1} \sum_{k \neq j} \tilde{\mathbf{y}}_k^{\text{pre}}$. We define the squared deviation $d_j = \frac{1}{T_0} \left\| \tilde{\mathbf{y}}_j^{\text{pre}} - \bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} \right\|_2^2$. If $d_j$ exceeds the $(1 - \alpha)$ quantile of the $\chi^2(T_0)$ distribution, control $j$ is flagged as an outlier. Let $p_j \in \{0,1\}$ be the proximity inclusion indicator.
+
+We define the hybrid inclusion indicator as $I_j = g_j \cdot p_j$. Control unit $j$ is retained only if $I_j = 1$. For each retained donor, we compute a smooth similarity score using a radial basis function: $s_j = \exp\left(-\frac{d_j^2}{2\sigma^2} \right)$, where $\sigma > 0$ controls the decay rate.
+
+These scores define a diagonal matrix $\mathbf{S} = \mathrm{diag}(I_j \cdot s_j)$, which downweights marginal donors and zeros out anomalous ones. This matrix is used to define a semi-norm in the synthetic control objective:
 
 $$
-\hat{\mathbf{y}}_1 = \mathbf{Y}_0 \hat{\boldsymbol{\omega}}.
+\min_{\mathbf{w} \in \Delta^{N_0 - 1}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_{\mathbf{S}}^2 = \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right)^\top \mathbf{S} \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right).
 $$
 
-This hybrid approach therefore preserves the familiar convex optimization structure of classical synthetic control, but integrates data-driven anomaly diagnostics both to exclude untrustworthy donors and to softly discount the influence of marginally reliable ones. In doing so, it yields more robust and stable estimates of the counterfactual trajectory, especially in real-world settings where untreated units may be subject to latent shocks or structural breaks.
+This semi-norm formulation softly penalizes residuals associated with high-variance or low-relevance donors, yielding a robust and data-adaptive synthetic control estimator.

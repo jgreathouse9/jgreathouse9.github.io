@@ -167,7 +167,14 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#stable-sc" id="toc-stable-sc" class="nav-link" data-scroll-target="#stable-sc">Stable SC</a></li>
+  </ul>
+</nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(11)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(7)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(7)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -207,27 +214,33 @@ window.Quarto = {
 </header>
 
 
-<p>To construct a robust synthetic control, we begin by pre-processing the data. For each control unit <span class="math inline">\(j \in \mathcal{N}_0\)</span>, we define the normalized and detrended time series <span class="math inline">\(\tilde{\mathbf{y}}_j \in \mathbb{R}^T\)</span> by subtracting the mean over time: <span class="math inline">\(\tilde{\mathbf{y}}_j = \mathbf{y}_j - \frac{1}{T} \sum_{t \in \mathcal{T}} y_{j,t}\)</span>. The treated unit <span class="math inline">\(\mathbf{y}_1\)</span> is normalized similarly. Let <span class="math inline">\(\tilde{\mathbf{Y}}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks the <span class="math inline">\(\tilde{\mathbf{y}}_j\)</span> for all <span class="math inline">\(j \in \mathcal{N}_0\)</span>.</p>
-<p>Next, we perform anomaly detection using two tests on the pre-treatment data <span class="math inline">\(\mathcal{T}_1 = \{1, \dots, T_0\}\)</span>. The first is a Granger causality test, in which we regress <span class="math inline">\(\tilde{y}_{1,t}\)</span> on lagged values of <span class="math inline">\(\tilde{y}_{j,t-1}\)</span> and retain control unit <span class="math inline">\(j\)</span> only if the null hypothesis of no Granger causality is rejected at significance level <span class="math inline">\(\alpha\)</span>. We define a binary indicator <span class="math inline">\(g_j \in \{0, 1\}\)</span>, which equals <span class="math inline">\(1\)</span> if control <span class="math inline">\(j\)</span> passes the Granger test and <span class="math inline">\(0\)</span> otherwise.</p>
-<p>The second test is a proximity test, which measures how far each control unit’s trajectory deviates from the average of the other control units. Let <span class="math inline">\(\bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} = \frac{1}{N_0 - 1} \sum_{k \neq j} \tilde{\mathbf{y}}_k^{\text{pre}}\)</span> denote the average pre-treatment path excluding unit <span class="math inline">\(j\)</span>, and define the squared distance <span class="math inline">\(d_j = \frac{1}{T_0} \left\| \tilde{\mathbf{y}}_j^{\text{pre}} - \bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} \right\|_2^2\)</span>. If <span class="math inline">\(d_j\)</span> exceeds the <span class="math inline">\((1 - \alpha)\)</span> quantile of the chi-squared distribution with <span class="math inline">\(T_0\)</span> degrees of freedom, we flag control <span class="math inline">\(j\)</span> as an anomaly. Let <span class="math inline">\(p_j \in \{0, 1\}\)</span> indicate whether unit <span class="math inline">\(j\)</span> passes this proximity test.</p>
-<p>We then define the hybrid inclusion indicator <span class="math inline">\(I_j = g_j \cdot p_j\)</span>, which equals <span class="math inline">\(1\)</span> if donor <span class="math inline">\(j\)</span> passes both tests and <span class="math inline">\(0\)</span> otherwise. For all units with <span class="math inline">\(I_j = 1\)</span>, we compute a soft anomaly score using a Gaussian radial basis function: <span class="math inline">\(s_j = \exp\left( -\frac{d_j^2}{2\sigma^2} \right)\)</span>, where <span class="math inline">\(\sigma &gt; 0\)</span> controls the rate of decay in similarity-based weighting. These anomaly scores are used to define relative importance in the loss function of the synthetic control estimator.</p>
-<p>Let <span class="math inline">\(\boldsymbol{\omega} = (\omega_j)_{j \in \mathcal{N}_0} \in \Delta^{N_0 - 1}\)</span> be the vector of synthetic control weights, constrained to the probability simplex. Let <span class="math inline">\(\mathbf{S} = \text{diag}(I_j \cdot s_j)\)</span> be a diagonal matrix of anomaly-based reweighting factors. We then solve the following <strong>weighted constrained least squares problem</strong>:</p>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<p>I adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as <span class="math inline">\(g\)</span>, vectors are denoted by bold lowercase letters such as <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>, and matrices are denoted by bold uppercase letters such as <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters, such as <span class="math inline">\(\mathcal{N}\)</span> or <span class="math inline">\(\mathcal{T}\)</span>, and the cardinality of a finite set <span class="math inline">\(\mathcal{A}\)</span> is written <span class="math inline">\(|\mathcal{A}|\)</span>. For a matrix <span class="math inline">\(\mathbf{A}\)</span>, we write <span class="math inline">\(\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2\)</span> for the squared Frobenius norm and <span class="math inline">\(\| \mathbf{A} \|_2\)</span> for its spectral norm. For any <span class="math inline">\(n \in \mathbb{N}\)</span>, we define the <span class="math inline">\(n\)</span>-dimensional probability simplex by</p>
 <p><span class="math display">\[
-\min_{\boldsymbol{\omega} \in \Delta^{N_0 - 1}} \left\| \mathbf{S}^{1/2} \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \boldsymbol{\omega} \right) \right\|_2^2.
+\Delta^{N_0 - 1} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid w_j \geq 0 \: \forall j \in \mathcal{N}_0, \sum_{j \in \mathcal{N}_0} w_j = 1 \right\}.
 \]</span></p>
-<p>Equivalently, we minimize a weighted residual sum of squares where each donor’s contribution to the fit is scaled by its anomaly-adjusted importance. Donors flagged as anomalous (i.e., <span class="math inline">\(I_j = 0\)</span>) contribute nothing to the fit since their corresponding diagonal entry in <span class="math inline">\(\mathbf{S}\)</span> is zero.</p>
-<p>The resulting solution <span class="math inline">\(\hat{\boldsymbol{\omega}}\)</span> defines the synthetic control for the treated unit as:</p>
+<p>Matrix multiplication is written in the usual way; products like <span class="math inline">\(\mathbf{A}^\top \mathbf{b}\)</span>, <span class="math inline">\(\mathbf{A} \mathbf{B}\)</span>, or <span class="math inline">\(\mathbf{b}^\top \mathbf{c}\)</span> denote standard matrix-vector or matrix-matrix products. Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units in the panel, with unit <span class="math inline">\(1\)</span> denoting the treated unit and <span class="math inline">\(\mathcal{N}_0 = \{2, 3, \dots, N\}\)</span> denoting the set of control units. We write <span class="math inline">\(N_0 = |\mathcal{N}_0| = N - 1\)</span> for its cardinality. Let <span class="math inline">\(\mathcal{T} \subset \mathbb{N}\)</span> be a finite set of time periods with <span class="math inline">\(|\mathcal{T}| = T\)</span>. Let <span class="math inline">\(T_0 &lt; T\)</span> denote the final pre-treatment period. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span> with <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span> with <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span>. Let <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^{T}\)</span> denote the time series for our focal outcome of interest <span class="math inline">\(\forall \, j \in \mathcal{N}\)</span>. We write <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{1,1} &amp; \cdots &amp; y_{1,T} \end{bmatrix}^\top \in \mathbb{R}^T\)</span> for the treated unit’s outcome vector. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks the outcome vectors for all control units <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Each time series <span class="math inline">\(\mathbf{y}_j\)</span> is partitioned into a pre-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> and a post-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span>. Likewise, the control matrix <span class="math inline">\(\mathbf{Y}_0\)</span> is partitioned into <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> and <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{(T - T_0) \times N_0}\)</span>.</p>
+</section>
+<section id="stable-sc" class="level1">
+<h1>Stable SC</h1>
+<p>To mitigate sensitivity to outlier and irrelevant control units, we apply a hybrid anomaly detection and weighting procedure that filters and scores donors before constructing the synthetic control. We begin by forming normalized, mean-centered versions of each time series. For each control unit <span class="math inline">\(j \in \mathcal{N}_0\)</span>, we define <span class="math inline">\(\tilde{\mathbf{y}}_j = \mathbf{y}_j - \frac{1}{T} \sum_{t \in \mathcal{T}} y_{j,t} \in \mathbb{R}^T\)</span>. The treated unit <span class="math inline">\(\mathbf{y}_1\)</span> is normalized analogously. Let <span class="math inline">\(\tilde{\mathbf{Y}}_0 \in \mathbb{R}^{T \times N_0}\)</span> stack the <span class="math inline">\(\tilde{\mathbf{y}}_j\)</span> for all <span class="math inline">\(j \in \mathcal{N}_0\)</span>.</p>
+<p>Two diagnostic tests are applied to each control unit using pre-treatment data <span class="math inline">\(\mathcal{T}_1\)</span>. The first is a Granger causality test that assesses whether the lagged values of <span class="math inline">\(\tilde{\mathbf{y}}_j\)</span> help predict <span class="math inline">\(\tilde{\mathbf{y}}_1^{\text{pre}}\)</span>. If the null of no Granger causality is not rejected at level <span class="math inline">\(\alpha\)</span>, control <span class="math inline">\(j\)</span> is flagged as uninformative. Let <span class="math inline">\(g_j \in \{0,1\}\)</span> denote the Granger inclusion indicator.</p>
+<p>The second test evaluates proximity. For each <span class="math inline">\(j \in \mathcal{N}_0\)</span>, we compute the average pre-treatment trajectory of all other donors, denoted <span class="math inline">\(\bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} = \frac{1}{N_0 - 1} \sum_{k \neq j} \tilde{\mathbf{y}}_k^{\text{pre}}\)</span>. We define the squared deviation <span class="math inline">\(d_j = \frac{1}{T_0} \left\| \tilde{\mathbf{y}}_j^{\text{pre}} - \bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} \right\|_2^2\)</span>. If <span class="math inline">\(d_j\)</span> exceeds the <span class="math inline">\((1 - \alpha)\)</span> quantile of the <span class="math inline">\(\chi^2(T_0)\)</span> distribution, control <span class="math inline">\(j\)</span> is flagged as an outlier. Let <span class="math inline">\(p_j \in \{0,1\}\)</span> be the proximity inclusion indicator.</p>
+<p>We define the hybrid inclusion indicator as <span class="math inline">\(I_j = g_j \cdot p_j\)</span>. Control unit <span class="math inline">\(j\)</span> is retained only if <span class="math inline">\(I_j = 1\)</span>. For each retained donor, we compute a smooth similarity score using a radial basis function: <span class="math inline">\(s_j = \exp\left(-\frac{d_j^2}{2\sigma^2} \right)\)</span>, where <span class="math inline">\(\sigma &gt; 0\)</span> controls the decay rate.</p>
+<p>These scores define a diagonal matrix <span class="math inline">\(\mathbf{S} = \mathrm{diag}(I_j \cdot s_j)\)</span>, which downweights marginal donors and zeros out anomalous ones. This matrix is used to define a semi-norm in the synthetic control objective:</p>
 <p><span class="math display">\[
-\hat{\mathbf{y}}_1 = \mathbf{Y}_0 \hat{\boldsymbol{\omega}}.
+\min_{\mathbf{w} \in \Delta^{N_0 - 1}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_{\mathbf{S}}^2 = \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right)^\top \mathbf{S} \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right).
 \]</span></p>
-<p>This hybrid approach therefore preserves the familiar convex optimization structure of classical synthetic control, but integrates data-driven anomaly diagnostics both to exclude untrustworthy donors and to softly discount the influence of marginally reliable ones. In doing so, it yields more robust and stable estimates of the counterfactual trajectory, especially in real-world settings where untreated units may be subject to latent shocks or structural breaks.</p>
+<p>This semi-norm formulation softly penalizes residuals associated with high-variance or low-relevance donors, yielding a robust and data-adaptive synthetic control estimator.</p>
 
 
 
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1746150865183" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1746157025383" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -251,7 +264,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1746150865180" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1746157025379" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -275,7 +288,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1746150865180" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1746157025380" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -299,7 +312,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1746150865180" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1746157025380" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -323,7 +336,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1746150865180" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1746157025380" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -349,7 +362,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1746150865180" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1746157025379" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -375,7 +388,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1746150865180" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1746157025380" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -399,7 +412,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1746150865186" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1746157025387" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -423,7 +436,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1746150865185" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1746157025386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -447,7 +460,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1746150865186" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
+<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1746157025387" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -471,7 +484,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1746150915563" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1746157074256" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>

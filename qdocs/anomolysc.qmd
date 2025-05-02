@@ -6,10 +6,24 @@ categories: [Causal Inference, Econometrics]
 
 To construct a robust synthetic control, we begin by pre-processing the data. For each control unit $j \in \mathcal{N}_0$, we define the normalized and detrended time series $\tilde{\mathbf{y}}_j \in \mathbb{R}^T$ by subtracting the mean over time: $\tilde{\mathbf{y}}_j = \mathbf{y}_j - \frac{1}{T} \sum_{t \in \mathcal{T}} y_{j,t}$. The treated unit $\mathbf{y}_1$ is normalized similarly. Let $\tilde{\mathbf{Y}}_0 \in \mathbb{R}^{T \times N_0}$ denote the matrix that stacks the $\tilde{\mathbf{y}}_j$ for all $j \in \mathcal{N}_0$.
 
-Next, we perform anomaly detection using two tests on the pre-treatment data $\mathcal{T}_1 = \{1, \dots, T_0\}$. The first is a Granger causality test, in which we regress $\tilde{y}_{1,t}$ on lagged values of $\tilde{y}_{j,t-1}$ and retain control unit $j$ only if the null hypothesis of no Granger causality is rejected at significance level $\alpha$. We define a binary indicator $g_j \in \{0, 1\}$ which equals $1$ if control $j$ passes the Granger test and $0$ otherwise.
+Next, we perform anomaly detection using two tests on the pre-treatment data $\mathcal{T}_1 = \{1, \dots, T_0\}$. The first is a Granger causality test, in which we regress $\tilde{y}_{1,t}$ on lagged values of $\tilde{y}_{j,t-1}$ and retain control unit $j$ only if the null hypothesis of no Granger causality is rejected at significance level $\alpha$. We define a binary indicator $g_j \in \{0, 1\}$, which equals $1$ if control $j$ passes the Granger test and $0$ otherwise.
 
-The second test is a proximity test, which measures how far each control unit's trajectory deviates from the average of the other control units. Let $\bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} = \frac{1}{N_0 - 1} \sum_{k \neq j} \tilde{\mathbf{y}}_k^{\text{pre}}$ denote the average pre-treatment path excluding unit $j$, and define the squared distance $d_j = \frac{1}{T_0} \left\| \tilde{\mathbf{y}}_j^{\text{pre}} - \bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} \right\|_2^2$. If $d_j$ exceeds the $(1 - \alpha)$ quantile of the chi-squared distribution with $T_0$ degrees of freedom, we flag control $j$ as an anomaly. Let $p_j \in \{0, 1\}$ be the indicator of whether unit $j$ passes this proximity test.
+The second test is a proximity test, which measures how far each control unit's trajectory deviates from the average of the other control units. Let $\bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} = \frac{1}{N_0 - 1} \sum_{k \neq j} \tilde{\mathbf{y}}_k^{\text{pre}}$ denote the average pre-treatment path excluding unit $j$, and define the squared distance $d_j = \frac{1}{T_0} \left\| \tilde{\mathbf{y}}_j^{\text{pre}} - \bar{\tilde{\mathbf{y}}}_{-j}^{\text{pre}} \right\|_2^2$. If $d_j$ exceeds the $(1 - \alpha)$ quantile of the chi-squared distribution with $T_0$ degrees of freedom, we flag control $j$ as an anomaly. Let $p_j \in \{0, 1\}$ indicate whether unit $j$ passes this proximity test.
 
-The hybrid approach combines these two diagnostics. We define the inclusion indicator $I_j = g_j \cdot p_j$, which equals $1$ if donor $j$ passes both tests and $0$ otherwise. For each unit $j$, we compute a soft anomaly score $s_j = \exp\left(-\frac{d_j^2}{2\sigma^2} \right)$, where $\sigma > 0$ controls the sensitivity of the weighting to distance anomalies. These scores are not used to directly define synthetic control weights; instead, they are used to define importance weights in the estimation process.
+We then define the hybrid inclusion indicator $I_j = g_j \cdot p_j$, which equals $1$ if donor $j$ passes both tests and $0$ otherwise. For all units with $I_j = 1$, we compute a soft anomaly score using a Gaussian radial basis function: $s_j = \exp\left( -\frac{d_j^2}{2\sigma^2} \right)$, where $\sigma > 0$ controls the rate of decay in similarity-based weighting. These anomaly scores are used to define relative importance in the loss function of the synthetic control estimator.
 
-Let $\mathbf{W} \in \mathbb{R}^{N_0 \times N_0}$ be the diagonal matrix with entries $w_j = I_j \cdot s_j$. These weights are incorporated into a re-weighted loss function used to estimate the parameters of a latent factor model for the control units. Specifically, we solve the following optimization problem.
+Let $\boldsymbol{\omega} = (\omega_j)_{j \in \mathcal{N}_0} \in \Delta^{N_0 - 1}$ be the vector of synthetic control weights, constrained to the probability simplex. Let $\mathbf{S} = \text{diag}(I_j \cdot s_j)$ be a diagonal matrix of anomaly-based reweighting factors. We then solve the following **weighted constrained least squares problem**:
+
+$$
+\min_{\boldsymbol{\omega} \in \Delta^{N_0 - 1}} \left\| \mathbf{S}^{1/2} \left( \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \boldsymbol{\omega} \right) \right\|_2^2.
+$$
+
+Equivalently, we minimize a weighted residual sum of squares where each donor’s contribution to the fit is scaled by its anomaly-adjusted importance. Donors flagged as anomalous (i.e., $I_j = 0$) contribute nothing to the fit since their corresponding diagonal entry in $\mathbf{S}$ is zero.
+
+The resulting solution $\hat{\boldsymbol{\omega}}$ defines the synthetic control for the treated unit as:
+
+$$
+\hat{\mathbf{y}}_1 = \mathbf{Y}_0 \hat{\boldsymbol{\omega}}.
+$$
+
+This hybrid approach therefore preserves the familiar convex optimization structure of classical synthetic control, but integrates data-driven anomaly diagnostics both to exclude untrustworthy donors and to softly discount the influence of marginally reliable ones. In doing so, it yields more robust and stable estimates of the counterfactual trajectory, especially in real-world settings where untreated units may be subject to latent shocks or structural breaks.

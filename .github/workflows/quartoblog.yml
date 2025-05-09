@@ -55,21 +55,11 @@ jobs:
     - name: Generate index.qmd (excluding landing.qmd)
       run: |
         echo "---" > qdocs/index.qmd
-        echo "title: Posts" >> qdocs/index.qmd
         echo "format: html" >> qdocs/index.qmd
         echo "---" >> qdocs/index.qmd
         echo "" >> qdocs/index.qmd
         echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
         echo "" >> qdocs/index.qmd
-
-        for file in qdocs/*.qmd; do
-          filename=$(basename -- "$file")
-          if [ "$filename" != "landing.qmd" ]; then
-            title=$(grep -m 1 '^title:' "$file" | sed 's/title:[ ]*//')
-            link="${filename%.qmd}.html"
-            echo "- [$title]($link)" >> qdocs/index.qmd
-          fi
-        done
 
     - name: Render all Quarto files
       run: |

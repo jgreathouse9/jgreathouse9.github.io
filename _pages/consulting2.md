@@ -5,7 +5,7 @@ permalink: /consulting/
 author_profile: true
 ---
 
-Learn more about the services I offer below! Please, in addition to reading the below, <ahref="http://jgreathouse9.github.io/files/Request_Intake_Form.docx" download> Download the Request Intake Form (DOCX)</a>.
+Learn more about the services I offer below! Please, in addition to reading the below, <a href="http://jgreathouse9.github.io/files/Request_Intake_Form.docx" download>Download the Request Intake Form (DOCX)</a>.
 
 
 <div id="container">

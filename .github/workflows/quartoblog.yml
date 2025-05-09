@@ -39,7 +39,7 @@ jobs:
           echo "docs/ directory found. Deleting..."
           rm -rf docs
           echo "docs/ directory deleted."
-        else
+        else:
           echo "No existing docs/ directory found. Skipping deletion."
         fi
 
@@ -61,10 +61,13 @@ jobs:
         echo "" >> qdocs/index.qmd
         echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
         echo "" >> qdocs/index.qmd
+        
+        # Loop through the files and only list the ones that are NOT landing.qmd
         for file in qdocs/*.qmd; do
           filename=$(basename -- "$file")
-          title=$(grep -m 1 '^title:' "$file" | sed 's/title:[ ]*//')
+          # Check if the file is NOT landing.qmd
           if [ "$filename" != "landing.qmd" ]; then
+            title=$(grep -m 1 '^title:' "$file" | sed 's/title:[ ]*//')
             echo "- [$title]($filename)" >> qdocs/index.qmd
           fi
         done

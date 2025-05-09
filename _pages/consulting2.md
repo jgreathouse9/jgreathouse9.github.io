@@ -1,7 +1,7 @@
 ---
 title: Services
 layout: archive
-permalink: /consulting/
+permalink: https://jgreathouse9.github.io/docs/landing.html
 author_profile: true
 ---
 

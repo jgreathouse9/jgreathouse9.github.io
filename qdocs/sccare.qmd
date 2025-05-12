@@ -61,7 +61,7 @@ tssc_config = base_config.copy()  # Start with base and modify if necessary
 arco = TSSC(tssc_config).fit()
 ```
 
-Here is TSSC estimator, where we adjust for an intercept.
+Here is TSSC estimator, where we adjust for baseline differences using an intercept.
 
 ```{python}
 #| echo: false
@@ -72,7 +72,7 @@ pda_config = base_config.copy()
 pda_config["method"] = "l2"
 arcol2 = PDA(pda_config).fit()
 ```
-Here is $\ell_2$-PDA estimator.
+Here is $\ell_2$-PDA estimator, where we allow for negative weights and an intercept.
 
 ```{python}
 #| echo: false
@@ -86,6 +86,6 @@ Here is the predictions of the FDID estimator.
 
 # Takeaway
 
-The qualitative takwaway is that these all produce very similar predictions to the baseline estimates. Even though we have reduced the donor pool by 30 units, we still maintain enough variation in the donor set to predict California's pre-treatment trends, and so long as we are doing that, we may generally use as many or as little relevant donors as we like. The issue is not that donors in general do not matter. I wrote ```mlsynth``` precisely because I take donor selection seriously, so we use methods such as Forward Selection, clustering, or other techniques to choose the right donors for a given target unit. The key issue though is that the "right donors" do not necessarily need to be the same type of unit as the kind you are using. What matters is the relevance of the donor pool, as well as the richness of it so that we can construct better synthetic controls. If that means you compare buyers of one product to buyers of other products in online advertising, or an unusually large state/city to nations or states, then you may happily do that.
+The qualitative takwaway is that these all produce very similar predictions to the baseline estimates. Even though we have reduced the donor pool by 30 units, we still maintain enough variation in the donor set to predict California's pre-treatment trends, and so long as we are doing that, we may generally use as many relevant donors as we like. The issue is **not** that donors in general do not matter. I wrote ```mlsynth``` precisely because I take donor selection seriously, so we use methods such as Forward Selection, clustering, or other techniques to choose the right donors for a given target unit, especially in high-dimensional settings. The key issue though is that the "right donors" do not necessarily need to be the same type of unit as the kind you are using, meaing we can be a little creative as to what we use as a donor. This is a philosophical question, not an econometric one. What matters is the relevance of the donor pool, as well as the richness of it so that we can construct better synthetic controls. If that means you compare buyers of one product to buyers of other products in online advertising, or an unusually large state/city to nations or states, then you may happily do that.
 
-Note that these conclusions are valid becasue of the underlying econometric theory that academic econometricians work on. If you do not know the basic theory of when we may or may not use SCM, you may be making wrong decisions in your modeling strategy, or you may not be taking advantage of existing study qualities to make your analyses better. Whether or not you can do the proofs in the papers I cited above matters less than whether you can understand what they mean for the applied econometrician/data scientist. After many years of torment and thinking it through, you too can apply the theoretical implications of econometrics to your own case.
+Note that these conclusions are valid **becasue of** the underlying econometric theory that academic econometricians work on. If you do not know the basic theory of when we may or may not use SCM, you may be making wrong decisions in your modeling strategy. Or, you may not be taking advantage of existing study qualities to make your analyses better. Whether or not you can do the theoretical proofs in the papers I cited above matters less than whether you can understand what they mean for the applied econometrician/data scientist. After many years of torment and thinking it through, you will be able to use these methods more confidently, and with much more clarity than before.

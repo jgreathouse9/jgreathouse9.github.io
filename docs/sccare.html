@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2025-04-29">
+<meta name="dcterms.date" content="2025-05-12">
 
-<title>Synthetic Control Methods for Personalized Causal Inference – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Synthetic Controls Do Not Care What Your Donors Are. So Why Do You? – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -21,40 +21,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -205,25 +171,19 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
-  <li><a href="#econometric-model" id="toc-econometric-model" class="nav-link" data-scroll-target="#econometric-model">Econometric Model</a></li>
-  <li><a href="#recalling-pcr" id="toc-recalling-pcr" class="nav-link" data-scroll-target="#recalling-pcr">Recalling PCR</a>
-  <ul class="collapse">
-  <li><a href="#si-in-mlsynth" id="toc-si-in-mlsynth" class="nav-link" data-scroll-target="#si-in-mlsynth">SI in <code>mlsynth</code></a></li>
-  </ul></li>
-  <li><a href="#closing-remarks" id="toc-closing-remarks" class="nav-link" data-scroll-target="#closing-remarks">Closing Remarks</a></li>
+  <li><a href="#basic-scm" id="toc-basic-scm" class="nav-link active" data-scroll-target="#basic-scm">Basic SCM</a></li>
+  <li><a href="#proof" id="toc-proof" class="nav-link" data-scroll-target="#proof">Proof</a></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(12)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(6)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(6)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(12)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(7)</span></div><div class="category" data-category="RGF0YSUyMFNjaWVuY2U=">Data Science <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(7)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(3)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Synthetic Control Methods for Personalized Causal Inference</h1>
+<h1 class="title">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</h1>
   <div class="quarto-categories">
-    <div class="quarto-category">Causal Inference</div>
-    <div class="quarto-category">Econometrics</div>
+    <div class="quarto-category">Econometric Theory</div>
   </div>
   </div>
 
@@ -241,7 +201,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 29, 2025</p>
+      <p class="date">May 12, 2025</p>
     </div>
   </div>
   
@@ -253,106 +213,63 @@ window.Quarto = {
 </header>
 
 
-<p>Most data scientists who use synthetic control methods likely aim to estimate the counterfactual outcome for a treated unit if it had not been treated at all. This framework works quite neatly in the setting with a dummy treatment status (exposed or not exposed). But very often, there are a grab bag of policies we concern ourselves with that oftentimes may affect the exact same outcome. A retail chain might roll out different loyalty programs across its stores. For instance, Store A adopts a cash-back program (Program A), Store B adopts a points-based program (Program B), and Store C adopts a discount coupon program (Program C). Observing outcomes like revenue and customer visits under each program, we are typically concered with the outcome under the scenario of no treatment. A research question could be how the store with the cash backprogram would have fared had it done nothing at all. In policy, cities or states implement different public health interventions targeting soda consumption. For example, City 1 bans the sale of large sodas, City 2 imposes a tax on sugary drinks, and City 3 mandates calorie labeling on menus.</p>
-<p>But what if we wish to estimate the counterfactual for a given unit <em>as if it did another policy from what it actually did</em>. In other words, <em>How would Store A have performed if it had adopted Program B instead of Program A?</em> <em>What if City 1 had imposed a soda tax instead of banning large sodas?</em> How would health metrics evolved if the other policy was done instead? <a href="https://doi.org/10.1177/0022243720936230">Plenty</a> <a href="https://doi.org/10.1186/s12889-025-22526-5">of</a> <a href="https://jamanetwork.com/journals/jama-health-forum/fullarticle/2813506">academic papers</a> have addressed this idea before, but only to assess the counterfactual scenario of no tax at all.</p>
-<p>This is where the <a href="https://doi.org/10.48550/arXiv.2006.07691">Synthetic Interventions</a> estimator is useful. SI estimates how a treated unit (<strong>or even a never treated unit</strong>) would have performed under an intervention it did not actually receive. Per the examples above, one could construct a synthetic version of Store A under Program B, based on observed outcomes from stores that actually implemented Program B. Similarly, we could construct a synthetic version of City/State 1 under the soda tax policy (instead of the ban), using observed outcomes from cities that actually taxed sugary drinks. SI <em>substantially expands</em> the range of counterfactual questions that can be credibly answered.</p>
-<p>Before we get to business, I should note how this is a personal milestone for me. SI was likely the first estimator that really got me interested in the extensions to SCM. You see, I became a PHD student right around the time the pandemic began, and we began to see papers like <a href="https://arxiv.org/pdf/2009.09987">this</a> circulate that claimed to be able to estimate things like “what would NYC’s COVID rate look like had it locked down earlier than it actually did”. I had never heard of tensors, or really even matrices at the time, so I would always ask “wow, how can we even do this?” So, on my 4th year of school, it is very nice to not just understand the estimator, but be able to share it with others.</p>
-<section id="notation" class="level1">
-<h1>Notation</h1>
-<p>Scalars are denoted by lowercase italic letters such as <span class="math inline">\(g\)</span>. Vectors are denoted by bold lowercase letters such as <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>. Matrices are denoted by bold uppercase letters such as <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters such as <span class="math inline">\(\mathcal{N}\)</span> and <span class="math inline">\(\mathcal{T}\)</span>. The cardinality of a finite set <span class="math inline">\(\mathcal{A}\)</span> is denoted <span class="math inline">\(|\mathcal{A}|\)</span>. Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units and <span class="math inline">\(\mathcal{T} = \{1, 2, \dots, T\}\)</span> index time periods. Let <span class="math inline">\(\mathcal{D} = \{0, 1, \dots, D\}\)</span> index treatment statuses, with <span class="math inline">\(0\)</span> denoting the untreated condition. Each unit <span class="math inline">\(j \in \mathcal{N}\)</span> is assigned a treatment <span class="math inline">\(d_j \in \mathcal{D}\)</span>.</p>
-<p>Define <span class="math inline">\(T_0 &lt; T\)</span> as the final pre-treatment period and partition <span class="math inline">\(\mathcal{T}\)</span> into pre-treatment periods <span class="math inline">\(\mathcal{T}_{\text{pre}} = \{1, 2, \dots, T_0\}\)</span> and post-treatment periods <span class="math inline">\(\mathcal{T}_{\text{post}} = \{T_0 + 1, \dots, T\}\)</span>. Let <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> denote the pre-treatment outcome vector for unit <span class="math inline">\(j\)</span> and <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span> denote its post-treatment outcomes. For a group of units assigned to treatment <span class="math inline">\(d\)</span>, define <span class="math inline">\(\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}\)</span> as the matrix stacking the pre-treatment outcomes of units <span class="math inline">\(j \in \mathcal{N}_d\)</span>, and <span class="math inline">\(\mathbf{Y}_d^{\text{post}} \in \mathbb{R}^{T - T_0 \times N_d}\)</span> as the corresponding post-treatment outcome matrix. Let <span class="math inline">\(\mathcal{N}_d = \{ j \in \mathcal{N} \mid d_j = d \}\)</span> denote the set of units exposed to treatment <span class="math inline">\(d\)</span>. At each <span class="math inline">\((t, j)\)</span> pair, we observe only <span class="math inline">\(y_{t j} = y^{\ast}_{t j d_j}\)</span>, the realized outcome under the assigned treatment. Our goal is to estimate the counterfactual post-treatment trajectory <span class="math inline">\(\{ y^{\ast}_{t 1 d} \}_{t \in \mathcal{T}_{\text{post}}}\)</span> for a focal unit <span class="math inline">\(j = 1\)</span> that actually received treatment <span class="math inline">\(d_1\)</span>, where <span class="math inline">\(d \neq d_1\)</span> represents an alternative treatment.</p>
+<p>Many people do not understand the math behind the methods they use. If you asked most DS employes who work with causal infernece to formally prove when parallel trends holds like Pedro Sant’Anna does, or derive the bias bound of a new SCM as Abadie might, we likely would not have very many contenders. And that’s okay, that’s natural. After all, DS is a very applied field; the langauge of proof and formal math are typically far flung concerns of your typical data scientist, and I am certainly not an exception to this rule.</p>
+<p>However, be that as it may, it is still important to know a little about why what you are doing is effective to begin with. Why? Well, intuition can only take us so far. Yeah, you may have a library like <code>mlsynth</code> or <code>geolift</code> on you machine (or whatever you run your code in), but how do you know which tool to use, when,. and why? More importantyl, what happens when something breaks and you do not get the results you expected? What if you get something wrong? Of course, some of this is black-box-y, but in my experience anyways, lots of the issues people run into are not research issues in the sense that their question is poor or the estimator is wrong; instead, they simply misunderstand or do not know econometric theory. And this fact is usually obvious from the problems they run into. Again, this is not an issue of proof or technical depth; it is about knowing why your toolkit is effective.</p>
+<p><a href="https://www.linkedin.com/posts/venkat-raman-analytics_why-advanced-difference-in-differences-did-activity-7318168653907025922-sQp_?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw">Ostensibly,</a> there are myths about SCM and its efficacy relative to DID, specifically “the myth that SCM/[Augmented] SCM don’t have assumptions like parallel trends”. I do not know who believes this myth, and if you do, <a href="https://jgreathouse9.github.io/docs/consulting.html">direct them to me</a>. Still, even there are not many people who confidently say “SCM has no assumptions”, this is certainly the way many researchers act in practice. And that is the point of this post.</p>
+<section id="basic-scm" class="level1">
+<h1>Basic SCM</h1>
+<p>People often bring up the condition of perfect pre-intervention fit as an assumption of SCM; this <a href="https://arxiv.org/pdf/2211.12095">has been</a> <a href="https://doi.org/10.3982/QE1596">revised</a> <a href="https://arxiv.org/pdf/2108.13935">substantially</a> in recent years, but there’s another one that people do not comment on enough: the idea of the linear factor model (or <a href="https://www.jmlr.org/papers/volume19/17-777/17-777.pdf">latent variable model</a>)</p>
+<p><span class="math display">\[
+Y_{it}(0) = \boldsymbol{\lambda}_t^\top \boldsymbol{\mu}_i + \varepsilon_{it}.
+\]</span></p>
+<p>What does this mean? It simply means that our outcome are generated by a set of unit specific factors that are time invariant, and a set of time variant factors that are common across all units. These factors may indeed affect each unit differently… but they are common across units. SCM <a href="https://osf.io/preprints/socarxiv/fc9xt_v1">fundamentally</a> is about matching our treated unit’s common factors to the common factors that we believe are embedded in the donor set (see conditons 1-6 <a href="https://arxiv.org/pdf/2211.12095">here</a>, such that unobservable heteorgeneity goes away and we have a good enough match between our donor pool an the target unit. The linear factor model assumes that all units (treated and donors) share the same common factors, and that the treated unit’s factor loadings can be expressed as a combination of the donors’ loadings.</p>
+<p>A more flexible idea is <a href="https://proceedings.mlr.press/v151/shi22b/shi22b.pdf">the fine-grained potential outcomes model</a>, which shifts the unit of analysis from groups (e.g., states, regions) to individuals within groups or regions. In this framework, groups are treated as distributions of individuals, and the goal is to estimate the ATT for the treated unit’s population. This model also allows for diverse donor types provided the aggregated donor outcomes reflect individuals who are exchangeable with the treated unit’s population. The practical implication of this is that when we apply these panel data models to real life settings, we are allowed to use different donor typs on the condition that they help us learn about the trajector of the target unit in the pre-intervention period. Because SCM does not care about what kind of donors you use, so long as they are informative donors.</p>
 </section>
-<section id="econometric-model" class="level1">
-<h1>Econometric Model</h1>
-<p><a href="https://doi.org/10.48550/arXiv.2006.07691">The paper</a> assumes that potential outcomes admit a low-rank latent factor structure. Formally, each potential outcome <span class="math inline">\(y_{t j d}^{\ast}\)</span> for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> under treatment <span class="math inline">\(d\)</span> is generated by <span class="math display">\[
-y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
-\]</span> where <span class="math inline">\(\mathbf{l}_t \in \mathbb{R}^r\)</span> is a vector of time-specific latent factors, <span class="math inline">\(\mathbf{f}_j^{(d)} \in \mathbb{R}^r\)</span> is a vector of unit- and treatment-specific loadings, and <span class="math inline">\(\varepsilon_{t j d}\)</span> is an idiosyncratic error term with mean zero. The dimension <span class="math inline">\(r\)</span> is assumed to be small relative to <span class="math inline">\(T\)</span> and <span class="math inline">\(N\)</span>.</p>
-<p>The interactive structure implies that the tensor of potential outcomes across <span class="math inline">\((t, j, d)\)</span> admits a low-rank decomposition. The principal components of the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}}\)</span> consistently estimate the column space of <span class="math inline">\(\{ \mathbf{l}_t \}\)</span> up to rotation. Consequently, by projecting pre-treatment outcomes onto this estimated subspace and regressing the treated unit onto the donors, we can recover consistent estimates of the treated unit’s counterfactual trajectory under alternative treatments. SI relies on assumptions similar to SCMs. Aside from low-rankness, we also presume the latent factor structure is stable across treatments and over time. The factors <span class="math inline">\(\mathbf{l}_t\)</span> and loadings <span class="math inline">\(\mathbf{f}_j^{(d)}\)</span> do not change discontinuously due to treatment assignment. Third, the donor units assigned to the alternative treatment <span class="math inline">\(d\)</span> span the relevant factor space needed to approximate the treated unit’s pre-treatment outcomes. Fourth, the idiosyncratic error terms <span class="math inline">\(\varepsilon_{t j d}\)</span> are mean-zero and satisfy weak regularity conditions such as independence across units or bounded variance. Finally, there is sufficient pre-treatment data to accurately estimate the principal components of the donor matrix.</p>
-<p>As we can see, all of this is more or less pretty standard.</p>
-</section>
-<section id="recalling-pcr" class="level1">
-<h1>Recalling PCR</h1>
-<p>Practically, SI simply applies PCR to the pre-treatment matrix of units assigned to the alternative treatment <span class="math inline">\(d\)</span>. To estimate the counterfactual trajectory under an alternative treatment <span class="math inline">\(d \neq d_1\)</span>, we apply singular value decomposition SVD to the pre-treatment donor matrix <span class="math inline">\(\mathbf{Y}_d^{\text{pre}} \in \mathbb{R}^{T_0 \times N_d}\)</span>. This yields the decomposition <span class="math display">\[
-\mathbf{Y}_d^{\text{pre}} = \mathbf{U} \mathbf{\Sigma} \mathbf{V}^\top,
-\]</span> where <span class="math inline">\(\mathbf{U} \in \mathbb{R}^{T_0 \times T_0}\)</span> contains the left singular vectors, <span class="math inline">\(\mathbf{\Sigma} \in \mathbb{R}^{T_0 \times N_d}\)</span> is the diagonal matrix of singular values, and <span class="math inline">\(\mathbf{V} \in \mathbb{R}^{N_d \times N_d}\)</span> contains the right singular vectors. To obtain a low-dimensional representation, we truncate the decomposition at rank <span class="math inline">\(r \leq T_0\)</span> via <a href="https://www.jstor.org/stable/43556512">Universal Singular Value Thresholding</a>. Let <span class="math inline">\(\mathbf{U}_r \in \mathbb{R}^{T_0 \times r}\)</span> denote the first <span class="math inline">\(r\)</span> columns of <span class="math inline">\(\mathbf{U}\)</span>, and let <span class="math inline">\(\mathbf{\Sigma}_r \in \mathbb{R}^{r \times r}\)</span> denote the leading <span class="math inline">\(r\)</span> singular values on the diagonal. Define the reduced-rank basis <span class="math display">\[
-\tilde{\mathbf{Y}}_d^{\text{pre}} = \mathbf{U}_r \mathbf{\Sigma}_r.
-\]</span></p>
-<p>We then project the treated unit’s pre-treatment outcomes <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> onto the reduced rank donor space by solving the program <span class="math display">\[
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathbb{R}^{N_d}}{\operatorname*{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \tilde{\mathbf{Y}}_d^{\text{pre}}\mathbf{w} \right\|_2^2.
-\]</span></p>
-<p>This yields a weight vector <span class="math inline">\(\mathbf{w}^{\ast}\)</span> over the donor units in <span class="math inline">\(\mathcal{N}_d\)</span>, constrained to lie in the subspace spanned by the leading principal components. The estimated counterfactual trajectory for the unit of interest under treatment <span class="math inline">\(d\)</span> is then constructed by applying these weights to the observed post-treatment outcomes: <span class="math display">\[
-\hat{\mathbf{y}}_1^{\text{post}} = \tilde{\mathbf{Y}}_d^{\text{post}} \mathbf{w}^\ast.
-\]</span></p>
-<p>This quantity serves as an estimate for <span class="math inline">\(\{y^{\ast}_{t 1 d}\}_{t \in \mathcal{T}_{\text{post}}}\)</span>, the counterfactual outcomes that unit 1 would have experienced had it received treatment <span class="math inline">\(d\)</span> instead of <span class="math inline">\(d_1\)</span>.</p>
-<section id="si-in-mlsynth" class="level2">
-<h2 class="anchored" data-anchor-id="si-in-mlsynth">SI in <code>mlsynth</code></h2>
-<p>Now I will give an example of how to use SI for your own applied work. As ususal, in order to properly implement this, we begin by installing <code>mlsynth</code> from my Github</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Next we load <a href="https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf">the Proposition 99 data</a>, using the dataset that has all of the states in the United States.</p>
-<div id="fe583d9a" class="cell" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> SI</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the data</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jehangiramjad/tslib/refs/heads/master/tests/testdata/prop99.csv"</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>last_column <span class="op">=</span> df.columns[<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df[df[last_column] <span class="op">==</span> <span class="dv">2</span>]</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>columns_to_keep <span class="op">=</span> <span class="bu">list</span>(df.columns[<span class="dv">0</span>:<span class="dv">4</span>]) <span class="op">+</span> [df.columns[<span class="dv">7</span>]]</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered[columns_to_keep]</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>sort_columns <span class="op">=</span> [df_filtered.columns[<span class="dv">1</span>], df_filtered.columns[<span class="dv">2</span>]]</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.sort_values(by<span class="op">=</span>sort_columns)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered[df_filtered[df_filtered.columns[<span class="dv">2</span>]] <span class="op">&lt;</span> <span class="dv">2000</span>]</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>df_filtered[<span class="st">'SynthInter'</span>] <span class="op">=</span> ((df_filtered[df_filtered.columns[<span class="dv">0</span>]] <span class="op">==</span> <span class="st">'LA'</span>) <span class="op">&amp;</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                         (df_filtered[df_filtered.columns[<span class="dv">2</span>]] <span class="op">&gt;=</span> <span class="dv">1992</span>)).astype(<span class="bu">int</span>)</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>tax_states <span class="op">=</span> [<span class="st">'MA'</span>, <span class="st">'AZ'</span>, <span class="st">'OR'</span>, <span class="st">'FL'</span>]  <span class="co"># Massachusetts, Arizona, Oregon, Florida abbreviations</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>df_filtered[<span class="st">'Taxes'</span>] <span class="op">=</span> (df_filtered[df_filtered.columns[<span class="dv">0</span>]].isin(tax_states)).astype(<span class="bu">int</span>)</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>program_states <span class="op">=</span> [<span class="st">'AK'</span>, <span class="st">'HI'</span>, <span class="st">'MD'</span>, <span class="st">'MI'</span>, <span class="st">'NJ'</span>, <span class="st">'NY'</span>, <span class="st">'WA'</span>, <span class="st">'CA'</span>]</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>df_filtered[<span class="st">'Program'</span>] <span class="op">=</span> (df_filtered[df_filtered.columns[<span class="dv">0</span>]].isin(program_states)).astype(<span class="bu">int</span>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.rename(columns<span class="op">=</span>{<span class="st">"Data_Value"</span>: <span class="st">"cigsale"</span>, <span class="st">"LocationDesc"</span>: <span class="st">"State"</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="proof" class="level1">
+<h1>Proof</h1>
+<p>Don’t believe me? Let’s replicate some results shall we. We know the classic example of Prop 99, where California’s anti-tobacco program was compared to 38 donor states. But California is a <a href="https://www.gov.ca.gov/2025/04/23/california-is-now-the-4th-largest-economy-in-the-world/">ridiculously large</a> economy, and is basically a small country by many metrics. So why do we need to use other states as the comparison units? Why can we not use larger, aggregated control units? It turns our that we can do just that. Here, I compare California to <a href="https://www2.census.gov/geo/pdfs/maps-data/maps/reference/us_regdiv.pdf">the donor divisions of the United States</a>, where the outcome (tobacco smoking per capita) for the donor units are averaged over time at the division level and California’s remains as is.</p>
+<div id="88ba6e3c" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.13.3/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:295: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  counts = df.groupby([unit_col, time_col]).size().unstack(fill_value=0)</code></pre>
 </div>
-<p>We begin with simple data cleaning. All we do is keep the relevant metrics, setting a treatment variable “SynthInter” to be 1 if the year is greater than or equal to 1992 and the unit of interest is Louisiana. I choose 1992 because this is the year Massachusetts passed its anti tobacco policy. Note that no policy in fact happened in Louisiana, so we will see the effect of keeping the status quo of no tobacco control policy at all. We then define as an indicator which states did the taxes. <a href="https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf">According to Abadie’s 2010 paper</a> those states are Massachusetts, Arizona, Oregon, and Florida. We also define an indicator for states that did an anti-tobacco statewide program. This way, we can see how per capita smoking would have evolved under either policy. Under the hood, we just loop through each of the different policies the user specifies.</p>
-<div id="b5db9a34" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.rename(columns<span class="op">=</span>{<span class="st">"Data_Value"</span>: <span class="st">"cigsale"</span>, <span class="st">"LocationDesc"</span>: <span class="st">"State"</span>})</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df_filtered,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">'cigsale'</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: <span class="st">'SynthInter'</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">'State'</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: <span class="st">'Year'</span>,</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>, <span class="st">"blue"</span>],</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inters"</span>: [<span class="st">"Taxes"</span>, <span class="st">"Program"</span>],</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"objective"</span>: <span class="st">"OLS"</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> SI(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="synthinter_files/figure-html/cell-3-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="sccare_files/figure-html/cell-2-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>For Louisiana, the ATT of keeping the status quo relative to the state-wide tobacco program maintained per capita consumption 19.134 higher than what it would have been otherwise. The ATT of not passing taxes on tobacco, compared to taxes, mainatined the same at roughly 19.77 higher than what would have been otherwise. To me, these findings are not very surprising: “Anti tobacco programs/taxes reduce slightly tobacco consumption, wow, how shocking!” But now, we can actually <em>answer</em> these kinds of questions using econometric methods, instead of just speculating.</p>
-<p>When we look at the dictionary that the SI class returns, we see that the policies would have been pretty effective at reducing tobacco consumption. The dictionary is policy specific, one dictionary per policy the user chooses to consider. The SI estimator also only works for 1 treated unit, however analysts can easily make (say) a list of dataframes with an indicator for each synthetic treatment and loop over them. Once they have done this, we may extract the ATT per policy, per treated unit, and compute the sample average for an event-time ATT version for a given policy across units. I do not optimize the code to do this for a few reasons: one, the more policies and treated units we have, the less efficient it becomes to estimate tractably. Furthermore, the SI estimator is about personalized causal inference. So, I will likely leave this class for users to adapt to their own purposes (with some adjustments, if demand exists for something else).</p>
-</section>
-</section>
-<section id="closing-remarks" class="level1">
-<h1>Closing Remarks</h1>
-<p>There are a few caveats to consider: for one, you likely need a lot of units that do the alternative treatment in order for SI to be effective. Again this is not voodoo or magic, it is just SCM applied using another set of treated units as our donor pool, meaning the other treated units must be informative about the pre-treatment trajectory of the target unit. This can only happen with a rich enough donor pool. We can also imagine cool extensions to this estimator, such as <a href="https://doi.org/10.48550/arXiv.1905.06400">incorporating additional outcomes</a>, making this into a sort of multi-dimensional SI (say, mSI-PCR) where we incorporate other outcomes into the SI objective function (maybe I’ll add this as a kind of extension to the PCR method in my Python code). We also could likely do this with other estimators too, aside from just SCM (say, one of the panel data apporaches in <code>mlsynth</code>).</p>
-<p>Either way, the benefits of this estimator should be pretty clear. I suspect with more fine tuning and in the right hands, this would be completely revolutionary for policy analysts, economists, and marketing scientists. We now need not limit ourselves to simply estimating counterfactuals where no treatment ever occurs in non-experimental settings. In advertising, we can simulate how the group shown 10 ads would have converted had they been shown 5, 4, or 2 ads. In public health, we can simulate whether masking mandates or vaccine mandates (or both) save more lives. The benefit of mlsynth’s <code>SI</code> class is to provide these tools to the wider experimentation world so that they may be used and indeed improved more than they currently are.</p>
+<p>Here is TSSC estimator</p>
+<div id="ed33f5ad" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.13.3/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:295: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  counts = df.groupby([unit_col, time_col]).size().unstack(fill_value=0)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="sccare_files/figure-html/cell-3-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Here is <span class="math inline">\(\ell_2\)</span>-PDA estimator.</p>
+<div id="27197cf1" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.13.3/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:295: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  counts = df.groupby([unit_col, time_col]).size().unstack(fill_value=0)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="sccare_files/figure-html/cell-4-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Here is the FDID estimator.</p>
 
 
 
@@ -580,21 +497,23 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1747059370528" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="888">
+<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1747059370531" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
+<a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
 </h3>
 <div class="listing-categories">
 
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
 
 </div>
 </div>
 <div class="metadata">
-<a href="./sccare.html" class="no-external">
+<a href="./synthinter.html" class="no-external">
 <div class="listing-date">
-May 12, 2025
+Apr 29, 2025
 </div>
 <div class="listing-author">
 Jared Greathouse

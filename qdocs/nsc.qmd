@@ -10,7 +10,7 @@ Sometimes our outcomes are nonlinear in nature with synthetic control methods, m
 
 ## Optimization Problem
 
-Let $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$ denote the outcome vector for the treated unit over the pre-treatment period $\mathcal{T}_1$, and let $\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}$ be the matrix of pre-treatment outcomes for the control units indexed by \$\mathcal{N}_0\$. We seek a weight vector $\mathbf{w} \in \mathbb{R}^{N_0}$ that minimizes the following objective:
+Let $\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}$ denote the outcome vector for the treated unit over the pre-treatment period $\mathcal{T}_1$, and let $\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}$ be the matrix of pre-treatment outcomes for the control units indexed by $\mathcal{N}_0$. We seek a weight vector $\mathbf{w} \in \mathbb{R}^{N_0}$ that minimizes the following objective:
 
 $$
 \min_{\mathbf{w} \in \mathbb{R}^{N_0}} \quad \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_2^2 + a \sum_{j \in \mathcal{N}_0} \delta_j |w_j| + b \|\mathbf{w}\|_2^2 \quad \text{s.t.} \quad \|\mathbf{w}\|_1 = 1
@@ -22,16 +22,17 @@ $$
 \delta_j = \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{y}_j^{\text{pre}} \right\|_2, \quad \forall j \in \mathcal{N}_0
 $$
 
-This term penalizes control units that differ more from the treated unit in pre-treatment trends. The final term is a Tikhonov regularization penalty that shrinks the weight vector toward zero to improve stability. The parameters $a > 0$ and $b > 0$ control the strength of the $\ell_1$ and $\ell_2$ penalties, respectively. The constraint $|\mathbf{w}|_1 = 1$ ensures that the synthetic control remains on the probability simplex $\Delta^{N_0 - 1}$, forming an affine combination of the control units.
+This term penalizes control units that differ more from the treated unit in pre-treatment trends. The final term is a Tikhonov regularization penalty that shrinks the weight vector toward zero to improve stability. The parameters $a > 0$ and $b > 0$ control the strength of the $\ell_1$ and $\ell_2$ penalties, respectively. The constraint $\|\mathbf{w}\|_1 = 1$ retains the SC to the probability simplex $\Delta^{N_0 - 1}$, forming an affine combination of the control units.
 
 ## Cross-Validation for Tuning
 
 To select optimal regularization parameters $(a, b)$, we perform $k$-fold cross-validation using a pseudo-treated framework. Each control unit $j \in \mathcal{N}_0$ is treated as if it were the treated unit, and we aim to reconstruct $\mathbf{y}_j^{\text{pre}}$ from the remaining controls. For a given pseudo-treated unit $j$, let $\mathcal{N}_0^{(-j)} = \mathcal{N}_0 \setminus {j}$ and define the donor matrix $\mathbf{Y}_0^{\text{pre}, (-j)}$ by removing column $j$.
 
-For each fold and pseudo-treated unit, we solve:
+Here, $k$ indexes donor units in the set $\mathcal{N}_0^{(-j)}$ when unit $j$ is treated as pseudo-treated. For each fold and pseudo-treated unit, we solve:
 
 $$
-\min_{\mathbf{w}^{(j)} \in \mathbb{R}^{N_0 - 1}} \quad \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)} \right\|_2^2 + a \sum_{\ell \in \mathcal{N}_0^{(-j)}} \delta_\ell^{(j)} |w_\ell^{(j)}| + b \|\mathbf{w}^{(j)}\|_2^2 \quad \text{s.t.} \quad \|\mathbf{w}^{(j)}\|_1 = 1
+\min_{\mathbf{w}^{(j)} \in \mathbb{R}^{N_0 - 1}} \quad \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)} \right\|_2^2 + a \sum_{k \in \mathcal{N}_0^{(-j)}} \delta_k^{(j)} = \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{y}_k^{\text{pre}} \right\|_2, \quad \forall k \in \mathcal{N}_0^{(-j)}
+
 $$
 
 where
@@ -43,7 +44,7 @@ $$
 Let $\widehat{\mathbf{y}}_j^{\text{pre}} = \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)}$ denote the predicted outcome. The validation error for unit $j$ is given by:
 
 $$
-\text{MSE}^{(j)} = \frac{1}{T_0} \left\| \mathbf{y}_j^{\text{pre}} - \widehat{\mathbf{y}}_j^{\text{pre}} \right\|_2^2
+\text{MSE}^{(j)} =  T_{0}^{-1} \left\| \mathbf{y}_j^{\text{pre}} - \widehat{\mathbf{y}}_j^{\text{pre}} \right\|_2^2
 $$
 
 The cross-validated error is averaged over all pseudo-treated units and all folds. We then select:

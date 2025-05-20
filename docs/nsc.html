@@ -226,21 +226,18 @@ window.Quarto = {
 \end{aligned}
 \]</span></p>
 <p>The first term, <span class="math inline">\(\|\mathbf{y} - \mathbf{Y}_0 \mathbf{w}\|_2^2\)</span>, is a standard least squares loss that penalizes the squared discrepancy between the treated unit’s outcomes and the weighted combination of control units. This term ensures that the synthetic control closely approximates the treated unit in the pre-treatment period. The second term, <span class="math inline">\(a \sum_{j=1}^J \delta_j |w_j|\)</span>, introduces a discrepancy-weighted <span class="math inline">\(\ell_1\)</span> penalty on the weights. The scalar parameter <span class="math inline">\(a &gt; 0\)</span> controls the strength of this penalty. This term discourages assigning large weights to control units whose outcomes differ substantially from the treated unit, thereby promoting selection of more similar controls. The third term, <span class="math inline">\(b \|\mathbf{w}\|_2^2\)</span>, is an <span class="math inline">\(\ell_2\)</span> regularization term (or Tikhonov regularization) that shrinks the weights toward zero in order to stabilize the solution and prevent overfitting. The scalar parameter <span class="math inline">\(b &gt; 0\)</span> determines the degree of shrinkage. The constraint <span class="math inline">\(\mathbf{1}^\top \mathbf{w} = 1\)</span> ensures that the resulting synthetic control is an affine combination of the control units, maintaining scale comparability with the treated unit.</p>
-<p>To select appropriate values of the regularization parameters <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>, we perform <span class="math inline">\(k\)</span>-fold cross-validation over a grid of candidate values. Let <span class="math inline">\(\mathbf{y} \in \mathbb{R}^T\)</span> denote the outcome vector for the treated unit in the pre-treatment period, and let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span> be the matrix of pre-treatment outcomes for the <span class="math inline">\(J\)</span> control units.</p>
-<p>Since the treated unit is unique and cannot be split into training and validation samples, we assess the quality of regularization parameters by leveraging only the control units. Specifically, we treat each control unit in turn as a “pseudo-treated” unit and attempt to reconstruct its pre-treatment outcomes using a weighted combination of the remaining controls. These reconstructions are repeated over several validation folds.</p>
+<p>To select appropriate values of the regularization parameters <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>, we perform <span class="math inline">\(k\)</span>-fold cross-validation over a grid of candidate values. The default CV method that Wei argues for in his paper frankly takes forever (on my end anyways), so I default to <code>sklearn</code>’s cross validation which seems to both be quicker and fit about as well. Similar to his approach, I treat each control unit in turn as a “pseudo-treated” unit and attempt to reconstruct its pre-treatment outcomes using a weighted combination of the remaining controls. These reconstructions are repeated over several validation folds.</p>
 <p>In each fold, we partition the control units into a training set <span class="math inline">\(\mathbf{Y}_{\text{train}}\)</span> and a validation set <span class="math inline">\(\mathbf{Y}_{\text{val}}\)</span>. For each unit <span class="math inline">\(\mathbf{y}^{(j)}\)</span> in the validation set, we solve the following optimization problem: <span class="math display">\[
 \begin{aligned}
 \min_{\mathbf{w} \in \mathbb{R}^J} \quad &amp; \|\mathbf{y}^{(j)} - \mathbf{Y}_{\text{train}} \mathbf{w}\|_2^2 + a \sum_{l=1}^J \delta_l |w_l| + b \|\mathbf{w}\|_2^2 \\
 \text{s.t.} \quad &amp; \mathbf{1}^\top \mathbf{w} = 1,
 \end{aligned}
-\]</span> where <span class="math inline">\(\delta_l = \|\mathbf{y}^{(j)} - \mathbf{Y}_{\text{train}}^{(:,l)}\|_2\)</span> measures the pairwise discrepancy between the pseudo-treated unit and each donor unit in the training set.</p>
-<p>Let <span class="math inline">\(\widehat{\mathbf{y}}^{(j)} = \mathbf{Y}_{\text{train}} \mathbf{w}^{(j)}\)</span> be the predicted outcome for unit <span class="math inline">\(j\)</span>. The validation error is given by the mean squared error: <span class="math display">\[
+\]</span> where <span class="math inline">\(\delta_l = \|\mathbf{y}^{(j)} - \mathbf{Y}_{\text{train}}\|_2\)</span> measures the pairwise discrepancy between the pseudo-treated unit and each donor unit in the training set. Let <span class="math inline">\(\widehat{\mathbf{y}}^{(j)} = \mathbf{Y}_{\text{train}} \mathbf{w}^{(j)}\)</span> be the predicted outcome for unit <span class="math inline">\(j\)</span>. The validation error is given by the mean squared error: <span class="math display">\[
 \text{MSE}^{(j)} = \frac{1}{T} \|\mathbf{y}^{(j)} - \widehat{\mathbf{y}}^{(j)}\|_2^2.
 \]</span></p>
 <p>Averaging over all validation units across all folds, we compute the total cross-validated prediction error for a given <span class="math inline">\((a, b)\)</span>. The optimal parameters are then defined as <span class="math display">\[
-(a^*, b^*) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b),
+(a^\ast, b^\ast) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b),
 \]</span> where <span class="math inline">\(\mathcal{A}\)</span> and <span class="math inline">\(\mathcal{B}\)</span> denote the candidate grids and <span class="math inline">\(\text{CVError}(a, b)\)</span> is the average mean squared error across folds.</p>
-<p>This procedure selects regularization parameters that yield weights performing well not only on the treated unit but also on unseen units, providing a robust estimate of predictive generalization.</p>
 
 
 
@@ -248,7 +245,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1747704397763" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1747705171466" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -272,7 +269,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1747704397760" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1747705171463" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -296,7 +293,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1747704397761" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1747705171464" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -320,7 +317,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1747704397760" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1747705171463" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -344,7 +341,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1747704397761" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1747705171464" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -370,7 +367,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1747704397760" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1747705171463" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -396,7 +393,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1747704397761" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1747705171464" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -420,7 +417,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1747704397767" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1747705171470" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -444,7 +441,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1747704397766" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1747705171469" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -468,7 +465,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1747704397766" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
+<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1747705171469" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -492,7 +489,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1747704397763" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1747705171466" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -514,7 +511,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1747704444413" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1747705219925" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -528,7 +525,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1747704397760" data-listing-reading-time-sort="1" data-listing-word-count-sort="102">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1747705171464" data-listing-reading-time-sort="1" data-listing-word-count-sort="102">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

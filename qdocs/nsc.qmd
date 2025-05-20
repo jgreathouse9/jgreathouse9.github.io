@@ -44,3 +44,42 @@ $$
 (a^\ast, b^\ast) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b),
 $$
 where $\mathcal{A}$ and $\mathcal{B}$ denote the candidate grids and $\text{CVError}(a, b)$ is the average mean squared error across folds.
+
+## NSC in ```mlsynth```
+
+Now I will give an example of how to use NSC for your own applied work. As ususal, in order to properly implement this, we begin by installing ```mlsynth``` from my Github
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+And then we load the Proposition 99 dataset and fit the model in the ususal ```mlsynth``` fashion. As per the ususal, we have a single unit name column which has the names of the donors, a time column (the year in this case), a numeric outcome column, and an indicator column which denotes the treatment when it is active and the unit is the name of the treated unit, else 0.
+
+```{python}
+#| fig-align: center
+
+import pandas as pd
+from mlsynth.mlsynth import NSC
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+
+# Feel free to change "smoking" with "basque" above in the URL
+
+data = pd.read_csv(url)
+
+# Our method inputs
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": "blue"}
+
+arco = NSC(config).fit()
+```
+
+Here is our observed versus counterfactual.

@@ -25,9 +25,7 @@ $$
 
 The first term, $\|\mathbf{y} - \mathbf{Y}_0 \mathbf{w}\|_2^2$, is a standard least squares loss that penalizes the squared discrepancy between the treated unit's outcomes and the weighted combination of control units. This term ensures that the synthetic control closely approximates the treated unit in the pre-treatment period. The second term, $a \sum_{j=1}^J \delta_j |w_j|$, introduces a discrepancy-weighted $\ell_1$ penalty on the weights. The scalar parameter $a > 0$ controls the strength of this penalty. This term discourages assigning large weights to control units whose outcomes differ substantially from the treated unit, thereby promoting selection of more similar controls. The third term, $b \|\mathbf{w}\|_2^2$, is an $\ell_2$ regularization term (or Tikhonov regularization) that shrinks the weights toward zero in order to stabilize the solution and prevent overfitting. The scalar parameter $b > 0$ determines the degree of shrinkage. The constraint $\mathbf{1}^\top \mathbf{w} = 1$ ensures that the resulting synthetic control is an affine combination of the control units, maintaining scale comparability with the treated unit.
 
-To select appropriate values of the regularization parameters $a$ and $b$, we perform $k$-fold cross-validation over a grid of candidate values. Let $\mathbf{y} \in \mathbb{R}^T$ denote the outcome vector for the treated unit in the pre-treatment period, and let $\mathbf{Y}_0 \in \mathbb{R}^{T \times J}$ be the matrix of pre-treatment outcomes for the $J$ control units.
-
-Since the treated unit is unique and cannot be split into training and validation samples, we assess the quality of regularization parameters by leveraging only the control units. Specifically, we treat each control unit in turn as a "pseudo-treated" unit and attempt to reconstruct its pre-treatment outcomes using a weighted combination of the remaining controls. These reconstructions are repeated over several validation folds.
+To select appropriate values of the regularization parameters $a$ and $b$, we perform $k$-fold cross-validation over a grid of candidate values. The default CV method that Wei argues for in his paper frankly takes forever (on my end anyways), so I default to `sklearn`'s cross validation which seems to both be quicker and fit about as well. Similar to his approach, I treat each control unit in turn as a "pseudo-treated" unit and attempt to reconstruct its pre-treatment outcomes using a weighted combination of the remaining controls. These reconstructions are repeated over several validation folds.
 
 In each fold, we partition the control units into a training set $\mathbf{Y}_{\text{train}}$ and a validation set $\mathbf{Y}_{\text{val}}$. For each unit $\mathbf{y}^{(j)}$ in the validation set, we solve the following optimization problem:
 $$
@@ -36,17 +34,13 @@ $$
 \text{s.t.} \quad & \mathbf{1}^\top \mathbf{w} = 1,
 \end{aligned}
 $$
-where $\delta_l = \|\mathbf{y}^{(j)} - \mathbf{Y}_{\text{train}}^{(:,l)}\|_2$ measures the pairwise discrepancy between the pseudo-treated unit and each donor unit in the training set.
-
-Let $\widehat{\mathbf{y}}^{(j)} = \mathbf{Y}_{\text{train}} \mathbf{w}^{(j)}$ be the predicted outcome for unit $j$. The validation error is given by the mean squared error:
+where $\delta_l = \|\mathbf{y}^{(j)} - \mathbf{Y}_{\text{train}}\|_2$ measures the pairwise discrepancy between the pseudo-treated unit and each donor unit in the training set. Let $\widehat{\mathbf{y}}^{(j)} = \mathbf{Y}_{\text{train}} \mathbf{w}^{(j)}$ be the predicted outcome for unit $j$. The validation error is given by the mean squared error:
 $$
 \text{MSE}^{(j)} = \frac{1}{T} \|\mathbf{y}^{(j)} - \widehat{\mathbf{y}}^{(j)}\|_2^2.
 $$
 
 Averaging over all validation units across all folds, we compute the total cross-validated prediction error for a given $(a, b)$. The optimal parameters are then defined as
 $$
-(a^*, b^*) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b),
+(a^\ast, b^\ast) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b),
 $$
 where $\mathcal{A}$ and $\mathcal{B}$ denote the candidate grids and $\text{CVError}(a, b)$ is the average mean squared error across folds.
-
-This procedure selects regularization parameters that yield weights performing well not only on the treated unit but also on unseen units, providing a robust estimate of predictive generalization.

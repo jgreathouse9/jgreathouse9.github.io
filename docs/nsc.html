@@ -257,19 +257,19 @@ window.Quarto = {
 <h1>Non-Linear Synthetic Control</h1>
 <section id="optimization-problem" class="level2">
 <h2 class="anchored" data-anchor-id="optimization-problem">Optimization Problem</h2>
-<p>Let $_1^{} ^{T_0}$ denote the outcome vector for the treated unit over the pre-treatment period $_1$, and let $_0^{} ^{T_0 N_0}$ be the matrix of pre-treatment outcomes for the control units indexed by $_0$. We seek a weight vector $ ^{N_0}$ that minimizes the following objective:</p>
+<p>Let <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> denote the outcome vector for the treated unit over the pre-treatment period <span class="math inline">\(\mathcal{T}_1\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> be the matrix of pre-treatment outcomes for the control units indexed by $_0$. We seek a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> that minimizes the following objective:</p>
 <p><span class="math display">\[
 \min_{\mathbf{w} \in \mathbb{R}^{N_0}} \quad \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_2^2 + a \sum_{j \in \mathcal{N}_0} \delta_j |w_j| + b \|\mathbf{w}\|_2^2 \quad \text{s.t.} \quad \|\mathbf{w}\|_1 = 1
 \]</span></p>
-<p>The first term is the standard squared reconstruction error. The second term introduces a discrepancy-weighted $_1$ penalty, where the discrepancy vector $ ^{N_0}$ is defined by:</p>
+<p>The first term is the standard squared reconstruction error. The second term introduces a discrepancy-weighted <span class="math inline">\(\ell_1\)</span> penalty, where the discrepancy vector <span class="math inline">\(\boldsymbol{\delta} \in \mathbb{R}^{N_0}\)</span> is defined by:</p>
 <p><span class="math display">\[
 \delta_j = \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{y}_j^{\text{pre}} \right\|_2, \quad \forall j \in \mathcal{N}_0
 \]</span></p>
-<p>This term penalizes control units that differ more from the treated unit in pre-treatment trends. The final term is a Tikhonov regularization penalty that shrinks the weight vector toward zero to improve stability. The parameters $a &gt; 0$ and $b &gt; 0$ control the strength of the $_1$ and $_2$ penalties, respectively. The constraint $||_1 = 1$ ensures that the synthetic control remains on the probability simplex $^{N_0 - 1}$, forming an affine combination of the control units.</p>
+<p>This term penalizes control units that differ more from the treated unit in pre-treatment trends. The final term is a Tikhonov regularization penalty that shrinks the weight vector toward zero to improve stability. The parameters <span class="math inline">\(a &gt; 0\)</span> and <span class="math inline">\(b &gt; 0\)</span> control the strength of the <span class="math inline">\(\ell_1\)</span> and <span class="math inline">\(\ell_2\)</span> penalties, respectively. The constraint <span class="math inline">\(|\mathbf{w}|_1 = 1\)</span> ensures that the synthetic control remains on the probability simplex <span class="math inline">\(\Delta^{N_0 - 1}\)</span>, forming an affine combination of the control units.</p>
 </section>
 <section id="cross-validation-for-tuning" class="level2">
 <h2 class="anchored" data-anchor-id="cross-validation-for-tuning">Cross-Validation for Tuning</h2>
-<p>To select optimal regularization parameters $(a, b)$, we perform $k$-fold cross-validation using a pseudo-treated framework. Each control unit $j _0$ is treated as if it were the treated unit, and we aim to reconstruct $_j^{}$ from the remaining controls. For a given pseudo-treated unit $j$, let $_0^{(-j)} = _0 $ and define the donor matrix $_0^{, (-j)}$ by removing column $j$.</p>
+<p>To select optimal regularization parameters <span class="math inline">\((a, b)\)</span>, we perform <span class="math inline">\(k\)</span>-fold cross-validation using a pseudo-treated framework. Each control unit <span class="math inline">\(j \in \mathcal{N}_0\)</span> is treated as if it were the treated unit, and we aim to reconstruct <span class="math inline">\(\mathbf{y}_j^{\text{pre}}\)</span> from the remaining controls. For a given pseudo-treated unit <span class="math inline">\(j\)</span>, let <span class="math inline">\(\mathcal{N}_0^{(-j)} = \mathcal{N}_0 \setminus {j}\)</span> and define the donor matrix <span class="math inline">\(\mathbf{Y}_0^{\text{pre}, (-j)}\)</span> by removing column <span class="math inline">\(j\)</span>.</p>
 <p>For each fold and pseudo-treated unit, we solve:</p>
 <p><span class="math display">\[
 \min_{\mathbf{w}^{(j)} \in \mathbb{R}^{N_0 - 1}} \quad \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)} \right\|_2^2 + a \sum_{\ell \in \mathcal{N}_0^{(-j)}} \delta_\ell^{(j)} |w_\ell^{(j)}| + b \|\mathbf{w}^{(j)}\|_2^2 \quad \text{s.t.} \quad \|\mathbf{w}^{(j)}\|_1 = 1
@@ -278,7 +278,7 @@ window.Quarto = {
 <p><span class="math display">\[
 \delta_\ell^{(j)} = \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{y}_\ell^{\text{pre}} \right\|_2, \quad \forall \ell \in \mathcal{N}_0^{(-j)}
 \]</span></p>
-<p>Let $_j^{} = _0^{, (-j)} ^{(j)}$ denote the predicted outcome. The validation error for unit $j$ is given by:</p>
+<p>Let <span class="math inline">\(\widehat{\mathbf{y}}_j^{\text{pre}} = \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)}\)</span> denote the predicted outcome. The validation error for unit <span class="math inline">\(j\)</span> is given by:</p>
 <p><span class="math display">\[
 \text{MSE}^{(j)} = \frac{1}{T_0} \left\| \mathbf{y}_j^{\text{pre}} - \widehat{\mathbf{y}}_j^{\text{pre}} \right\|_2^2
 \]</span></p>
@@ -286,7 +286,7 @@ window.Quarto = {
 <p><span class="math display">\[
 (a^\ast, b^\ast) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b)
 \]</span></p>
-<p>where $$ and $$ are grids of candidate values. In practice, we employ <code>sklearn</code>’s cross-validation utilities to accelerate computation, as the original approach from Wei (2021) was computationally intensive. This modification performs comparably while dramatically improving runtime.</p>
+<p>where <span class="math inline">\(\mathcal{A}\)</span> and <span class="math inline">\(\mathcal{B}\)</span> are grids of candidate values. In practice, we employ <code>sklearn</code>’s cross-validation utilities to accelerate computation. I had to go rogue from the original approach because on my end it was computationally intensive. This modification seems to perform comparably while dramatically improving runtime. So while the empirical results will not be the same, they are about what we’d expect.</p>
 </section>
 </section>
 <section id="nsc-in-mlsynth" class="level1">
@@ -294,7 +294,7 @@ window.Quarto = {
 <p>Now I will give an example of how to use NSC for your own applied work. As ususal, in order to properly implement this, we begin by installing <code>mlsynth</code> from my Github</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>And then we load the Proposition 99 dataset and fit the model in the ususal <code>mlsynth</code> fashion. As per the ususal, we have a single unit name column which has the names of the donors, a time column (the year in this case), a numeric outcome column, and an indicator column which denotes the treatment when it is active and the unit is the name of the treated unit, else 0.</p>
-<div id="96ea93fb" class="cell" data-execution_count="1">
+<div id="639dc59b" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.mlsynth <span class="im">import</span> NSC</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -334,7 +334,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1747752263250" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
+<div class="quarto-post image-right" data-index="0" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1747753219368" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="20" data-listing-word-count-sort="3839">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
@@ -358,7 +358,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1747752263247" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="1" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1747753219365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -382,7 +382,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1747752263248" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1747753219366" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -406,7 +406,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1747752263247" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5n" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1747753219365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2232">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./clustsc.html" class="no-external">On Clustering for Synthetic Controls</a>
@@ -430,7 +430,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1747752263247" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDTWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1740441600000" data-listing-file-modified-sort="1747753219365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2184">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fdid.html" class="no-external">Applying Forward DID to Construction and Tourism Policy</a>
@@ -456,7 +456,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1747752263247" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNlJTJDRGF0YSUyMFNjaWVuY2U=" data-listing-date-sort="1740960000000" data-listing-file-modified-sort="1747753219365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3502">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./actins.html" class="no-external">Causal Inference Runs the World: Actionable Insights, Econometrics Style</a>
@@ -482,7 +482,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1747752263248" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
+<div class="quarto-post image-right" data-index="6" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1747753219365" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1652">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -506,7 +506,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1747752263253" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743897600000" data-listing-file-modified-sort="1747753219371" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2046">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthregcontrol.html" class="no-external">The Synthetic Regressing Control Method for Python</a>
@@ -530,7 +530,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1747752263253" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1747753219371" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -554,7 +554,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1747752263253" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
+<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1747753219371" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2183">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -578,7 +578,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1747752263250" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1747753219368" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -600,7 +600,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1747752315109" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1747753272679" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -614,7 +614,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1747752263247" data-listing-reading-time-sort="1" data-listing-word-count-sort="102">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1747753219365" data-listing-reading-time-sort="1" data-listing-word-count-sort="102">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

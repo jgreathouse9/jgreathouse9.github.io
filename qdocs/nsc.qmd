@@ -82,4 +82,10 @@ config = {
 arco = NSC(config).fit()
 ```
 
-Here is our observed versus counterfactual.
+Here is our observed versus counterfactual. The weights shown define an affine combination of control units used to approximate California’s per capita cigarette consumption prior to 1989. In this synthetic control, the dominant contributor is Nebraska, which carries a weight of 0.540, indicating that it serves as the single most influential donor in replicating California's pre-treatment trajectory. Other notable positive contributors include Montana (0.171), Nevada (0.168), Colorado (0.148), New Mexico and Connecticut (each at 0.127), Idaho (0.122), and Alabama (0.110). These states together form the backbone of the synthetic California, suggesting that their historical smoking trends most closely mirrored California’s prior to the intervention.
+
+In addition to these major contributors, several states contribute small positive weights, such as Kansas (0.082), Arkansas (0.029), Minnesota (0.013), and Illinois (0.006). While their individual influence is limited, they fine-tune the fit by providing marginal adjustments.
+
+Interestingly, the model also assigns negative weights to some control units—North Dakota (-0.250), Tennessee (-0.213), Ohio (-0.195), Indiana (-0.083), and Iowa (-0.035). These negative weights, a feature allowed in affine but not convex combinations, indicate that the synthetic control is extrapolating beyond the convex hull of the donor pool. In practical terms, the model is subtracting the influence of these states because their smoking trends diverged from California’s in ways that could distort the synthetic match if left uncorrected.
+
+Many remaining states receive weights that are exactly zero or numerically negligible. These states did not contribute to the synthetic California because either their historical trajectories were too dissimilar from California’s, or the regularization in the model penalized their inclusion due to high discrepancy or redundancy with other controls.

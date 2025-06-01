@@ -175,7 +175,7 @@ To install ```mlsynth```, we need:
 
 - Python 3.9 or later
 
-- ```cvxpy, matplotlib, numpy, pandas, scipy, scikit-learn, statsmodels```
+- ```cvxpy, matplotlib, numpy, pandas, scipy, scikit-learn, statsmodels, pydantic```
 
 - And then, we can install this from the command line
 
@@ -187,7 +187,7 @@ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 
 ## Using ```mlsynth```
 
-- A ```df```.
+- A long ```df``` where we have one observations per unit per time period.
 
 - A Time variable (numeric or date-time are allowed).
 
@@ -199,13 +199,43 @@ pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 
 ---
 
-## [Hubei Lockdown](https://doi.org/10.1002/jae.2871)
+## [Proposition 99](https://doi.org/10.1198/jasa.2009.ap08746)
 
-Find the data [here](https://github.com/jgreathouse9/mlsynth/blob/main/basedata/HubeiSCM.csv).
+Find the data [here](https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv).
 
 ::: {.panel-tabset}
 
 ### Inspection
+
+```{python}
+#| echo: true
+#| results: 'hide'
+#| fig-show: 'hold'
+
+import pandas as pd
+from mlsynth.utils.helperutils import sc_diagplot
+
+# Load smoking data
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/smoking_data.csv"
+df = pd.read_csv(url)
+
+# Configure CLUSTERSC
+config = {
+    "df": df,
+    "outcome": df.columns[2],
+    "treat": df.columns[-1],
+    "unitid": df.columns[0],
+    "time": df.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": "red",
+    "method": "RPCA",
+    "Frequentist": True
+}
+
+sc_diagplot([config]).fit()
+
+```
 
 Parallel trends does not appear to hold.... Hubei has a steeper upward trend compared to the average of all control units. No matter what constant we would shift it by, the mean difference does not appear to be constant. This suggests either parallel trends would hold with _some_ control units, or we simply need to re-weight some donors to matter more than others.
 

@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.7.8">
 
   <meta name="author" content="Jared Greathouse">
-  <meta name="dcterms.date" content="2025-05-31">
+  <meta name="dcterms.date" content="2025-06-01">
   <title>Counterfactual Estimation via mlsynth: A Practical Guide</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -204,7 +204,7 @@ Jared Greathouse
 </div>
 </div>
 
-  <p class="date">2025-05-31</p>
+  <p class="date">2025-06-01</p>
 </section>
 <section id="counterfactual-estimation" class="slide level2">
 <h2>Counterfactual Estimation</h2>
@@ -266,7 +266,7 @@ Jared Greathouse
 <ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Forward DID</a></li><li><a href="#tabset-2-2">RSC</a></li><li><a href="#tabset-2-3">And…</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1">
-<div id="649cc26a" class="cell" data-execution_count="1">
+<div id="aec95751" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -278,10 +278,10 @@ Jared Greathouse
 <ul>
 <li><p>Forward DID uses forward selection to choose a donor pool/control group for a single treated unit, using the DID estimator.</p></li>
 <li><p>However, its only existing implementations are either in MATLAB and R.</p></li>
-<li><p>MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods.</p></li>
+<li><p>MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods (see the below).</p></li>
 <li><p>This may work fine for one study, but what about if we do not have 44 pretreatment periods?</p></li>
 </ul>
-<div id="76d4969f" class="cell" data-execution_count="2">
+<div id="dfd805dc" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a>data <span class="op">=</span> read.csv(<span class="st">"GDP.csv"</span>, sep<span class="op">=</span><span class="st">","</span>, header <span class="op">=</span> TRUE)</span>
 <span id="cb1-2"><a href=""></a></span>
 <span id="cb1-3"><a href=""></a>t<span class="op">=</span>dim(data)[<span class="dv">1</span>]</span>
@@ -294,7 +294,7 @@ Jared Greathouse
 </div>
 </div>
 <div id="tabset-2-2">
-<div id="0aab4fff" class="cell" data-execution_count="3">
+<div id="15088922" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -332,7 +332,7 @@ Jared Greathouse
 <p>To install <code>mlsynth</code>, we need:</p>
 <ul>
 <li><p>Python 3.9 or later</p></li>
-<li><p><code>cvxpy, matplotlib, numpy, pandas, scipy, scikit-learn, statsmodels</code></p></li>
+<li><p><code>cvxpy, matplotlib, numpy, pandas, scipy, scikit-learn, statsmodels, pydantic</code></p></li>
 <li><p>And then, we can install this from the command line</p></li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href=""></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -340,50 +340,81 @@ Jared Greathouse
 <section id="using-mlsynth" class="slide level2">
 <h2>Using <code>mlsynth</code></h2>
 <ul>
-<li><p>A <code>df</code>.</p></li>
+<li><p>A long <code>df</code> where we have one observations per unit per time period.</p></li>
 <li><p>A Time variable (numeric or date-time are allowed).</p></li>
 <li><p>A unit variable (a string, to know which units are which).</p></li>
 <li><p>A numeric outcome variable.</p></li>
 <li><p>A dummy variable denoting treatment, 1 when the treatment is active and the unit is treated, else 0 for all other units and times.</p></li>
 </ul>
 </section>
-<section id="hubei-lockdown" class="slide level2">
-<h2><a href="https://doi.org/10.1002/jae.2871">Hubei Lockdown</a></h2>
-<p>Find the data <a href="https://github.com/jgreathouse9/mlsynth/blob/main/basedata/HubeiSCM.csv">here</a>.</p>
+<section id="proposition-99" class="slide level2">
+<h2><a href="https://doi.org/10.1198/jasa.2009.ap08746">Proposition 99</a></h2>
+<p>Find the data <a href="https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv">here</a>.</p>
 <div class="panel-tabset">
 <ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Inspection</a></li><li><a href="#tabset-3-2">SCM</a></li><li><a href="#tabset-3-3">FDID</a></li></ul>
 <div class="tab-content">
 <div id="tabset-3-1">
-<p>Parallel trends does not appear to hold…. Hubei has a steeper upward trend compared to the average of all control units. No matter what constant we would shift it by, the mean difference does not appear to be constant. This suggests either parallel trends would hold with <em>some</em> control units, or we simply need to re-weight some donors to matter more than others.</p>
+<div id="f71c055e" class="cell" data-fig-show="hold" data-results="hide" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href=""></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
+<span id="cb3-3"><a href=""></a></span>
+<span id="cb3-4"><a href=""></a><span class="co"># Load smoking data</span></span>
+<span id="cb3-5"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/smoking_data.csv"</span></span>
+<span id="cb3-6"><a href=""></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb3-7"><a href=""></a></span>
+<span id="cb3-8"><a href=""></a><span class="co"># Configure CLUSTERSC</span></span>
+<span id="cb3-9"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb3-10"><a href=""></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb3-11"><a href=""></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
+<span id="cb3-12"><a href=""></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb3-13"><a href=""></a>    <span class="st">"unitid"</span>: df.columns[<span class="dv">0</span>],</span>
+<span id="cb3-14"><a href=""></a>    <span class="st">"time"</span>: df.columns[<span class="dv">1</span>],</span>
+<span id="cb3-15"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb3-16"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb3-17"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"red"</span>,</span>
+<span id="cb3-18"><a href=""></a>    <span class="st">"method"</span>: <span class="st">"RPCA"</span>,</span>
+<span id="cb3-19"><a href=""></a>    <span class="st">"Frequentist"</span>: <span class="va">True</span></span>
+<span id="cb3-20"><a href=""></a>}</span>
+<span id="cb3-21"><a href=""></a></span>
+<span id="cb3-22"><a href=""></a>sc_diagplot([config])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="mlsynth_files/figure-revealjs/cell-5-output-1.png" width="577" height="489"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Parallel trends does not appear to hold for California with respect to its donor pool. California has a faster downward sloping trend of cigarette consumption compared to the average of the donor pool. No matter what constant we would shift the mean of the donor pool by, the mean difference does not appear to be constant with respect to California. This suggests either parallel trends would hold with <em>some</em> control units, or we simply need to re-weight some donors to matter more than others.</p>
 </div>
 <div id="tabset-3-2">
 <p>Here is the results of the <code>CLUSTERSC</code> class. This class implements two SCMs which use k-means clustering and low-rank methods to select the donor pool (Principal Component Regression and <a href="https://doi.org/10.48550/arXiv.2108.12542">Robust PCA Synth</a> specifically). Both selected donor pools (via the clustering) choose 25 of the 30 donor units. The pre-treatment RMSE for Robust PCA is <span class="math inline">\(89.76\)</span>, and for Cluster PCR/Cluster Robust SC the RMSE is <span class="math inline">\(96.37\)</span>.</p>
 <p>The ATT of RPCA Synth is <span class="math inline">\(-754\)</span>, and for Cluster PCR the ATT is <span class="math inline">\(-814\)</span>. The original paper used the LASSO to select the controls, and we get roughly the same results as they do.</p>
 </div>
 <div id="tabset-3-3">
-<div id="036351a9" class="cell" data-fig-show="hold" data-results="hide" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FDID</span>
-<span id="cb3-3"><a href=""></a></span>
-<span id="cb3-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
-<span id="cb3-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb3-6"><a href=""></a></span>
-<span id="cb3-7"><a href=""></a>config <span class="op">=</span> {</span>
-<span id="cb3-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
-<span id="cb3-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
-<span id="cb3-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb3-11"><a href=""></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
-<span id="cb3-12"><a href=""></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
-<span id="cb3-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb3-14"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
-<span id="cb3-16"><a href=""></a>}</span>
-<span id="cb3-17"><a href=""></a></span>
-<span id="cb3-18"><a href=""></a>arco <span class="op">=</span> FDID(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="c1fd473b" class="cell" data-fig-show="hold" data-results="hide" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FDID</span>
+<span id="cb4-3"><a href=""></a></span>
+<span id="cb4-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
+<span id="cb4-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb4-6"><a href=""></a></span>
+<span id="cb4-7"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb4-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb4-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb4-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb4-11"><a href=""></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb4-12"><a href=""></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb4-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb4-14"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb4-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
+<span id="cb4-16"><a href=""></a>}</span>
+<span id="cb4-17"><a href=""></a></span>
+<span id="cb4-18"><a href=""></a>arco <span class="op">=</span> FDID(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="mlsynth_files/figure-revealjs/cell-5-output-1.png" width="919" height="532"></p>
+<p><img data-src="mlsynth_files/figure-revealjs/cell-6-output-1.png" width="919" height="532"></p>
 </figure>
 </div>
 </div>

@@ -266,7 +266,7 @@ Jared Greathouse
 <ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Forward DID</a></li><li><a href="#tabset-2-2">RSC</a></li><li><a href="#tabset-2-3">And…</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1">
-<div id="0432d330" class="cell" data-execution_count="1">
+<div id="1cc3ab9a" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -281,7 +281,7 @@ Jared Greathouse
 <li><p>MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods (see the below).</p></li>
 <li><p>This may work fine for one study, but what about if we do not have 44 pretreatment periods?</p></li>
 </ul>
-<div id="88c01110" class="cell" data-execution_count="2">
+<div id="a4c888ff" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a>data <span class="op">=</span> read.csv(<span class="st">"GDP.csv"</span>, sep<span class="op">=</span><span class="st">","</span>, header <span class="op">=</span> TRUE)</span>
 <span id="cb1-2"><a href=""></a></span>
 <span id="cb1-3"><a href=""></a>t<span class="op">=</span>dim(data)[<span class="dv">1</span>]</span>
@@ -294,7 +294,7 @@ Jared Greathouse
 </div>
 </div>
 <div id="tabset-2-2">
-<div id="72620fd3" class="cell" data-execution_count="3">
+<div id="7002e1b1" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -355,7 +355,7 @@ Jared Greathouse
 <div class="tab-content">
 <div id="tabset-3-1">
 <p>This is the classical example from the Abadie 2010 paper.</p>
-<div id="c79f2b30" class="cell" data-results="hide" data-execution_count="4">
+<div id="f4a6e3c8" class="cell" data-results="hide" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-2"><a href=""></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
 <span id="cb3-3"><a href=""></a></span>
@@ -364,7 +364,7 @@ Jared Greathouse
 <span id="cb3-6"><a href=""></a>df <span class="op">=</span> pd.read_csv(url)</span>
 <span id="cb3-7"><a href=""></a></span>
 <span id="cb3-8"><a href=""></a><span class="co"># Configure the SC_DIAGPLOT method</span></span>
-<span id="cb3-9"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb3-9"><a href=""></a>plotconfig <span class="op">=</span> {</span>
 <span id="cb3-10"><a href=""></a>    <span class="st">"df"</span>: df,</span>
 <span id="cb3-11"><a href=""></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
 <span id="cb3-12"><a href=""></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
@@ -377,7 +377,7 @@ Jared Greathouse
 <span id="cb3-19"><a href=""></a>    <span class="st">"Frequentist"</span>: <span class="va">True</span></span>
 <span id="cb3-20"><a href=""></a>}</span>
 <span id="cb3-21"><a href=""></a></span>
-<span id="cb3-22"><a href=""></a>sc_diagplot([config])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-22"><a href=""></a>sc_diagplot([plotconfig])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -389,15 +389,15 @@ Jared Greathouse
 <p>Parallel trends does not appear to hold for California with respect to its donor pool. California has a steeper downward sloping trend of cigarette consumption compared to the average of the donor pool. No matter what scalar constant we would shift the mean of the donor pool by, the mean difference would not be constant with respect to California. This suggests one of two solutions is viable: either parallel trends would hold with <em>some</em> control units, or we simply need to re-weight the donor pool to better match the pre-intervention trajectory.</p>
 </div>
 <div id="tabset-3-2">
-<p>Here is the results of the <code>CLUSTERSC</code> class. This class implements the Robust Synthetic Control Method.</p>
-<div id="78d72797" class="cell" data-results="hide" data-execution_count="5">
+<p>Here is the results of the <code>CLUSTERSC</code> class. This class implements the Robust Synthetic Control Method. We can see that this model fits the pre-treatment trajectory very well, without needing to use any of the seven covariates that the original paper uses.</p>
+<div id="8cb3fab8" class="cell" data-results="hide" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb4-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> CLUSTERSC</span>
 <span id="cb4-3"><a href=""></a></span>
 <span id="cb4-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
 <span id="cb4-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
 <span id="cb4-6"><a href=""></a></span>
-<span id="cb4-7"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb4-7"><a href=""></a>SCconfig <span class="op">=</span> {</span>
 <span id="cb4-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
 <span id="cb4-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
 <span id="cb4-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
@@ -408,7 +408,7 @@ Jared Greathouse
 <span id="cb4-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span>, <span class="st">"method"</span>: <span class="st">"PCR"</span>, <span class="st">"cluster"</span>: <span class="va">False</span></span>
 <span id="cb4-16"><a href=""></a>}</span>
 <span id="cb4-17"><a href=""></a></span>
-<span id="cb4-18"><a href=""></a>arco <span class="op">=</span> CLUSTERSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-18"><a href=""></a>arco <span class="op">=</span> CLUSTERSC(SCconfig).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -419,14 +419,14 @@ Jared Greathouse
 </div>
 </div>
 <div id="tabset-3-3">
-<div id="c260047f" class="cell" data-results="hide" data-execution_count="6">
+<div id="e02dfd3f" class="cell" data-results="hide" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FDID</span>
 <span id="cb5-3"><a href=""></a></span>
 <span id="cb5-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
 <span id="cb5-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
 <span id="cb5-6"><a href=""></a></span>
-<span id="cb5-7"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb5-7"><a href=""></a>FDIDconfig <span class="op">=</span> {</span>
 <span id="cb5-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
 <span id="cb5-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
 <span id="cb5-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
@@ -437,7 +437,7 @@ Jared Greathouse
 <span id="cb5-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"blue"</span></span>
 <span id="cb5-16"><a href=""></a>}</span>
 <span id="cb5-17"><a href=""></a></span>
-<span id="cb5-18"><a href=""></a>arco <span class="op">=</span> FDID(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-18"><a href=""></a>arco <span class="op">=</span> FDID(FDIDconfig).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>

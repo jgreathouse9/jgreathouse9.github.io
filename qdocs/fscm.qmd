@@ -74,7 +74,7 @@ import pandas as pd # To work with panel data
 
 from IPython.display import display, Markdown # To create the table
 
-from mlsynth.mlsynth import FSCM # The method of interest
+from mlsynth import FSCM # The method of interest
 
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
 
@@ -97,14 +97,7 @@ config = {
 arco = FSCM(config).fit()
 ```
 
-After estimation, we can get the weights into a table like
-
-```{python}
-weights_dict = arco['Weights'][0]
-df = pd.DataFrame(list(weights_dict.items()), columns=['State', 'Weight'])
-display(Markdown(df.to_markdown(index=False)))
-```
-These are the weights for all 17 units that were selected by the algorithm. As we can see, all of these even did not ultimately contribute to the SC, with only 6 being assigned positive weight. The ATT of Prop 99 as estimated by FSCM is -19.51 and the pre-treatment Root Mean Squared Error for FSCM is 1.66. I compared these results to the same results we get in [Stata](https://doi.org/10.1177/1536867X2311952), which includes the covariates that Abadie, Diamond, and Hainmuller originally adjusted for as well as customizes the period over which to minimize the MSE. The ATT using the original method is -19.0018, and the RMSE for the pre-treatment period is 1.76. The corresponding weights using the full donor pool are 0.334 for Utah, 0.235 for Nevada, 0.2020 for Montana, Colorado 0.161, and Connecticut 0.068. So as we can see, the ATTs are very similar, and the pre-treatment prediction errors are pretty much the same. When we estimate this in Stata (omitting the auxilary covariate predictors and estimate ```synth2 cigsale cigsale(1988) cigsale(1980) cigsale(1975) , trunit(3) trperiod(1989) xperiod(1980(1)1988) nested fig```, we get a RMSE of 4.33 and an ATT of -22.88. Furthermore, with this specification, the weights are no longer a sparse vector.
+After estimation, we can get the weights. These are the weights for all 17 units that were selected by the algorithm. As we can see, all of these even did not ultimately contribute to the SC, with only 6 being assigned positive weight. The ATT of Prop 99 as estimated by FSCM is -19.51 and the pre-treatment Root Mean Squared Error for FSCM is 1.66. I compared these results to the same results we get in [Stata](https://doi.org/10.1177/1536867X2311952), which includes the covariates that Abadie, Diamond, and Hainmuller originally adjusted for as well as customizes the period over which to minimize the MSE. The ATT using the original method is -19.0018, and the RMSE for the pre-treatment period is 1.76. The corresponding weights using the full donor pool are 0.334 for Utah, 0.235 for Nevada, 0.2020 for Montana, Colorado 0.161, and Connecticut 0.068. So as we can see, the ATTs are very similar, and the pre-treatment prediction errors are pretty much the same. When we estimate this in Stata (omitting the auxilary covariate predictors and estimate ```synth2 cigsale cigsale(1988) cigsale(1980) cigsale(1975) , trunit(3) trperiod(1989) xperiod(1980(1)1988) nested fig```, we get a RMSE of 4.33 and an ATT of -22.88. Furthermore, with this specification, the weights are no longer a sparse vector.
 
 The point of this article is very simple. The original SCM works well, however it can be very sensitive to the inclusion of covariates, which covariates are included, what their lags are, and so on and so forth. Furthermore, there is also an issue of [covariate selection](
 https://doi.org/10.48550/arXiv.2203.11576) in settings where we have multiple covariates that can potentially inform our selection of the donor pool. Furthermore, collecting a rich list of covariates may also not be possible in some settings. In such situations, especially without some pre-existing grount truth donor pool, analysts may apply the FSCM algorithm to guard against interpolation biases.

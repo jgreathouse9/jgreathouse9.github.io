@@ -247,14 +247,17 @@ window.Quarto = {
 </header>
 
 
-<p>This will be a short blog post. I’ve spent the last two months doing a little industry work in the marketing realm, and in the meantime I have made some substantial changes to <code>mlsynth</code>. This blog post simply shows one of the new key features I have implemented. Chances are if you’re reading this, you know what I mean by the notation of SUTVA, or the stable unit treatment value assumption. It’s the idea that if we care about the causal impact of a treatment on a unit, but other units are affected by the treatment or otherwise experience a similar treatment, that this exposure confounds our treatment effect with respect to the original unit we do care about. Say we wish to study the impact of German Reunification on West Germany’s GDP. We know West Germany was exposed, but what about neighboring nations like Austria or France? What if the reunificaion had regional effects? Analysts therefore have a problem: Austria and France may be very similar to West Germany, and therefore informative of West Germany’s counterfactual, but we are concerned they are exposed. What do we do? Before, researchers would need to drop these units or argue for their inclusion/exclusion, despite them being treated. Now, we do not need to do that, as SCM has a few approaches that deal with spillovers (this post covers just <a href="https://arxiv.org/abs/2405.01645">one</a>). The approach, called iterative synthetic controls, is deceptively simple.</p>
-<p>Say we think Austria and France are treated, partly. Step one is to estimate a synthetic control for Austria, including France as a donor but excluding West Germany. Which SCM you ask? Any one you like! For the purposes of this post, we will be using the Robsut SCM and the Robust PCA SCM methods from <code>mlsynth</code>. The precise details are not important, but you may <a href="https://mlsynth.readthedocs.io/en/latest/clustersc.html">read the docs</a> should you like. We then take the model predictions for Austria across the full pre and post period and replace the original Austria with the synthetic control values. Next, we do France: <strong>using the cleaned up Austria as a donor</strong>, we estimate the synthetic control for France, using the now-cleaned Austria and the remaining 14 donor pool units. As before, we replace the values for the original France with the new synthetic France. We now have cleaned up our two donors that may be exposed to the treatment. Now, with these two cleaned donors, we estimate the counterfactual for West Germany, with our 14 totally unexposed donors and the two now cleaned up donors that were once partially exposed.</p>
+<p>This will be a short blog post. I’ve spent the last two months doing a little industry work in the marketing realm, and in the meantime I have made some substantial changes to <code>mlsynth</code>. This blog post simply shows one of the new key features I have implemented.</p>
+<p>Chances are if you’re reading this, you know what I mean by the notion of SUTVA, or the stable unit treatment value assumption. It is the idea that if we care about the causal impact of a treatment on one unit, but other units are affected by the treatment or otherwise experience a similar treatment, that this exposure confounds our treatment effect with respect to the original unit we do care about. Say we wish to study the impact of German Reunification on West Germany’s GDP. We know West Germany was exposed, but what about neighboring nations like Austria or France? What if the reunification had regional effects? Analysts therefore have a problem: Austria and France may be very similar to West Germany, and therefore informative of West Germany’s counterfactual, but we are concerned they are exposed or affected by the main treatment of interest. What do we do? Before, researchers would need to drop these units or argue for their inclusion/exclusion, despite them being treated. Now, we do not need to do that, as SCM has a few approaches that deal with spillovers (this post covers just <a href="https://arxiv.org/abs/2405.01645">one</a>). The approach, called iterative synthetic controls, is deceptively simple.</p>
+<p>Suppose Austria and France are partly treated. Step one of iSCM is to estimate a synthetic control for Austria, including France as a donor but excluding West Germany. Which SCM flavor you ask? Any one you like! For the purposes of this post, we will be using the Robsut SCM and the Robust PCA SCM methods from <code>mlsynth</code>. The precise details are not really important, but you may <a href="https://mlsynth.readthedocs.io/en/latest/clustersc.html">read the docs</a> should you like. We then take the model predictions for Austria across the full pre and post period and replace the original Austria with the synthetic control values that the model predicts for Austria.</p>
+<p>Next, we do France: <strong>using the cleaned up Austria as a donor</strong>, we estimate the synthetic control for France, using the now-cleaned up Austria and the remaining donor pool units. As before, we replace the values for the original France (in the original dataset) with the new synthetic France. We now have cleaned up our two donors that may be exposed to the treatment.</p>
+<p>Now, with these two cleaned donors, we estimate the counterfactual for West Germany, with our 14 totally unexposed donors and the two now cleaned up donors that were once partially exposed.</p>
 <section id="estimation-in-python" class="level1">
 <h1>Estimation in Python</h1>
-<p>“But Jared!”, you’ll say, this seems like a lot of looping and lots of donor tracking. Well fear not, that’s what <code>mlsynth</code> is for. In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
+<p>“But Jared!”, you will say, this seems like a lot of looping and lots of donor tracking. Well fear not, that is what <code>mlsynth</code> is for. In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>First we estimate the orignal model. You’ll find our handy-dandy util function <code>iterative_scm</code> is now imported.</p>
-<div id="183c9013" class="cell" data-execution_count="1">
+<p>First we estimate the orignal model. You will find our handy-dandy util function <code>iterative_scm</code> is now imported.</p>
+<div id="ffbbf6db" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> CLUSTERSC</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.spillover <span class="im">import</span> iterative_scm</span>
@@ -287,7 +290,7 @@ window.Quarto = {
 </div>
 </div>
 <p>These are the original results., You may check them against <a href="https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&amp;context=gc_etds">my coworker’s dissertation</a> if you wish. Now we see how sensitive the results are to adjusting for spillover effects.</p>
-<div id="3be855ea" class="cell" data-execution_count="2">
+<div id="3d7c056e" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run iterative SCM</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>iSCM_result <span class="op">=</span> iterative_scm(CLUSTERSC(config), spillover_unit_identifiers<span class="op">=</span>[<span class="st">"Austria"</span>, <span class="st">"France"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
@@ -359,7 +362,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1752078553718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1752105166685" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -383,7 +386,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1752078553718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1752105166686" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -407,7 +410,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1752078553718" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1752105166686" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -431,7 +434,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1752078553723" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1752105166691" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -455,7 +458,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1752078553724" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1752105166691" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -479,7 +482,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1752078553721" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1752105166688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -501,7 +504,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752078553721" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752105166688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -525,7 +528,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1752078607585" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="7" data-listing-file-modified-sort="1752105222928" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -539,7 +542,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1752078553718" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1752105166685" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

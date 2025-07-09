@@ -5,13 +5,18 @@ on:
     paths:
       - 'qdocs/**'  # Trigger on any file change within the qdocs directory
   workflow_dispatch:
+    inputs:
+      qmd_path:
+        description: "Optional: Path to a specific .qmd file to render (e.g. qdocs/posts/my-post.qmd)"
+        required: false
+        default: ""
 
 jobs:
   render:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Ensures the workflow can push changes
+      contents: write
 
     steps:
     - name: Checkout the repository
@@ -25,7 +30,7 @@ jobs:
     - name: Set up Quarto
       uses: quarto-dev/quarto-actions/setup@v2
       with:
-        version: "1.7.8"  # Specify the exact Quarto version
+        version: "1.7.8"
 
     - name: Install required Python packages
       run: |
@@ -61,12 +66,18 @@ jobs:
         echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
         echo "" >> qdocs/index.qmd
 
-    - name: Render all Quarto files
+    - name: Conditionally Render Quarto File(s)
       run: |
-        for file in qdocs/*.qmd; do
-          echo "Rendering $file..."
-          quarto render "$file"
-        done
+        if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
+          echo "Rendering only: ${{ github.event.inputs.qmd_path }}"
+          quarto render "${{ github.event.inputs.qmd_path }}"
+        else
+          echo "Rendering all .qmd files in qdocs/"
+          for file in qdocs/*.qmd; do
+            echo "Rendering $file..."
+            quarto render "$file"
+          done
+        fi
 
     - name: Check rendered output
       run: |

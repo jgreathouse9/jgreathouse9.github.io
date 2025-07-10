@@ -59,22 +59,34 @@ These are the original results., You may check them against [my coworker's disse
 
 #| fig-align: center
 
+from IPython.display import display, Markdown
+
 iSCM_result = iterative_scm(CLUSTERSC(config), spillover_unit_identifiers=["Austria", "France"], method="BOTH")
+
+def summarize_att_rmse_markdown(iSCM_result):
+    rows = []
+    for method in ['PCR', 'RPCA']:
+        sub = iSCM_result[method].sub_method_results[method]
+        att = sub.effects.additional_effects['ATT']
+        percent_att = sub.effects.additional_effects.get('Percent ATT', None)
+        t0_rmse = sub.fit_diagnostics.additional_metrics['T0 RMSE']
+
+        rows.append({
+            "Method": method,
+            "ATT": f"{att:,.0f}",
+            "Percent ATT": f"{percent_att:.2f}%" if percent_att is not None else "—",
+            "T0 RMSE": f"{t0_rmse:,.1f}",
+        })
+
+    df = pd.DataFrame(rows)
+    md_table = df.to_markdown(index=False)
+    display(Markdown(f"### Iterative SCM \n\n{md_table}"))
+
+summarize_att_rmse_markdown(iSCM_result)
 
 ```
 
-You pass the original ```config``` to the util function, and you pass a list of strings that denote which units we believe are partly treated. Form there, the algorithm under the hood handles the donor cleaning, and returns back the results of the final SCM run with both donors cleaned.
-
-
-| Estimator | Donor Cleaning | Pre-Treatment RMSE | Post-Treatment RMSE | ATT      |
-|-----------|----------------|--------------------|----------------------|----------|
-| PCR       | No             | 98.698             | 1870.339             | -1962.635 |
-| PCR       | Yes            | 105.499            | 1910.530             | -2055.579 |
-| RPCA      | No             | 88.603             | 1482.419             | -1500.934 |
-| RPCA      | Yes            | 89.189             | 1508.943             | -1604.434 |
-
-
-We can see that the results are very similar. Both results are quite similar, with the pre-treatment fits degrading only very slightly (even more so with the Robust PCA method, highlighting its robustness to tiny tweaks in the model). Speaking of which, the new weights are 'Denmark': 0.032, 'France': 0.855, 'Norway': 0.105, 'New Zealand': 0.03, whereas before they were 'Austria': 0.023, 'France': 0.354, 'Norway': 0.485, 'New Zealand': 0.296. Austria goes away as a weighed donor, but there's not very much change in the pre-treatment fit or the practical conclusions we draw from the analysis.
+You pass the original ```config``` to the util function, and you pass a list of strings that denote which units we believe are partly treated. Form there, the algorithm under the hood handles the donor cleaning, and returns back the results of the final SCM run with both donors cleaned. If you want both PCR and RPCA cleaning, we pass it as ```method="BOTH"``` to ```iterative_scm```. We can see that the results are very similar. Both results are quite similar, with the pre-treatment fits degrading only very slightly (even more so with the Robust PCA method, highlighting its robustness to tiny tweaks in the model). Speaking of which, the new weights are 'Denmark': 0.032, 'France': 0.855, 'Norway': 0.105, 'New Zealand': 0.03, whereas before they were 'Austria': 0.023, 'France': 0.354, 'Norway': 0.485, 'New Zealand': 0.296. Austria goes away as a weighed donor, but there's not very much change in the pre-treatment fit or the practical conclusions we draw from the analysis.
 
 
 # Comments

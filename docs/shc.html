@@ -329,7 +329,7 @@ N = T_0 - m - n + 1 = 14 - 2 - 1 + 1 = 12.
 <p>In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This example uses the Malaysian Ringgit as an example. Its currency was affected by <a href="https://www.investopedia.com/terms/a/asian-financial-crisis.asp">the Asian Financial Crisis</a>. I use the SHC method to estimate the impact the crisis had on the growth rate of the spot exchange rate, taken from FRED’s database. We can see my code below, where I use 36 months (3 years) of a pretreatment period.</p>
-<div id="7027b6b7" class="cell" data-execution_count="1">
+<div id="938f8531" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SHC</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -366,17 +366,17 @@ N = T_0 - m - n + 1 = 14 - 2 - 1 + 1 = 12.
 <span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SHC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>MSE with best 1 donors: 0.0009644584 | BIC: -246.398460
-MSE with best 2 donors: 0.0002455680 | BIC: -292.062680
-MSE with best 3 donors: 0.0001905295 | BIC: -297.614775
-MSE with best 4 donors: 0.0001623444 | BIC: -299.794393
-MSE with best 5 donors: 0.0001421612 | BIC: -300.990163
-MSE with best 6 donors: 0.0001020804 | BIC: -309.329894
-MSE with best 7 donors: 0.0000876216 | BIC: -311.244772
-MSE with best 8 donors: 0.0000734189 | BIC: -314.027677
-MSE with best 9 donors: 0.0000644758 | BIC: -315.120254
-MSE with best 10 donors: 0.0000599335 | BIC: -314.166682
-MSE with best 11 donors: 0.0000551027 | BIC: -313.608546
+<pre><code>MSE with best 1 donors: 0.0009644526 | BIC: -246.398676
+MSE with best 2 donors: 0.0002455641 | BIC: -292.063246
+MSE with best 3 donors: 0.0001905261 | BIC: -297.615414
+MSE with best 4 donors: 0.0001623415 | BIC: -299.795017
+MSE with best 5 donors: 0.0001421587 | BIC: -300.990811
+MSE with best 6 donors: 0.0001020778 | BIC: -309.330798
+MSE with best 7 donors: 0.0000876191 | BIC: -311.245787
+MSE with best 8 donors: 0.0000734166 | BIC: -314.028821
+MSE with best 9 donors: 0.0000644736 | BIC: -315.121485
+MSE with best 10 donors: 0.0000599316 | BIC: -314.167843
+MSE with best 11 donors: 0.0000551007 | BIC: -313.609795
 Stopping early at j=11 due to BIC increase.</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -388,7 +388,7 @@ Stopping early at j=11 due to BIC increase.</code></pre>
 </div>
 </div>
 <p>Now I do the effect of the 2008 Financial Crisis, because why not? I look at the effet for the U.K., but of course we may choose any nation we like. I use the precomputed annual growth rate of GDP.</p>
-<div id="d1871676" class="cell" data-execution_count="2">
+<div id="78e4463b" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span><span class="st">"https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=</span><span class="sc">%23e</span><span class="st">bf3fb&amp;chart_type=line&amp;drp=0&amp;fo=open</span><span class="sc">%20s</span><span class="st">ans&amp;graph_bgcolor=</span><span class="sc">%23f</span><span class="st">fffff&amp;height=450&amp;mode=fred&amp;recession_bars=off&amp;txtcolor=%23444444&amp;ts=12&amp;tts=12&amp;width=1320&amp;nt=0&amp;thu=0&amp;trc=0&amp;show_legend=yes&amp;show_axis_titles=yes&amp;show_tooltip=yes&amp;id=GBRGDPRQPSMEI&amp;scale=left&amp;cosd=1956-01-01&amp;coed=2025-01-01&amp;line_color=</span><span class="sc">%230073e</span><span class="st">6&amp;link_values=false&amp;line_style=solid&amp;mark_type=none&amp;mw=3&amp;lw=3&amp;ost=-99999&amp;oet=99999&amp;mma=0&amp;fml=a&amp;fq=Quarterly&amp;fam=avg&amp;fgst=lin&amp;fgsnd=2020-02-01&amp;line_index=1&amp;transformation=lin&amp;vintage_date=2025-07-17&amp;revision_date=2025-07-17&amp;nd=1956-01-01"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
@@ -414,29 +414,29 @@ Stopping early at j=11 due to BIC increase.</code></pre>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>resultFC <span class="op">=</span> SHC(configFC).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>MSE with best 1 donors: 0.8340768028 | BIC: -2.947954
-MSE with best 2 donors: 0.2261287036 | BIC: -46.352397
-MSE with best 3 donors: 0.1775563150 | BIC: -51.474271
-MSE with best 4 donors: 0.1007133466 | BIC: -68.303094
-MSE with best 5 donors: 0.0400031203 | BIC: -97.959127
-MSE with best 6 donors: 0.0187588942 | BIC: -121.638029
-MSE with best 7 donors: 0.0122249791 | BIC: -133.469230
-MSE with best 8 donors: 0.0098186149 | BIC: -137.776956
-MSE with best 9 donors: 0.0084363915 | BIC: -139.655552
-MSE with best 10 donors: 0.0070949905 | BIC: -142.305998
-MSE with best 11 donors: 0.0055417381 | BIC: -147.617387
-MSE with best 12 donors: 0.0052742381 | BIC: -145.814930
-MSE with best 13 donors: 0.0042073357 | BIC: -150.367578
-MSE with best 14 donors: 0.0026623397 | BIC: -163.258533
-MSE with best 15 donors: 0.0024811049 | BIC: -162.213063
-MSE with best 16 donors: 0.0017295758 | BIC: -171.619346
-MSE with best 17 donors: 0.0013456992 | BIC: -177.070473
-MSE with best 18 donors: 0.0008039510 | BIC: -192.031661
-MSE with best 19 donors: 0.0006684691 | BIC: -195.091872
-MSE with best 20 donors: 0.0004714517 | BIC: -204.078599
-MSE with best 21 donors: 0.0004096323 | BIC: -205.555126
-MSE with best 22 donors: 0.0003899810 | BIC: -203.741437
-MSE with best 23 donors: 0.0003724490 | BIC: -201.813837
+<pre><code>MSE with best 1 donors: 0.8375617331 | BIC: -2.797852
+MSE with best 2 donors: 0.2285861877 | BIC: -45.963272
+MSE with best 3 donors: 0.1793404556 | BIC: -51.114338
+MSE with best 4 donors: 0.1016206983 | BIC: -67.980214
+MSE with best 5 donors: 0.0404368881 | BIC: -97.570867
+MSE with best 6 donors: 0.0191391750 | BIC: -120.915534
+MSE with best 7 donors: 0.0124970903 | BIC: -132.676707
+MSE with best 8 donors: 0.0100946176 | BIC: -136.778953
+MSE with best 9 donors: 0.0086642921 | BIC: -138.695952
+MSE with best 10 donors: 0.0072633615 | BIC: -141.461662
+MSE with best 11 donors: 0.0056592847 | BIC: -146.861772
+MSE with best 12 donors: 0.0053809976 | BIC: -145.093507
+MSE with best 13 donors: 0.0047071484 | BIC: -146.326482
+MSE with best 14 donors: 0.0028529738 | BIC: -160.768897
+MSE with best 15 donors: 0.0024030221 | BIC: -163.364229
+MSE with best 16 donors: 0.0010180807 | BIC: -190.697797
+MSE with best 17 donors: 0.0008640748 | BIC: -193.018824
+MSE with best 18 donors: 0.0005711405 | BIC: -204.340169
+MSE with best 19 donors: 0.0004850733 | BIC: -206.636720
+MSE with best 20 donors: 0.0004385279 | BIC: -206.684756
+MSE with best 21 donors: 0.0003952938 | BIC: -206.837832
+MSE with best 22 donors: 0.0003804762 | BIC: -204.629716
+MSE with best 23 donors: 0.0003661885 | BIC: -202.424107
 Stopping early at j=23 due to BIC increase.</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -462,7 +462,7 @@ Stopping early at j=23 due to BIC increase.</code></pre>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1752776424172" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1752782017277" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -486,7 +486,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1752776424173" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1752782017278" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -510,7 +510,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1752776424173" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1752782017278" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -534,7 +534,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1752776424178" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1752782017283" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -558,7 +558,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1752776424178" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1752782017283" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -582,7 +582,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1752776424175" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1752782017280" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -604,7 +604,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752776424175" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752782017280" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -628,7 +628,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1752776424178" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1752782017283" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -650,7 +650,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1752776484761" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1752782092233" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -664,7 +664,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1752776424172" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1752782017277" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

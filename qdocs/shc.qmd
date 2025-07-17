@@ -139,7 +139,7 @@ df = df[df["Date"].dt.year < 1999]
 
 df["Unit"] = "Ringgit"
 
-df["Financial Crisis"] = (df["Date"] >= pd.Timestamp("1997-07-01")).astype(int)
+df["Asian Financial Crisis"] = (df["Date"] >= pd.Timestamp("1997-07-01")).astype(int)
 
 config = {
     "df": df,
@@ -155,6 +155,43 @@ config = {
 result = SHC(config).fit()
 
 ```
+
+Now I do the effect of the 2008 Financial Crisis, because why not? I look at the effet for the U.K., but of course we may choose any nation we like. I use the precomputed annual growth rate of GDP.
+
+
+
+```{python}
+
+#| fig-align: center
+
+
+url ="https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open%20sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=off&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=GBRGDPRQPSMEI&scale=left&cosd=1956-01-01&coed=2025-01-01&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Quarterly&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-07-17&revision_date=2025-07-17&nd=1956-01-01"
+
+df = pd.read_csv(url)
+
+df.rename(columns={df.columns[0]: "Date", df.columns[1]: "Growth Rate of GDP"}, inplace=True)
+df["Date"] = pd.to_datetime(df["Date"])
+value_col = df.columns[1]
+
+df = df[df["Date"].dt.year < 2011]
+df["Unit"] = "United Kingdom"
+df["2008 Financial Crisis"] = (df["Date"] >= pd.Timestamp("2008-01-01")).astype(int)
+
+configFC = {
+    "df": df,
+    "outcome": df.columns[1],
+    "treat": df.columns[-1],
+    "unitid": "Unit",
+    "time": df.columns[0],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"], "m": 36
+}
+
+resultFC = SHC(configFC).fit()
+```
+
+The ATT for the growth rate is -3.755, meaning the conomy shrank by 3 percentage points over the next three years.
 
 # Caveats
 

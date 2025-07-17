@@ -205,7 +205,11 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#the-synthetic-historical-control-shc-estimator" id="toc-the-synthetic-historical-control-shc-estimator" class="nav-link active" data-scroll-target="#the-synthetic-historical-control-shc-estimator">The Synthetic Historical Control (SHC) Estimator</a></li>
+  <li><a href="#notations" id="toc-notations" class="nav-link active" data-scroll-target="#notations">Notations</a></li>
+  <li><a href="#the-synthetic-historical-control-shc-estimator" id="toc-the-synthetic-historical-control-shc-estimator" class="nav-link" data-scroll-target="#the-synthetic-historical-control-shc-estimator">The Synthetic Historical Control (SHC) Estimator</a>
+  <ul class="collapse">
+  <li><a href="#choosing-our-historical-segments" id="toc-choosing-our-historical-segments" class="nav-link" data-scroll-target="#choosing-our-historical-segments">Choosing Our Historical Segments</a></li>
+  </ul></li>
   <li><a href="#estimation-in-python" id="toc-estimation-in-python" class="nav-link" data-scroll-target="#estimation-in-python">Estimation in Python</a></li>
   </ul>
 </nav>
@@ -247,14 +251,61 @@ window.Quarto = {
 </header>
 
 
-<p>Oftentimes, we struggle with p[icking a donor pool for SCMs. This blog post shows you one way we can get around that using the <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4995085">syntehtic historical control</a> method.</p>
+<p>Oftentimes, we struggle with p[icking a donor pool for SCMs. This blog post shows you one way we can get around that using the <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4995085">synthetic historical control</a> method.</p>
+<section id="notations" class="level2">
+<h2 class="anchored" data-anchor-id="notations">Notations</h2>
+<p>The notation for this method makes my head hurt, so I will simpyl quote directly from my paper that currently uses this method in hopes that I can spell it out clearly.</p>
+<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers, and let <span class="math inline">\(\|\cdot\|_1\)</span> denote the usual <span class="math inline">\(\ell_1\)</span> vector norm. Throughout, I denote sets using calligraphic letters (e.g., <span class="math inline">\(\mathcal{T}, \mathcal{S}, \mathcal{N}\)</span>) for clarity. Scalars are represented using plain lowercase letters (e.g., <span class="math inline">\(h, t, n, m\)</span>), and matrices are denoted by bold uppercase letters (e.g., <span class="math inline">\(\mathbf{X}, \mathbf{W}, \mathbf{Y}\)</span>). Given a vector <span class="math inline">\(\mathbf{x} = (x_1, x_2, \dots, x_T)^\top \in \mathbb{R}^T\)</span> and an index set <span class="math inline">\(\mathcal{I} \subseteq \{1, \dots, T\}\)</span>, I write <span class="math inline">\(\mathbf{x}_{\mathcal{I}} \coloneqq (x_t)_{t \in \mathcal{I}} \in \mathbb{R}^{|\mathcal{I}|}\)</span> to denote the subvector of <span class="math inline">\(\mathbf{x}\)</span> corresponding to indices in <span class="math inline">\(\mathcal{I}\)</span>, preserving their original order.</p>
+<p>Let <span class="math inline">\(\mathcal{T} = \{1, 2, \dots, T\}\)</span> index time. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 \coloneqq \{t \in \mathcal{T} : t \leq T_0\}\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 \coloneqq \{t \in \mathcal{T} : t &gt; T_0\}\)</span>. The number of post-treatment periods is <span class="math inline">\(n = T - T_0\)</span>. Let <span class="math inline">\(m \in \mathbb{N}\)</span> denote the evaluation window length, i.e., the number of periods used to construct the SHC match. Define the evaluation period as the final <span class="math inline">\(m\)</span> months of the pre-treatment period:</p>
+<p><span class="math display">\[
+\mathcal{T}_{\text{eval}} \coloneqq \{T_0 - m + 1, \dots, T_0\} \subset \mathcal{T}_1.
+\]</span></p>
+<p>Let <span class="math inline">\(\mathbf{y} = (y_1, y_2, \dots, y_T)^\top \in \mathbb{R}^T\)</span> denote the observed outcome vector for the treated unit. Define the pre-treatment outcome vector <span class="math inline">\(\mathbf{y}_{\text{pre}} \coloneqq \mathbf{y}_{\mathcal{T}_1} \in \mathbb{R}^{T_0}\)</span>, the evaluation subvector <span class="math inline">\(\mathbf{y}_{\text{eval}} \coloneqq \mathbf{y}_{\mathcal{T}_{\text{eval}}} \in \mathbb{R}^m\)</span>, and the post-treatment outcome vector <span class="math inline">\(\mathbf{y}_{\text{post}} \coloneqq \mathbf{y}_{\mathcal{T}_2} \in \mathbb{R}^n\)</span>. The evaluation subvector <span class="math inline">\(\mathbf{y}_{\text{eval}}\)</span> is the target pattern to be reconstructed using convex combinations of earlier segments from the pre-treatment period.</p>
+<p>To reconstruct the evaluation window, we compare it against earlier segments of the treated unit’s own pre-treatment trajectory. Define the donor matrix <span class="math inline">\(\widetilde{\mathbf{Y}}_{\text{pre}} \in \mathbb{R}^{m \times N}\)</span> as a collection of <span class="math inline">\(N\)</span> overlapping length-<span class="math inline">\(m\)</span> subvectors extracted from the smoothed pre-treatment series. Each column is a contiguous subvector of the form <span class="math inline">\(\widetilde{\mathbf{y}}_{[i, i+m-1]}\)</span>, with <span class="math inline">\(i\)</span> ranging over eligible start points in <span class="math inline">\(\mathcal{T}_1\)</span> that precede the evaluation window.</p>
+<p>I do not feel the authors do a good job of this in the paper, so I will give a toy example (and I do this in my current paper, as well, that examines a different case).</p>
+<p>Suppose we have <span class="math inline">\(T_0 = 14\)</span> days of pre-treatment data, and we want to:</p>
+<ul>
+<li>use <span class="math inline">\(m = 2\)</span> days to define the evaluation window (i.e., the last 2 days before treatment),</li>
+<li>and predict <span class="math inline">\(n = 1\)</span> day into the post-treatment period.</li>
+</ul>
+<p>Then, to build a valid donor, each segment must be <span class="math inline">\(m + n = 3\)</span> days long:<br>
+the first <span class="math inline">\(m\)</span> days are used to match the evaluation window,<br>
+and the last <span class="math inline">\(n\)</span> days are used to forecast the post-treatment period.</p>
+<p>So, how many such segments can we extract from the 14 pre-treatment days? We need to ensure that each 3-day segment fits <strong>entirely within</strong> the pre-treatment window. The last such segment would be <span class="math inline">\((\widetilde{y}_{12}, \widetilde{y}_{13}, \widetilde{y}_{14})^\top\)</span>. Thus, the total number of eligible segments is: <span class="math display">\[
+N = T_0 - m - n + 1 = 14 - 2 - 1 + 1 = 12.
+\]</span></p>
+<p>Each donor segment looks like: <span class="math display">\[
+\widetilde{\mathbf{y}}_{[i, i + m + n - 1]} = (\widetilde{y}_i, \widetilde{y}_{i+1}, \widetilde{y}_{i+2})^\top
+\quad \text{for } i = 1, \dots, 12.
+\]</span></p>
+<ul>
+<li>The first <span class="math inline">\(m = 2\)</span> elements are used for fitting the evaluation window.</li>
+<li>The final <span class="math inline">\(n = 1\)</span> element is used to extrapolate into the post-treatment period.</li>
+</ul>
+<p>So the donor matrix for evaluation looks like: <span class="math display">\[
+\widetilde{\mathbf{Y}}_{\text{pre}} =
+\begin{bmatrix}
+\widetilde{y}_1 &amp; \widetilde{y}_2 &amp; \cdots &amp; \widetilde{y}_{12} \\
+\widetilde{y}_2 &amp; \widetilde{y}_3 &amp; \cdots &amp; \widetilde{y}_{13}
+\end{bmatrix} \in \mathbb{R}^{2 \times 12},
+\]</span></p>
+<p>and the corresponding donor matrix for forecasting (aligned with each segment’s next day) is: <span class="math display">\[
+\widetilde{\mathbf{Y}}_{\text{post}} =
+\begin{bmatrix}
+\widetilde{y}_3 &amp; \widetilde{y}_4 &amp; \cdots &amp; \widetilde{y}_{14}
+\end{bmatrix} \in \mathbb{R}^{1 \times 12}.
+\]</span></p>
+<p>We use the pre period for the historical controls tofit our evaluation period for our treated unit. ASs in normal SCM style, all of those weights are applied to the full segment matrix to give us the counterfactual. So the SHC counterfactual for day 15 is estimated as: <span class="math display">\[
+\widehat{y}_{15} = \widetilde{\mathbf{Y}}_{\text{post}} \cdot \mathbf{w}^\ast,
+\]</span> where <span class="math inline">\(\mathbf{w}^\ast\)</span> are weights that optimally match the evaluation window using the <span class="math inline">\(\widetilde{\mathbf{Y}}_{\text{pre}}\)</span> matrix.</p>
+</section>
 <section id="the-synthetic-historical-control-shc-estimator" class="level1">
 <h1>The Synthetic Historical Control (SHC) Estimator</h1>
-<p>The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s <em>own historical data</em>. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series <span class="math inline">\(\{y_t\}_{t=1}^{T_0}\)</span> using local linear regression, which helps reduce noise and better recover the underlying trend. The result is a smoothed series:</p>
+<p>The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s own historical data. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series <span class="math inline">\(\{y_t\}_{t=1}^{T_0}\)</span> using local linear regression, which helps reduce noise and better recover the underlying trend. In practice, I use cross validation for the Gaussain kernel to choose the bandwidth. Either way, The result is a smoothed series:</p>
 <p><span class="math display">\[
 \widetilde{\mathbf{y}} = (\widetilde{y}_1, \ldots, \widetilde{y}_{T_0})^\top.
 \]</span></p>
-<p>From this smoothed series, we construct a <strong>donor matrix</strong> by taking overlapping segments of length <span class="math inline">\(m\)</span>:</p>
+<p>From this smoothed series, we construct a donor matrix of historical segments by taking overlapping segments of length <span class="math inline">\(m\)</span>:</p>
 <p><span class="math display">\[
 \widetilde{\mathbf{Y}}_{\text{pre}} = \begin{bmatrix}
 \widetilde{\mathbf{y}}_{[1, m]} &amp;
@@ -263,66 +314,68 @@ window.Quarto = {
 \widetilde{\mathbf{y}}_{[N, N+m-1]}
 \end{bmatrix} \in \mathbb{R}^{m \times N},
 \]</span></p>
-<p>where <span class="math inline">\(N = T_0 - m - n + 1\)</span> and each column is a historical “donor” segment used to predict post-treatment outcomes.</p>
-<p>SHC selects weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^N\)</span> to minimize the squared distance between the evaluation window and a convex combination of donor segments, with regularization to address multicollinearity:</p>
+<p>where <span class="math inline">\(N = T_0 - m - n + 1\)</span> and each column is a historical “donor” segment used to predict post-treatment outcomes. In this case, we ahve <span class="math inline">\(n\)</span> post-treatment observations.</p>
+<p>SHC selects weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^N\)</span> to minimize the squared distance between the evaluation window and a convex combination of donor segments, with regularization:</p>
 <p><span class="math display">\[
 \mathbf{w}^\ast = \arg\min_{\mathbf{w} \geq 0, \ \mathbf{1}^\top \mathbf{w} = 1}
 \left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}} \mathbf{w} \right\|_2^2
 + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2.
 \]</span></p>
-<p>Here, <span class="math inline">\(\mathbf{C}_0\)</span> contains the eigenvectors of the donor Gram matrix associated with low-variance directions, and the penalty term discourages overfitting in those directions.</p>
-<p>To avoid using too many (possibly redundant) donor segments, SHC implements a forward selection algorithm. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample prediction error.</p>
+<p>Here, <span class="math inline">\(\mathbf{C}_0\)</span> contains the eigenvectors of the donor pool’s Gram matrix. We use this term to stabilize the optimization, since in practice we will always have more predictors than the segment length allows.</p>
+<section id="choosing-our-historical-segments" class="level2">
+<h2 class="anchored" data-anchor-id="choosing-our-historical-segments">Choosing Our Historical Segments</h2>
+<p>To avoid using too many donor segments and overfit, SHC implements a forward selection algorithm. The authors in the paper sort of choose an arbitrary number of donors to use, but I did not like that so I write my own forward selection methodd. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample MSE.</p>
 <p><span class="math display">\[
 \mathcal{S}_j = \mathcal{S}_{j-1} \cup \left\{ \underset{i \in \mathcal{N} \setminus \mathcal{S}_{j-1}}{\operatorname*{argmin}} \left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}}^{(\mathcal{S}_{j-1} \cup \{i\})} \mathbf{w}^{(j)} \right\|_2^2  + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2 \right\}, \quad \mathcal{S}_0 = \emptyset,
 \]</span></p>
-<p>To choose when to stop, we compute a modified BIC at each step:</p>
+<p>To choose when to stop adding donors, we compute a modified BIC at each step:</p>
 <p><span class="math display">\[
 \text{BIC}(j) = m \cdot \log\left( \text{MSE}_j \right) + \lambda j,
 \]</span></p>
-<p>where <span class="math inline">\(\text{MSE}_j\)</span> is the in-sample mean squared error using <span class="math inline">\(j\)</span> donors, and <span class="math inline">\(\lambda = \log(m)\)</span>. The algorithm stops when BIC increases for two steps in a row. The resulting sparse donor set gives us stable, interpretable counterfactuals.</p>
+<p>where <span class="math inline">\(\text{MSE}_j\)</span> is the in-sample mean squared error using <span class="math inline">\(j\)</span> donors, and <span class="math inline">\(\lambda = \log(m)\)</span>. The algorithm stops when BIC increases for two steps in a row. Presumably, we could use a better one, so if you have suggestions let me know.</p>
+</section>
 </section>
 <section id="estimation-in-python" class="level1">
 <h1>Estimation in Python</h1>
-<p>“But Jared!”, you will say, this seems like a lot of looping and lots of donor tracking. Well fear not, that is what <code>mlsynth</code> is for. In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
+<p>In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div id="4b65b41a" class="cell" data-execution_count="1">
+<p>This example uses the Malaysian Ringgit as an example. Its cirrency was affected by the Asian Financial Crisis. I use the SHC method to estimate the impact the crisis had on the growth rate of the spot exchange rate, taken from FRED’s database. We can see my code below, where I use 36 months (3 years) of a pretreatment period.</p>
+<div id="4e38c6c5" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SHC</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=</span><span class="sc">%23e</span><span class="st">bf3fb&amp;chart_type=line&amp;drp=0&amp;fo=open</span><span class="sc">%20s</span><span class="st">ans&amp;graph_bgcolor=</span><span class="sc">%23f</span><span class="st">fffff&amp;height=450&amp;mode=fred&amp;recession_bars=on&amp;txtcolor=%23444444&amp;ts=12&amp;tts=12&amp;width=1320&amp;nt=0&amp;thu=0&amp;trc=0&amp;show_legend=yes&amp;show_axis_titles=yes&amp;show_tooltip=yes&amp;id=EXMAUS&amp;scale=left&amp;cosd=1971-01-01&amp;coed=2025-06-01&amp;line_color=</span><span class="sc">%230073e</span><span class="st">6&amp;link_values=false&amp;line_style=solid&amp;mark_type=none&amp;mw=3&amp;lw=3&amp;ost=-99999&amp;oet=99999&amp;mma=0&amp;fml=a&amp;fq=Monthly&amp;fam=avg&amp;fgst=lin&amp;fgsnd=2020-02-01&amp;line_index=1&amp;transformation=lin&amp;vintage_date=2025-07-17&amp;revision_date=2025-07-17&amp;nd=1971-01-01"</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>df.rename(columns<span class="op">=</span>{df.columns[<span class="dv">0</span>]: <span class="st">"Date"</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>])</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>value_col <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"YoY Growth Rate"</span>] <span class="op">=</span> df[value_col].pct_change(periods<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>df.rename(columns<span class="op">=</span>{df.columns[<span class="dv">0</span>]: <span class="st">"Date"</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>])</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>value_col <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"YoY Growth Rate"</span>] <span class="op">=</span> df[value_col].pct_change(periods<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"YoY Growth Rate"</span>])</span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"YoY Growth Rate"</span>])</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(columns<span class="op">=</span>df.columns[<span class="dv">1</span>])</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(columns<span class="op">=</span>df.columns[<span class="dv">1</span>])</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df[<span class="st">"Date"</span>].dt.year <span class="op">&lt;</span> <span class="dv">1999</span>]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Unit"</span>] <span class="op">=</span> <span class="st">"Ringgit"</span></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df[<span class="st">"Date"</span>].dt.year <span class="op">&lt;</span> <span class="dv">1999</span>]</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Unit"</span>] <span class="op">=</span> <span class="st">"Ringgit"</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Financial Crisis"</span>] <span class="op">=</span> (df[<span class="st">"Date"</span>] <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"1997-07-01"</span>)).astype(<span class="bu">int</span>)</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">1</span>],</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"Unit"</span>,</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"m"</span>: <span class="dv">12</span><span class="op">*</span><span class="dv">3</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SHC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Financial Crisis"</span>] <span class="op">=</span> (df[<span class="st">"Date"</span>] <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"1997-07-01"</span>)).astype(<span class="bu">int</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">1</span>],</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"Unit"</span>,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"m"</span>: <span class="dv">12</span><span class="op">*</span><span class="dv">3</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SHC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>MSE with best 1 donors: 0.0009644584 | BIC: -246.398460
 MSE with best 2 donors: 0.0002455680 | BIC: -292.062680
@@ -345,7 +398,9 @@ Stopping early at j=11 due to BIC increase.</code></pre>
 </div>
 </div>
 </div>
-<p>The SHC Method.</p>
+<p>The authors note that this apporach will not work with trendy data. In other words, you need to detrend it first if a trend exists.</p>
+<p>In principle, I like this method. I wonder what would happen if we just did this same method, but just slapped on the <a href="https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf">Robust SCM</a> method for the weight solution, where we take the low rank structure of the pre-treatment period based off the PCA representation of it and use the weights learnt from OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts. If the idea is just that “we think the fiture will look like some combination of the untreated past), then who’s to say that using the low-dimensional subspace of pre-treatment periods wouldn’t be a good idea? he authors do not propose infernece, so I use the agnostic conformal prediction intervals from the <a href="https://doi.org/10.18637/jss.v113.i01">scpi package</a>.</p>
+<p>Anyways, that’s another paper. The SHC method itself is not even published just yet, so unclear how popular it will become or if others will want to extend it for other things.</p>
 
 
 
@@ -353,7 +408,7 @@ Stopping early at j=11 due to BIC increase.</code></pre>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1752767667550" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1752769694898" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -377,7 +432,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1752767667551" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1752769694899" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -401,7 +456,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1752767667551" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1752769694899" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -425,7 +480,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1752767667556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1752769694904" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -449,7 +504,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1752767667556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1752769694904" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -473,7 +528,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1752767667553" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1752769694901" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -495,7 +550,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752767667553" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752769694901" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -519,7 +574,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1752767667556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1752769694904" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -541,7 +596,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1752767720461" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="8" data-listing-file-modified-sort="1752769753658" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -555,7 +610,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1752767667550" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="9" data-listing-file-modified-sort="1752769694899" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

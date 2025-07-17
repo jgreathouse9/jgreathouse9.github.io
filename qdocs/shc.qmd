@@ -1,0 +1,109 @@
+---
+title: "The Synthetic Historical Control Method"
+date: 2025-07-17
+categories: [Econometrics]
+---
+
+Oftentimes, we struggle with p[icking a donor pool for SCMs. This blog post shows you one way we can get around that.
+
+# The Synthetic Historical Control (SHC) Estimator
+
+The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s *own historical data*. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series $\{y_t\}_{t=1}^{T_0}$ using local linear regression, which helps reduce noise and better recover the underlying trend. The result is a smoothed series:
+
+$$
+\widetilde{\mathbf{y}} = (\widetilde{y}_1, \ldots, \widetilde{y}_{T_0})^\top.
+$$
+
+From this smoothed series, we construct a **donor matrix** by taking overlapping segments of length $m$:
+
+$$
+\widetilde{\mathbf{Y}}_{\text{pre}} = \begin{bmatrix}
+\widetilde{\mathbf{y}}_{[1, m]} & 
+\widetilde{\mathbf{y}}_{[2, m+1]} & 
+\cdots & 
+\widetilde{\mathbf{y}}_{[N, N+m-1]}
+\end{bmatrix} \in \mathbb{R}^{m \times N},
+$$
+
+where $N = T_0 - m - n + 1$ and each column is a historical “donor” segment used to predict post-treatment outcomes.
+
+SHC selects weights $\mathbf{w} \in \mathbb{R}^N$ to minimize the squared distance between the evaluation window and a convex combination of donor segments, with regularization to address multicollinearity:
+
+$$
+\mathbf{w}^\ast = \arg\min_{\mathbf{w} \geq 0, \ \mathbf{1}^\top \mathbf{w} = 1}
+\left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}} \mathbf{w} \right\|_2^2
++ \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2.
+$$
+
+Here, $\mathbf{C}_0$ contains the eigenvectors of the donor Gram matrix associated with low-variance directions, and the penalty term discourages overfitting in those directions.
+
+
+To avoid using too many (possibly redundant) donor segments, SHC implements a forward selection algorithm. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample prediction error.
+
+$$
+\mathcal{S}_j = \mathcal{S}_{j-1} \cup \left\{ \underset{i \in \mathcal{N} \setminus \mathcal{S}_{j-1}}{\operatorname*{argmin}} \left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}}^{(\mathcal{S}_{j-1} \cup \{i\})} \mathbf{w}^{(j)} \right\|_2^2  + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2 \right\}, \quad \mathcal{S}_0 = \emptyset,
+$$
+
+To choose when to stop, we compute a modified BIC at each step:
+
+$$
+\text{BIC}(j) = m \cdot \log\left( \text{MSE}_j \right) + \lambda j,
+$$
+
+where $\text{MSE}_j$ is the in-sample mean squared error using $j$ donors, and $\lambda = \log(m)$. The algorithm stops when BIC increases for two steps in a row. The resulting sparse donor set gives us stable, interpretable counterfactuals.
+
+# Estimation in Python
+
+"But Jared!", you will say, this seems like a lot of looping and lots of donor tracking. Well fear not, that is what ```mlsynth``` is for. In order to get these results, you need Python (3.9 or greater) and ``mlsynth``, which you may install from the Github repo. You'll need the most recent version.
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+```{python}
+
+#| fig-align: center
+
+
+
+from mlsynth import SHC
+import pandas as pd
+
+
+url = "https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=%23ebf3fb&chart_type=line&drp=0&fo=open%20sans&graph_bgcolor=%23ffffff&height=450&mode=fred&recession_bars=on&txtcolor=%23444444&ts=12&tts=12&width=1320&nt=0&thu=0&trc=0&show_legend=yes&show_axis_titles=yes&show_tooltip=yes&id=EXMAUS&scale=left&cosd=1971-01-01&coed=2025-06-01&line_color=%230073e6&link_values=false&line_style=solid&mark_type=none&mw=3&lw=3&ost=-99999&oet=99999&mma=0&fml=a&fq=Monthly&fam=avg&fgst=lin&fgsnd=2020-02-01&line_index=1&transformation=lin&vintage_date=2025-07-17&revision_date=2025-07-17&nd=1971-01-01"
+
+
+
+df = pd.read_csv(url)
+
+df.rename(columns={df.columns[0]: "Date"}, inplace=True)
+df["Date"] = pd.to_datetime(df["Date"])
+
+value_col = df.columns[1]
+df["YoY Growth Rate"] = df[value_col].pct_change(periods=12)
+
+df = df.dropna(subset=["YoY Growth Rate"])
+
+df = df.drop(columns=df.columns[1])
+
+
+df = df[df["Date"].dt.year < 1999]
+df["Unit"] = "Ringgit"
+df["Financial Crisis"] = (df["Date"] >= pd.Timestamp("1997-07-01")).astype(int)
+
+config = {
+    "df": df,
+    "outcome": df.columns[1],
+    "treat": df.columns[-1],
+    "unitid": "Unit",
+    "time": df.columns[0],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["blue"], "m": 12*3
+}
+
+result = SHC(config).fit()
+
+```
+
+The SHC Method.

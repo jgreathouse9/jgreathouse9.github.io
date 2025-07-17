@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2025-05-19">
+<meta name="dcterms.date" content="2025-07-17">
 
-<title>Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation – Policy Analysis, Data Science, and Causal Inference</title>
+<title>The Synthetic Historical Control Method – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -205,23 +205,18 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#non-linear-synthetic-control" id="toc-non-linear-synthetic-control" class="nav-link active" data-scroll-target="#non-linear-synthetic-control">Non-Linear Synthetic Control</a>
-  <ul class="collapse">
-  <li><a href="#optimization-problem" id="toc-optimization-problem" class="nav-link" data-scroll-target="#optimization-problem">Optimization Problem</a></li>
-  <li><a href="#cross-validation-to-tune-a-and-b" id="toc-cross-validation-to-tune-a-and-b" class="nav-link" data-scroll-target="#cross-validation-to-tune-a-and-b">Cross-Validation to Tune <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span></a></li>
-  </ul></li>
-  <li><a href="#nsc-in-mlsynth" id="toc-nsc-in-mlsynth" class="nav-link" data-scroll-target="#nsc-in-mlsynth">NSC in <code>mlsynth</code></a></li>
+  <li><a href="#the-synthetic-historical-control-shc-estimator" id="toc-the-synthetic-historical-control-shc-estimator" class="nav-link active" data-scroll-target="#the-synthetic-historical-control-shc-estimator">The Synthetic Historical Control (SHC) Estimator</a></li>
+  <li><a href="#estimation-in-python" id="toc-estimation-in-python" class="nav-link" data-scroll-target="#estimation-in-python">Estimation in Python</a></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(10)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(5)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(10)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(3)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(5)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</h1>
+<h1 class="title">The Synthetic Historical Control Method</h1>
   <div class="quarto-categories">
-    <div class="quarto-category">Causal Inference</div>
     <div class="quarto-category">Econometrics</div>
   </div>
   </div>
@@ -240,7 +235,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 19, 2025</p>
+      <p class="date">July 17, 2025</p>
     </div>
   </div>
   
@@ -252,81 +247,105 @@ window.Quarto = {
 </header>
 
 
-<p>Sometimes our outcomes are nonlinear in nature with synthetic control methods, meaning biases can be quite severe if not addressed correctly. This is where <a href="https://arxiv.org/abs/2306.01967">the non-linear synthetic control method</a> comes in handy. In this blog post, I present the Python implementation of the method and give an example of how it works using the Proposition 99 dataset.</p>
-<section id="non-linear-synthetic-control" class="level1">
-<h1>Non-Linear Synthetic Control</h1>
-<section id="optimization-problem" class="level2">
-<h2 class="anchored" data-anchor-id="optimization-problem">Optimization Problem</h2>
-<p>Let <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> denote the outcome vector for the treated unit over the pre-treatment period <span class="math inline">\(\mathcal{T}_1\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> be the matrix of pre-treatment outcomes for the control units indexed by <span class="math inline">\(\mathcal{N}_0\)</span>. We seek a weight vector <span class="math inline">\(\mathbf{w} \in \mathbb{R}^{N_0}\)</span> that minimizes the following objective:</p>
+<p>Oftentimes, we struggle with p[icking a donor pool for SCMs. This blog post shows you one way we can get around that using the <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4995085">syntehtic historical control</a> method.</p>
+<section id="the-synthetic-historical-control-shc-estimator" class="level1">
+<h1>The Synthetic Historical Control (SHC) Estimator</h1>
+<p>The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s <em>own historical data</em>. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series <span class="math inline">\(\{y_t\}_{t=1}^{T_0}\)</span> using local linear regression, which helps reduce noise and better recover the underlying trend. The result is a smoothed series:</p>
 <p><span class="math display">\[
-\min_{\mathbf{w} \in \mathbb{R}^{N_0}} \quad \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \right\|_2^2 + a \sum_{j \in \mathcal{N}_0} \delta_j |w_j| + b \|\mathbf{w}\|_2^2 \quad \text{s.t.} \quad \|\mathbf{w}\|_1 = 1
+\widetilde{\mathbf{y}} = (\widetilde{y}_1, \ldots, \widetilde{y}_{T_0})^\top.
 \]</span></p>
-<p>The first term is the standard squared reconstruction error. The second term introduces a discrepancy-weighted <span class="math inline">\(\ell_1\)</span> penalty, where the discrepancy vector <span class="math inline">\(\boldsymbol{\delta} \in \mathbb{R}^{N_0}\)</span> is defined by:</p>
+<p>From this smoothed series, we construct a <strong>donor matrix</strong> by taking overlapping segments of length <span class="math inline">\(m\)</span>:</p>
 <p><span class="math display">\[
-\delta_j = \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{y}_j^{\text{pre}} \right\|_2, \quad \forall j \in \mathcal{N}_0
+\widetilde{\mathbf{Y}}_{\text{pre}} = \begin{bmatrix}
+\widetilde{\mathbf{y}}_{[1, m]} &amp;
+\widetilde{\mathbf{y}}_{[2, m+1]} &amp;
+\cdots &amp;
+\widetilde{\mathbf{y}}_{[N, N+m-1]}
+\end{bmatrix} \in \mathbb{R}^{m \times N},
 \]</span></p>
-<p>This term penalizes control units that differ more from the treated unit in pre-treatment trends. The final term is a Tikhonov regularization penalty that shrinks the weight vector toward zero to improve stability. The parameters <span class="math inline">\(a &gt; 0\)</span> and <span class="math inline">\(b &gt; 0\)</span> control the strength of the <span class="math inline">\(\ell_1\)</span> and <span class="math inline">\(\ell_2\)</span> penalties, respectively. The constraint <span class="math inline">\(\|\mathbf{w}\|_1 = 1\)</span> retains the SC to the probability simplex <span class="math inline">\(\Delta^{N_0 - 1}\)</span>, forming an affine combination of the control units.</p>
+<p>where <span class="math inline">\(N = T_0 - m - n + 1\)</span> and each column is a historical “donor” segment used to predict post-treatment outcomes.</p>
+<p>SHC selects weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^N\)</span> to minimize the squared distance between the evaluation window and a convex combination of donor segments, with regularization to address multicollinearity:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \arg\min_{\mathbf{w} \geq 0, \ \mathbf{1}^\top \mathbf{w} = 1}
+\left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}} \mathbf{w} \right\|_2^2
++ \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2.
+\]</span></p>
+<p>Here, <span class="math inline">\(\mathbf{C}_0\)</span> contains the eigenvectors of the donor Gram matrix associated with low-variance directions, and the penalty term discourages overfitting in those directions.</p>
+<p>To avoid using too many (possibly redundant) donor segments, SHC implements a forward selection algorithm. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample prediction error.</p>
+<p><span class="math display">\[
+\mathcal{S}_j = \mathcal{S}_{j-1} \cup \left\{ \underset{i \in \mathcal{N} \setminus \mathcal{S}_{j-1}}{\operatorname*{argmin}} \left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}}^{(\mathcal{S}_{j-1} \cup \{i\})} \mathbf{w}^{(j)} \right\|_2^2  + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2 \right\}, \quad \mathcal{S}_0 = \emptyset,
+\]</span></p>
+<p>To choose when to stop, we compute a modified BIC at each step:</p>
+<p><span class="math display">\[
+\text{BIC}(j) = m \cdot \log\left( \text{MSE}_j \right) + \lambda j,
+\]</span></p>
+<p>where <span class="math inline">\(\text{MSE}_j\)</span> is the in-sample mean squared error using <span class="math inline">\(j\)</span> donors, and <span class="math inline">\(\lambda = \log(m)\)</span>. The algorithm stops when BIC increases for two steps in a row. The resulting sparse donor set gives us stable, interpretable counterfactuals.</p>
 </section>
-<section id="cross-validation-to-tune-a-and-b" class="level2">
-<h2 class="anchored" data-anchor-id="cross-validation-to-tune-a-and-b">Cross-Validation to Tune <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span></h2>
-<p>To select optimal regularization parameters <span class="math inline">\((a, b)\)</span>, we perform <span class="math inline">\(k\)</span>-fold cross-validation using a pseudo-treated framework. Each control unit <span class="math inline">\(j \in \mathcal{N}_0\)</span> is treated as if it were the treated unit, and we aim to reconstruct <span class="math inline">\(\mathbf{y}_j^{\text{pre}}\)</span> from the remaining controls. For a given pseudo-treated unit <span class="math inline">\(j\)</span>, let <span class="math inline">\(\mathcal{N}_0^{(-j)} = \mathcal{N}_0 \setminus \{j\}\)</span> and define the donor matrix <span class="math inline">\(\mathbf{Y}_0^{\text{pre}, (-j)}\)</span> by removing column <span class="math inline">\(j\)</span> from <span class="math inline">\(\mathbf{Y}_0^{\text{pre}}\)</span>.</p>
-<p>For each fold and pseudo-treated unit, we solve:</p>
-<p><span class="math display">\[
-\min_{\mathbf{w}^{(j)} \in \mathbb{R}^{N_0 - 1}} \quad \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)} \right\|_2^2 + a \sum_{k \in \mathcal{N}_0^{(-j)}} \delta_k^{(j)} |w_k^{(j)}| + b \|\mathbf{w}^{(j)}\|_2^2 \quad \text{s.t.} \quad \|\mathbf{w}^{(j)}\|_1 = 1
-\]</span></p>
-<p>where</p>
-<p><span class="math display">\[
-\delta_k^{(j)} = \left\| \mathbf{y}_j^{\text{pre}} - \mathbf{y}_k^{\text{pre}} \right\|_2, \quad \forall k \in \mathcal{N}_0^{(-j)}
-\]</span></p>
-<p>Let <span class="math inline">\(\widehat{\mathbf{y}}_j^{\text{pre}} = \mathbf{Y}_0^{\text{pre}, (-j)} \mathbf{w}^{(j)}\)</span> denote the predicted outcome. The validation error for unit <span class="math inline">\(j\)</span> is given by:</p>
-<p><span class="math display">\[
-\text{MSE}^{(j)} = T_0^{-1} \left\| \mathbf{y}_j^{\text{pre}} - \widehat{\mathbf{y}}_j^{\text{pre}} \right\|_2^2
-\]</span></p>
-<p>The cross-validated error is averaged over all pseudo-treated units and all folds. We then select:</p>
-<p><span class="math display">\[
-(a^\ast, b^\ast) = \arg\min_{a \in \mathcal{A},\, b \in \mathcal{B}} \; \text{CVError}(a, b)
-\]</span></p>
-<p>Here, <span class="math inline">\(k\)</span> indexes the donor units in the pseudo-treated optimization problem. <span class="math inline">\(\mathcal{A}\)</span> and <span class="math inline">\(\mathcal{B}\)</span> are grids of candidate values. In practice, I employ <code>sklearn</code>’s cross-validation utilities to accelerate computation. I had to go rogue from the original approach because on my end it was computationally intensive. This modification seems to perform comparably while dramatically improving runtime. So while the empirical results will not be the same, they are about what we’d expect.</p>
-</section>
-</section>
-<section id="nsc-in-mlsynth" class="level1">
-<h1>NSC in <code>mlsynth</code></h1>
-<p>Now I will give an example of how to use NSC for your own applied work. As ususal, in order to properly implement this, we begin by installing <code>mlsynth</code> from my Github</p>
+<section id="estimation-in-python" class="level1">
+<h1>Estimation in Python</h1>
+<p>“But Jared!”, you will say, this seems like a lot of looping and lots of donor tracking. Well fear not, that is what <code>mlsynth</code> is for. In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>And then we load the Proposition 99 dataset and fit the model in the ususal <code>mlsynth</code> fashion. As per the ususal, we have a single unit name column which has the names of the donors, a time column (the year in this case), a numeric outcome column, and an indicator column which denotes the treatment when it is active and the unit is the name of the treated unit, else 0.</p>
-<div id="64fd5bd1" class="cell" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> NSC</span>
+<div id="4b65b41a" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SHC</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Feel free to change "smoking" with "basque" above in the URL</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=</span><span class="sc">%23e</span><span class="st">bf3fb&amp;chart_type=line&amp;drp=0&amp;fo=open</span><span class="sc">%20s</span><span class="st">ans&amp;graph_bgcolor=</span><span class="sc">%23f</span><span class="st">fffff&amp;height=450&amp;mode=fred&amp;recession_bars=on&amp;txtcolor=%23444444&amp;ts=12&amp;tts=12&amp;width=1320&amp;nt=0&amp;thu=0&amp;trc=0&amp;show_legend=yes&amp;show_axis_titles=yes&amp;show_tooltip=yes&amp;id=EXMAUS&amp;scale=left&amp;cosd=1971-01-01&amp;coed=2025-06-01&amp;line_color=</span><span class="sc">%230073e</span><span class="st">6&amp;link_values=false&amp;line_style=solid&amp;mark_type=none&amp;mw=3&amp;lw=3&amp;ost=-99999&amp;oet=99999&amp;mma=0&amp;fml=a&amp;fq=Monthly&amp;fam=avg&amp;fgst=lin&amp;fgsnd=2020-02-01&amp;line_index=1&amp;transformation=lin&amp;vintage_date=2025-07-17&amp;revision_date=2025-07-17&amp;nd=1971-01-01"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Our method inputs</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: data,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>]}</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>df.rename(columns<span class="op">=</span>{df.columns[<span class="dv">0</span>]: <span class="st">"Date"</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>])</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>value_col <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"YoY Growth Rate"</span>] <span class="op">=</span> df[value_col].pct_change(periods<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"YoY Growth Rate"</span>])</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(columns<span class="op">=</span>df.columns[<span class="dv">1</span>])</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> NSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df[<span class="st">"Date"</span>].dt.year <span class="op">&lt;</span> <span class="dv">1999</span>]</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Unit"</span>] <span class="op">=</span> <span class="st">"Ringgit"</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Financial Crisis"</span>] <span class="op">=</span> (df[<span class="st">"Date"</span>] <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"1997-07-01"</span>)).astype(<span class="bu">int</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">1</span>],</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"Unit"</span>,</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"m"</span>: <span class="dv">12</span><span class="op">*</span><span class="dv">3</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SHC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>MSE with best 1 donors: 0.0009644584 | BIC: -246.398460
+MSE with best 2 donors: 0.0002455680 | BIC: -292.062680
+MSE with best 3 donors: 0.0001905295 | BIC: -297.614775
+MSE with best 4 donors: 0.0001623444 | BIC: -299.794393
+MSE with best 5 donors: 0.0001421612 | BIC: -300.990163
+MSE with best 6 donors: 0.0001020804 | BIC: -309.329894
+MSE with best 7 donors: 0.0000876216 | BIC: -311.244772
+MSE with best 8 donors: 0.0000734189 | BIC: -314.027677
+MSE with best 9 donors: 0.0000644758 | BIC: -315.120254
+MSE with best 10 donors: 0.0000599335 | BIC: -314.166682
+MSE with best 11 donors: 0.0000551027 | BIC: -313.608546
+Stopping early at j=11 due to BIC increase.</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="nsc_files/figure-html/cell-2-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="shc_files/figure-html/cell-2-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Here is our observed California versus the counterfactual. The weights shown define an affine combination of control units used to approximate California’s per capita cigarette consumption prior to 1989. The dominant contributor is Nebraska, which carries a weight of 0.540, indicating that it serves as the single most influential donor in replicating California’s pre-treatment trajectory. Other notable positive contributors include Montana (0.171), Nevada (0.168), Colorado (0.148), New Mexico and Connecticut (each at 0.127), Idaho (0.122), and Alabama (0.110). This suggests that their historical smoking trends most closely mirrored California’s prior to the intervention. Several states contribute small positive weights, such as Kansas (0.082), Arkansas (0.029), Minnesota (0.013), and Illinois (0.006). Some control units—North Dakota (-0.250), Tennessee (-0.213), Ohio (-0.195), Indiana (-0.083), and Iowa (-0.035) get negative weight. These negative weights (again bear in mind that this is allowed in affine but not convex combinations) indicate that we are extrapolating beyond the support of the donor pool. Practically, the model is subtracting the influence of these states because their smoking trends diverged from California’s in ways that could distort the synthetic match if left uncorrected. Many remaining states receive weights that are exactly zero or numerically negligible. These states did not contribute to the synthetic California because either their historical trajectories were too dissimilar from California’s, or the regularization in the model penalized their inclusion due to high discrepancy or redundancy with other controls.</p>
-<p>As we can see, the fit is near perfect: you can barely even see the fit in the pre-intervention period. I also get similar results to Abadie and co (I also tested this with Basque and West Germany and got similar results). Full disclaimer: I have not programmed the confidence intervals presented in the paper just yet, but they are derived from <a href="https://arxiv.org/pdf/1610.07748">Section 6</a> from a bootstrapped procedure. I’ll also allow thge user to compute conformal inference as well, since I presume that’ll be helpful.</p>
+<p>The SHC Method.</p>
 
 
 
@@ -476,7 +495,31 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1752767667556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1752767667553" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./nsc.html" class="no-external">
+<div class="listing-date">
+May 19, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1752767667556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -491,28 +534,6 @@ Jared Greathouse
 <a href="./spillsynth.html" class="no-external">
 <div class="listing-date">
 Jul 9, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1752767667556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="496">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./shc.html" class="no-external">
-<div class="listing-date">
-Jul 17, 2025
 </div>
 <div class="listing-author">
 Jared Greathouse

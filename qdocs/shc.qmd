@@ -194,11 +194,15 @@ configFC = {
 resultFC = SHC(configFC).fit()
 ```
 
-The ATT for the growth rate is -3.755, meaning the conomy shrank by 3 percentage points over the next three years.
+The ATT for the growth rate is -3.755, meaning the economy shrank by 3 percentage points over the next three years following the 2008 Financial Crisis/Crash.
+
+Of course, these examples are both financial crises, but you can literally do this with anything that we have a big enough time series to do it with. No reason this method cannot work with promotions for sales of goods, ad campaigns, tourism (my current applicattion!) or other questions we may care about.
 
 # Caveats
 
-The authors note that this approach will not work with trendy data (which makes sense due to the convex combination of donor periods). In other words, you need to detrend it first if a trend exists. In principle, I like this method. I wonder what would happen if we just did this same method, but just slapped on the [Robust SCM](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) method for the weight solution, where we take the low rank structure of the pre-treatment period based off the PCA representation of it and use the weights learnt from OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts. If the idea is just that "we think the fiture will look like some combination of the untreated past), then who's to say that using the low-dimensional subspace of pre-treatment periods wouldn't be a good idea? he authors do not propose infernece, so I use the agnostic conformal prediction intervals from the [scpi package](https://doi.org/10.18637/jss.v113.i01).
+The authors note that this approach will not work with trendy data (which makes sense due to the convex combination of donor periods). In other words, you need to detrend it first if a trend exists. This is why I use the growth rate to (ideally) avoid this issue. 
 
-Anyways, that's another paper. The SHC method itself is not even published just yet, so unclear how popular it will become or if others will want to extend it for other things.
+In principle, I like this method. I wonder what would happen if we just did this same method of donor pool construction, but just slapped on the [Robust SCM](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) method for the weight solution, where we take the low rank structure of the pre-treatment period and learn the weights via OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts to adjust for this, either.. If the idea is just that "we think the future will look like some combination of the untreated past", then who's to say that using the low-dimensional subspace of pre-treatment periods wouldn't be a good idea? The authors do not propose inference methods either, so I use the agnostic conformal prediction intervals from the [scpi package](https://doi.org/10.18637/jss.v113.i01). Presumably though there's a better way than this.
+
+Anyways, all of that is really for another paper. The SHC method itself is not even published just yet, so unclear how popular it will become or if others will want to extend it for other things. But now of course, you too may use it, should you wish.
 

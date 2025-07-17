@@ -24,14 +24,7 @@ To reconstruct the evaluation window, we compare it against earlier segments of 
 
 I do not feel the authors do a good job of this in the paper, so I will give a toy example (and I do this in my current paper, as well, that examines a different case).
 
-Suppose we have $T_0 = 14$ days of pre-treatment data, and we want to:
-
-- use $m = 2$ days to define the evaluation window (i.e., the last 2 days before treatment),
-- and predict $n = 1$ day into the post-treatment period.
-
-Then, to build a valid donor, each segment must be $m + n = 3$ days long:  
-the first $m$ days are used to match the evaluation window,  
-and the last $n$ days are used to forecast the post-treatment period.
+Suppose we have $T_0 = 14$ days of pre-treatment data, and we want to: use $m = 2$ days to define the evaluation window (i.e., the last 2 days before treatment) and predict $n = 1$ day into the post-treatment period. Then, to build a valid donor, each segment must be $m + n = 3$ days long:   the first $m$ days are used to match the evaluation window,   and the last $n$ days are used to forecast the post-treatment period.
 
 So, how many such segments can we extract from the 14 pre-treatment days? We need to ensure that each 3-day segment fits **entirely within** the pre-treatment window. The last such segment would be $(\widetilde{y}_{12}, \widetilde{y}_{13}, \widetilde{y}_{14})^\top$. Thus, the total number of eligible segments is:
 $$
@@ -44,10 +37,7 @@ $$
 \quad \text{for } i = 1, \dots, 12.
 $$
 
-- The first $m = 2$ elements are used for fitting the evaluation window.
-- The final $n = 1$ element is used to extrapolate into the post-treatment period.
-
-So the donor matrix for evaluation looks like:
+The first $m = 2$ elements are used for fitting the evaluation window. The final $n = 1$ element is used to extrapolate into the post-treatment period. So the donor matrix for evaluation looks like:
 $$
 \widetilde{\mathbf{Y}}_{\text{pre}} = 
 \begin{bmatrix}
@@ -55,7 +45,6 @@ $$
 \widetilde{y}_2 & \widetilde{y}_3 & \cdots & \widetilde{y}_{13}
 \end{bmatrix} \in \mathbb{R}^{2 \times 12},
 $$
-
 and the corresponding donor matrix for forecasting (aligned with each segment's next day) is:
 $$
 \widetilde{\mathbf{Y}}_{\text{post}} = 
@@ -64,7 +53,7 @@ $$
 \end{bmatrix} \in \mathbb{R}^{1 \times 12}.
 $$
 
-We use the pre period for the historical controls tofit our evaluation period for our treated unit. ASs in normal SCM style, all of those weights are applied to the full segment matrix to give us the counterfactual. So the SHC counterfactual for day 15 is estimated as:
+We use the pre period for the historical controls to fit our evaluation period for our treated unit. As in normal SCM style, all of those weights are applied to the full segment matrix to give us the in and out of sample predictions. So the SHC counterfactual for day 15 is estimated as:
 $$
 \widehat{y}_{15} = \widetilde{\mathbf{Y}}_{\text{post}} \cdot \mathbf{w}^\ast,
 $$
@@ -72,7 +61,7 @@ where $\mathbf{w}^\ast$ are weights that optimally match the evaluation window u
 
 # The Synthetic Historical Control (SHC) Estimator
 
-The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s own historical data. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series $\{y_t\}_{t=1}^{T_0}$ using local linear regression, which helps reduce noise and better recover the underlying trend. In practice, I use cross validation for the Gaussain kernel to choose the bandwidth. Either way, The result is a smoothed series:
+The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s own historical data. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series $\{y_t\}_{t=1}^{T_0}$ using local linear regression, which helps reduce noise and better recover the underlying trend. In practice, I use leave one out cross validation to choose the bandwidth for the Gaussain kernel. Either way, the result of all this is a smoothed series:
 
 $$
 \widetilde{\mathbf{y}} = (\widetilde{y}_1, \ldots, \widetilde{y}_{T_0})^\top.
@@ -89,9 +78,7 @@ $$
 \end{bmatrix} \in \mathbb{R}^{m \times N},
 $$
 
-where $N = T_0 - m - n + 1$ and each column is a historical “donor” segment used to predict post-treatment outcomes. In this case, we ahve $n$ post-treatment observations.
-
-SHC selects weights $\mathbf{w} \in \mathbb{R}^N$ to minimize the squared distance between the evaluation window and a convex combination of donor segments, with regularization:
+where $N = T_0 - m - n + 1$ and each column is a historical “donor” segment used to predict post-treatment outcomes. In this case, we have $n$ post-treatment observations. SHC selects weights $\mathbf{w} \in \mathbb{R}^N$ to minimize the squared distance between the evaluation window and a convex combination of donor segments. We also have a penalty term:
 
 $$
 \mathbf{w}^\ast = \arg\min_{\mathbf{w} \geq 0, \ \mathbf{1}^\top \mathbf{w} = 1}
@@ -99,11 +86,11 @@ $$
 + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2.
 $$
 
-Here, $\mathbf{C}_0$ contains the eigenvectors of the donor pool's Gram matrix. We use this term to stabilize the optimization, since in practice we will always have more predictors than the segment length allows. 
+The term on the left is the ususal OLS loss function. Here, $\mathbf{C}_0$ contains the eigenvectors of the donor pool's Grammian matrix. We use this term to stabilize the optimization, since in practice we will always have more predictors than the segment length allows. The authors go into more detail on this in their paper on page 11.
 
 ## Choosing Our Historical Segments
 
-To avoid using too many donor segments and overfit, SHC implements a forward selection algorithm. The authors in the paper sort of choose an arbitrary number of donors to use, but I did not like that so I write my own forward selection methodd. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample MSE.
+To avoid using too many donor segments and overfit, SHC implements a forward selection algorithm. The authors in the paper sort of choose an arbitrary number of donors to use. They find that 27 donor segments about does the job, in practice. However, I did not like that they wanted to use a stepwise method with no stopping rule, since this just means that the size of the donor pool we use is kind of arbitrary. So, I write my own forward selection method. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample MSE.
 
 $$
 \mathcal{S}_j = \mathcal{S}_{j-1} \cup \left\{ \underset{i \in \mathcal{N} \setminus \mathcal{S}_{j-1}}{\operatorname*{argmin}} \left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}}^{(\mathcal{S}_{j-1} \cup \{i\})} \mathbf{w}^{(j)} \right\|_2^2  + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2 \right\}, \quad \mathcal{S}_0 = \emptyset,
@@ -115,7 +102,7 @@ $$
 \text{BIC}(j) = m \cdot \log\left( \text{MSE}_j \right) + \lambda j,
 $$
 
-where $\text{MSE}_j$ is the in-sample mean squared error using $j$ donors, and $\lambda = \log(m)$. The algorithm stops when BIC increases for two steps in a row. Presumably, we could use a better one, so if you have suggestions let me know.
+where $\text{MSE}_j$ is the in-sample mean squared error using $j$ donors, and $\lambda = \log(m)$. The algorithm stops when BIC increases for two steps in a row. Presumably, we could use a better one, so if you have suggestions let me know. I borrowed this idea from [the forward selected PDA approach](https://doi.org/10.1016/j.jeconom.2021.04.009).
 
 # Estimation in Python
 
@@ -125,7 +112,7 @@ In order to get these results, you need Python (3.9 or greater) and ``mlsynth``,
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 ```
 
-This example uses the Malaysian Ringgit as an example. Its cirrency was affected by the Asian Financial Crisis. I use the SHC method to estimate the impact the crisis had on the growth rate of the spot exchange rate, taken from FRED's database. We can see my code below, where I use 36 months (3 years) of a pretreatment period.
+This example uses the Malaysian Ringgit as an example. Its currency was affected by [the Asian Financial Crisis](https://www.investopedia.com/terms/a/asian-financial-crisis.asp). I use the SHC method to estimate the impact the crisis had on the growth rate of the spot exchange rate, taken from FRED's database. We can see my code below, where I use 36 months (3 years) of a pretreatment period.
 
 ```{python}
 
@@ -169,9 +156,9 @@ result = SHC(config).fit()
 
 ```
 
-The authors note that this apporach will not work with trendy data. In other words, you need to detrend it first if a trend exists.
+# Caveats
 
-In principle, I like this method. I wonder what would happen if we just did this same method, but just slapped on the [Robust SCM](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) method for the weight solution, where we take the low rank structure of the pre-treatment period based off the PCA representation of it and use the weights learnt from OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts. If the idea is just that "we think the fiture will look like some combination of the untreated past), then who's to say that using the low-dimensional subspace of pre-treatment periods wouldn't be a good idea? he authors do not propose infernece, so I use the agnostic conformal prediction intervals from the [scpi package](https://doi.org/10.18637/jss.v113.i01).
+The authors note that this approach will not work with trendy data (which makes sense due to the convex combination of donor periods). In other words, you need to detrend it first if a trend exists. In principle, I like this method. I wonder what would happen if we just did this same method, but just slapped on the [Robust SCM](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) method for the weight solution, where we take the low rank structure of the pre-treatment period based off the PCA representation of it and use the weights learnt from OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts. If the idea is just that "we think the fiture will look like some combination of the untreated past), then who's to say that using the low-dimensional subspace of pre-treatment periods wouldn't be a good idea? he authors do not propose infernece, so I use the agnostic conformal prediction intervals from the [scpi package](https://doi.org/10.18637/jss.v113.i01).
 
 Anyways, that's another paper. The SHC method itself is not even published just yet, so unclear how popular it will become or if others will want to extend it for other things.
 

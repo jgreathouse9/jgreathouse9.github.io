@@ -24,7 +24,7 @@ To reconstruct the evaluation window, we compare it against earlier segments of 
 
 # The Synthetic Historical Control (SHC) Estimator
 
-The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s own historical data. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series $\{y_t\}_{t=1}^{T_0}$ using local linear regression, which helps reduce noise and better recover the underlying trend. In practice, I use leave one out cross validation to choose the bandwidth for the Gaussain kernel. Either way, the result of all this is a smoothed series:
+The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s own historical data. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series $\{y_t\}_{t=1}^{T_0}$ using local linear regression, which helps reduce noise and better recover the underlying trend. In practice, I use leave one out cross validation to choose the bandwidth for the Gaussain kernel. The result of all this is a smoothed series:
 
 $$
 \widetilde{\mathbf{y}} = (\widetilde{y}_1, \ldots, \widetilde{y}_{T_0})^\top.
@@ -41,12 +41,7 @@ $$
 \end{bmatrix} \in \mathbb{R}^{m \times N},
 $$
 
-where $N = T_0 - m - n + 1$ and each column is a historical “donor” segment used to predict post-treatment outcomes. In this case, we have $n$ post-treatment observations. 
-
-
-I do not feel the authors do a good job of this in the paper, so I will give a toy example (and I do this in my current paper, as well, that examines a different case) of how the donor pool is actually built.
-
-Suppose we have $T_0 = 14$ days of pre-treatment data, and we want to: use $m = 2$ days to define the evaluation window (i.e., the last 2 days before treatment) and predict $n = 1$ day into the post-treatment period. Then, to build a valid donor, each segment must be $m + n = 3$ days long:   the first $m$ days are used to match the evaluation window,   and the last $n$ days are used to forecast the post-treatment period.
+where $N = T_0 - m - n + 1$ is the number of segments, where each column is a historical “donor” segment used to predict post-treatment outcomes. In this case, we have $n$ post-treatment observations. I will give a toy example. Suppose we have $T_0 = 14$ days of pre-treatment data, and we want to: use $m = 2$ days to define the evaluation window (i.e., the last 2 days before treatment) and predict $n = 1$ day into the post-treatment period. Then, to build a valid donor, each segment must be $m + n = 3$ days long:   the first $m$ days are used to match the evaluation window,   and the last $n$ days are used to forecast the post-treatment period.
 
 So, how many such segments can we extract from the 14 pre-treatment days? We need to ensure that each 3-day segment fits **entirely within** the pre-treatment window. The last such segment would be $(\widetilde{y}_{12}, \widetilde{y}_{13}, \widetilde{y}_{14})^\top$. Thus, the total number of eligible segments is:
 $$
@@ -159,8 +154,7 @@ result = SHC(config).fit()
 
 ```
 
-Now I do the effect of the 2008 Financial Crisis, because why not? I look at the effet for the U.K., but of course we may choose any nation we like. I use the precomputed annual growth rate of GDP.
-
+Now I do the effect of the 2008 Financial Crisis, because why not? I look at the effect for the U.K., but of course we may choose any nation we like. I use the precomputed annual growth rate of GDP.
 
 
 ```{python}
@@ -194,15 +188,15 @@ configFC = {
 resultFC = SHC(configFC).fit()
 ```
 
-The ATT for the growth rate is -3.755, meaning the economy shrank by 3 percentage points over the next three years following the 2008 Financial Crisis/Crash.
+The ATT for the growth rate is -3.755, meaning the growth of the economy slowed down by 3 percentage points over the next three years following the 2008 Financial Crisis/Crash.
 
-Of course, these examples are both financial crises, but you can literally do this with anything that we have a big enough time series to do it with. No reason this method cannot work with promotions for sales of goods, ad campaigns, tourism (my current applicattion!) or other questions we may care about.
+Of course, these examples are both financial crises, but you can literally do this with anything that we have a big enough time series to do it with. No reason this method cannot work with promotions for sales of goods, ad campaigns, tourism (my current application!) or other questions we may care about.
 
 # Caveats
 
 The authors note that this approach will not work with trendy data (which makes sense due to the convex combination of donor periods). In other words, you need to detrend it first if a trend exists. This is why I use the growth rate to (ideally) avoid this issue. 
 
-In principle, I like this method. I wonder what would happen if we just did this same method of donor pool construction, but just slapped on the [Robust SCM](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) method for the weight solution, where we take the low rank structure of the pre-treatment period and learn the weights via OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts to adjust for this, either.. If the idea is just that "we think the future will look like some combination of the untreated past", then who's to say that using the low-dimensional subspace of pre-treatment periods wouldn't be a good idea? The authors do not propose inference methods either, so I use the agnostic conformal prediction intervals from the [scpi package](https://doi.org/10.18637/jss.v113.i01). Presumably though there's a better way than this.
+In principle, I like this method. I wonder what would happen if we just did this same method of donor pool construction, but just slapped on the [Robust SCM](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) method for the weight solution, where we take the low rank structure of the pre-treatment period and learn the weights via OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts to adjust for this, either. If the idea is just that "we think the future will look like some combination of the untreated past", then who's to say that using the low-dimensional subspace of pre-treatment periods wouldn't be a good idea? The authors do not propose inference methods either, so I use the agnostic conformal prediction intervals from the [scpi package](https://doi.org/10.18637/jss.v113.i01). Presumably though there's a better way than this.
 
 Anyways, all of that is really for another paper. The SHC method itself is not even published just yet, so unclear how popular it will become or if others will want to extend it for other things. But now of course, you too may use it, should you wish.
 

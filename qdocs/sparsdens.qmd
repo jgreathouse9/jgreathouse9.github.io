@@ -24,7 +24,7 @@ $$
 
 where $\mathbf{y}_1$ is the vector of observed outcomes for the treated unit(s) during the pre-treatment period, $\mathbf{Y}_0$ is the matrix of outcomes for the donor pool units over the same period, and $\mathbf{w}$ is the vector of weights assigned to those donor units. The function $\mathcal{L}(\cdot, \cdot)$ represents the loss function measuring the discrepancy between the treated outcomes and the weighted combination of donors, commonly the squared error loss. The term $\mathcal{R}(\mathbf{w})$ is a regularization function that imposes additional structure or penalties on the weights to reflect beliefs or promote certain properties like sparsity or smoothness. The scalar $\lambda \geq 0$ controls the trade-off between fitting the data closely and respecting the regularization. Finally, the set $\mathcal{W}$ defines the feasible set of weights, encoding constraints such as non-negativity, sum-to-one, or other domain-specific restrictions. Notice that this setup is intended to be very very general. I have not yet taken a position on the nature of the weights or the specifics of the optimization problem.
 
-To be more specific, let's use a real example.
+To be more specific, let's use an example.
 
 
 ```{python}
@@ -72,7 +72,9 @@ config = {
 sc_diagplot([config])
 ```
 
-Consider this plot of a growth rate variable, where the outcome is number of products purchased when some advertising campaigns went into effect. The goal of an incrementality study would be to estimate how the growth of the sales would have evolved absent the ads (after all, this is how we know if we're wasting money or not, by estimating how much we would've made if we just didn't do our ad spend at all).
+Consider this plot of a growth rate variable, where the outcome is the number of products purchased when some advertising campaigns went into effect. The goal of an incrementality study is to estimate how the growth of sales would have evolved absent the ads. After all, this is how we determine if the ad spend was effective or if it was wasted—by estimating how much revenue we would have generated without any advertising.
+
+In this dataset, we observe 276 control units across 176 pre-treatment time periods. The key problem of interest is that there are very many control units to choose from. We cannot simply use the average of controls as a counterfactual estimate, as this presumes that the mean of this entire control group is similar enough (in both level and trend) to the treated unit of interest. As the figure suggests though, this is likely not true. While the growth rate removes seasonality elements, there are still trend differences we can show as well as level differences between the treated and control group. Given this, it's likely the case that some reweighted average of these controls will mimic the treated unit much better than the pure average of the control units.
 
 
 ```{python}
@@ -244,17 +246,16 @@ ax0.set_xlabel("Time")
 ax0.set_ylabel("Outcome (YoY Growth)")
 ax0.set_title("Observed vs Model-Averaged Synthetic Controls")
 ax0.legend()
-ax0.text(50, -20, f"Sparse RMSE: {results['sparse']['rmse']:.4f}", color="red", fontsize=12)
+ax0.text(50, -10, f"Sparse RMSE: {results['sparse']['rmse']:.4f}", color="red", fontsize=12)
 ax0.text(50, -22, f"Dense RMSE: {results['dense']['rmse']:.4f}", color="blue", fontsize=12)
 
 # Bottom plot: horizontal RMSE bar chart
 ax1 = fig.add_subplot(gs[1])
-bars = ax1.barh(range(len(sorted_names)), sorted_rmses, color="skyblue")
+bars = ax1.barh(range(len(sorted_names)), sorted_rmses, color="blue")
 ax1.set_yticks(range(len(sorted_names)))
 ax1.set_yticklabels(sorted_names, rotation=45)
 ax1.invert_yaxis()
 ax1.set_xlabel("Pre-treatment RMSE")
-ax1.set_title("RMSEs of Individual and Averaged Models")
 
 for bar, rmse in zip(bars, sorted_rmses):
     width = bar.get_width()

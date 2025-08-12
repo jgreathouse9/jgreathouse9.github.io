@@ -1,0 +1,200 @@
+---
+title: 'What is a Synthetic Control?'
+date: 2025-08-12
+categories: [Econometrics, Causal Inference]
+---
+
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+import pandas as pd
+import numpy as np
+import cvxpy as cp
+from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import matplotlib
+
+# --- Plotting Setup ---
+plot_theme_settings = {
+    "figure.facecolor": "white",
+    "figure.figsize": (11, 5),
+    "figure.dpi": 100,
+    "figure.titlesize": 16,
+    "figure.titleweight": "bold",
+    "lines.linewidth": 1.2,
+    "patch.facecolor": "#0072B2",
+    "xtick.direction": "out",
+    "ytick.direction": "out",
+    "font.size": 14,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["DejaVu Sans"],
+    "axes.grid": True,
+    "axes.facecolor": "white",
+    "axes.linewidth": 0.1,
+    "axes.titlesize": "large",
+    "axes.titleweight": "bold",
+    "axes.labelsize": "medium",
+    "axes.labelweight": "bold",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.spines.left": False,
+    "axes.spines.bottom": False,
+    "axes.titlepad": 25,
+    "axes.labelpad": 20,
+    "grid.alpha": 0.1,
+    "grid.linewidth": 0.5,
+    "grid.color": "#000000",
+    "legend.framealpha": 0.5,
+    "legend.fancybox": True,
+    "legend.borderpad": 0.5,
+    "legend.loc": "best",
+    "legend.fontsize": "small",
+}
+
+# Apply the settings globally
+matplotlib.rcParams.update(plot_theme_settings)
+
+
+# === Load and parse data ===
+df = pd.read_csv(r"Data\scm_counterfactuals.csv")
+
+extracted = {"sparse": {}, "dense": {}}
+
+for col in df.columns:
+    if col.startswith("sparse_"):
+        model_name = col[len("sparse_"):]
+        extracted["sparse"][model_name] = df[col].to_numpy()
+    elif col.startswith("dense_"):
+        model_name = col[len("dense_"):]
+        extracted["dense"][model_name] = df[col].to_numpy()
+
+if "CLUSTERSC" in extracted["dense"]:
+    extracted["dense"]["PCR"] = extracted["dense"].pop("CLUSTERSC")
+if "CLUSTERSC" in extracted["sparse"]:
+    extracted["sparse"]["RPCA"] = extracted["sparse"].pop("CLUSTERSC")
+
+T0 = (df["treatment"] == 0).sum()
+y = df["observed"].to_numpy()
+y_pre = y[:T0]
+
+def fit_weights(y, Y0, lambda_):
+    n, m = Y0.shape
+    w = cp.Variable(m, nonneg=True)
+    residual = y - Y0 @ w
+    obj = cp.Minimize(cp.sum_squares(residual) + lambda_ * cp.sum_squares(w))
+    constraints = [cp.sum(w) == 1]
+    prob = cp.Problem(obj, constraints)
+    prob.solve()
+    return w.value
+
+def cross_validate_lambda(y_pre, Y0_pre, lambdas, k_folds=5, random_state=42):
+    kf = KFold(n_splits=k_folds, shuffle=True, random_state=random_state)
+    avg_errors = []
+    for lambda_ in lambdas:
+        fold_errors = []
+        for train_idx, test_idx in kf.split(y_pre):
+            y_train, y_test = y_pre[train_idx], y_pre[test_idx]
+            Y_train, Y_test = Y0_pre[train_idx], Y0_pre[test_idx]
+            try:
+                w_hat = fit_weights(y_train, Y_train, lambda_)
+                y_pred = Y_test @ w_hat
+                fold_errors.append(np.mean((y_test - y_pred) ** 2))
+            except:
+                fold_errors.append(np.inf)
+        avg_errors.append(np.mean(fold_errors))
+    best_lambda = lambdas[np.argmin(avg_errors)]
+    return best_lambda, avg_errors
+
+lambda_grid = np.logspace(-3, 2, 100)
+
+results = {}
+for group in ["sparse", "dense", "all"]:
+    if group == "all":
+        models = {**extracted["sparse"], **extracted["dense"]}
+    else:
+        models = extracted[group]
+
+    model_names = list(models.keys())
+    Y0 = np.column_stack([models[name] for name in model_names])
+    Y0_pre = Y0[:T0]
+
+    best_lambda, _ = cross_validate_lambda(y_pre, Y0_pre, lambda_grid)
+    w_opt = fit_weights(y_pre, Y0_pre, best_lambda)
+    y_hat_pre = Y0_pre @ w_opt
+    rmse = np.sqrt(np.mean((y_pre - y_hat_pre) ** 2))
+
+    results[group] = {
+        "rmse": rmse,
+        "lambda": best_lambda,
+        "weights": dict(zip(model_names, w_opt)),
+        "model_names": model_names,
+        "Y0": Y0
+    }
+
+indiv_rmses = {}
+for group in ["sparse", "dense"]:
+    models = extracted[group]
+    for name, series in models.items():
+        rmse = np.sqrt(np.mean((y_pre - series[:T0]) ** 2))
+        indiv_rmses[name] = rmse
+
+for group in ["sparse", "dense", "all"]:
+    indiv_rmses[f"{group} average"] = results[group]["rmse"]
+
+sorted_names = sorted(indiv_rmses, key=lambda k: indiv_rmses[k], reverse=True)
+sorted_rmses = [indiv_rmses[name] for name in sorted_names]
+
+
+# === Plot side-by-side instead of stacked ===
+fig = plt.figure()
+gs = gridspec.GridSpec(1, 2, width_ratios=[3, 2], wspace=0.3)
+
+# Left plot: observed and model averages
+ax0 = fig.add_subplot(gs[0])
+ax0.plot(y, label="Observed", color="black", linewidth=3)
+
+colors = {"sparse": "red", "dense": "blue", "all": "purple"}
+
+for group in ["sparse", "dense", "all"]:
+    if group == "all":
+        models = {**extracted["sparse"], **extracted["dense"]}
+    else:
+        models = extracted[group]
+
+    model_names = list(models.keys())
+    Y0 = np.column_stack([models[name] for name in model_names])
+
+    w = np.array([results[group]["weights"].get(name, 0) for name in model_names])
+    y_hat = Y0 @ w
+
+    ax0.plot(y_hat, label=f"{group.capitalize()} Model Avg", color=colors[group], linewidth=1.5)
+
+ax0.axvline(x=T0-1, color="grey", linestyle="--", label="Treatment Start")
+ax0.set_xlabel("Time")
+ax0.set_ylabel("Outcome (YoY Growth)")
+ax0.set_title("Observed vs Model-Averaged Synthetic Controls")
+ax0.legend()
+ax0.text(50, -20, f"Sparse RMSE: {results['sparse']['rmse']:.4f}", color="red", fontsize=12)
+ax0.text(50, -22, f"Dense RMSE: {results['dense']['rmse']:.4f}", color="blue", fontsize=12)
+
+# Right plot: horizontal RMSE bar chart
+ax1 = fig.add_subplot(gs[1])
+bars = ax1.barh(range(len(sorted_names)), sorted_rmses, color="skyblue")
+ax1.set_yticks(range(len(sorted_names)))
+ax1.set_yticklabels(sorted_names, rotation=45)
+ax1.invert_yaxis()
+ax1.set_xlabel("Pre-treatment RMSE")
+ax1.set_title("RMSEs of Individual and Averaged Models")
+
+for bar, rmse in zip(bars, sorted_rmses):
+    width = bar.get_width()
+    ax1.text(width + 0.01, bar.get_y() + bar.get_height()/2, f"{rmse:.3f}",
+             va='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+```
+

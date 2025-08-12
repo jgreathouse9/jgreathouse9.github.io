@@ -24,6 +24,56 @@ $$
 
 where $\mathbf{y}_1$ is the vector of observed outcomes for the treated unit(s) during the pre-treatment period, $\mathbf{Y}_0$ is the matrix of outcomes for the donor pool units over the same period, and $\mathbf{w}$ is the vector of weights assigned to those donor units. The function $\mathcal{L}(\cdot, \cdot)$ represents the loss function measuring the discrepancy between the treated outcomes and the weighted combination of donors, commonly the squared error loss. The term $\mathcal{R}(\mathbf{w})$ is a regularization function that imposes additional structure or penalties on the weights to reflect beliefs or promote certain properties like sparsity or smoothness. The scalar $\lambda \geq 0$ controls the trade-off between fitting the data closely and respecting the regularization. Finally, the set $\mathcal{W}$ defines the feasible set of weights, encoding constraints such as non-negativity, sum-to-one, or other domain-specific restrictions. Notice that this setup is intended to be very very general. I have not yet taken a position on the nature of the weights or the specifics of the optimization problem.
 
+To be more specific, let's use a real example.
+
+
+```{python}
+
+#| fig-align: center
+#| echo: false
+
+import pandas as pd
+import numpy as np
+from mlsynth.utils.helperutils import sc_diagplot
+
+df = pd.read_csv("Data/TNFEMP.csv")
+
+# Step 1: Rename columns
+df = df.rename(columns={
+    "Katrina": "Treated",
+    "MSA Title": "Unit",
+    "YoY_NFE": "Outcome"
+})
+df["time"] = df["time"] - 12
+
+# Step 2: Identify the treated unit name (before we overwrite it)
+treated_unit = df.loc[df["Treated"] == 1, "Unit"].unique()[0]
+
+# Step 3: Rename treated unit to 'Treated'
+df.loc[df["Unit"] == treated_unit, "Unit"] = "Treated"
+
+# Step 4: Rename all control units — make sure we exclude "Treated"
+control_units = df["Unit"].unique()
+control_units = [u for u in control_units if u != "Treated"]  # exclude treated
+control_rename_map = {name: f"Control {i+1}" for i, name in enumerate(control_units)}
+df["Unit"] = df["Unit"].replace(control_rename_map)
+
+# Shared config
+config = {
+    "df": df,
+    "outcome": "Outcome",
+    "treat": "Treated",
+    "unitid": "Unit",
+    "time": "time",
+    "display_graphs": False,
+    "save": False,
+    "counterfactual_color": ["red", "blue"]
+}
+sc_diagplot([config])
+```
+
+Consider this plot of a growth rate variable, where the outcome is number of products purchased when some advertising campaigns went into effect. The goal of an incrementality study would be to estimate how the growth of the sales would have evolved absent the ads (after all, this is how we know if we're wasting money or not, by estimating how much we would've made if we just didn't do our ad spend at all).
+
 
 ```{python}
 #| fig-align: center

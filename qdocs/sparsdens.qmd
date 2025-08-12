@@ -27,7 +27,7 @@ where $\mathbf{y}_1$ is the vector of observed outcomes for the treated unit(s) 
 
 ```{python}
 #| fig-align: center
-#| ec: false
+#| echo: false
 
 import pandas as pd
 import numpy as np
@@ -40,7 +40,7 @@ import matplotlib
 # --- Plotting Setup ---
 plot_theme_settings = {
     "figure.facecolor": "white",
-    "figure.figsize": (11, 5),
+    "figure.figsize": (11, 7),  # Slightly taller for vertical stacking
     "figure.dpi": 100,
     "figure.titlesize": 16,
     "figure.titleweight": "bold",
@@ -74,9 +74,7 @@ plot_theme_settings = {
     "legend.fontsize": "small",
 }
 
-# Apply the settings globally
 matplotlib.rcParams.update(plot_theme_settings)
-
 
 # === Load and parse data ===
 df = pd.read_csv(r"Data/scm_counterfactuals.csv")
@@ -167,12 +165,11 @@ for group in ["sparse", "dense", "all"]:
 sorted_names = sorted(indiv_rmses, key=lambda k: indiv_rmses[k], reverse=True)
 sorted_rmses = [indiv_rmses[name] for name in sorted_names]
 
+# === Plot stacked vertically (2 rows, 1 col) ===
+fig = plt.figure(constrained_layout=True)
+gs = gridspec.GridSpec(2, 1, height_ratios=[3, 2], hspace=0.3)
 
-# === Plot side-by-side instead of stacked ===
-fig = plt.figure()
-gs = gridspec.GridSpec(1, 2, width_ratios=[3, 2], wspace=0.3)
-
-# Left plot: observed and model averages
+# Top plot: observed and model averages
 ax0 = fig.add_subplot(gs[0])
 ax0.plot(y, label="Observed", color="black", linewidth=3)
 
@@ -200,7 +197,7 @@ ax0.legend()
 ax0.text(50, -20, f"Sparse RMSE: {results['sparse']['rmse']:.4f}", color="red", fontsize=12)
 ax0.text(50, -22, f"Dense RMSE: {results['dense']['rmse']:.4f}", color="blue", fontsize=12)
 
-# Right plot: horizontal RMSE bar chart
+# Bottom plot: horizontal RMSE bar chart
 ax1 = fig.add_subplot(gs[1])
 bars = ax1.barh(range(len(sorted_names)), sorted_rmses, color="skyblue")
 ax1.set_yticks(range(len(sorted_names)))
@@ -214,7 +211,10 @@ for bar, rmse in zip(bars, sorted_rmses):
     ax1.text(width + 0.01, bar.get_y() + bar.get_height()/2, f"{rmse:.3f}",
              va='center', fontsize=9)
 
-plt.tight_layout()
 plt.show()
+
+
+
+
 ```
 

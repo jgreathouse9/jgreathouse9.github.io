@@ -18,7 +18,7 @@ $$
 
 where $\mathbf{y}_1$ is the vector of observed outcomes for the treated unit(s) during the pre-treatment period, $\mathbf{Y}_0$ is the matrix of outcomes for the donor pool units over the same period, and $\mathbf{w}$ is the vector of weights assigned to those donor units. The function $\mathcal{L}(\cdot, \cdot)$ represents the loss function measuring the discrepancy between the treated outcomes and the weighted combination of donors, commonly the squared error loss. The term $\mathcal{R}(\mathbf{w})$ is a regularization function that imposes additional structure or penalties on the weights to reflect beliefs or promote certain properties like sparsity or smoothness. The scalar $\lambda \geq 0$ controls the trade-off between fitting the data closely and respecting the regularization. Finally, the set $\mathcal{W}$ defines the feasible set of weights, encoding constraints such as non-negativity, sum-to-one, or other domain-specific restrictions. Notice that this setup is intended to be very very general. I have not yet taken a position on the nature of the weights or the specifics of the optimization problem.
 
-To be more specific, let's use an example. In this dataset, we observe 276 control units across 176 pre-treatment time periods. The key problem of interest is that there are very many control units to choose from. We cannot simply use the average of controls as a counterfactual estimate, as this presumes that the mean of this entire control group is similar enough (in both level and trend) to the treated unit of interest. As the figure suggests though, this is likely not true. While the growth rate does indeed remove seasonality elements, there are still trend, periodic, and perhaps [cyclical](https://arxiv.org/abs/2505.22388) differences to account for as well. Given this, it's likely the case that some reweighted average of these controls will mimic the treated unit much better than the pure average of the control units.
+To be more specific, let's use an example. Consider this plot of a growth rate variable, where the outcome is the number of products purchased when some advertising campaigns went into effect. The goal of an incrementality study is to estimate how the growth of sales would have evolved absent the ads. After all, this is how we determine if the ad spend was effective or if it was wasted—by estimating how much revenue we would have generated without any advertising. In this dataset, we observe 276 control units across 176 pre-treatment time periods. The key problem of interest is that there are very many control units to choose from. We cannot simply use the average of controls as a counterfactual estimate, as this presumes that the mean of this entire control group is similar enough (in both level and trend) to the treated unit of interest. As the figure suggests though, this is likely not true. While the growth rate does indeed remove seasonality elements, there are still trend, periodic, and perhaps [cyclical](https://arxiv.org/abs/2505.22388) differences to account for as well. Given this, it's likely the case that some reweighted average of these controls will mimic the treated unit much better than the pure average of the control units.
 
 
 ```{python}
@@ -66,10 +66,20 @@ config = {
 sc_diagplot([config])
 ```
 
-Consider this plot of a growth rate variable, where the outcome is the number of products purchased when some advertising campaigns went into effect. The goal of an incrementality study is to estimate how the growth of sales would have evolved absent the ads. After all, this is how we determine if the ad spend was effective or if it was wasted—by estimating how much revenue we would have generated without any advertising.
+To this end, I fit a festival of models, some sparse, some sense. I fit the forward DID model (sparse), Forward SCM model (also sparse) and the robust PCA SCM model (sparse). For the dense models I estimate the $\ell_2$ panel data approach and the robust synthetic control (all these are [documented here](https://mlsynth.readthedocs.io/en/latest/)). I construct an ensemble of artificial counterfactual estimators by convexly combining the predictions of the base models. The goal is to produce a flexible estimator that balances the predictive accuracy of dense estimators with the interpretability and sparsity of sparse estimators. Let $M$ denote the number of candidate models in the ensemble. For each model $m = 1, \ldots, M$, we obtain a predicted counterfactual series $\widehat{Y}^{(m)}_{1,t}$ for the treated unit in the pre-treatment period $t \in \mathcal{T}_0$. We organize these into a matrix $\widehat{\mathbf{Y}}_0 \in \mathbb{R}^{T_0 \times M}$, where each column corresponds to one model's predicted values over the pre-treatment period. Let $\mathbf{Y}_{1,\text{pre}} \in \mathbb{R}^{T_0}$ denote the observed outcomes for the treated unit during the same period. We solve the following convex optimization problem to learn a set of model weights $\mathbf{w} \in \mathbb{R}^M$:
 
-To this end, I fit a festival of models, some sparse, some sense. I fit the forward DID model (sparse), Forward SCM model (also sparse) and the robust PCA SCM model (sparse). For the dense models I estimate the $\ell_2$ panel data approach and the robust synthetic control (all these are [documented here](https://mlsynth.readthedocs.io/en/latest/)).
+$$
+\min_{\mathbf{w}} \left\| \mathbf{Y}_{1,\text{pre}} - \widehat{\mathbf{Y}}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} \right\|_2^2
+\quad \text{subject to} \quad \mathbf{w} \geq 0,\quad \sum_{m=1}^M w_m = 1.
+$$
 
+This is a ridge-penalized model averaging objective, constrained so that the weights are non-negative and sum to one. The penalty term $\lambda \left\| \mathbf{w} \right\|_2^2$ discourages over-reliance on any single model and promotes stability in the ensemble. We select the regularization parameter $\lambda$ via $K$-fold cross-validation on the pre-treatment period, minimizing the out-of-sample prediction error. The resulting weights $\widehat{\mathbf{w}}$ define the ensemble counterfactual:
+
+$$
+\widehat{Y}^{\text{ens}}_{1,t} = \sum_{m=1}^M \widehat{w}_m \widehat{Y}^{(m)}_{1,t}, \quad \text{for all } t.
+$$
+
+This procedure allows flexible borrowing of information across model classes, combining the sparse structure of subset-selected synthetic controls with the improved fit of regularized or dense variants, depending on which performs better in-sample. The ensemble is constrained to lie in the convex hull of the candidate model predictions.
 
 ```{python}
 #| fig-align: center
@@ -257,9 +267,7 @@ for bar, rmse in zip(bars, sorted_rmses):
              va='center', fontsize=9)
 
 plt.show()
-
-
-
-
 ```
+
+As we can see, both the sparse and dense models perform about the same, despite the clear differneces in the models themselves. THe sparse model average is not far off from the dense model average, and their predictions/ATTs are quite similar.
 

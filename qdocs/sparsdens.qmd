@@ -269,5 +269,8 @@ for bar, rmse in zip(bars, sorted_rmses):
 plt.show()
 ```
 
-As we can see, both the sparse and dense models perform about the same, despite the clear differneces in the models themselves. THe sparse model average is not far off from the dense model average, and their predictions/ATTs are quite similar.
+The results from the model averaging procedure reveal clear trade-offs between sparsity and predictive accuracy. In the sparse model average, the optimal penalty parameter is $\lambda = 1.7074$, leading to a pre-treatment RMSE of $0.5028$. Within this specification, the FSCM model receives the most weight ($0.2085$), followed by FDID ($0.7915$), while RPCA is unused. In contrast, the dense model average achieves a substantially better fit (RMSE $= 0.3085$) with a much smaller penalty ($\lambda = 0.0010$), allocating nearly all weight to PCR ($0.9966$) and very little to PDA ($0.0034$). The full model average, which includes both sparse and dense estimators, also selects $\lambda = 0.0010$ and reaches the same RMSE of $0.3085$, but nearly all weight again falls on PCR ($0.9927$), with RPCA contributing marginally ($0.0073$) and all others excluded.
+
+These results underscore a key econometric tension: while dense methods often achieve superior in-sample fit, they can obscure the role of individual donors and reduce interpretability. Sparse methods like FSCM and FDID provide clearer narratives but may underperform in terms of match quality. In settings where both approaches yield similar outcomes—as they do here—the choice between them ultimately depends on the econometrician’s priorities. If transparency and donor interpretability are paramount, sparse models may be preferred. If minimizing pre-treatment error is the guiding objective, dense models may be more appropriate. In this sense, model selection becomes not just a statistical exercise, but a philosophical one as well.
+
 

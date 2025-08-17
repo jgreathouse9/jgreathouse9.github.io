@@ -38,11 +38,11 @@ This is the feasible region for the ASC estimator. While both are weighted avera
 We define the corresponding sets of feasible weights as:
 
 $$
-\mathcal{W}_{\mathrm{conv}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{w} \geq \mathbf{0}, \; \|\mathbf{w}\|_1 = 1 \right\},
+\mathcal{W}_{\mathrm{conv}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0}_{\geq 0} \mid \; \|\mathbf{w}\|_1 = 1 \right\},
 $$
 
 $$
-\mathcal{W}_{\mathrm{aff}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \right\},
+\mathcal{W}_{\mathrm{aff}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \|\mathbf{w}\|_1 = 1 \right\},
 $$
 
 where $\|\mathbf{w}\|_1 = \sum_{j=1}^{N_0} |w_j|$ denotes the $\ell_1$ norm of the weight vector $\mathbf{w}$, and $\mathbf{1}$ is the vector of ones in $\mathbb{R}^{N_0}$. Note that for $\mathcal{W}_{\mathrm{conv}}$, the weights are non-negative and sum to one (equivalently, their $\ell_1$ norm is one), whereas for $\mathcal{W}_{\mathrm{aff}}$ weights can be negative but must sum to one.
@@ -127,13 +127,31 @@ plt.show()
 
 ## Synthetic Controls
 
-SCM solves the program
+The classic SCM estimator solves the program
 
 $$
 \mathbf{w}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-We seek the weight vector $\mathbf{w}$ that minimizes the mean squared error between the treated unit outcomes and the weighted average of control units in the pre-treatment period. The Forward Selection variant (ideally) builds a sparse synthetic control by greedily adding one donor at a time to minimize the pre-treatment fit error. Let $S = \emptyset$ denote the initial (empty) set of selected donors. At each iteration, the algorithm considers every donor $j \notin S$, temporarily forming a new set $S' = S \cup \{j\}$. For each such candidate set $S'$, it solves the synthetic control optimization problem restricted to the columns of $\mathbf{Y}_0^{S'}$, where $\mathbf{Y}_0^{S'}$ denotes the submatrix of donor outcomes for units in $S'$. The donor $j^{\ast}$ whose inclusion yields the smallest pre-treatment RMSE is then added to $S$. This process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
+We seek the weight vector $\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}$ that minimizes the mean squared error between the treated unit’s observed pre-treatment outcomes $\mathbf{y}_1$ and the weighted average of donor outcomes $\mathbf{Y}_0 \mathbf{w}$ over the pre-treatment period $\mathcal{T}_1$. The forward selection variant constructs a sparse synthetic control by iteratively adding one donor unit at a time to minimize the pre-treatment fit error. Starting from the empty set $\mathcal{S} = \emptyset$ of selected donors, at each iteration, the algorithm examines each donor $j \in \mathcal{N}_0 \setminus \mathcal{S}$ and forms a candidate set $\mathcal{S}^{\prime} = \mathcal{S} \cup \{j\}$. For each such candidate set $\mathcal{S}^{\prime}$, it solves the restricted optimization problem over the donor submatrix $\mathbf{Y}_0^{\mathcal{S}^{\prime}}$, defined as the columns of $\mathbf{Y}_0$ corresponding to units in $\mathcal{S}^{\prime}$:
+
+$$
+\mathbf{w}_{\mathcal{S}^{\prime}}^{\ast} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S}^{\prime})}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0^{\mathcal{S}^{\prime}} \mathbf{w} \right\|_2^2,
+$$
+
+where
+
+$$
+\mathcal{W}_{\mathrm{conv}}(\mathcal{S}^{\prime}) = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{|\mathcal{S}^{\prime}|} \,\middle|\, \sum_{j \in \mathcal{S}^{\prime}} w_j = 1 \right\}.
+$$
+
+The donor selected at each iteration is
+
+$$
+j^{\ast} = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \; \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S} \cup \{j\})} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{\mathcal{S} \cup \{j\}} \mathbf{w} \right\|_2^2,
+$$
+
+and it is then added to the selected set by updating \$\mathcal{S} \leftarrow \mathcal{S} \cup { j^\ast }\$. This process repeats until a stopping rule is met, such as a maximum number of donors or minimal improvement in fit. The donor selection process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
 
 $$
 \text{mBIC}(S) = T_0 \cdot \log(\text{MSE}) + |S| \cdot \log(T_0)

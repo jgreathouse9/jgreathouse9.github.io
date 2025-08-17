@@ -208,15 +208,13 @@ The intuition here is pretty simple. If the SCM weights are already giving us go
 
 # Forward-Selected Augmented Synthetic Controls
 
-The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy correction It begins with a Forward SCM, selecting a small set of donors that best approximate the treated unit in the pre-treatment period via forward selection. Then, instead of stopping there, it augments this base model with a bias-corrected adjustment by seeing whether an affine combination can do much better than the convex combination, using the original weights as a warm start. The FS-ASC estimator solves:
+The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy correction, $\left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2$. It begins with a Forward SCM as described above, selecting a small set of donors that best approximate the treated unit in the pre-treatment period via forward selection. Let the weight vector for this solution be $\mathbf{w}_0$. Then, it augments this base model with a bias-corrected adjustment by seeing whether an affine combination can do better than the convex combination, using the original weights as a warm start. The FASC solves:
 
 $$
 \mathbf{w}^\ast_{\text{FASC}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
 $$
 
-The solution lies in the affine hull of all donors, but it is regularized to remain close to the sparse, interpretable model obtained from forward selection on the condition that the originally selected model is good. The strength of this regularization is governed by the parameter $\lambda$.
-
-The regularization parameter $\lambda$ is selected via time-split cross-validation on the pre-treatment period. First, use the first half ($t = 1, \dots, \lfloor T_0/2 \rfloor$) to fit candidate weights $\mathbf{w}(\lambda)$. Then, use the second half ($t = \lfloor T_0/2 \rfloor + 1, \dots, T_0$) to evaluate prediction error. For each candidate $\lambda$, we compute:
+The solution lies in the affine hull of all donors, but it is regularized to remain close to the sparse, interpretable model obtained from forward selection on the condition that the originally selected model is good. The strength of this regularization is governed by the parameter $\lambda$. The regularization parameter $\lambda$ is selected via time-split cross-validation on the pre-treatment period. First, use the first half ($t = 1, \dots, \lfloor T_0/2 \rfloor$) to fit candidate weights $\mathbf{w}(\lambda)$. Then, use the second half ($t = \lfloor T_0/2 \rfloor + 1, \dots, T_0$) to evaluate prediction error. For each candidate $\lambda$, we compute:
 
 $$
 \mathbf{w}(\lambda) = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.

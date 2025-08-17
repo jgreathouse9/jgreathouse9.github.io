@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
+<meta name="dcterms.date" content="2025-08-17">
 
-<title>Policy Analysis, Data Science, and Causal Inference</title>
+<title>Forward Selected Augmented Synthetic Controls – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -166,15 +167,32 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(12)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(8)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <ul class="collapse">
+  <li><a href="#notations" id="toc-notations" class="nav-link" data-scroll-target="#notations">Notations</a></li>
+  <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
+  <li><a href="#the-augmented-synthetic-control-estimator" id="toc-the-augmented-synthetic-control-estimator" class="nav-link" data-scroll-target="#the-augmented-synthetic-control-estimator">The Augmented Synthetic Control Estimator</a></li>
+  </ul></li>
+  <li><a href="#forward-selected-augmented-synthetic-controls" id="toc-forward-selected-augmented-synthetic-controls" class="nav-link" data-scroll-target="#forward-selected-augmented-synthetic-controls">Forward-Selected Augmented Synthetic Controls</a></li>
+  <li><a href="#kansas-tax-cuts" id="toc-kansas-tax-cuts" class="nav-link" data-scroll-target="#kansas-tax-cuts">Kansas Tax Cuts</a></li>
+  </ul>
+</nav>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(12)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(4)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(7)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Policy Analysis, Data Science, and Causal Inference</h1>
-</div>
+<h1 class="title">Forward Selected Augmented Synthetic Controls</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Causal Inference</div>
+    <div class="quarto-category">Econometrics</div>
+  </div>
+  </div>
 
 
 
@@ -187,6 +205,12 @@ window.Quarto = {
           </div>
   </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 17, 2025</p>
+    </div>
+  </div>
   
     
   </div>
@@ -196,10 +220,142 @@ window.Quarto = {
 </header>
 
 
-<p>Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics.</p>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p><a href="https://archive.is/20230120121731/https://www.washingtonpost.com/news/wonk/wp/2015/10/30/how-to-measure-things-in-a-world-of-competing-claims/">Synthetic Control Methods</a> (SCM) is a widely used framework for estimating causal effects when randomized experiments are not feasible. At its core, SCM constructs a weighted average of control (donor) units to approximate the treated unit’s pre-treatment trajectory. The goal is to find an in-sample/pre–treatment average of controls that closely mirrors the treated unit before the intervention.</p>
+<p>Much of the method’s credibility hinges on the quality of this pre-treatment fit. Econometricians <a href="https://mixtape.scunning.com/10-synthetic_control">regularly</a> <a href="https://arxiv.org/pdf/2203.06279">warn</a> that poor pre-treatment fit undermines the validity of SCM estimates. Even if the optimization problem is formally well-posed, poor alignment between the treated unit and its in-sample match can lead to substantial bias. The intuition is straightforward: if similar units are <a href="https://doi.org/10.3982/ECTA21248">assumed to behave similarly</a>, a control group that fails to mimic the treated unit before treatment is unlikely to produce a credible counterfactual afterward. Just as important as pre-treatment fit is the composition of the donor pool. Including irrelevant or poorly matched units, or omitting relevant ones, can distort the synthetic weights and lead to misleading inferences. But how should the donor pool be chosen?</p>
+<p>One increasingly popular solution to the imperfect match is the Augmented Synthetic Control Method (ASCM), known in industry through Meta’s <a href="https://facebookincubator.github.io/GeoLift/">GeoLift</a> library. Shops like <a href="https://geolift-docs.getrecast.com/docs/">Recast</a> use it, and data scientists such as <a href="https://medium.com/data-science/how-to-analyze-geo-based-campaigns-with-synthetic-control-a90b839479a8">Mandy Liu</a> and <a href="https://www.linkedin.com/posts/svet-semov-79072913_metas-geolift-activity-7341471937493200896-SFvd?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw">Svet Semov</a> have helped bring it to applied audiences.</p>
+<p>Methods for donor pool selection have also received attention. In fact, this is part of what makes GeoLift so popular: it <a href="https://github.com/facebookincubator/GeoLift/blob/main/R/pre_test_power.R#L37">attempts to identify</a> the most similar markets to a treated group before the intervention. In academic settings, approaches like <a href="https://doi.org/10.1016/j.jeconom.2021.04.009">forward</a> <a href="https://pubsonline.informs.org/doi/10.1287/mksc.2022.0212">selection</a>, and even <a href="https://doi.org/10.1002/jae.3123">random forests</a> have been proposed to automate or guide the choice of appropriate donors.</p>
+<p>But what if we can do better?</p>
+<p>In previous posts, I’ve written about donor selection strategies and how to handle imperfect pre-treatment fit. In this post, I introduce a synthesis of both: the Augmented Forward-Selected Synthetic Control estimator. By combining forward selection with a bias correction estimator, I show that we can reduce in-sample risk relative to the standard ASCM and Forward SCM alone. This approach is illustrated using two popular SCM case studies: the Kansas tax cut experiment and California’s Proposition 99.</p>
+<section id="notations" class="level2">
+<h2 class="anchored" data-anchor-id="notations">Notations</h2>
+<p>Formally, let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers. A calligraphic letter, such as <span class="math inline">\(\mathcal{S}\)</span>, represents a discrete set with cardinality <span class="math inline">\(S = |\mathcal{S}|\)</span>. Let <span class="math inline">\(j \in \mathbb{N}\)</span> index a total of <span class="math inline">\(N\)</span> units and <span class="math inline">\(t \in \mathbb{N}\)</span> index time. Unit <span class="math inline">\(j=1\)</span> is the treated unit, with the set of control units defined as <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}\)</span>, of cardinality <span class="math inline">\(N_0\)</span>. The pre-treatment period is <span class="math inline">\(\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}\)</span>, where <span class="math inline">\(T_0\)</span> is the last period before treatment, and the post-treatment period is <span class="math inline">\(\mathcal{T}_2 = \{ t \in \mathbb{N} : t &gt; T_0 \}\)</span>. The observed outcome for unit <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(y_{jt}\)</span>, and the generic outcome vector for unit <span class="math inline">\(j\)</span> is <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^T\)</span>, so that <span class="math inline">\(\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top\)</span>. The treated unit’s outcome vector is <span class="math inline">\(\mathbf{y}_1\)</span>, and the donor matrix is defined as <span class="math inline">\(\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}\)</span>, with each column corresponding to a donor unit and each row corresponding to a time period.</p>
+<p>I will frequently refer to linear combinations of the donor units’ outcomes. Two important geometric concepts help clarify the space of possible synthetic controls: The convex hull of the donor units, denoted <span class="math inline">\(\operatorname{conv}(\mathbf{y}_j)_{j \in \mathcal{N}_0}\)</span>, is the set of all weighted averages of donor vectors where the weights are non-negative and sum to one:</p>
+<p><span class="math display">\[
+\operatorname{conv}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, w_j \geq 0, \sum_{j} w_j = 1 \right\}.
+\]</span> This is the feasible region for standard SCM weights <span class="math inline">\(\mathbf{w} \in \Delta^{N_0}\)</span>. The affine hull, denoted <span class="math inline">\(\operatorname{aff}(\mathbf{y}_j)_{j \in \mathcal{N}_0}\)</span>, is the set of all affine combinations of donor vectors — that is, the set of linear combinations where the weights sum to one, but may include negative values:</p>
+<p><span class="math display">\[
+  \operatorname{aff}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, \sum_{j} w_j = 1 \right\}.
+\]</span> This is the feasible region for the ASC estimator. While both are weighted averages, the convex hull is a “weighted average” over the subsapce of the donor outcomes, while the affine hull is a “shifted subspace” that contains the convex hull but allows for extrapolation beyond it.</p>
+<div id="ad76e28e" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="fasc_files/figure-html/cell-2-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="synthetic-controls" class="level2">
+<h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
+<p>SCM solves the program</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\]</span></p>
+<p>We seek the weight vector <span class="math inline">\(\mathbf{w}\)</span> that minimizes the mean squared error between the treated unit outcomes and the weighted average of control units in the pre-treatment period.</p>
+<p>The Forward Selection variant (ideally) builds a sparse synthetic control by greedily adding one donor at a time to minimize the pre-treatment fit error. Let <span class="math inline">\(S = \emptyset\)</span> denote the initial (empty) set of selected donors. At each iteration, the algorithm considers every donor <span class="math inline">\(j \notin S\)</span>, temporarily forming a new set <span class="math inline">\(S' = S \cup \{j\}\)</span>. For each such candidate set <span class="math inline">\(S'\)</span>, it solves the synthetic control optimization problem restricted to the columns of <span class="math inline">\(\mathbf{Y}_0^{S'}\)</span>, where <span class="math inline">\(\mathbf{Y}_0^{S'}\)</span> denotes the submatrix of donor outcomes for units in <span class="math inline">\(S'\)</span>. The donor <span class="math inline">\(j^*\)</span> whose inclusion yields the smallest pre-treatment RMSE is then added to <span class="math inline">\(S\)</span>. This process continues <a href="https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function">at the discretion of the user</a>, until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and <code>full_selection = FALSE</code>. The modified BIC is defined as:</p>
+<p><span class="math display">\[
+\text{mBIC}(S) = T_0 \cdot \log(\text{MSE}) + |S| \cdot \log(T_0)
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+\text{MSE} = \frac{1}{T_0} \left\| \mathbf{y}_1 - \mathbf{Y}_0^S \mathbf{w}_S \right\|_2^2.
+\]</span></p>
+<p>This penalized error criterion trades off in-sample fit and model complexity, enabling the construction of a sparse but well-performing synthetic control using only a small, carefully chosen subset of donor units.</p>
+</section>
+<section id="the-augmented-synthetic-control-estimator" class="level2">
+<h2 class="anchored" data-anchor-id="the-augmented-synthetic-control-estimator">The Augmented Synthetic Control Estimator</h2>
+<p>Building on this baseline formulation, the ASCM introduces a regularization term that penalizes deviations of the weight vector from a reference or initial weight vector, <span class="math inline">\(\mathbf{w}_0\)</span>. The augmented objective can be written as</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast_\text{aug} = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}}  \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2 \quad \forall t \in \mathcal{T}_1,
+\]</span></p>
+<p>where <span class="math inline">\(\lambda \ge 0\)</span> controls the strength of the penalty.</p>
+<details>
+<summary>
+About that lambda…
+</summary>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>One may ask <em>“Jared, why did you include the penalty on the weight deviation term instead of the fit term, as Ben-Michael and co. do in Equation 18 of their paper?”</em> Here’s why.</p>
+<p>In ASCM, the placement of the regularization parameter <span class="math inline">\(\lambda\)</span> determines how the estimator balances pre-treatment fit and fidelity to the original SCM weights. Their formulation (e.g., Ben-Michael et al.&nbsp;2021) minimizes:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast_{\text{alt}} = \underset{\sum w_j = 1}{\operatorname*{argmin}} \; \lambda \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \|\mathbf{w} - \mathbf{w}_0\|_2^2
+\]</span></p>
+<p>while ours solves:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast_{\text{aug}} = \underset{\sum w_j = 1}{\operatorname*{argmin}} \; \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2
+\]</span></p>
+<p>It turns out these are mathematically equivalent under a simple reparameterization. If we define <span class="math inline">\(\lambda_{\text{alt}} = \frac{1}{\lambda_{\text{aug}}}\)</span>, then both objectives yield the same solution. This follows directly from the first-order conditions of each problem, which differ only by a scaling of the Lagrange multiplier.</p>
+<p>So in truth, it’s just a matter of which interpretation you find more natural.</p>
+<p>I personally prefer our formulation. Here’s why: in the affine-regularized version of the forward-selected synthetic control, <span class="math inline">\(\mathbf{w}_0\)</span> comes from a deliberately chosen sparse model. As <span class="math inline">\(\lambda \to \infty\)</span>, the penalty on deviation dominates, and <span class="math inline">\(\mathbf{w}^\ast_{\text{aug}}\)</span> collapses to the projection of <span class="math inline">\(\mathbf{w}_0\)</span> onto the affine constraint <span class="math inline">\(\sum_j w_j = 1\)</span>. This makes intuitive sense: when the original FSCM fit is already good, we want to stick close to it.</p>
+<p>Conversely, as <span class="math inline">\(\lambda \to 0\)</span>, the regularization term disappears and the solution becomes the best-fitting affine combination of the donor units — completely unconstrained by the initial weights. That’s appropriate when the original fit is poor and we’re willing to learn something new.</p>
+<p>So while the math is equivalent, the perspective isn’t. I find it more natural to think of <span class="math inline">\(\lambda\)</span> as controlling how much I “trust” the prior weights. And that’s easier to reason about when <span class="math inline">\(\lambda\)</span> is attached to the deviation term.</p>
+</div>
+</div>
+</details>
+<p>The intuition here is pretty simple. If the SCM weights are already giving us good pre-treatment fit, then there is little incentive to extrapolate away from the original (F)SCM solution. However, if there’s need for better fit, then we will extrapolate away from the convex hull solution. In practice, BMFR advocate for choosing lambda via cross validation.</p>
+</section>
+</section>
+<section id="forward-selected-augmented-synthetic-controls" class="level1">
+<h1>Forward-Selected Augmented Synthetic Controls</h1>
+<p>The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy correction It begins with a Forward SCM, selecting a small set of donors that best approximate the treated unit in the pre-treatment period via forward selection. Then, instead of stopping there, it augments this base model with a bias-corrected adjustment by seeing whether an affine combination can do much better than the convex combination, using the original weights as a warm start. The FS-ASC estimator solves:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast_{\text{FASC}} = \underset{\mathbf{w} \in \mathbb{R}^{N_0}, \sum w_j = 1}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+\]</span></p>
+<p>The solution lies in the affine hull of all donors, but it is regularized to remain close to the sparse, interpretable model obtained from forward selection on the condition that the originally selected model is good. The strength of this regularization is governed by the parameter <span class="math inline">\(\lambda\)</span>.</p>
+<p>The regularization parameter <span class="math inline">\(\lambda\)</span> is selected via time-split cross-validation on the pre-treatment period. First, use the first half (<span class="math inline">\(t = 1, \dots, \lfloor T_0/2 \rfloor\)</span>) to fit candidate weights <span class="math inline">\(\mathbf{w}(\lambda)\)</span>. Then, use the second half (<span class="math inline">\(t = \lfloor T_0/2 \rfloor + 1, \dots, T_0\)</span>) to evaluate prediction error. For each candidate <span class="math inline">\(\lambda\)</span>, we compute:</p>
+<p><span class="math display">\[
+\mathbf{w}(\lambda) = \arg\min_{\mathbf{w}, \sum w_j = 1} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2,
+\]</span> <span class="math display">\[
+\text{CV-RMSE}(\lambda) = \left\| \mathbf{y}^{(2)} - \mathbf{Y}_0^{(2)} \mathbf{w}(\lambda) \right\|_2,
+\]</span></p>
+<p>and select the value of <span class="math inline">\(\lambda\)</span> that minimizes the cross-validation RMSE.</p>
+<p>To efficiently explore the hyperparameter space, I use <code>skopt</code>’s Bayesian optimization over <span class="math inline">\(\log_{10}(\lambda) \in [-2, 3]\)</span>, corresponding to <span class="math inline">\(\lambda \in [10^{-2}, 10^3]\)</span>. The optimization proceeds as follows: A Gaussian Process (GP) prior is placed over the unknown function <span class="math inline">\(\lambda \mapsto \text{CV-RMSE}(\lambda)\)</span>. This GP models both the mean and uncertainty of the objective function. The algorithm begins with a small number of initial random evaluations. At each step, the next <span class="math inline">\(\lambda\)</span> to evaluate is chosen by maximizing an acquisition function, in this case the Expected Improvement (EI), which balances exploration and exploitation. This process continues for a total of 50 steps (or as specified). Once the optimal <span class="math inline">\(\lambda^\ast\)</span> is identified, the final weight vector is estimated by solving:</p>
+<p><span class="math display">\[
+\mathbf{w}^* = \arg\min_{\mathbf{w}, \sum w_j = 1} \left\| \mathbf{y} - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda^\ast \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+\]</span></p>
+<p>The resulting weights lie in the affine hull of the donor pool and strike a balance between fitting the treated unit and remaining close to the original sparse solution.</p>
+<p>As above, when <span class="math inline">\(\lambda\)</span> is large, the augmented weights remain close to <span class="math inline">\(\mathbf{w}_0\)</span>; when <span class="math inline">\(\lambda\)</span> is small, the estimator prioritizes fit over sparsity and may extrapolate well beyond the original donor set. In essence, FS-ASC gives us the best of both worlds: interpretability and parsimony from sparse donor selection, and flexibility and reduced bias from affine augmentation. Empirically (we will see this below), it yields lower pre-treatment error than either method alone.</p>
+<div id="7850067d" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="fasc_files/figure-html/cell-3-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="kansas-tax-cuts" class="level1">
+<h1>Kansas Tax Cuts</h1>
+<div id="55b1b22f" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.13.6/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:434: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+  observations_per_unit = df.groupby(unit_id_column_name)[time_period_column_name].nunique() # Changed from .count() to .nunique() for robustness</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="fasc_files/figure-html/cell-4-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Thjs is the Kansas example.</p>
 
 
 
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
@@ -437,24 +593,14 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1755449338228" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2606">
+<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755449388824" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./fasc.html" class="no-external">Forward Selected Augmented Synthetic Controls</a>
+<a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
 </h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
 </div>
 <div class="metadata">
-<a href="./fasc.html" class="no-external">
-<div class="listing-date">
-Aug 17, 2025
-</div>
+<a href="./index.html" class="no-external">
 <div class="listing-author">
 Jared Greathouse
 </div>

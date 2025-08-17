@@ -289,13 +289,29 @@ plt.show()
 
 ## Conformal Prediction Intervals
 
-To quantify uncertainty around the estimated counterfactual outcomes, we apply quantile-based conformal prediction intervals using pre-treatment residuals. These intervals are distribution-free and provide finite-sample valid coverage under minimal assumptions. Let $\hat{y}_t^{\text{cf}}$ denote the estimated counterfactual at time $t$, and $y_t^{\text{obs}}$ the observed outcome. For each pre-treatment time point $t \leq T_0$, we compute residuals $\varepsilon_t = y_t^{\text{obs}} - \hat{y}_t^{\text{cf}}$, and take their absolute values. We then compute the $(1 - \alpha)$ quantile of these residuals, denoted $q_{1 - \alpha}$. To center the interval, we use the mean of the pre-treatment residuals, $\bar{\varepsilon} = \frac{1}{T_0} \sum_{t \leq T_0} \varepsilon_t$. The prediction interval for the post-treatment counterfactual at time $t > T_0$ is then given by:
+To quantify uncertainty around the estimated counterfactual trajectory, we apply [conformal prediction intervals](https://matheusfacure.github.io/python-causality-handbook/Conformal-Inference-for-Synthetic-Control.html) based on block-permuted pre-treatment residuals. These intervals are distribution-free, require no assumptions about the data-generating process, and provide valid finite-sample marginal coverage. Let $\hat{y}_t^{\text{cf}}$ denote the estimated counterfactual outcome at time $t$, and let $y_t^{\text{obs}}$ be the observed outcome. We begin by computing residuals for all time periods:
 
 $$
-\left[ \hat{Y}_t^{\text{cf}} + \bar{\varepsilon} - q_{1 - \alpha},\ \hat{Y}_t^{\text{cf}} + \bar{\varepsilon} + q_{1 - \alpha} \right]
+\varepsilon_t = y_t^{\text{obs}} - \hat{y}_t^{\text{cf}}.
 $$
 
-This interval adjusts for any systematic bias in pre-treatment fit while ensuring coverage in the post-period. The resulting shaded region in our plots visualizes the 90% conformal interval for the counterfactual trajectory.
+We then construct a conformal score by calculating the mean absolute residual over the post-treatment period. To simulate the distribution of this score under the null (i.e., assuming no treatment effect), we perform circular block permutations of the residual vector and recompute the same statistic for each shifted version.
+
+This yields an empirical distribution of conformal scores under the null. We take the $(1 - \alpha)$ quantile of this distribution as our conformal threshold, denoted $q_{1 - \alpha}$. To center the interval, we compute the mean residual over the pre-treatment period:
+
+$$
+\bar{\varepsilon} = \frac{1}{T_0} \sum_{t \leq T_0} \varepsilon_t.
+$$
+
+The conformal prediction interval for each post-treatment time $t > T_0$ is then given by:
+
+$$
+\left[ \hat{y}_t^{\text{cf}} + \bar{\varepsilon} - q_{1 - \alpha},\ \hat{y}_t^{\text{cf}} + \bar{\varepsilon} + q_{1 - \alpha} \right].
+$$
+
+This approach ensures that the prediction intervals account for uncertainty in the counterfactual trajectory while adjusting for systematic bias in the pre-treatment fit. The shaded regions in our figures visualize these conformal intervals.
+
+
 
 # Kansas Tax Cuts
 

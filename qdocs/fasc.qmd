@@ -287,8 +287,15 @@ plt.tight_layout()
 plt.show()
 ```
 
+## Conformal Prediction Intervals
 
+To quantify uncertainty around the estimated counterfactual outcomes, we apply quantile-based conformal prediction intervals using pre-treatment residuals. These intervals are distribution-free and provide finite-sample valid coverage under minimal assumptions. Let $\hat{y}_t^{\text{cf}}$ denote the estimated counterfactual at time $t$, and $y_t^{\text{obs}}$ the observed outcome. For each pre-treatment time point $t \leq T_0$, we compute residuals $\varepsilon_t = y_t^{\text{obs}} - \hat{y}_t^{\text{cf}}$, and take their absolute values. We then compute the $(1 - \alpha)$ quantile of these residuals, denoted $q_{1 - \alpha}$. To center the interval, we use the mean of the pre-treatment residuals, $\bar{\varepsilon} = \frac{1}{T_0} \sum_{t \leq T_0} \varepsilon_t$. The prediction interval for the post-treatment counterfactual at time $t > T_0$ is then given by:
 
+$$
+\left[ \hat{Y}_t^{\text{cf}} + \bar{\varepsilon} - q_{1 - \alpha},\ \hat{Y}_t^{\text{cf}} + \bar{\varepsilon} + q_{1 - \alpha} \right]
+$$
+
+This interval adjusts for any systematic bias in pre-treatment fit while ensuring coverage in the post-period. The resulting shaded region in our plots visualizes the 90% conformal interval for the counterfactual trajectory.
 
 # Kansas Tax Cuts
 

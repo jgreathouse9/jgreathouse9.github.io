@@ -1,0 +1,332 @@
+---
+title: "Forward Selected Augmented Synthetic Controls"
+date: 2025-08-17
+categories: [Causal Inference, Econometrics]
+---
+
+# Introduction
+
+[Synthetic Control Methods](https://archive.is/20230120121731/https://www.washingtonpost.com/news/wonk/wp/2015/10/30/how-to-measure-things-in-a-world-of-competing-claims/) (SCM) is a widely used framework for estimating causal effects when randomized experiments are not feasible. At its core, SCM constructs a weighted average of control (donor) units to approximate the treated unit’s pre-treatment trajectory. The goal is to find an in-sample/pre--treatment average of controls that closely mirrors the treated unit before the intervention.
+
+Much of the method’s credibility hinges on the quality of this pre-treatment fit. Econometricians [regularly](https://mixtape.scunning.com/10-synthetic_control) [warn](https://arxiv.org/pdf/2203.06279) that poor pre-treatment fit undermines the validity of SCM estimates. Even if the optimization problem is formally well-posed, poor alignment between the treated unit and its in-sample match can lead to substantial bias. The intuition is straightforward: if similar units are [assumed to behave similarly](https://doi.org/10.3982/ECTA21248), a control group that fails to mimic the treated unit before treatment is unlikely to produce a credible counterfactual afterward. Just as important as pre-treatment fit is the composition of the donor pool. Including irrelevant or poorly matched units, or omitting relevant ones, can distort the synthetic weights and lead to misleading inferences. But how should the donor pool be chosen?
+
+One increasingly popular solution to the imperfect match is the Augmented Synthetic Control Method (ASCM), known in industry through Meta’s [GeoLift](https://facebookincubator.github.io/GeoLift/) library. Shops like [Recast](https://geolift-docs.getrecast.com/docs/) use it, and data scientists such as [Mandy Liu](https://medium.com/data-science/how-to-analyze-geo-based-campaigns-with-synthetic-control-a90b839479a8) and [Svet Semov](https://www.linkedin.com/posts/svet-semov-79072913_metas-geolift-activity-7341471937493200896-SFvd?utm_source=share&utm_medium=member_desktop&rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw) have helped bring it to applied audiences.
+
+Methods for donor pool selection have also received attention. In fact, this is part of what makes GeoLift so popular: it [attempts to identify](https://github.com/facebookincubator/GeoLift/blob/main/R/pre_test_power.R#L37) the most similar markets to a treated group before the intervention. In academic settings, approaches like [forward](https://doi.org/10.1016/j.jeconom.2021.04.009) [selection](https://pubsonline.informs.org/doi/10.1287/mksc.2022.0212), and even [random forests](https://doi.org/10.1002/jae.3123) have been proposed to automate or guide the choice of appropriate donors.
+
+
+But what if we can do better?
+
+In previous posts, I’ve written about donor selection strategies and how to handle imperfect pre-treatment fit. In this post, I introduce a synthesis of both: the Augmented Forward-Selected Synthetic Control estimator. By combining forward selection with a bias correction estimator, I show that we can reduce in-sample risk relative to the standard ASCM and Forward SCM alone. This approach is illustrated using two popular SCM case studies: the Kansas tax cut experiment and California’s Proposition 99.
+
+## Notations
+
+Formally, let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ index a total of $N$ units and $t \in \mathbb{N}$ index time. Unit $j=1$ is the treated unit, with the set of control units defined as $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, of cardinality $N_0$. The pre-treatment period is $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0$ is the last period before treatment, and the post-treatment period is $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is $y_{jt}$, and the generic outcome vector for unit $j$ is $\mathbf{y}_j \in \mathbb{R}^T$, so that $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top$. The treated unit’s outcome vector is $\mathbf{y}_1$, and the donor matrix is defined as $\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$, with each column corresponding to a donor unit and each row corresponding to a time period.
+
+I will frequently refer to linear combinations of the donor units’ outcomes. Two important geometric concepts help clarify the space of possible synthetic controls: The convex hull of the donor units, denoted $\operatorname{conv}(\mathbf{y}_j)_{j \in \mathcal{N}_0}$, is the set of all weighted averages of donor vectors where the weights are non-negative and sum to one:
+  
+$$
+\operatorname{conv}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, w_j \geq 0, \sum_{j} w_j = 1 \right\}.
+$$
+This is the feasible region for standard SCM weights $\mathbf{w} \in \Delta^{N_0}$. The affine hull, denoted $\operatorname{aff}(\mathbf{y}_j)_{j \in \mathcal{N}_0}$, is the set of all affine combinations of donor vectors — that is, the set of linear combinations where the weights sum to one, but may include negative values:
+
+$$
+  \operatorname{aff}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, \sum_{j} w_j = 1 \right\}.
+$$
+This is the feasible region for the ASC estimator. While both are weighted averages, the convex hull is a "weighted average" over the subsapce of the donor outcomes, while the affine hull is a "shifted subspace" that contains the convex hull but allows for extrapolation beyond it.
+
+
+```{python}
+
+#| fig-align: center
+#| echo: false
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Two donor points in 2D
+donors = np.array([
+    [0, 0],
+    [2, 2]
+])
+
+plt.figure(figsize=(8, 6))
+
+# Plot donor points
+plt.scatter(donors[:, 0], donors[:, 1], color='blue', label='Donor units')
+
+# Plot convex hull: line segment between the two points
+plt.plot(donors[:, 0], donors[:, 1], 'k-', label='Convex hull (line segment)')
+
+# Define the affine hull line (infinite line)
+line_x = np.linspace(-2, 4, 500)
+slope = (donors[1,1] - donors[0,1]) / (donors[1,0] - donors[0,0])
+line_y = slope * (line_x - donors[0,0]) + donors[0,1]
+
+# Plot affine hull line
+plt.plot(line_x, line_y, 'gray', linestyle='--', label='Affine hull (infinite line)')
+
+# Shade a band around the affine hull line
+band_width = 0.4  # vertical width of band
+
+# Compute offsets perpendicular to the line
+# Perp vector to (dx, dy) = (-dy, dx)
+dx = donors[1,0] - donors[0,0]
+dy = donors[1,1] - donors[0,1]
+length = np.sqrt(dx**2 + dy**2)
+perp = np.array([-dy, dx]) / length
+
+# Points for upper and lower band boundaries
+upper_band = np.vstack([line_x, line_y]).T + perp * band_width / 2
+lower_band = np.vstack([line_x, line_y]).T - perp * band_width / 2
+
+# Fill between upper and lower bands
+plt.fill_between(line_x,
+                 upper_band[:,1],
+                 lower_band[:,1],
+                 color='gray', alpha=0.15, label='Affine hull band')
+
+# Convex combination (inside segment)
+w_convex = np.array([0.3, 0.7])  # weights sum to 1, >= 0
+point_convex = donors.T @ w_convex
+plt.scatter(*point_convex, color='green', s=100, label='Convex Point')
+
+# Affine combination (outside segment but on line)
+w_affine = np.array([1.5, -0.5])  # weights sum to 1, one negative allowed
+point_affine = donors.T @ w_affine
+plt.scatter(*point_affine, color='red', s=100, label='Affine Point')
+
+# Point outside affine hull (off the line)
+point_outside = np.array([1, 3])
+plt.scatter(*point_outside, color='purple', s=100, label='Outside')
+
+plt.legend()
+plt.title("Convex Hull vs. Affine Hull")
+plt.xlabel("Dimension 1")
+plt.ylabel("Dimension 2")
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+
+
+
+
+```
+
+## Synthetic Controls
+
+SCM solves the program
+
+$$
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
+$$
+
+We seek the weight vector $\mathbf{w}$ that minimizes the mean squared error between the treated unit outcomes and the weighted average of control units in the pre-treatment period.
+
+The Forward Selection variant (ideally) builds a sparse synthetic control by greedily adding one donor at a time to minimize the pre-treatment fit error. Let $S = \emptyset$ denote the initial (empty) set of selected donors. At each iteration, the algorithm considers every donor $j \notin S$, temporarily forming a new set $S' = S \cup \{j\}$. For each such candidate set $S'$, it solves the synthetic control optimization problem restricted to the columns of $\mathbf{Y}_0^{S'}$, where $\mathbf{Y}_0^{S'}$ denotes the submatrix of donor outcomes for units in $S'$. The donor $j^*$ whose inclusion yields the smallest pre-treatment RMSE is then added to $S$. This process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
+
+$$
+\text{mBIC}(S) = T_0 \cdot \log(\text{MSE}) + |S| \cdot \log(T_0)
+$$
+
+where
+
+$$
+\text{MSE} = \frac{1}{T_0} \left\| \mathbf{y}_1 - \mathbf{Y}_0^S \mathbf{w}_S \right\|_2^2.
+$$
+
+This penalized error criterion trades off in-sample fit and model complexity, enabling the construction of a sparse but well-performing synthetic control using only a small, carefully chosen subset of donor units.
+
+## The Augmented Synthetic Control Estimator
+
+Building on this baseline formulation, the ASCM introduces a regularization term that penalizes deviations of the weight vector from a reference or initial weight vector, $\mathbf{w}_0$. The augmented objective can be written as
+
+$$
+\mathbf{w}^\ast_\text{aug} = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}}  \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2 \quad \forall t \in \mathcal{T}_1,
+$$
+
+where $\lambda \ge 0$ controls the strength of the penalty.
+
+<details>
+  <summary>About that lambda...</summary>
+::: {.callout-note}
+One may ask *"Jared, why did you include the penalty on the weight deviation term instead of the fit term, as Ben-Michael and co. do in Equation 18 of their paper?"* Here’s why.
+
+In ASCM, the placement of the regularization parameter $\lambda$ determines how the estimator balances pre-treatment fit and fidelity to the original SCM weights. Their formulation (e.g., Ben-Michael et al. 2021) minimizes:
+
+$$
+\mathbf{w}^\ast_{\text{alt}} = \underset{\sum w_j = 1}{\operatorname*{argmin}} \; \lambda \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \|\mathbf{w} - \mathbf{w}_0\|_2^2
+$$
+
+while ours solves:
+
+$$
+\mathbf{w}^\ast_{\text{aug}} = \underset{\sum w_j = 1}{\operatorname*{argmin}} \; \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2
+$$
+
+It turns out these are mathematically equivalent under a simple reparameterization. If we define $\lambda_{\text{alt}} = \frac{1}{\lambda_{\text{aug}}}$, then both objectives yield the same solution. This follows directly from the first-order conditions of each problem, which differ only by a scaling of the Lagrange multiplier.
+
+So in truth, it’s just a matter of which interpretation you find more natural.
+
+I personally prefer our formulation. Here’s why: in the affine-regularized version of the forward-selected synthetic control, $\mathbf{w}_0$ comes from a deliberately chosen sparse model. As $\lambda \to \infty$, the penalty on deviation dominates, and $\mathbf{w}^\ast_{\text{aug}}$ collapses to the projection of $\mathbf{w}_0$ onto the affine constraint $\sum_j w_j = 1$. This makes intuitive sense: when the original FSCM fit is already good, we want to stick close to it.
+
+Conversely, as $\lambda \to 0$, the regularization term disappears and the solution becomes the best-fitting affine combination of the donor units — completely unconstrained by the initial weights. That’s appropriate when the original fit is poor and we’re willing to learn something new.
+
+So while the math is equivalent, the perspective isn’t. I find it more natural to think of $\lambda$ as controlling how much I "trust" the prior weights. And that’s easier to reason about when $\lambda$ is attached to the deviation term.
+:::
+</details>
+
+The intuition here is pretty simple. If the SCM weights are already giving us good pre-treatment fit, then there is little incentive to extrapolate away from the original (F)SCM solution. However, if there's need for better fit, then we will extrapolate away from the convex hull solution. In practice, BMFR advocate for choosing lambda via cross validation.
+
+# Forward-Selected Augmented Synthetic Controls
+
+The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy correction It begins with a Forward SCM, selecting a small set of donors that best approximate the treated unit in the pre-treatment period via forward selection. Then, instead of stopping there, it augments this base model with a bias-corrected adjustment by seeing whether an affine combination can do much better than the convex combination, using the original weights as a warm start. The FS-ASC estimator solves:
+
+$$
+\mathbf{w}^\ast_{\text{FASC}} = \underset{\mathbf{w} \in \mathbb{R}^{N_0}, \sum w_j = 1}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+$$
+
+The solution lies in the affine hull of all donors, but it is regularized to remain close to the sparse, interpretable model obtained from forward selection on the condition that the originally selected model is good. The strength of this regularization is governed by the parameter $\lambda$.
+
+The regularization parameter $\lambda$ is selected via time-split cross-validation on the pre-treatment period. First, use the first half ($t = 1, \dots, \lfloor T_0/2 \rfloor$) to fit candidate weights $\mathbf{w}(\lambda)$. Then, use the second half ($t = \lfloor T_0/2 \rfloor + 1, \dots, T_0$) to evaluate prediction error. For each candidate $\lambda$, we compute:
+
+$$
+\mathbf{w}(\lambda) = \arg\min_{\mathbf{w}, \sum w_j = 1} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2,
+$$
+$$
+\text{CV-RMSE}(\lambda) = \left\| \mathbf{y}^{(2)} - \mathbf{Y}_0^{(2)} \mathbf{w}(\lambda) \right\|_2,
+$$
+
+and select the value of $\lambda$ that minimizes the cross-validation RMSE.
+
+To efficiently explore the hyperparameter space, I use `skopt`'s Bayesian optimization over $\log_{10}(\lambda) \in [-2, 3]$, corresponding to $\lambda \in [10^{-2}, 10^3]$. The optimization proceeds as follows: A Gaussian Process (GP) prior is placed over the unknown function $\lambda \mapsto \text{CV-RMSE}(\lambda)$. This GP models both the mean and uncertainty of the objective function. The algorithm begins with a small number of initial random evaluations. At each step, the next $\lambda$ to evaluate is chosen by maximizing an acquisition function, in this case the Expected Improvement (EI), which balances exploration and exploitation. This process continues for a total of 50 steps (or as specified). Once the optimal $\lambda^\ast$ is identified, the final weight vector is estimated by solving:
+
+$$
+\mathbf{w}^* = \arg\min_{\mathbf{w}, \sum w_j = 1} \left\| \mathbf{y} - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda^\ast \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+$$
+
+The resulting weights lie in the affine hull of the donor pool and strike a balance between fitting the treated unit and remaining close to the original sparse solution.
+
+
+As above, when $\lambda$ is large, the augmented weights remain close to $\mathbf{w}_0$; when $\lambda$ is small, the estimator prioritizes fit over sparsity and may extrapolate well beyond the original donor set. In essence, FS-ASC gives us the best of both worlds: interpretability and parsimony from sparse donor selection, and flexibility and reduced bias from affine augmentation. Empirically (we will see this below), it yields lower pre-treatment error than either method alone.
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+def draw_box(ax, text, xy, boxstyle="round,pad=0.3", fc="lightblue", ec="black", fontsize=12):
+    box = FancyBboxPatch(
+        (xy[0] - 1.5, xy[1] - 0.5), 3, 1,
+        boxstyle=boxstyle,
+        linewidth=1.5,
+        facecolor=fc,
+        edgecolor=ec
+    )
+    ax.add_patch(box)
+    ax.text(xy[0], xy[1], text, ha="center", va="center", fontsize=fontsize, fontweight='bold', color='black')
+
+def draw_arrow(ax, start, end):
+    arrow = FancyArrowPatch(
+        start, end,
+        arrowstyle='-|>', mutation_scale=20,
+        linewidth=2,
+        color='darkblue'
+    )
+    ax.add_patch(arrow)
+
+fig, ax = plt.subplots(figsize=(7, 9))
+ax.set_xlim(0, 4)
+ax.set_ylim(0, 10)
+ax.axis("off")
+
+# Positions for boxes (x, y)
+positions = [
+    (2, 9),  # Donor Pool Data
+    (2, 8),  # Forward Selection
+    (2, 7),  # Obtain Sparse Weights w0
+    (2, 5),  # Cross-Validation to tune lambda
+    (2, 4),  # Augmented SCM Optimization
+    (2, 2),  # Final weights w*
+]
+
+texts = [
+    "Donor Pool Data",
+    "Forward Selection:\nIterative Donor Choice",
+    "Obtain Sparse Weights\n$\\mathbf{w}_0$",
+    "Cross-Validation\nto Tune $\\lambda$",
+    "Augmented SCM\nOptimization",
+    "Final Weights\n$\\mathbf{w}^*$"
+]
+
+# Colors for each box
+colors = [
+    "#FFD700",  # gold
+    "#87CEEB",  # skyblue
+    "#40E0D0",  # turquoise
+    "#FFA07A",  # lightsalmon
+    "#9370DB",  # mediumpurple
+    "#90EE90",  # lightgreen
+]
+
+# Draw boxes with colors
+for pos, text, col in zip(positions, texts, colors):
+    draw_box(ax, text, pos, fc=col)
+
+# Draw arrows between boxes
+arrow_pairs = [(0,1), (1,2), (2,3), (3,4), (4,5)]
+for i, j in arrow_pairs:
+    start = (positions[i][0], positions[i][1] - 0.5)
+    end = (positions[j][0], positions[j][1] + 0.5)
+    draw_arrow(ax, start, end)
+
+plt.tight_layout()
+plt.show()
+```
+
+
+
+
+# Kansas Tax Cuts
+
+
+```{python}
+#| fig-align: center
+#| echo: false
+
+import pandas as pd
+
+from mlsynth import FSCM
+
+url = "http://fmwww.bc.edu/repec/bocode/s/scul_Taxes.dta"
+
+# Feel free to change "smoking" with "basque" above in the URL
+
+data = pd.read_stata(url)
+
+state_col = data.columns[0]
+date_col = data.columns[-1]
+
+q2_2012_start = pd.Timestamp('2012-04-01')
+
+# Create the 'Kansas Tax Cuts' indicator column
+data['Kansas Tax Cuts'] = ((data[state_col] == 'Kansas') & (data[date_col] >= q2_2012_start)).astype(int)
+
+config = {
+    "df": data,
+    "outcome": data.columns[4],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[-2],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red", "blue"], "use_augmented": True}
+
+arco = FSCM(config).fit()
+
+```
+
+Thjs is the Kansas example.

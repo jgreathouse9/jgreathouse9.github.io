@@ -19,7 +19,7 @@ But what if we can do better?
 
 In previous posts, I’ve written about donor selection strategies and how to handle imperfect pre-treatment fit. In this post, I introduce a synthesis of both: the Augmented Forward-Selected Synthetic Control estimator. By combining forward selection with a bias correction estimator, I show that we can reduce in-sample risk relative to the standard ASCM and Forward SCM alone. This approach is illustrated using two popular SCM case studies: the Kansas tax cut experiment and California’s Proposition 99.
 
-## Notations
+### Notations
 
 Formally, let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ index a total of $N$ units and $t \in \mathbb{N}$ index time. Unit $j=1$ is the treated unit, with the set of control units defined as $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, of cardinality $N_0$. The pre-treatment period is $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0$ is the last period before treatment, and the post-treatment period is $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is $y_{jt}$, and the generic outcome vector for unit $j$ is $\mathbf{y}_j \in \mathbb{R}^T$, so that $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top$. The treated unit’s outcome vector is $\mathbf{y}_1$, and the donor matrix is defined as $\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$, with each column corresponding to a donor unit and each row corresponding to a time period.
 
@@ -35,6 +35,17 @@ $$
 $$
 This is the feasible region for the ASC estimator. While both are weighted averages, the convex hull is a "weighted average" over the subsapce of the donor outcomes, while the affine hull is a "shifted subspace" that contains the convex hull but allows for extrapolation beyond it.
 
+We define the corresponding sets of feasible weights as:
+
+$$
+\mathcal{W}_{\mathrm{conv}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{w} \geq \mathbf{0}, \; \|\mathbf{w}\|_1 = 1 \right\},
+$$
+
+$$
+\mathcal{W}_{\mathrm{aff}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \right\},
+$$
+
+where $\|\mathbf{w}\|_1 = \sum_{j=1}^{N_0} |w_j|$ denotes the $\ell_1$ norm of the weight vector $\mathbf{w}$, and $\mathbf{1}$ is the vector of ones in $\mathbb{R}^{N_0}$. Note that for $\mathcal{W}_{\mathrm{conv}}$, the weights are non-negative and sum to one (equivalently, their $\ell_1$ norm is one), whereas for $\mathcal{W}_{\mathrm{aff}}$ weights can be negative but must sum to one.
 
 ```{python}
 
@@ -119,12 +130,10 @@ plt.show()
 SCM solves the program
 
 $$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2 \quad \forall t \in \mathcal{T}_1.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
-We seek the weight vector $\mathbf{w}$ that minimizes the mean squared error between the treated unit outcomes and the weighted average of control units in the pre-treatment period.
-
-The Forward Selection variant (ideally) builds a sparse synthetic control by greedily adding one donor at a time to minimize the pre-treatment fit error. Let $S = \emptyset$ denote the initial (empty) set of selected donors. At each iteration, the algorithm considers every donor $j \notin S$, temporarily forming a new set $S' = S \cup \{j\}$. For each such candidate set $S'$, it solves the synthetic control optimization problem restricted to the columns of $\mathbf{Y}_0^{S'}$, where $\mathbf{Y}_0^{S'}$ denotes the submatrix of donor outcomes for units in $S'$. The donor $j^*$ whose inclusion yields the smallest pre-treatment RMSE is then added to $S$. This process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
+We seek the weight vector $\mathbf{w}$ that minimizes the mean squared error between the treated unit outcomes and the weighted average of control units in the pre-treatment period. The Forward Selection variant (ideally) builds a sparse synthetic control by greedily adding one donor at a time to minimize the pre-treatment fit error. Let $S = \emptyset$ denote the initial (empty) set of selected donors. At each iteration, the algorithm considers every donor $j \notin S$, temporarily forming a new set $S' = S \cup \{j\}$. For each such candidate set $S'$, it solves the synthetic control optimization problem restricted to the columns of $\mathbf{Y}_0^{S'}$, where $\mathbf{Y}_0^{S'}$ denotes the submatrix of donor outcomes for units in $S'$. The donor $j^{\ast}$ whose inclusion yields the smallest pre-treatment RMSE is then added to $S$. This process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
 
 $$
 \text{mBIC}(S) = T_0 \cdot \log(\text{MSE}) + |S| \cdot \log(T_0)
@@ -143,7 +152,7 @@ This penalized error criterion trades off in-sample fit and model complexity, en
 Building on this baseline formulation, the ASCM introduces a regularization term that penalizes deviations of the weight vector from a reference or initial weight vector, $\mathbf{w}_0$. The augmented objective can be written as
 
 $$
-\mathbf{w}^\ast_\text{aug} = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}}  \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2 \quad \forall t \in \mathcal{T}_1,
+\mathbf{w}^\ast_{\mathrm{aug}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2 \quad \forall t \in \mathcal{T}_1.
 $$
 
 where $\lambda \ge 0$ controls the strength of the penalty.
@@ -156,13 +165,13 @@ One may ask *"Jared, why did you include the penalty on the weight deviation ter
 In ASCM, the placement of the regularization parameter $\lambda$ determines how the estimator balances pre-treatment fit and fidelity to the original SCM weights. Their formulation (e.g., Ben-Michael et al. 2021) minimizes:
 
 $$
-\mathbf{w}^\ast_{\text{alt}} = \underset{\sum w_j = 1}{\operatorname*{argmin}} \; \lambda \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \|\mathbf{w} - \mathbf{w}_0\|_2^2
+\mathbf{w}^\ast_{\text{alt}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \lambda \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \|\mathbf{w} - \mathbf{w}_0\|_2^2
 $$
 
 while ours solves:
 
 $$
-\mathbf{w}^\ast_{\text{aug}} = \underset{\sum w_j = 1}{\operatorname*{argmin}} \; \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2
+\mathbf{w}^\ast_{\text{aug}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2
 $$
 
 It turns out these are mathematically equivalent under a simple reparameterization. If we define $\lambda_{\text{alt}} = \frac{1}{\lambda_{\text{aug}}}$, then both objectives yield the same solution. This follows directly from the first-order conditions of each problem, which differ only by a scaling of the Lagrange multiplier.
@@ -184,7 +193,7 @@ The intuition here is pretty simple. If the SCM weights are already giving us go
 The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy correction It begins with a Forward SCM, selecting a small set of donors that best approximate the treated unit in the pre-treatment period via forward selection. Then, instead of stopping there, it augments this base model with a bias-corrected adjustment by seeing whether an affine combination can do much better than the convex combination, using the original weights as a warm start. The FS-ASC estimator solves:
 
 $$
-\mathbf{w}^\ast_{\text{FASC}} = \underset{\mathbf{w} \in \mathbb{R}^{N_0}, \sum w_j = 1}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+\mathbf{w}^\ast_{\text{FASC}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
 $$
 
 The solution lies in the affine hull of all donors, but it is regularized to remain close to the sparse, interpretable model obtained from forward selection on the condition that the originally selected model is good. The strength of this regularization is governed by the parameter $\lambda$.
@@ -192,24 +201,20 @@ The solution lies in the affine hull of all donors, but it is regularized to rem
 The regularization parameter $\lambda$ is selected via time-split cross-validation on the pre-treatment period. First, use the first half ($t = 1, \dots, \lfloor T_0/2 \rfloor$) to fit candidate weights $\mathbf{w}(\lambda)$. Then, use the second half ($t = \lfloor T_0/2 \rfloor + 1, \dots, T_0$) to evaluate prediction error. For each candidate $\lambda$, we compute:
 
 $$
-\mathbf{w}(\lambda) = \arg\min_{\mathbf{w}, \sum w_j = 1} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2,
+\mathbf{w}(\lambda) = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
 $$
+The expression $\text{CV-RMSE}(\lambda)$ measures the out-of-sample prediction error on the second half of the pre-treatment period when using weights $\mathbf{w}(\lambda)$ fitted on the first half. Specifically, it calculates the Euclidean norm (root sum of squared differences) between the observed outcomes $\mathbf{y}^{(2)}$ of the treated unit and the synthetic control’s predicted outcomes $\mathbf{Y}_0^{(2)} \mathbf{w}(\lambda)$. Minimizing this cross-validated root mean squared error helps select the regularization parameter $\lambda$ that balances fit and regularization to improve generalization to unseen (post-first-half) data.
 $$
-\text{CV-RMSE}(\lambda) = \left\| \mathbf{y}^{(2)} - \mathbf{Y}_0^{(2)} \mathbf{w}(\lambda) \right\|_2,
+\text{CV-RMSE}(\lambda) = \left\| \mathbf{y}^{(2)} - \mathbf{Y}_0^{(2)} \mathbf{w}(\lambda) \right\|_2.
 $$
-
-and select the value of $\lambda$ that minimizes the cross-validation RMSE.
 
 To efficiently explore the hyperparameter space, I use `skopt`'s Bayesian optimization over $\log_{10}(\lambda) \in [-2, 3]$, corresponding to $\lambda \in [10^{-2}, 10^3]$. The optimization proceeds as follows: A Gaussian Process (GP) prior is placed over the unknown function $\lambda \mapsto \text{CV-RMSE}(\lambda)$. This GP models both the mean and uncertainty of the objective function. The algorithm begins with a small number of initial random evaluations. At each step, the next $\lambda$ to evaluate is chosen by maximizing an acquisition function, in this case the Expected Improvement (EI), which balances exploration and exploitation. This process continues for a total of 50 steps (or as specified). Once the optimal $\lambda^\ast$ is identified, the final weight vector is estimated by solving:
 
 $$
-\mathbf{w}^* = \arg\min_{\mathbf{w}, \sum w_j = 1} \left\| \mathbf{y} - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda^\ast \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \left\| \mathbf{y} - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda^{\ast} \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
 $$
 
-The resulting weights lie in the affine hull of the donor pool and strike a balance between fitting the treated unit and remaining close to the original sparse solution.
-
-
-As above, when $\lambda$ is large, the augmented weights remain close to $\mathbf{w}_0$; when $\lambda$ is small, the estimator prioritizes fit over sparsity and may extrapolate well beyond the original donor set. In essence, FS-ASC gives us the best of both worlds: interpretability and parsimony from sparse donor selection, and flexibility and reduced bias from affine augmentation. Empirically (we will see this below), it yields lower pre-treatment error than either method alone.
+The resulting weights lie in the affine hull of the donor pool and strike a balance between fitting the treated unit and remaining close to the original sparse solution. As above, when $\lambda$ is large, the augmented weights remain close to $\mathbf{w}_0$; when $\lambda$ is small, the estimator prioritizes fit over sparsity and may extrapolate well beyond the original donor set. In essence, FS-ASC gives us the best of both worlds: interpretability and parsimony from sparse donor selection, and flexibility and reduced bias from affine augmentation. Empirically (we will see this below), it yields lower pre-treatment error than either method alone.
 
 ```{python}
 #| fig-align: center
@@ -259,7 +264,7 @@ texts = [
     "Obtain Sparse Weights\n$\\mathbf{w}_0$",
     "Cross-Validation\nto Tune $\\lambda$",
     "Augmented SCM\nOptimization",
-    "Final Weights\n$\\mathbf{w}^*$"
+    "Final Weights\n$\\mathbf{w}^{\ast}$"
 ]
 
 # Colors for each box

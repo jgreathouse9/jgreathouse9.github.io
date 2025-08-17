@@ -142,7 +142,7 @@ $$
 where
 
 $$
-\mathcal{W}_{\mathrm{conv}}(\mathcal{S}^{\prime}) = \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{|\mathcal{S}^{\prime}|} \,\middle|\, \sum_{j \in \mathcal{S}^{\prime}} w_j = 1 \right\}.
+\mathcal{W}_{\mathrm{conv}}(\mathcal{S}^{\prime}) = \left\{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{|\mathcal{S}^{\prime}|} \,\middle|\, \|\mathbf{w}\|_1 = 1 \right\}.
 $$
 
 The donor selected at each iteration is
@@ -151,7 +151,7 @@ $$
 j^{\ast} = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \; \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S} \cup \{j\})} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{\mathcal{S} \cup \{j\}} \mathbf{w} \right\|_2^2,
 $$
 
-and it is then added to the selected set by updating \$\mathcal{S} \leftarrow \mathcal{S} \cup { j^\ast }\$. This process repeats until a stopping rule is met, such as a maximum number of donors or minimal improvement in fit. The donor selection process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
+and it is then added to the selected set by updating $\mathcal{S} \leftarrow \mathcal{S} \cup {j^\ast}$. This process repeats until a stopping rule is met, such as a maximum number of donors or minimal improvement in fit. The donor selection process continues [at the discretion of the user](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function), until either all/some portion of donors have been exhausted, or a model selection criterion, the modified BIC, begins to increase and `full_selection = FALSE`. The modified BIC is defined as:
 
 $$
 \text{mBIC}(S) = T_0 \cdot \log(\text{MSE}) + |S| \cdot \log(T_0)
@@ -180,7 +180,7 @@ where $\lambda \ge 0$ controls the strength of the penalty.
 ::: {.callout-note}
 One may ask *"Jared, why did you include the penalty on the weight deviation term instead of the fit term, as Ben-Michael and co. do in Equation 18 of their paper?"* Here’s why.
 
-In ASCM, the placement of the regularization parameter $\lambda$ determines how the estimator balances pre-treatment fit and fidelity to the original SCM weights. Their formulation (e.g., Ben-Michael et al. 2021) minimizes:
+In ASCM, the placement of the regularization parameter $\lambda$ determines how the estimator balances pre-treatment fit and fidelity to the original SCM weights. Their formulation minimizes:
 
 $$
 \mathbf{w}^\ast_{\text{alt}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \lambda \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \|\mathbf{w} - \mathbf{w}_0\|_2^2
@@ -192,27 +192,29 @@ $$
 \mathbf{w}^\ast_{\text{aug}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \|\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\|_2^2 + \lambda \|\mathbf{w} - \mathbf{w}_0\|_2^2
 $$
 
-It turns out these are mathematically equivalent under a simple reparameterization. If we define $\lambda_{\text{alt}} = \frac{1}{\lambda_{\text{aug}}}$, then both objectives yield the same solution. This follows directly from the first-order conditions of each problem, which differ only by a scaling of the Lagrange multiplier.
+It turns out these are mathematically equivalent under a simple reparameterization. If we define $\lambda_{\text{alt}} = \frac{1}{\lambda_{\text{aug}}}$, then both objectives yield the same solution. This follows directly from the first-order conditions of each problem, which differ only by a scaling of the Lagrange multiplier. So in truth, it’s just a matter of which interpretation you find more natural.
 
-So in truth, it’s just a matter of which interpretation you find more natural.
-
-I personally prefer our formulation. Here’s why: in the affine-regularized version of the forward-selected synthetic control, $\mathbf{w}_0$ comes from a deliberately chosen sparse model. As $\lambda \to \infty$, the penalty on deviation dominates, and $\mathbf{w}^\ast_{\text{aug}}$ collapses to the projection of $\mathbf{w}_0$ onto the affine constraint $\sum_j w_j = 1$. This makes intuitive sense: when the original FSCM fit is already good, we want to stick close to it.
-
-Conversely, as $\lambda \to 0$, the regularization term disappears and the solution becomes the best-fitting affine combination of the donor units — completely unconstrained by the initial weights. That’s appropriate when the original fit is poor and we’re willing to learn something new.
-
-So while the math is equivalent, the perspective isn’t. I find it more natural to think of $\lambda$ as controlling how much I "trust" the prior weights. And that’s easier to reason about when $\lambda$ is attached to the deviation term.
+I personally prefer our formulation because as $\lambda \to \infty$, the penalty on deviation dominates, and $\mathbf{w}^\ast_{\text{aug}}$ collapses to the projection of $\mathbf{w}_0$ onto the affine constraint $\|\mathbf{w}\|_1 = 1$. In other words, when the original FSCM fit is already good, we want to stick close to it. Conversely, as $\lambda \to 0$, the regularization term disappears and the solution becomes the best-fitting affine combination of the donor units, completely unconstrained by the initial weights. That’s appropriate when the original fit is poor and we’re willing to learn something new (although this is probably going to be uncommon in practice). So while the math is equivalent, the perspective isn't. I find it much more natural to think of $\lambda$ as controlling how much I "trust" the prior weights. And that’s easier to reason about when $\lambda$ is attached to the deviation term.
 :::
 </details>
 
-The intuition here is pretty simple. If the SCM weights are already giving us good pre-treatment fit, then there is little incentive to extrapolate away from the original (F)SCM solution. However, if there's need for better fit, then we will extrapolate away from the convex hull solution. In practice, BMFR advocate for choosing lambda via cross validation.
+The intuition here is pretty simple. If the SCM weights are already giving us good pre-treatment fit, then there is little incentive to extrapolate away from the original (F)SCM solution. However, if there's need for better fit, then we will extrapolate away from the convex hull solution. In practice, Ben-Michael and co advocate for choosing lambda via cross validation.
 
 # Forward-Selected Augmented Synthetic Controls
 
-The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy correction, $\left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2$. It begins with a Forward SCM as described above, selecting a small set of donors that best approximate the treated unit in the pre-treatment period via forward selection. Let the weight vector for this solution be $\mathbf{w}_0$. Then, it augments this base model with a bias-corrected adjustment by seeing whether an affine combination can do better than the convex combination, using the original weights as a warm start. The FASC solves:
+The Forward-Selected Augmented Synthetic Control (FASC) estimator synthesizes two complementary strategies in SCM research: forward selection of donors and bias correction via the discrepancy penalty, $\left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2$. It begins with a forward-selected SCM (FSCM) as described above, producing a base weight vector $\mathbf{w}_0$. In this procedure, let $\mathcal{S}_0 \subseteq \mathcal{N}_0$ denote the set of donor indices selected by the FSCM corresponding to the non-zero entries of $\mathbf{w}_0$. The full donor weight vector is then defined as
 
 $$
-\mathbf{w}^\ast_{\text{FASC}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}_0 \right\|_2^2.
+w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \in \mathcal{N}_0,
 $$
+
+where $\mathbf{1}_{\{j \in \mathcal{S}_0\}}$ is an indicator function equal to $1$ if $j \in \mathcal{S}_0$ and $0$ otherwise. This ensures that only the selected donor indices carry the forward-selected weights, while all other donors are assigned zero weight. FASC then augments this base model by allowing an affine combination of the donors to potentially improve the pre-treatment fit, using $\mathbf{w}^{\mathrm{full}}$ as a warm start. The FASC estimator solves
+
+$$
+\mathbf{w}^\ast_{\mathrm{FASC}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}^{\mathrm{full}} \right\|_2^2,
+$$
+
+where $\lambda \ge 0$ controls the strength of the bias-correction toward the forward-selected weights.
 
 The solution lies in the affine hull of all donors, but it is regularized to remain close to the sparse, interpretable model obtained from forward selection on the condition that the originally selected model is good. The strength of this regularization is governed by the parameter $\lambda$. The regularization parameter $\lambda$ is selected via time-split cross-validation on the pre-treatment period. First, use the first half ($t = 1, \dots, \lfloor T_0/2 \rfloor$) to fit candidate weights $\mathbf{w}(\lambda)$. Then, use the second half ($t = \lfloor T_0/2 \rfloor + 1, \dots, T_0$) to evaluate prediction error. For each candidate $\lambda$, we compute:
 

@@ -292,6 +292,8 @@ plt.show()
 
 # Kansas Tax Cuts
 
+Here are the results of the FASC method.
+
 
 ```{python}
 #| fig-align: center
@@ -329,4 +331,57 @@ arco = FSCM(config).fit()
 
 ```
 
-Thjs is the Kansas example.
+I compare the pretreatment and posttreatment fit of Forward SCM (FSCM) and its Augmented variant (ASCM). Both estimators were applied to the same treated unit over a common pre- and post-treatment period.
+
+| Estimator           | Pre-RMSE | Post-RMSE | R²     | Notes                                |
+|---------------------|----------|-----------|--------|--------------------------------------|
+| Forward SCM         | 0.012    | 0.014     | 0.999  | Baseline sparse estimator            |
+| Augmented SCM       | 0.012    | 0.014     | 0.999  | Ridge-augmented refinement           |
+| Ben Michael (SCM)   | 0.90     | –         | –      | Some imbalance           |
+| Ben Michael (ASCM)  | 0.65     | –         | –      | RMSE reduced by ~28% from SCM        |
+
+
+Both FSCM and its ridge-augmented variant achieve nearly identical performance, with a pre-RMSE of 0.012 and an out-of-sample RMSE of 0.014. Since the donor selection is already good, the addition of regularization does not improve predictive accuracy, indicating that the original FSCM fit is already near-optimal. In contrast, the original SCM fit exhibits a much larger pre-RMSE of 0.90. While ASCM reduces this error to 0.65, the improvement is modest by comparison to FASC. Relative to these benchmarks, FASC approach achieves a *98.7% reduction in pre-RMSE* compared to standard SCM, and a *98.2% reduction* compared to augmented SCM with ridge. Of course, these were just the default settings; for higher dimensional donor pools, we could use stopping rules to make the selection process quicker. Also notice that inference has not yet been programmed just yet.
+
+# Proposition 99
+
+I compare the effect of Proposition 99 on cigarette sales in California using FASC, FSCM, and the original SCM. While all three detect a significant reduction in sales, the quality of pretreatment fit varies meaningfully. 
+
+```{python}
+
+
+import pandas as pd # To work with panel data
+
+from mlsynth import FSCM
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+
+data = pd.read_csv(url)
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["blue", "#00F0FF"], "use_augmented": True}
+
+arco = FSCM(config).fit()
+```
+
+
+| Estimator      | ATT    | Pre-RMSE  | $R^2$        |
+| ----------- | ------ | --------- | --------- |
+| FASC        | -16.76 | **0.935** | **0.993** |
+| FSCM        | -19.51 | 1.656     | 0.979     |
+| ADH (Stata) | -19.00 | 1.76      | —         |
+
+FASC achieves the best pretreatment fit, with a root mean squared error of 0.935 and an $R^2$ of 0.993. This represents a **46% reduction in pre-RMSE compared to FSCM** and a **47% reduction relative to the original ADH implementation**. The improved fit comes with a slightly smaller estimated ATT (-16.76) compared to FSCM (-19.51) and ADH (-19.00), suggesting that regularized, forward-selected models may, if slightly, temper exaggerated effects while maintaining excellent in-sample risk.
+
+FASC produces weights that differ notably from both FSCM and the original SCM with covariates. While the vanilla FSCM weights are sparse and non-negative, concentrated on a small set of donors such as Utah, Montana, Nevada, and Connecticut, the augmented FSCM weights are less sparse and include small negative values, as we would expect. These negative weights allow the augmented estimator to extrapolate slightly beyond the convex hull formed by the donors, thus providing controlled flexibility to improve the pre-treatment fit. Importantly, the augmented weights *still maintain the core donor pool* emphasized by the vanilla FSCM, with similar magnitudes on key states — for example, Utah (~0.38), Montana (~0.24), Nevada (~0.21), and Connecticut (~0.14). The original SCM with covariates also concentrates weight on a similar subset of donors, including Utah, Nevada, Montana, Colorado, and Connecticut, demonstrating stability in donor selection across methods.
+
+The presence of small negative weights in the augmented FSCM, assigned to peripheral donors such as Alabama, Mississippi, and Tennessee, acts as fine-tuning adjustments to better capture the treated unit’s trajectory. Machine learning scientsts [have remarked](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf) that there's not obvious reason why the donor weights need to bo convex; Ben-Michael, Feller, and Rothstein argue that such extrapolation, provided that it is controlled, is worth it in settings where the base estimator produces poor in-sample risk. Overall, these patterns underscore how augmentation refines the synthetic control weights, offering a nuanced improvement over vanilla forward selection by reducing bias without sacrificing the stability or interpretability of the donor composition.
+
+

@@ -211,7 +211,10 @@ window.Quarto = {
   <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
   <li><a href="#the-augmented-synthetic-control-estimator" id="toc-the-augmented-synthetic-control-estimator" class="nav-link" data-scroll-target="#the-augmented-synthetic-control-estimator">The Augmented Synthetic Control Estimator</a></li>
   </ul></li>
-  <li><a href="#forward-selected-augmented-synthetic-controls" id="toc-forward-selected-augmented-synthetic-controls" class="nav-link" data-scroll-target="#forward-selected-augmented-synthetic-controls">Forward-Selected Augmented Synthetic Controls</a></li>
+  <li><a href="#forward-selected-augmented-synthetic-controls" id="toc-forward-selected-augmented-synthetic-controls" class="nav-link" data-scroll-target="#forward-selected-augmented-synthetic-controls">Forward-Selected Augmented Synthetic Controls</a>
+  <ul class="collapse">
+  <li><a href="#conformal-prediction-intervals" id="toc-conformal-prediction-intervals" class="nav-link" data-scroll-target="#conformal-prediction-intervals">Conformal Prediction Intervals</a></li>
+  </ul></li>
   <li><a href="#kansas-tax-cuts" id="toc-kansas-tax-cuts" class="nav-link" data-scroll-target="#kansas-tax-cuts">Kansas Tax Cuts</a></li>
   <li><a href="#proposition-99" id="toc-proposition-99" class="nav-link" data-scroll-target="#proposition-99">Proposition 99</a></li>
   </ul>
@@ -273,7 +276,7 @@ window.Quarto = {
 <p><span class="math display">\[
   \operatorname{aff}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, \sum_{j} w_j = 1 \right\}.
 \]</span> This is the feasible region for the ASC estimator. While both are weighted averages, the convex hull is a “weighted average” over the subsapce of the donor outcomes, while the affine hull is a “shifted subspace” that contains the convex hull but allows for extrapolation beyond it.</p>
-<div id="fa431814" class="cell" data-execution_count="1">
+<div id="3a90ba02" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -361,7 +364,7 @@ Note
 \]</span></p>
 <p>The resulting weights lie in the affine hull of the donor pool and strike a balance between fitting the treated unit and remaining close to the original sparse solution.</p>
 <p>As above, when <span class="math inline">\(\lambda\)</span> is large, the augmented weights remain close to <span class="math inline">\(\mathbf{w}_0\)</span>; when <span class="math inline">\(\lambda\)</span> is small, the estimator prioritizes fit over sparsity and may extrapolate well beyond the original donor set. In essence, FS-ASC gives us the best of both worlds: interpretability and parsimony from sparse donor selection, and flexibility and reduced bias from affine augmentation. Empirically (we will see this below), it yields lower pre-treatment error than either method alone.</p>
-<div id="560234ce" class="cell" data-execution_count="2">
+<div id="9ace5934" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -370,11 +373,28 @@ Note
 </div>
 </div>
 </div>
+<section id="conformal-prediction-intervals" class="level2">
+<h2 class="anchored" data-anchor-id="conformal-prediction-intervals">Conformal Prediction Intervals</h2>
+<p>To quantify uncertainty around the estimated counterfactual trajectory, we apply <a href="https://matheusfacure.github.io/python-causality-handbook/Conformal-Inference-for-Synthetic-Control.html">conformal prediction intervals</a> based on block-permuted pre-treatment residuals. These intervals are distribution-free, require no assumptions about the data-generating process, and provide valid finite-sample marginal coverage. Let <span class="math inline">\(\hat{y}_t^{\text{cf}}\)</span> denote the estimated counterfactual outcome at time <span class="math inline">\(t\)</span>, and let <span class="math inline">\(y_t^{\text{obs}}\)</span> be the observed outcome. We begin by computing residuals for all time periods:</p>
+<p><span class="math display">\[
+\varepsilon_t = y_t^{\text{obs}} - \hat{y}_t^{\text{cf}}.
+\]</span></p>
+<p>We then construct a conformal score by calculating the mean absolute residual over the post-treatment period. To simulate the distribution of this score under the null (i.e., assuming no treatment effect), we perform circular block permutations of the residual vector and recompute the same statistic for each shifted version.</p>
+<p>This yields an empirical distribution of conformal scores under the null. We take the <span class="math inline">\((1 - \alpha)\)</span> quantile of this distribution as our conformal threshold, denoted <span class="math inline">\(q_{1 - \alpha}\)</span>. To center the interval, we compute the mean residual over the pre-treatment period:</p>
+<p><span class="math display">\[
+\bar{\varepsilon} = \frac{1}{T_0} \sum_{t \leq T_0} \varepsilon_t.
+\]</span></p>
+<p>The conformal prediction interval for each post-treatment time <span class="math inline">\(t &gt; T_0\)</span> is then given by:</p>
+<p><span class="math display">\[
+\left[ \hat{y}_t^{\text{cf}} + \bar{\varepsilon} - q_{1 - \alpha},\ \hat{y}_t^{\text{cf}} + \bar{\varepsilon} + q_{1 - \alpha} \right].
+\]</span></p>
+<p>This approach ensures that the prediction intervals account for uncertainty in the counterfactual trajectory while adjusting for systematic bias in the pre-treatment fit. The shaded regions in our figures visualize these conformal intervals.</p>
+</section>
 </section>
 <section id="kansas-tax-cuts" class="level1">
 <h1>Kansas Tax Cuts</h1>
 <p>Here are the results of the FASC method.</p>
-<div id="e4ece650" class="cell" data-execution_count="3">
+<div id="aad70589" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.6/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:434: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
   observations_per_unit = df.groupby(unit_id_column_name)[time_period_column_name].nunique() # Changed from .count() to .nunique() for robustness</code></pre>
@@ -441,7 +461,7 @@ Note
 <section id="proposition-99" class="level1">
 <h1>Proposition 99</h1>
 <p>I compare the effect of Proposition 99 on cigarette sales in California using FASC, FSCM, and the original SCM. While all three detect a significant reduction in sales, the quality of pretreatment fit varies meaningfully.</p>
-<div id="5ebc3c41" class="cell" data-execution_count="4">
+<div id="fca5556b" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd <span class="co"># To work with panel data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM</span>
@@ -509,7 +529,7 @@ Note
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1755452955866" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1755457095741" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -533,7 +553,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1755452955867" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1755457095742" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -557,7 +577,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1755452955867" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1755457095742" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -581,7 +601,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1755452955873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1755457095746" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -605,7 +625,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1755452955873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1755457095747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -629,7 +649,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1755452955870" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1755457095744" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -651,7 +671,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1755452955870" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1755457095744" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -675,7 +695,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1755452955873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1755457095747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -697,7 +717,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1755452955873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1755457095747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -719,7 +739,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1755452955873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1755457095747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -743,7 +763,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755453016599" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755457152658" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -757,7 +777,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1755452955867" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1755457095741" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

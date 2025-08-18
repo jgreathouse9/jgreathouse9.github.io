@@ -17,35 +17,35 @@ Methods for donor pool selection have also received attention. In fact, this is 
 
 But what if we can do better?
 
-In previous posts, I’ve written about donor selection strategies and how to handle imperfect pre-treatment fit. In this post, I introduce a synthesis of both: the Augmented Forward-Selected Synthetic Control estimator. By combining forward selection with a bias correction estimator, I show that we can reduce in-sample risk relative to the standard ASCM and Forward SCM alone. This approach is illustrated using two popular SCM case studies: the Kansas tax cut experiment and California’s Proposition 99.
+In previous posts, I’ve written about donor selection strategies and how to handle imperfect pre-treatment fit. In this post, I introduce a synthesis of both: the Forward Augmented Synthetic Control estimator. By combining forward selection with a bias correction step, I show that we can reduce in-sample risk relative to the standard ASCM and Forward SCM alone. This approach is illustrated using two popular SCM case studies: the Kansas tax cut experiment and California’s Proposition 99.
 
 ### Notations
 
-Formally, let $\mathbb{R}$ denote the set of real numbers. A calligraphic letter, such as $\mathcal{S}$, represents a discrete set with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ index a total of $N$ units and $t \in \mathbb{N}$ index time. Unit $j=1$ is the treated unit, with the set of control units defined as $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, of cardinality $N_0$. The pre-treatment period is $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0$ is the last period before treatment, and the post-treatment period is $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is $y_{jt}$, and the generic outcome vector for unit $j$ is $\mathbf{y}_j \in \mathbb{R}^T$, so that $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top$. The treated unit’s outcome vector is $\mathbf{y}_1$, and the donor matrix is defined as $\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$, with each column corresponding to a donor unit and each row corresponding to a time period.
+Let $\mathbb{R}$ denote the set of real numbers. Calligraphic letters, such as $\mathcal{S}$, represent discrete sets with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ index a total of $N$ units and $t \in \mathbb{N}$ index time. Unit $j=1$ is the treated unit, with the set of control units $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$ of cardinality $N_0$. The pre-treatment period is $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \le T_0 \}$ and the post-treatment period is $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is $y_{jt}$, and the outcome vector for unit $j$ is $\mathbf{y}_j = (y_{j1}, \dots, y_{jT})^\top \in \mathbb{R}^T$. The treated unit’s outcome vector is $\mathbf{y}_1$, and the donor matrix is $\mathbf{Y}_0 = \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$.
 
-I will frequently refer to linear combinations of the donor units’ outcomes. Two important geometric concepts help clarify the space of possible synthetic controls: The convex hull of the donor units, denoted $\operatorname{conv}(\mathbf{y}_j)_{j \in \mathcal{N}_0}$, is the set of all weighted averages of donor vectors where the weights are non-negative and sum to one:
-  
-$$
-\operatorname{conv}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, w_j \geq 0, \sum_{j} w_j = 1 \right\}.
-$$
-This is the feasible region for standard SCM weights $\mathbf{w} \in \Delta^{N_0}$. The affine hull, denoted $\operatorname{aff}(\mathbf{y}_j)_{j \in \mathcal{N}_0}$, is the set of all affine combinations of donor vectors — that is, the set of linear combinations where the weights sum to one, but may include negative values:
+We frequently consider linear combinations of donor outcomes. The **convex hull** of the donor vectors is
 
 $$
-  \operatorname{aff}(\mathbf{y}_j) = \left\{ \sum_{j \in \mathcal{N}_0} w_j \mathbf{y}_j \,\middle|\, \sum_{j} w_j = 1 \right\}.
-$$
-This is the feasible region for the ASC estimator. While both are weighted averages, the convex hull is a "weighted average" over the subsapce of the donor outcomes, while the affine hull is a "shifted subspace" that contains the convex hull but allows for extrapolation beyond it.
-
-We define the corresponding sets of feasible weights as:
-
-$$
-\mathcal{W}_{\mathrm{conv}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0}_{\geq 0} \mid \; \|\mathbf{w}\|_1 = 1 \right\},
+\operatorname{conv}(\{\mathbf{y}_j\}_{j \in \mathcal{N}_0}) 
+= \Big\{ \mathbf{Y}_0 \mathbf{w} \;\Big|\; \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0}, \;\mathbf{1}^\top \mathbf{w} = 1 \Big\},
 $$
 
+and the **affine hull** is
+
 $$
-\mathcal{W}_{\mathrm{aff}} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \|\mathbf{w}\|_1 = 1 \right\},
+\operatorname{aff}(\{\mathbf{y}_j\}_{j \in \mathcal{N}_0}) 
+= \Big\{ \mathbf{Y}_0 \mathbf{w} \;\Big|\; \mathbf{w} \in \mathbb{R}^{N_0}, \;\mathbf{1}^\top \mathbf{w} = 1 \Big\}.
 $$
 
-where $\|\mathbf{w}\|_1 = \sum_{j=1}^{N_0} |w_j|$ denotes the $\ell_1$ norm of the weight vector $\mathbf{w}$, and $\mathbf{1}$ is the vector of ones in $\mathbb{R}^{N_0}$. Note that for $\mathcal{W}_{\mathrm{conv}}$, the weights are non-negative and sum to one (equivalently, their $\ell_1$ norm is one), whereas for $\mathcal{W}_{\mathrm{aff}}$ weights can be negative but must sum to one.
+While both involve weighted averages of donors, the convex hull restricts weights to be non-negative, whereas the affine hull allows negative weights and extrapolation beyond the convex hull.
+
+The corresponding sets of feasible weights are
+
+$$
+\mathcal{W}_{\mathrm{conv}} = \{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}, \quad
+\mathcal{W}_{\mathrm{aff}} = \{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}.
+$$
+
 
 ```{python}
 

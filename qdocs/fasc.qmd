@@ -23,14 +23,16 @@ In previous posts, I’ve written about donor selection strategies and how to ha
 
 Let $\mathbb{R}$ denote the set of real numbers. Calligraphic letters, such as $\mathcal{S}$, represent discrete sets with cardinality $S = |\mathcal{S}|$. Let $j \in \mathbb{N}$ index a total of $N$ units and $t \in \mathbb{N}$ index time. Unit $j=1$ is the treated unit, with the set of control units $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$ of cardinality $N_0$. The pre-treatment period is $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \le T_0 \}$ and the post-treatment period is $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is $y_{jt}$, and the outcome vector for unit $j$ is $\mathbf{y}_j = (y_{j1}, \dots, y_{jT})^\top \in \mathbb{R}^T$. The treated unit’s outcome vector is $\mathbf{y}_1$, and the donor matrix is $\mathbf{Y}_0 = \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}$.
 
-We frequently consider linear combinations of donor outcomes. The **convex hull** of the donor vectors is
+#### Geometry
+
+I frequently consider linear combinations of donor outcomes. The convex hull of the donor vectors is
 
 $$
 \operatorname{conv}(\{\mathbf{y}_j\}_{j \in \mathcal{N}_0}) 
 = \Big\{ \mathbf{Y}_0 \mathbf{w} \;\Big|\; \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0}, \;\mathbf{1}^\top \mathbf{w} = 1 \Big\},
 $$
 
-and the **affine hull** is
+and the affine hull is
 
 $$
 \operatorname{aff}(\{\mathbf{y}_j\}_{j \in \mathcal{N}_0}) 
@@ -124,6 +126,12 @@ plt.show()
 
 
 ```
+
+In two dimensions, the convex hull of two donor points is the line segment connecting them. It represents all convex combinations of the donors, where the weights are nonnegative and sum to one. In the figure above, this is shown as the black line segment, and the green point lies within it because its weights are both positive and sum to one. By contrast, the affine hull is the entire infinite line passing through the donors.
+
+Affine combinations also require weights to sum to one, but they may be negative, which allows extrapolation beyond the segment (though practically we may force the weights to be between negative one and positive one, what we'd call a kind of [polytope](https://www.geeksforgeeks.org/maths/polytope-definition-types-and-examples/)). The dashed gray line in the figure illustrates the affine hull, and the red point lies outside the convex segment but on this line because one weight is negative.
+
+Any point not on this line at all cannot be expressed as an affine combination, as shown by the purple point. The key difference is that the convex hull is bounded and interpolative, while the affine hull is unbounded and permits extrapolation arbitrarily far from the observed donor points.
 
 # Synthetic Controls
 

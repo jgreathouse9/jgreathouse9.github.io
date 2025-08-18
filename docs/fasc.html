@@ -287,7 +287,7 @@ window.Quarto = {
 \mathcal{W}_{\mathrm{conv}} = \{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}, \quad
 \mathcal{W}_{\mathrm{aff}} = \{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}.
 \]</span></p>
-<div id="40d94622" class="cell" data-execution_count="1">
+<div id="3eaaae78" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -416,7 +416,7 @@ w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \
 \]</span></p>
 <p>The <span class="math inline">\(\lambda\)</span> minimizing this cross-validated error balances fidelity to the original forward-selected weights with pre-treatment fit. To explore the hyperparameter space efficiently, Bayesian optimization can be used over <span class="math inline">\(\log_{10}(\lambda)\)</span>, for example <span class="math inline">\(\log_{10}(\lambda) \in [-2, 3]\)</span>, with a Gaussian Process modeling the CV-RMSE function and Expected Improvement guiding sequential evaluations. I do this using <code>skopt</code>, but presumably other methods can be used as well.</p>
 <p>An important property of FASC is that its in-sample MSE is never worse than that of the original FSCM solution. This follows directly from the fact that the FSCM weights, <span class="math inline">\(\mathbf{w}^{\mathrm{full}}\)</span>, are feasible in the FASC optimization. Any other solution <span class="math inline">\(\mathbf{w}^\ast_{\mathrm{FASC}}\)</span> can only reduce the fit error further (or match it if no improvement is possible), since the optimization allows affine combinations beyond the original sparse set. Therefore, the in-sample MSE of FASC is bounded above by the FSCM MSE, ensuring that augmenting the forward-selected solution cannot worsen the pre-treatment fit. This provides a natural guarantee: FASC preserves interpretability while maintaining or improving in-sample accuracy. In essence, FASC gives the best of both worlds: a sparse, interpretable initialization from forward selection, and bias-corrected flexibility from the weight discrepancy term in the FASC.</p>
-<div id="d8a6e6ce" class="cell" data-execution_count="2">
+<div id="0c7558a2" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -446,7 +446,7 @@ w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \
 <section id="kansas-tax-cuts" class="level1">
 <h1>Kansas Tax Cuts</h1>
 <p>Here are the results of the FASC method.</p>
-<div id="e20ebe77" class="cell" data-execution_count="3">
+<div id="5f2584c5" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.6/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:434: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
   observations_per_unit = df.groupby(unit_id_column_name)[time_period_column_name].nunique() # Changed from .count() to .nunique() for robustness</code></pre>
@@ -513,7 +513,7 @@ w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \
 <section id="proposition-99" class="level1">
 <h1>Proposition 99</h1>
 <p>I compare the effect of Proposition 99 on cigarette sales in California using FASC, FSCM, and the original SCM. While all three detect a significant reduction in sales, the quality of pretreatment fit varies meaningfully.</p>
-<div id="255a1ec5" class="cell" data-execution_count="4">
+<div id="99d18ea3" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd <span class="co"># To work with panel data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM</span>
@@ -577,9 +577,10 @@ w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \
 </section>
 <section id="implications" class="level1">
 <h1>Implications</h1>
-<p>FASC allows practitioners to handle high-dimensional donor pools without manually specifying which donors to include. By automatically prioritizing donors that improve pre-treatment balance, it reduces interpolation biases. The discrepancy penalty keeps the FASC solution close to the interpretable forward-selected weights, unless of course pre-treatment fit would improve by moving away from FSCM weights. This saves time and reduces bias stemming from subjective choices in donor selection.</p>
-<p>Compared to alternative selection mechanisms, such as Geolift’s dynamic time warping (DTW), forward selection is computationally efficient and scales better to high-dimensional settings. DTW aligns entire time series pairwise, which can be slow and less suitable when there are many more control units than pre-treatment periods. Even simpler correlation-based approaches, which GeoLift also uses, may struggle with complex temporal patterns, highlighting the advantage of forward selection combined with affine augmentation.</p>
-<p>FASC as presented assumes a single treatment time for the treated unit. In many real-world scenarios, treatments are staggered across units. Extending FASC to these settings would require a pooled approach, where one balances fitting individual synthetic controls against capturing the best fit across cohorts. Deriving Cohort ATTs in this setting would allow meaningful causal inference even when treated units receive the intervention at different calendar times.</p>
+<p>FASC combines two complementary strategies to improve synthetic control estimation. Forward selection identifies a suitable donor pool when it is unclear which control units to include, prioritizing donors that maximize pre-treatment balance and reducing interpolation biases in high-dimensional settings. At the same time, bias correction via the original forward-selected weights, implemented as a ridge-type penalty, ensures that even if the convex hull weights provide imperfect in-sample fit, FASC can slightly extrapolate beyond the FSCM solution to reduce pre-treatment bias.</p>
+<p>By integrating these two ideas, FASC addresses both common challenges in synthetic control applications that marketers and economists often face: interpolation biases/non-uniqueness when the donor pool is high-dimensional, and imperfect pre-treatment fit when FSCM weights alone are insufficient. If FSCM already achieves excellent pre-treatment fit, FASC will closely track it. If FSCM performs reasonably well but leaves some residual imbalance, the augmentation allows controlled deviation to further improve the synthetic control. The discrepancy penalty keeps the solution interpretable by favoring the forward-selected weights when the original fit is already strong.</p>
+<p>Compared to alternative donor selection mechanisms, such as Geolift’s dynamic time warping (DTW), forward selection is computationally efficient and scales better to high-dimensional settings. DTW aligns entire time series pairwise, which can be slow and less suitable when there are many more control units than pre-treatment periods. Even simpler correlation-based approaches, which GeoLift also offers, may struggle with complex temporal patterns, highlighting the advantage of forward selection combined with affine augmentation.</p>
+<p>Finally, FASC as presented assumes a single treatment time for the treated unit. In many real-world scenarios, treatments are staggered across units. Extending FASC to these settings would require a (partially) pooled approach, balancing the fit of individual synthetic controls against capturing the best fit across cohorts. Deriving Cohort ATTs in this setting would allow meaningful causal inference even when treated units receive the intervention at different calendar times.</p>
 
 
 
@@ -587,7 +588,7 @@ w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1755522567008" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1755523129382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -611,7 +612,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1755522567009" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1755523129383" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -635,7 +636,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1755522567009" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1755523129383" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -659,7 +660,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1755522567014" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1755523129388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -683,7 +684,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1755522567014" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1755523129389" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -707,7 +708,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1755522567012" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1755523129386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -729,7 +730,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1755522567011" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1755523129386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -753,7 +754,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1755522567014" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1755523129389" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -775,7 +776,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1755522567014" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1755523129389" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -797,7 +798,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1755522567014" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1755523129389" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -821,7 +822,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755522622240" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755523179769" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -835,7 +836,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1755522567009" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1755523129383" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

@@ -208,7 +208,9 @@ window.Quarto = {
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
   <ul class="collapse">
   <li><a href="#notations" id="toc-notations" class="nav-link" data-scroll-target="#notations">Notations</a></li>
-  <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a></li>
+  </ul></li>
+  <li><a href="#synthetic-controls" id="toc-synthetic-controls" class="nav-link" data-scroll-target="#synthetic-controls">Synthetic Controls</a>
+  <ul class="collapse">
   <li><a href="#forward-selection-scm-fscm" id="toc-forward-selection-scm-fscm" class="nav-link" data-scroll-target="#forward-selection-scm-fscm">Forward Selection SCM (FSCM)</a></li>
   <li><a href="#the-augmented-synthetic-control-estimator" id="toc-the-augmented-synthetic-control-estimator" class="nav-link" data-scroll-target="#the-augmented-synthetic-control-estimator">The Augmented Synthetic Control Estimator</a></li>
   </ul></li>
@@ -287,7 +289,7 @@ window.Quarto = {
 \mathcal{W}_{\mathrm{conv}} = \{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}, \quad
 \mathcal{W}_{\mathrm{aff}} = \{ \mathbf{w} \in \mathbb{R}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}.
 \]</span></p>
-<div id="d09bb21b" class="cell" data-execution_count="1">
+<div id="99d70709" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -297,14 +299,14 @@ window.Quarto = {
 </div>
 </div>
 </section>
-<section id="synthetic-controls" class="level2">
-<h2 class="anchored" data-anchor-id="synthetic-controls">Synthetic Controls</h2>
+</section>
+<section id="synthetic-controls" class="level1">
+<h1>Synthetic Controls</h1>
 <p>The classic SCM estimator solves</p>
 <p><span class="math display">\[
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1} \mathbf{w} \right\|_2^2,
+\mathbf{w}^{\mathrm{SCM}} = \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1} \mathbf{w}^{\mathrm{SCM}} \right\|_2^2,
 \]</span></p>
-<p>where <span class="math inline">\(\mathcal{W}_{\mathrm{conv}} = \{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}\)</span>. This finds the weight vector <span class="math inline">\(\mathbf{w}^\ast\)</span> that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes.</p>
-</section>
+<p>where <span class="math inline">\(\mathcal{W}_{\mathrm{conv}} = \{\mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1\}\)</span>. This finds the weight vector <span class="math inline">\(\mathbf{w}^{\mathrm{SCM}}\)</span> that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes.</p>
 <section id="forward-selection-scm-fscm" class="level2">
 <h2 class="anchored" data-anchor-id="forward-selection-scm-fscm">Forward Selection SCM (FSCM)</h2>
 <p>FSCM constructs a synthetic control iteratively by adding one donor at a time. Starting from the empty set <span class="math inline">\(\mathcal{S} = \emptyset\)</span>, at each iteration the algorithm considers each candidate donor <span class="math inline">\(j \in \mathcal{N}_0 \setminus \mathcal{S}\)</span> and forms <span class="math inline">\(\mathcal{S}^\prime = \mathcal{S} \cup \{j\}\)</span>. For each candidate set <span class="math inline">\(\mathcal{S}^\prime\)</span>, it solves the restricted SCM problem over the donor submatrix <span class="math inline">\(\mathbf{Y}_0^{\mathcal{S}^\prime}\)</span>, defined as the columns of <span class="math inline">\(\mathbf{Y}_0\)</span> corresponding to units in <span class="math inline">\(\mathcal{S}^\prime\)</span>:</p>
@@ -355,7 +357,11 @@ S^\ast = \arg\min_{\substack{S \subseteq \mathcal{N}_0 \\ |S| \le K}} \text{MSE}
 \qquad
 \mathbf{w}_{S^\ast}^\ast = \arg\min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(S^\ast)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{S^\ast} \mathbf{w} \right\|_2^2.
 \]</span></p>
-<p>This implementation provides flexibility in practice: exhaustive evaluation is feasible in low-dimensional settings, while early stopping or a capped selection is recommended in high-dimensional applications. The algorithm in <code>mlsynth</code> issues a warning if the donor pool contains 200 or more units.</p>
+<p>Whichever variant of the forward selection algorithm is used—exhaustive search, model selection, or cardinality constraint—the result is a selected subset of donors <span class="math inline">\(S^\ast \subseteq \mathcal{N}_0\)</span> and a corresponding optimal weight vector <span class="math inline">\(\mathbf{w}_{S^\ast}^\ast \in \mathbb{R}^{|S^\ast|}\)</span>. To unify notation and simplify presentation going forward, we define the final forward-selected weights by embedding this sparse solution into the full donor space:</p>
+<p><span class="math display">\[
+w_j^{\mathrm{FSCM}} = \left(\mathbf{w}_{S^\ast}^\ast\right)_j \cdot \mathbb{1}\{j \in S^\ast\}.
+\]</span></p>
+<p>Equivalently, let <span class="math inline">\(\mathbf{w}^{\mathrm{FSCM}} \in \mathbb{R}^{N_0}\)</span> be the zero-padded extension of <span class="math inline">\(\mathbf{w}_{S^\ast}^\ast\)</span>, such that it assigns zero weight to all donors not selected by FSCM. This implementation provides flexibility in practice: exhaustive evaluation is feasible in low-dimensional settings, while early stopping or a capped selection is recommended in high-dimensional applications. The algorithm in <code>mlsynth</code> issues a warning if the donor pool contains 200 or more units.</p>
 </section>
 <section id="the-augmented-synthetic-control-estimator" class="level2">
 <h2 class="anchored" data-anchor-id="the-augmented-synthetic-control-estimator">The Augmented Synthetic Control Estimator</h2>
@@ -397,26 +403,22 @@ Note
 </section>
 <section id="forward-augmented-synthetic-controls" class="level1">
 <h1>Forward Augmented Synthetic Controls</h1>
-<p>The FASC estimator combines two complementary ideas: sparse donor selection via forward selection and bias correction via affine augmentation. It begins with FSCM, which produces a base weight vector <span class="math inline">\(\mathbf{w}_{S^\ast}^\ast\)</span>. Let <span class="math inline">\(\mathcal{S}_0 \subseteq \mathcal{N}_0\)</span> denote the donor indices selected by the FSCM corresponding to the non-zero entries of <span class="math inline">\(\mathbf{w}_{S^\ast}^\ast\)</span>. The full donor weight vector is then defined componentwise as</p>
+<p>The FASC estimator combines two complementary ideas: sparse donor selection via forward selection and bias correction via affine augmentation. It begins with FSCM, while all other donor units initially have zero weight. FASC then allows the estimator to adjust all weights, including those outside the original selection, by solving the following program</p>
 <p><span class="math display">\[
-w_j^{\mathrm{full}} = (\mathbf{w}_{S^\ast}^\ast)_j \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \in \mathcal{N}_0,
+\mathbf{w}^{\mathrm{FASC}} = \underset{\mathbf{w}^{\mathrm{FASC}} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}^{\mathrm{FASC}} \right\|_2^2 + \lambda \left\| \mathbf{w}^{\mathrm{FASC}} - \mathbf{w}^{\mathrm{FSCM}} \right\|_2^2.
 \]</span></p>
-<p>where <span class="math inline">\(\mathbf{1}_{\{j \in \mathcal{S}_0\}}\)</span> is an indicator function equal to <span class="math inline">\(1\)</span> if <span class="math inline">\(j \in \mathcal{S}_0\)</span> and <span class="math inline">\(0\)</span> otherwise. The original forward-selected weights are preserved, while all other donor units initially have zero weight. FASC then allows the estimator to adjust all weights, including those outside the original selection, by solving the following program</p>
-<p><span class="math display">\[
-\mathbf{w}^\ast_{\mathrm{FASC}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}^{\mathrm{full}} \right\|_2^2.
-\]</span></p>
-<p>Here, <span class="math inline">\(\lambda \ge 0\)</span> controls the strength of the penalty toward the original forward-selected weights. When <span class="math inline">\(\lambda\)</span> is large, the solution remains close to <span class="math inline">\(\mathbf{w}^{\mathrm{full}}\)</span>, preserving sparsity and interpretability; when <span class="math inline">\(\lambda\)</span> is small, the estimator prioritizes pre-treatment fit and may assign positive or negative weights to donors outside the original selection.</p>
+<p>Here, <span class="math inline">\(\lambda \ge 0\)</span> controls the strength of the penalty toward the original forward-selected weights. When <span class="math inline">\(\lambda\)</span> is large, the solution remains close to <span class="math inline">\(\mathbf{w}^{\mathrm{FSCM}}\)</span>, preserving sparsity and interpretability; when <span class="math inline">\(\lambda\)</span> is small, the estimator prioritizes pre-treatment fit and may assign positive or negative weights to donors outside the original selection.</p>
 <p>In practice, the regularization parameter <span class="math inline">\(\lambda\)</span> is chosen via time-split cross-validation on the pre-treatment period. The first half of the pre-treatment data is used to fit candidate weights <span class="math inline">\(\mathbf{w}(\lambda)\)</span>:</p>
 <p><span class="math display">\[
-\mathbf{w}(\lambda) = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}^{\mathrm{full}} \right\|_2^2,
+\mathbf{w}^{\mathrm{FASC}}(\lambda) = \underset{\mathbf{w}^{\mathrm{FASC}} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \left\| \mathbf{y}^{(1)} - \mathbf{Y}_0^{(1)} \mathbf{w}^{\mathrm{FASC}} \right\|_2^2 + \lambda \left\| \mathbf{w}^{\mathrm{FASC}} - \mathbf{w}^{\mathrm{FSCM}}\right\|_2^2,
 \]</span></p>
 <p>and the second half is used to evaluate the out-of-sample prediction error:</p>
 <p><span class="math display">\[
-\text{CV-RMSE}(\lambda) = \left\| \mathbf{y}^{(2)} - \mathbf{Y}_0^{(2)} \mathbf{w}(\lambda) \right\|_2.
+\text{CV-RMSE}(\lambda) = \left\| \mathbf{y}^{(2)} - \mathbf{Y}_0^{(2)} \mathbf{w}^{\mathrm{FASC}}(\lambda) \right\|_2.
 \]</span></p>
 <p>The <span class="math inline">\(\lambda\)</span> minimizing this cross-validated error balances fidelity to the original forward-selected weights with pre-treatment fit. To explore the hyperparameter space efficiently, Bayesian optimization can be used over <span class="math inline">\(\log_{10}(\lambda)\)</span>, for example <span class="math inline">\(\log_{10}(\lambda) \in [-2, 3]\)</span>, with a Gaussian Process modeling the CV-RMSE function and Expected Improvement guiding sequential evaluations. I do this using <code>skopt</code>, but presumably other methods can be used as well.</p>
-<p>An important property of FASC is that its in-sample MSE is never worse than that of the original FSCM solution. This follows directly from the fact that the FSCM weights, <span class="math inline">\(\mathbf{w}^{\mathrm{full}}\)</span>, are feasible in the FASC optimization. Any other solution <span class="math inline">\(\mathbf{w}^\ast_{\mathrm{FASC}}\)</span> can only reduce the fit error further (or match it if no improvement is possible), since the optimization allows affine combinations beyond the original sparse set. Therefore, the in-sample MSE of FASC is bounded above by the FSCM MSE, ensuring that augmenting the forward-selected solution cannot worsen the pre-treatment fit. This provides a natural guarantee: FASC preserves interpretability while maintaining or improving in-sample accuracy. In essence, FASC gives the best of both worlds: a sparse, interpretable initialization from forward selection, and bias-corrected flexibility from the weight discrepancy term in the FASC.</p>
-<div id="99c8affd" class="cell" data-execution_count="2">
+<p>An important property of FASC is that its in-sample MSE is never worse than that of the original FSCM solution. This follows directly from the fact that the FSCM weights, <span class="math inline">\(\mathbf{w}^{\mathrm{FSCM}}\)</span>, are feasible in the FASC optimization. Any other solution for <span class="math inline">\(\mathbf{w}^\ast_{\mathrm{FASC}}\)</span> can only reduce the fit error further (or match it if no improvement is possible), since the optimization allows affine combinations beyond the original sparse set. Therefore, the in-sample MSE of FASC is bounded above by the FSCM MSE, ensuring that augmenting the forward-selected solution cannot worsen the pre-treatment fit. This provides a natural guarantee: FASC preserves interpretability while maintaining or improving in-sample accuracy. In essence, FASC gives the best of both worlds: a sparse, interpretable initialization from forward selection, and bias-corrected flexibility from the weight discrepancy term in the FASC.</p>
+<div id="fefeef39" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -446,7 +448,7 @@ w_j^{\mathrm{full}} = (\mathbf{w}_{S^\ast}^\ast)_j \, \mathbf{1}_{\{j \in \mathc
 <section id="kansas-tax-cuts" class="level1">
 <h1>Kansas Tax Cuts</h1>
 <p>Here are the results of the FASC method.</p>
-<div id="0d6b3ba4" class="cell" data-execution_count="3">
+<div id="ddc5bb06" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.6/x64/lib/python3.13/site-packages/mlsynth/utils/datautils.py:434: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
   observations_per_unit = df.groupby(unit_id_column_name)[time_period_column_name].nunique() # Changed from .count() to .nunique() for robustness</code></pre>
@@ -513,7 +515,7 @@ w_j^{\mathrm{full}} = (\mathbf{w}_{S^\ast}^\ast)_j \, \mathbf{1}_{\{j \in \mathc
 <section id="proposition-99" class="level1">
 <h1>Proposition 99</h1>
 <p>I compare the effect of Proposition 99 on cigarette sales in California using FASC, FSCM, and the original SCM. While all three detect a significant reduction in sales, the quality of pretreatment fit varies meaningfully.</p>
-<div id="b713c9cc" class="cell" data-execution_count="4">
+<div id="9d381e34" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd <span class="co"># To work with panel data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM</span>
@@ -588,7 +590,7 @@ w_j^{\mathrm{full}} = (\mathbf{w}_{S^\ast}^\ast)_j \, \mathbf{1}_{\{j \in \mathc
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1755525284190" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1755530132741" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -612,7 +614,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1755525284191" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1755530132742" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -636,7 +638,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1755525284190" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1755530132741" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -660,7 +662,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1755525284195" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1755530132746" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -684,7 +686,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1755525284196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1755530132747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -708,7 +710,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1755525284193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1755530132744" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -730,7 +732,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1755525284193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1755530132744" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -754,7 +756,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1755525284196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1755530132747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -776,7 +778,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1755525284196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1755530132747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -798,7 +800,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1755525284196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1755530132747" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -822,7 +824,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755525345508" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="10" data-listing-file-modified-sort="1755530187141" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -836,7 +838,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1755525284190" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1755530132741" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

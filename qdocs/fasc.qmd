@@ -153,7 +153,9 @@ $$
 The donor selected at each iteration is
 
 $$
-j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \; \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S} \cup \{j\})} \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{S} \cup \{j\}}^{\mathcal{T}_1} \mathbf{w} \right\|_2^2,
+j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \; 
+\min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S} \cup \{j\})} 
+\left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1}_{\mathcal{S} \cup \{j\}} \mathbf{w} \right\|_2^2
 $$
 
 and it is then added to the selected set by updating
@@ -281,7 +283,7 @@ $$
 
 The $\lambda$ minimizing this cross-validated error balances fidelity to the original forward-selected weights with pre-treatment fit. To explore the hyperparameter space efficiently, Bayesian optimization can be used over $\log_{10}(\lambda)$, for example $\log_{10}(\lambda) \in [-2, 3]$, with a Gaussian Process modeling the CV-RMSE function and Expected Improvement guiding sequential evaluations. I do this using `skopt`, but presumably other methods can be used as well.
 
-An important property of FASC is that its in-sample mean squared error (MSE) is never worse than that of the original FSCM solution. Formally, let
+An important property of FASC is that its in-sample MSE is never worse than that of the original FSCM solution. Formally, let
 
 $$
 \text{MSE}^{\mathrm{FASC}} = \frac{1}{T_0} \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1} \mathbf{w}^{\mathrm{FASC}} \right\|_2^2,

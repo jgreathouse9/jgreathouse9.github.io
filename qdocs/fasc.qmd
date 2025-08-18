@@ -127,50 +127,61 @@ plt.show()
 
 ## Synthetic Controls
 
-The classic SCM estimator solves the program
+The classic SCM estimator solves
 
 $$
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 \quad \forall t \in \mathcal{T}_1.
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1} \mathbf{w} \right\|_2^2,
 $$
 
-We seek the weight vector, $\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}$, that minimizes the pre-treatment mean squared error between the treated unit’s observed pre-treatment outcomes $\mathbf{y}_1$ and the weighted average of donor outcomes $\mathbf{Y}_0 \mathbf{w}$.
+where $\mathcal{W}_{\mathrm{conv}} = \{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \}$. This finds the weight vector $\mathbf{w}^\ast$ that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes.
 
-The forward selection variant constructs a synthetic control by iteratively adding one donor unit at a time to minimize the pre-treatment fit error. Starting from the empty set $\mathcal{S} = \emptyset$ where zero donors are selected, we begin by estimating a single-donor unit SCM. Practically this is akin to finding the neares neighbor, where we estimate $N_0$ submodels. At each iteration, the algorithm examines each donor $j \in \mathcal{N}_0 \setminus \mathcal{S}$ and forms a candidate set $\mathcal{S}^{\prime} = \mathcal{S} \cup \{j\}$. For each such candidate set $\mathcal{S}^{\prime}$, it solves the restricted optimization problem over the donor submatrix $\mathbf{Y}_0^{\mathcal{S}^{\prime}}$, defined as the columns of $\mathbf{Y}_0$ corresponding to units in $\mathcal{S}^{\prime}$:
+## Forward Selection SCM (FSCM)
+
+FSCM constructs a synthetic control iteratively by adding one donor at a time. Starting from the empty set $\mathcal{S} = \emptyset$, at each iteration the algorithm considers each candidate donor $j \in \mathcal{N}_0 \setminus \mathcal{S}$ and forms $\mathcal{S}^\prime = \mathcal{S} \cup \{j\}$. For each candidate set $\mathcal{S}^\prime$, it solves the restricted SCM problem over the donor submatrix $\mathbf{Y}_0^{\mathcal{S}^\prime}$, defined as the columns of $\mathbf{Y}_0$ corresponding to units in $\mathcal{S}^\prime$:
 
 $$
-\mathbf{w}_{\mathcal{S}^{\prime}}^{\ast} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S}^{\prime})}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0^{\mathcal{S}^{\prime}} \mathbf{w} \right\|_2^2,
+\mathbf{w}_{\mathcal{S}^\prime}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S}^\prime)}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{S}^\prime}{}^{\mathcal{T}_1} \mathbf{w} \right\|_2^2,
 $$
 
 where
 
 $$
-\mathcal{W}_{\mathrm{conv}}(\mathcal{S}^{\prime}) = \left\{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{|\mathcal{S}^{\prime}|} \,\middle|\, \|\mathbf{w}\|_1 = 1 \right\}.
+\mathcal{W}_{\mathrm{conv}}(\mathcal{S}^\prime) = \left\{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{|\mathcal{S}^\prime|} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}.
 $$
 
 The donor selected at each iteration is
 
 $$
-j^{\ast} = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \; \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S} \cup \{j\})} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{\mathcal{S} \cup \{j\}} \mathbf{w} \right\|_2^2,
+j^\ast = \underset{j \in \mathcal{N}_0 \setminus \mathcal{S}}{\operatorname*{argmin}} \; \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(\mathcal{S} \cup \{j\})} \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{S} \cup \{j\}}{}^{\mathcal{T}_1} \mathbf{w} \right\|_2^2,
 $$
 
-and it is then added to the selected set by updating $\mathcal{S} \leftarrow \mathcal{S} \cup {j^\ast}$. 
+and it is then added to the selected set by updating
 
-### Donor Selection and Stopping Rules
-
-The donor selection process proceeds sequentially, with one donor unit added at a time according to the forward selection rule. The procedure may continue until all donor units have been exhausted, but in practice analysts [have several options](https://mlsynth.readthedocs.io/en/latest/fscm.html#fscm-function) for determining when to stop.
-
-In the exhaustive option (the default), selection proceeds until the pre-treatment MSE is minimized over all candidate donor subsets. Let $\mathcal{P}(\mathcal{N}_0)$ denote the power set of the donor indices and define, for any $S \subseteq \mathcal{N}_0$, the within–pre-treatment fit as
 $$
-\text{MSE}(S) \;=\; \frac{1}{T_0}\,\min_{\mathbf{w}\in\mathcal{W}_{\mathrm{conv}}(S)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{S}\mathbf{w} \right\|_2^2,
-$$
-where $\mathcal{W}_{\mathrm{conv}}(S)=\{\mathbf{w}\in\mathbb{R}^{|S|}_{\ge 0}:\|\mathbf{w}\|_1=1\}$. The exhaustive-search estimator chooses
-$$
-S^\star \;=\; \arg\min_{S\in \mathcal{P}(\mathcal{N}_0)} \text{MSE}(S), 
-\qquad 
-\mathbf{w}_{S^\star}^\star \;=\; \arg\min_{\mathbf{w}\in\mathcal{W}_{\mathrm{conv}}(S^\star)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{S^\star}\mathbf{w} \right\|_2^2.
+\mathcal{S} \leftarrow \mathcal{S} \cup \{j^\ast\}.
 $$
 
-Another option is to rely on a model selection criterion, the modified BIC (mBIC), which provides a trade-off between in-sample fit and model complexity. The modified BIC for a selected set $S$ of donor units is defined as
+The donor selection process proceeds sequentially according to this forward selection rule. In principle, the procedure may continue until all donor units have been exhausted, but in practice analysts use stopping rules to terminate the selection at a sensible point. In the exhaustive option, selection proceeds until the pre-treatment mean squared error (MSE) is minimized over all candidate donor subsets. Let $\mathcal{P}(\mathcal{N}_0)$ denote the power set of donor indices, and for any $S \subseteq \mathcal{N}_0$, define the within–pre-treatment fit as
+
+$$
+\text{MSE}(S) = \frac{1}{T_0} \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(S)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^S \mathbf{w} \right\|_2^2,
+$$
+
+where
+
+$$
+\mathcal{W}_{\mathrm{conv}}(S) = \left\{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{|S|} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}.
+$$
+
+The exhaustive-search estimator chooses
+
+$$
+S^\ast = \arg\min_{S \in \mathcal{P}(\mathcal{N}_0)} \text{MSE}(S), 
+\qquad
+\mathbf{w}_{S^\ast}^\ast = \arg\min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(S^\ast)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{S^\ast} \mathbf{w} \right\|_2^2.
+$$
+
+Another option is to rely on a model selection criterion, such as the modified BIC (mBIC), which balances pre-treatment fit with model complexity. The modified BIC for a selected set $S$ of donor units is defined as
 
 $$
 \text{mBIC}(S) = T_0 \cdot \log(\text{MSE}) + |S| \cdot \log(T_0),
@@ -182,20 +193,21 @@ $$
 \text{MSE} = \frac{1}{T_0} \left\| \mathbf{y}_1 - \mathbf{Y}_0^S \mathbf{w}_S \right\|_2^2.
 $$
 
-Here, $T_0$ is the number of pre-treatment periods, $\mathbf{y}_1$ is the treated unit’s outcome vector, $\mathbf{Y}_0^S$ is the donor submatrix formed from the selected set $S$, and $\mathbf{w}_S$ is the optimal weight vector estimated on that submatrix. The first term in the criterion rewards better fit, while the second term penalizes larger donor sets. As in standard information criteria, smaller values of mBIC are preferred, and the forward selection procedure may be terminated as soon as adding a new donor increases the penalized error:
+The forward selection procedure may terminate when adding a new donor increases the penalized error:
 
 $$
 \text{mBIC}(S \cup \{j\}) > \text{mBIC}(S).
 $$
 
-A final option is to impose an upper bound on the number of selected donors. When a cardinality cap is imposed, with $p\in(0,1]$ and $K=\lfloor pN_0\rfloor$, the search is restricted to $\{S\subseteq \mathcal{N}_0:\, |S|\le K\}$, so that
+A final practical option is to impose an upper bound on the number of selected donors. When a cardinality cap is imposed, let $p \in (0,1]$ and $K = \lfloor p N_0 \rfloor$, so that the search is restricted to subsets $S \subseteq \mathcal{N}_0$ with $|S| \le K$. The corresponding FSCM estimator chooses
+
 $$
-S^\star \;=\; \arg\min_{\substack{S\subseteq \mathcal{N}_0\\ |S|\le K}} \text{MSE}(S),
-\qquad 
-\mathbf{w}_{S^\star}^\star \;=\; \arg\min_{\mathbf{w}\in\mathcal{W}_{\mathrm{conv}}(S^\star)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{S^\star}\mathbf{w} \right\|_2^2.
+S^\ast = \arg\min_{\substack{S \subseteq \mathcal{N}_0 \\ |S| \le K}} \text{MSE}(S),
+\qquad
+\mathbf{w}_{S^\ast}^\ast = \arg\min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(S^\ast)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^{S^\ast} \mathbf{w} \right\|_2^2.
 $$
 
-I programmed this for flexibility in practice: in low-dimensional settings analysts may choose to evaluate all donors with minimal runtime, whereas in high-dimensional applications it is neither computationally efficient nor substantively plausible to evaluate extremely large subsets, and early stopping or capped selection provides a practical alternative. The algorithm issues a warning if the user has a donor pool of at least 200.
+This implementation provides flexibility in practice: exhaustive evaluation is feasible in low-dimensional settings, while early stopping or a capped selection is recommended in high-dimensional applications. The algorithm in `mlsynth` issues a warning if the donor pool contains 200 or more units.
 
 ## The Augmented Synthetic Control Estimator
 

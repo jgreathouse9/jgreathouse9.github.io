@@ -167,7 +167,11 @@ $$
 \mathcal{S} \leftarrow \mathcal{S} \cup \{j^\ast\}.
 $$
 
-The donor selection process proceeds sequentially according to this forward selection rule. In principle, the procedure may continue until all donor units have been exhausted, but in practice analysts use stopping rules to terminate the selection at a sensible point. In the exhaustive option, selection proceeds until the pre-treatment mean squared error (MSE) is minimized over all candidate donor subsets. Let $\mathcal{P}(\mathcal{N}_0)$ denote the power set of donor indices, and for any $S \subseteq \mathcal{N}_0$, define the within–pre-treatment fit as
+The donor selection process proceeds sequentially according to this forward selection rule. In principle, the procedure may continue until all donor units have been exhausted, but in practice analysts use stopping rules to terminate the selection at a sensible point. 
+
+### Exhaustive Search
+
+In the exhaustive option, selection proceeds until the pre-treatment mean squared error (MSE) is minimized over all candidate donor subsets. Let $\mathcal{P}(\mathcal{N}_0)$ denote the power set of donor indices, and for any $S \subseteq \mathcal{N}_0$, define the within–pre-treatment fit as
 
 $$
 \text{MSE}(S) = \frac{1}{T_0} \min_{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(S)} \left\| \mathbf{y}_1 - \mathbf{Y}_0^S \mathbf{w} \right\|_2^2,
@@ -179,13 +183,17 @@ $$
 \mathcal{W}_{\mathrm{conv}}(S) = \left\{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{|S|} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}.
 $$
 
-The exhaustive-search estimator chooses
+The exhaustive-search estimator iestimates $\sum_{i=0}^{k-1} (N_0 - i) = k N_0 - \frac{k(k-1)}{2}$ total models. It chooses
 
 $$
 S^\ast = \underset{S \in \mathcal{P}(\mathcal{N}_0)}{\operatorname*{argmin}} \; \text{MSE}(S), 
 \qquad
 \mathbf{w}_{S^\ast}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}(S^\ast)}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1,S^\ast} \mathbf{w} \right\|_2^2.
 $$
+
+This means we continue until all donors are eventually selected.
+
+### Information Criteria, per [Shi and Huang, 2023](https://doi.org/10.1016/j.jeconom.2021.04.009)
 
 Another option is to rely on a model selection criterion, such as the modified BIC (mBIC), which balances pre-treatment fit with model complexity. The modified BIC for a selected set $S$ of donor units is defined as
 
@@ -204,6 +212,8 @@ The forward selection procedure may terminate when adding a new donor increases 
 $$
 \text{mBIC}(S \cup \{j\}) > \text{mBIC}(S).
 $$
+
+### Donor Pool Cap
 
 A final practical option is to impose an upper bound on the number of selected donors. When a cardinality cap is imposed, let $p \in (0,1]$ and $K = \lfloor p N_0 \rfloor$, so that the search is restricted to subsets $S \subseteq \mathcal{N}_0$ with $|S| \le K$. The corresponding FSCM estimator chooses
 

@@ -244,12 +244,12 @@ I personally prefer our formulation because as $\lambda \to \infty$, the penalty
 
 The intuition here is pretty simple. If the SCM weights are already giving us good pre-treatment fit, then there is little incentive to extrapolate away from the original (F)SCM solution. However, if there's need for better fit, then we will extrapolate away from the convex hull solution. In practice, Ben-Michael and co advocate for choosing lambda via cross validation.
 
-# Forward-Selected Augmented Synthetic Controls
+# Forward Augmented Synthetic Controls
 
-The FASC estimator combines two complementary ideas: sparse donor selection via forward selection and bias correction via affine augmentation. It begins with FSCM which produces a base weight vector $\mathbf{w}_0$. Let $\mathcal{S}_0 \subseteq \mathcal{N}_0$ denote the donor indices selected by the FSCM corresponding to the non-zero entries of $\mathbf{w}_0$. The full donor weight vector is then defined as
+The FASC estimator combines two complementary ideas: sparse donor selection via forward selection and bias correction via affine augmentation. It begins with FSCM, which produces a base weight vector $\mathbf{w}_{S^\ast}^\ast$. Let $\mathcal{S}_0 \subseteq \mathcal{N}_0$ denote the donor indices selected by the FSCM corresponding to the non-zero entries of $\mathbf{w}_{S^\ast}^\ast$. The full donor weight vector is then defined componentwise as
 
 $$
-w_j^{\mathrm{full}} = w_{0,j} \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \in \mathcal{N}_0,
+w_j^{\mathrm{full}} = (\mathbf{w}_{S^\ast}^\ast)_j \, \mathbf{1}_{\{j \in \mathcal{S}_0\}}, \quad j \in \mathcal{N}_0,
 $$
 
 where $\mathbf{1}_{\{j \in \mathcal{S}_0\}}$ is an indicator function equal to $1$ if $j \in \mathcal{S}_0$ and $0$ otherwise. The original forward-selected weights are preserved, while all other donor units initially have zero weight. FASC then allows the estimator to adjust all weights, including those outside the original selection, by solving the following program
@@ -257,6 +257,7 @@ where $\mathbf{1}_{\{j \in \mathcal{S}_0\}}$ is an indicator function equal to $
 $$
 \mathbf{w}^\ast_{\mathrm{FASC}} = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{aff}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2 + \lambda \left\| \mathbf{w} - \mathbf{w}^{\mathrm{full}} \right\|_2^2.
 $$
+
 
 Here, $\lambda \ge 0$ controls the strength of the penalty toward the original forward-selected weights. When $\lambda$ is large, the solution remains close to $\mathbf{w}^{\mathrm{full}}$, preserving sparsity and interpretability; when $\lambda$ is small, the estimator prioritizes pre-treatment fit and may assign positive or negative weights to donors outside the original selection.
 

@@ -1,0 +1,580 @@
+---
+title: "What Are We Weighting For? It Depends on Your Objective"
+date: 2025-08-25
+categories: [Econometric Theory]
+---
+
+# Intro
+
+In causal inference, many estimators can be understood as performing a weighted comparison between observed and counterfactual outcomes. The form of these weights, and the criterion by which they are chosen, varies across designs. What ultimately distinguishes one estimator from another is the objective function driving the weights. In this post, I cover experiments, difference-in-differences, and synthetic control estimators as a general expression of an averaging estimator.
+
+## Notation
+
+To make this idea concrete, let’s define the notation we’ll use to explore these estimators. Let $\mathbb{R}$ denote the set of real numbers. Let $j \in \mathbb{N}$ index a total of $N$ units, and let $t \in \mathbb{N}$ index time. Denote the treated unit as $j = 1$, and define the donor pool as $\mathcal{N}_0 = \mathcal{N} \setminus \{1\}$, with cardinality $N_0 = |\mathcal{N}_0|$. The pre-treatment period is given by the set $\mathcal{T}_1 = \{ t \in \mathbb{N} : t \leq T_0 \}$, where $T_0 \in \mathbb{N}$ is the final period prior to treatment; the post-treatment period is $\mathcal{T}_2 = \{ t \in \mathbb{N} : t > T_0 \}$. The observed outcome for unit $j$ at time $t$ is denoted $y_{jt}$, and the full outcome vector for unit $j$ is $\mathbf{y}_j = (y_{j1}, y_{j2}, \dots, y_{jT})^\top \in \mathbb{R}^T$. In particular, the outcome vector for the treated unit is $\mathbf{y}_1$, and the donor matrix is defined as:
+
+$$
+\mathbf{Y}_0 \coloneqq \begin{bmatrix} \mathbf{y}_j \end{bmatrix}_{j \in \mathcal{N}_0} \in \mathbb{R}^{T \times N_0}
+$$
+
+where columns index control units and rows index time.
+
+### What’s an Average?
+
+Before we continue, we need to be explicit about what an average is. An average is just a weighted combination of numbers. Most people are familiar with the arithmetic mean. Given scalars $x_1, x_2, \dots, x_n \in \mathbb{R}$, the arithmetic mean is:
+
+$$
+\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i,
+$$
+
+This can also be written as a dot product between a weight vector and the value vector:
+
+$$
+\bar{x} = \mathbf{w}^\top \mathbf{x},
+\quad \text{where} \quad 
+\mathbf{w} = \left(\frac{1}{n}, \dots, \frac{1}{n}\right)^\top,
+\quad \mathbf{x} = \left(x_1, \dots, x_n\right)^\top
+$$
+
+The same logic extends naturally to matrices. If $\mathbf{Y}_0 \in \mathbb{R}^{T \times N}$ is a matrix of values (e.g., $T$ time periods, $N$ units), and $\mathbf{w} \in \mathbb{R}^N$ is a vector of weights for each column, then the matrix-vector product:
+
+$$
+\bar{\mathbf{y}} = \mathbf{Y}_0 \cdot \mathbf{w}
+$$
+
+is a new vector in $\mathbb{R}^T$—a weighted average of each row in $\mathbf{Y}_0$. Each element of $\bar{\mathbf{y}}$ is computed as:
+
+$$
+\bar{y}_t = \sum_{j=1}^N w_j y_{tj}, \quad \forall \, \, t \in \{1, \dots, T\}
+$$
+
+This is exactly what we mean when we say we take an "average across units" for every point in time. 
+
+Let’s consider a simple example. Suppose we track bookings across three hotels over five days. Let each column represent a hotel, and each row a day:
+
+$$
+\mathbf{Y}_0 =
+\begin{bmatrix}
+12 & 14 & 13 \\
+15 & 16 & 15 \\
+18 & 20 & 19 \\
+17 & 18 & 17 \\
+19 & 21 & 20 \\
+\end{bmatrix}
+$$
+
+```{python}
+#| echo: false
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the hotel bookings matrix (rows: days, columns: hotels A, B, C)
+Y0 = np.array([
+    [12, 14, 13],
+    [15, 16, 15],
+    [18, 20, 19],
+    [17, 18, 17],
+    [19, 21, 20]
+])
+
+# Uniform weights for the average
+w_uniform = np.full(Y0.shape[1], 1 / Y0.shape[1])  # [1/3, 1/3, 1/3]
+
+# Compute the weighted average
+uniform_avg = Y0 @ w_uniform
+
+# Create the plot
+days = np.arange(1, 6)  # Days 1 to 5
+plt.figure(figsize=(8, 6))
+plt.plot(days, Y0[:, 0], label='Hotel A', marker='o', color='red')
+plt.plot(days, Y0[:, 1], label='Hotel B', marker='s', color='blue')
+plt.plot(days, Y0[:, 2], label='Hotel C', marker='^', color='purple')
+plt.plot(days, uniform_avg, label='Uniform Average', marker='*', color='black', linestyle='--')
+
+# Customize the plot
+plt.xlabel('Day')
+plt.ylabel('Bookings')
+plt.title('Daily Hotel Bookings and Uniform Average')
+plt.grid(True)
+plt.legend()
+plt.xticks(days)  # Ensure x-axis shows days 1 to 5
+plt.tight_layout()
+
+# Display the plot
+plt.show()
+
+
+```
+
+
+
+This matrix $\mathbf{Y}_0 \in \mathbb{R}^{5 \times 3}$ shows daily bookings for Hotels A, B, and C. If we want the average bookings across the three hotels, we compute the row-wise average using equal weights:
+
+$$
+\bar{\mathbf{y}} = \mathbf{Y}_0 \cdot \mathbf{w}, 
+\quad \text{where } \mathbf{w} = 
+\begin{bmatrix}
+{\color{red}\frac{1}{3}} \\
+{\color{blue}\frac{1}{3}} \\
+{\color{purple}\frac{1}{3}} \\
+\end{bmatrix}
+$$
+
+Then, the calculation is:
+
+$$
+\begin{aligned}
+\bar{\mathbf{y}} &= \mathbf{Y}_0 \cdot \mathbf{w} \\
+&=
+\begin{bmatrix}
+12 & 14 & 13 \\
+15 & 16 & 15 \\
+18 & 20 & 19 \\
+17 & 18 & 17 \\
+19 & 21 & 20 \\
+\end{bmatrix}
+\begin{bmatrix}
+{\color{red}\frac{1}{3}} \\
+{\color{blue}\frac{1}{3}} \\
+{\color{purple}\frac{1}{3}} \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+(12 \times {\color{red}\frac{1}{3}}) + (14 \times {\color{blue}\frac{1}{3}}) + (13 \times {\color{purple}\frac{1}{3}}) \\
+(15 \times {\color{red}\frac{1}{3}}) + (16 \times {\color{blue}\frac{1}{3}}) + (15 \times {\color{purple}\frac{1}{3}}) \\
+(18 \times {\color{red}\frac{1}{3}}) + (20 \times {\color{blue}\frac{1}{3}}) + (19 \times {\color{purple}\frac{1}{3}}) \\
+(17 \times {\color{red}\frac{1}{3}}) + (18 \times {\color{blue}\frac{1}{3}}) + (17 \times {\color{purple}\frac{1}{3}}) \\
+(19 \times {\color{red}\frac{1}{3}}) + (21 \times {\color{blue}\frac{1}{3}}) + (20 \times {\color{purple}\frac{1}{3}}) \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+4 + 4.67 + 4.33 \\
+5 + 5.33 + 5 \\
+6 + 6.67 + 6.33 \\
+5.67 + 6 + 5.67 \\
+6.33 + 7 + 6.67 \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+13 \\
+15.33 \\
+19 \\
+17.33 \\
+20 \\
+\end{bmatrix}
+\end{aligned}
+$$
+
+But what if we do not want all the weghts to be the same? What if we want one hotel, in this case, the receive more weight? Here's a new set of weights:
+
+$$
+\mathbf{w} = 
+\begin{bmatrix}
+0.15 \\\\
+0.70 \\\\
+0.15 \\\\
+\end{bmatrix}
+$$
+
+This is a non-uniformly weighted average that leans more heavily on Hotel B. The weighted average is then:
+
+$$
+\begin{aligned}
+\bar{\mathbf{y}}_{\text{custom}} &= \mathbf{Y}_0 \cdot \mathbf{w} \quad \text{(Dot Product)} \\
+&=
+\begin{bmatrix}
+12 & 14 & 13 \\
+15 & 16 & 15 \\
+18 & 20 & 19 \\
+17 & 18 & 17 \\
+19 & 21 & 20 \\
+\end{bmatrix}
+\begin{bmatrix}
+{\color{red}0.15} \\
+{\color{blue}0.70} \\
+{\color{purple}0.15} \\
+\end{bmatrix}
+\quad \text{(Color Coded Weights)} \\
+&=
+\begin{bmatrix}
+(12 \times {\color{red}0.15}) + (14 \times {\color{blue}0.70}) + (13 \times {\color{purple}0.15}) \\
+(15 \times {\color{red}0.15}) + (16 \times {\color{blue}0.70}) + (15 \times {\color{purple}0.15}) \\
+(18 \times {\color{red}0.15}) + (20 \times {\color{blue}0.70}) + (19 \times {\color{purple}0.15}) \\
+(17 \times {\color{red}0.15}) + (18 \times {\color{blue}0.70}) + (17 \times {\color{purple}0.15}) \\
+(19 \times {\color{red}0.15}) + (21 \times {\color{blue}0.70}) + (20 \times {\color{purple}0.15}) \\
+\end{bmatrix}
+\quad \text{(Multiply)} \\
+&=
+\begin{bmatrix}
+1.8 + 9.8 + 1.95 \\
+2.25 + 11.2 + 2.25 \\
+2.7 + 14 + 2.85 \\
+2.55 + 12.6 + 2.55 \\
+2.85 + 14.7 + 3 \\
+\end{bmatrix}
+\quad \text{(Add)} \\
+&=
+\begin{bmatrix}
+13.55 \\
+15.70 \\
+19.55 \\
+17.70 \\
+20.55 \\
+\end{bmatrix}
+\quad \text{(Our result)} \\
+\end{aligned}
+$$
+
+
+
+
+In the extreme case, we can assign all the weight to a single hotel. Suppose we give all the weight to Hotel B (the second column), and none to Hotels A and C:
+
+$$
+\mathbf{w} = 
+\begin{bmatrix}
+{\color{red}0} \\
+{\color{blue}1} \\
+{\color{red}0} \\
+\end{bmatrix}
+$$
+
+The weighted average then becomes:
+
+$$
+\begin{aligned}
+\bar{\mathbf{y}}_{\text{extreme}} &= \mathbf{Y}_0 \cdot \mathbf{w} \\
+&=
+\begin{bmatrix}
+12 & 14 & 13 \\
+15 & 16 & 15 \\
+18 & 20 & 19 \\
+17 & 18 & 17 \\
+19 & 21 & 20 \\
+\end{bmatrix}
+\begin{bmatrix}
+{\color{red}0} \\
+{\color{blue}1} \\
+{\color{red}0} \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+(12 \times {\color{red}0}) + (14 \times {\color{blue}1}) + (13 \times {\color{red}0}) \\
+(15 \times {\color{red}0}) + (16 \times {\color{blue}1}) + (15 \times {\color{red}0}) \\
+(18 \times {\color{red}0}) + (20 \times {\color{blue}1}) + (19 \times {\color{red}0}) \\
+(17 \times {\color{red}0}) + (18 \times {\color{blue}1}) + (17 \times {\color{red}0}) \\
+(19 \times {\color{red}0}) + (21 \times {\color{blue}1}) + (20 \times {\color{red}0}) \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+0 + 14 + 0 \\
+0 + 16 + 0 \\
+0 + 20 + 0 \\
+0 + 18 + 0 \\
+0 + 21 + 0 \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+14 \\
+16 \\
+20 \\
+18 \\
+21 \\
+\end{bmatrix}
+\end{aligned}
+$$
+
+As we can see, this is just copying Hotel B’s bookings directly. None of this is voodoo, it is just linear algebra. In fact, we can compute all of it in good ole `numpy`:
+
+```{python}
+import numpy as np
+import pandas as pd
+from IPython.display import display, Markdown
+
+# Matrix of hotel bookings (rows: days, columns: hotels)
+Y0 = np.array([
+    [12, 14, 13],
+    [15, 16, 15],
+    [18, 20, 19],
+    [17, 18, 17],
+    [19, 21, 20]
+])
+
+# Define weights
+w_uniform = np.full(Y0.shape[1], 1 / Y0.shape[1])  # Uniformity
+w_custom = np.array([0.15, 0.70, 0.15])            # Custom weights
+w_single = np.array([0.0, 1.0, 0.0])               # Extreme
+
+# Compute weighted averages
+manual_uniform = Y0 @ w_uniform
+library_mean = np.mean(Y0, axis=1)
+custom_weighted = Y0 @ w_custom
+single_weighted = Y0 @ w_single
+
+# Create a DataFrame with all results
+mean_df = pd.DataFrame({
+    "Uniform Weights": manual_uniform,
+    "np.mean": library_mean,
+    "Custom Weights": custom_weighted,
+    "All on Hotel B": single_weighted
+})
+
+# Format and display markdown table with centered columns
+md_table = mean_df.to_markdown(index=False).split('\n')
+md_table[1] = "|:--------------:|:-------:|:--------------:|:-------------:|"
+display(Markdown('\n'.join(md_table)))
+
+```
+
+By now you're asking me "Jared, why did you go through the trouble of showing me all this? I earned a good grade in my probability and stats undergrad/masters/PHD courses, why bother showing me this at all? The reason is very simple: all of causal inference (pretty much) is based on this simple idea. The idea of averaging.
+
+# Randomized Controlled Trials
+
+
+Having established weighted averages as a foundation, let’s apply this to the simplest causal estimator: the randomized controlled trial, or RCT for short. RCTs (known in business for some reason as A/B tests) are often referred to as the gold standard for causal methods. The beauty of RCTs is that we assign the treatment randomly to a sample of individuals we wish to draw inferences about the treatment effect for. The reason we randomize in the first place is because in large enough samples, confounding is eliminated in the sense that no other covariates determine whether you get the treatment. That is left up to chance. Assuming we've randomized well, and that things such as SUTVA and compliance are respected, the estimator for our treatment effect is a simple difference in means (this is also true in clustering frameworks where we have more sophisticated experimental setups). The weights assigned to control units are uniform—$w_j = 1/N_0$ for all $j \in \mathcal{N}_0$ because RCT estimation presumes that baseline characteristics are balanced by construction due to random assignment.
+
+Suppose these are sales figures after a marketing intervention. Suppose we observe the following for four units: two treated, and two control. Our treated outcomes are $4$ and $8$ and the control outcomes are $6$ and $12$. We assign equal group weight: $1/2$ to treated and $1/2$ to control.
+
+Thus:
+
+$$
+\mathbf{Y}_1 =
+\begin{bmatrix}
+4 \\
+8
+\end{bmatrix},
+\quad
+\mathbf{Y}_0 =
+\begin{bmatrix}
+6 \\
+12
+\end{bmatrix}
+$$
+
+The treated group mean:
+$$
+\bar{y}_1 = \mathbf{w}_1^\top \mathbf{Y}_1 = \begin{bmatrix} 0.5 & 0.5 \end{bmatrix} \begin{bmatrix} 4 \\ 8 \end{bmatrix} = (0.5 \cdot 4) + (0.5 \cdot 8) = 2 + 4 = 6
+$$
+
+The control group mean:
+$$
+\bar{y}_0 = \mathbf{w}_0^\top \mathbf{Y}_0 = \begin{bmatrix} 0.5 & 0.5 \end{bmatrix} \begin{bmatrix} 6 \\ 12 \end{bmatrix} = (0.5 \cdot 6) + (0.5 \cdot 12) = 3 + 6 = 9
+$$
+
+The result here is a scalar, since it is a dot product of vectors. The ATE is the difference between these dot products:
+$$
+\widehat{\text{ATE}} = \bar{y}_1 - \bar{y}_0 = \mathbf{w}_1^\top \mathbf{Y}_1 - \mathbf{w}_0^\top \mathbf{Y}_0 = 6 - 9 = -3
+$$
+Again, no tricks at all. In Python this looks like:
+
+```{python}
+import numpy as np
+
+# Define treated and control outcomes
+Y1 = np.array([4, 8])  # Treated outcomes
+Y0 = np.array([6, 12])  # Control outcomes
+
+w1 = np.array([0.5, 0.5])  # Weights for treated group
+w0 = np.array([0.5, 0.5])  # Weights for control group
+
+treated_mean = np.dot(w1, Y1)  # w1^T * Y1
+control_mean = np.dot(w0, Y0)  # w0^T * Y0
+
+ate = treated_mean - control_mean
+
+print(f"ATE (difference of dot products): {ate}")
+```
+
+Of course, I'm aware that in real life experiments do not in fact have 4 observations, and I know they are a lot more complicated than I am making them out to be here. But, the point I'm trying to make, is that the validity of the ATE estimator here is valid, on the condition that we've randomized well, SUTVA is not violated, and compliance is reasonable.
+
+# Difference-in-Differences
+
+Unlike RCTs, which rely on randomization, DID tackles settings where baseline differences exist. Unlike the RCT, which assumes treated and control groups are balanced in ***both*** levels and trends before treatment, DID acknowledges this assumption is often violated. Precisely, DID counts on the parallel trends assumption. Parallel trends says that the mean difference in outcomes between treated and control groups would remain constant over time in the absence of treatment
+
+$$
+\mathbb{E}[y_{1t}(0) - \bar{y}_{0t} | t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} | t \in \mathcal{T}_1]
+$$
+This states that the expected difference between the treated unit’s counterfactual outcome ($ y_{1t}(0)$ and the control group’s mean outcome ($\bar{y}_{0t}$) is constant across pre-treatment ($\mathcal{T}_1$) and post-treatment ($\mathcal{T}_2$) periods. Equivalently, in terms of trends, parallel trends implies that the expected change in the treated unit’s counterfactual outcome matches the expected change in the control group’s mean outcome:
+$$
+\mathbb{E}[y_{1t}(0) - y_{1s}(0) | t, s \in \mathcal{T}_2] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s} | t, s \in \mathcal{T}_2],
+$$
+where $s$ is another point in the same time period. Since pre-treatment outcomes for the treated unit are observed ($y_{1t} = y_{1t}(0) \, \forall \: t \in \mathcal{T}_1$), we can assess this assumption by checking:
+$$
+\mathbb{E}[y_{1t}(0) - y_{1s}(0) | t, s \in \mathcal{T}_1] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s} | t, s \in \mathcal{T}_1]
+$$
+
+In other words, even if the treated and control groups differ in baseline levels, their pre-treatment *trends* are similar enough that the control group’s time trend can serve as a valid proxy for the counterfactual trend in the treated group.
+
+From this, the weights in DID are uniform across control units. Why? That's what it means for the weights to be uniform as an arithmetic average! Same as we've discussed above. Formally, the DID weighting problem satisfies:
+
+$$
+\mathbf{w}^\ast = \operatorname*{argmin}_{\mathbf{w} \in \mathbb{R}^{N_0}} 
+\left\| 
+\underbrace{ 
+\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} 
+}_{\text{Fit}} 
+- 
+\underbrace{ 
+\boldsymbol{\beta} 
+}_{\text{Mean difference}} 
+\right\|_2^2 
+\quad 
+\text{subject to} 
+\quad 
+w_j = \frac{1}{N_0}, 
+\quad \forall j \in \mathcal{N}_0.
+$$
+
+Here, the weights $\mathbf{w}$ are assigned *a priori* as uniform weights—essentially computing the arithmetic mean of the control units. Thus, we are not optimizing the weights, as they are already chosen for us. The solution to this optimization, therefore, is trivial, being the pre-treatment average difference $\boldsymbol{\beta}$ through this formulation.
+
+Using the classic Prop 99 dataset from my Github, we can prove that DID for this instance is a simple convex optimization problem:
+
+
+```{python}
+
+import pandas as pd # To work with panel data
+from mlsynth.utils.datautils import dataprep
+import cvxpy as cp
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+
+data = pd.read_csv(url)
+
+prepped = dataprep(data,"state","year","cigsale","Proposition 99")
+
+y = prepped["y"]
+Y0 = prepped["donor_matrix"]
+T0 = prepped["pre_periods"]
+
+# Extract pre-treatment outcomes for treated unit
+y1_pre = y[:T0]
+
+# Extract pre-treatment donor matrix
+Y0_pre = Y0[:T0, :]
+
+N0 = Y0_pre.shape[1]
+
+# Uniform weights over controls
+w = np.full(N0, 1 / N0)
+
+# Compute uniformly weighted average of donor units
+weighted_control_pre = Y0_pre @ w
+
+beta = cp.Variable()
+
+# The objective function
+objective = cp.Minimize(cp.sum_squares(y1_pre - weighted_control_pre - beta))
+
+# Solve
+prob = cp.Problem(objective)
+prob.solve()
+
+
+y_DID= Y0 @ w+ beta.value
+
+time = np.arange(1, len(y) + 1)  # time from 1 to T
+
+# Compute mean of control group (all periods)
+control_mean = Y0 @ w
+
+plt.figure(figsize=(10, 6))
+
+# Plot observed treated outcomes
+plt.plot(time, y, label="California (Treated)", linewidth=2, color='black')
+
+# Plot mean of control group
+plt.plot(time, control_mean, label="Control Group Mean", linewidth=2, color='blue', alpha=0.7)
+
+# Plot DID counterfactual in pre-treatment (fit) period
+plt.plot(time[:T0], y_DID[:T0], label="DID Fit (In-Sample)", linestyle='--', color='green', linewidth=2)
+
+# Plot DID counterfactual in post-treatment (prediction) period
+plt.plot(time[T0-1:], y_DID[T0-1:], label="DID Prediction (Out-of-Sample)", linestyle='--', color='red', linewidth=2)
+
+# Reference line marking treatment start
+plt.axvline(x=time[T0 - 1], color='grey', linestyle='-', label='Proposition 99')
+
+plt.title(f"Prop 99 DID Analysis, Optimal beta: {beta.value:.4f}")
+plt.xlabel("Time")
+plt.ylabel("Cigarette Packs Per Capita")
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+This plot is the in and out of sample predictions of the DID estimator. As we can see, it is just the donor pool mean, minus 14.35. The ATT is roughly -27, which Abadie and Co frame as an overstatment stamming from violation of the parallel pre-trends assumption.
+
+I did not use any mathematical tricks, I simply used optimization to find the beta and then I used it to compute the counterfactual. Of course again, DID can be a lot more complicated, especially when you begin to account for staggered adoption, non-absorbing treatments, continuous treatments, potential violations to parallel trends, and so on and so forth. The simple point being made here is that, at its core, DID assigns weights too! It just does not tell you about them. Other estimators, yes, even the ones I like, are not absolved of this either: sometimes, in fact, we can even modify the parallel pre-trends assumption to [something more flexible](https://mlsynth.readthedocs.io/en/latest/fdid.html). But it is sill a weighting estimator, nonetheless.
+
+# SCM
+
+SCM estimates a counterfactual for the treated unit by choosing weights on the set
+
+$$
+\mathcal{W}_{\mathrm{conv}} = \{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1 \},
+$$
+
+that minimize the pre-treatment discrepancy between the treated unit and a convex combination of the controls. Formally, SCM solves the optimization problem
+
+$$
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2.
+$$
+
+
+As we can see, here the weights are not uniform. They are treated as unknowns which we solve for. The average treatment effect on the treated (ATT) measures the treatment effect for the treated unit using the synthetic control as the counterfactual. The estimator for the ATT is then the mean difference between the treated unit’s post-treatment outcome and the synthetic control constructed from the weighted donor pool:
+
+$$
+\hat{\tau}_\text{SCM} = |\mathcal{T}_2|^{-1} \sum_{t \in \mathcal{T}_2} \left( y_{1t} - \sum_{j \in \mathcal{N}_0} w_j^\ast y_{jt} \right).
+$$
+The key thing here is that the weights are not voodoo magic, and they do not come from a black box. There's a well defined optimization ([usually](https://link.springer.com/article/10.1007/s10614-023-10471-7)) that is used to return the weights. Let's apply a flavor of SCM, per the above.
+
+```{python}
+import pandas as pd
+from mlsynth import FSCM # The method of interest
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+
+data = pd.read_csv(url)
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"]}
+
+arco = FSCM(config).fit()
+weights = arco.sub_method_results['FSCM'].weights.donor_weights
+weights_df = pd.DataFrame(list(weights.items()), columns=['State', 'Weight'])
+weights_df = weights_df.sort_values(by='Weight', ascending=False).reset_index(drop=True)
+
+md_table = weights_df.to_markdown(index=False)
+
+display(Markdown(md_table))
+
+```
+
+
+The plot shows California’s cigarette sales and the synthetic control counterfactual, with an in sample risk (the RMSE) of 1.656. The ATT for FSCM is -19.51, very similar to the original SCM of -19 and very far from the DID estimator of  27 fewer packs per capita. We can also see the weights from [the Forward SCM estimator](https://jgreathouse9.github.io/docs/fasc.html), which mirror the same weights from the original SCM. We can see that Utah receives the highest weight in the sample, followed by Montana and Nevada. This is the weighted average that, by forward-selection, minimizes the MSE with respect to California in the pre-treatment period.
+
+Now, the key question is: what makes these weights so much different from the DID weights? What makes this set of weights any more fake than the ones from DID? We know SCM’s weights are not uniform, that much we can see. But also, the weights from SCM appear to fit the pre-intervention time series of California much better than the DID weights do. The chosen units reconstruct California a lot better than the DID weights do. Furthermore, there are only a few donors that are selected, unlike DID where Texas and Iowa would matter just as much as the ones that were originally selected.
+
+::: {.callout-note}
+[Abadie](https://youtu.be/oDNaOpNK6G4?t=1701) has spoken about this idea before as well, that when he and his coauthors began to present this idea to other economists and statisticians, oftentimes they would ask “Well, why don’t you just run a regression,” or perhaps, why don’t you run a DID model? Sometimes, they would quip with them on the weights, saying “Japan should not matter as much as the SCM says.” Well, in the DID model or regression weights (depending on the donor pool size), sometimes units that we think should not matter, matter even more with the DID model.
+:::
+
+Now, I am not taking a position on the most accurate form of the weights, for reasons I have argued elsewhere. But it does trouble me to hear the remarks people sometimes make about DID versus SCM and their supposed differences. Some people [have argued](https://segmentstream.com/blog/articles/why-geo-lift-testing-falls-short-measure-true-ads-incrementality) that "this Synthetic Control and those Weights are the biggest problem of Geo-Lift tests." I have even heard some people say things such as this comment on LinkedIn, which argues:
+
+> No control unit be it real or synthetic will ever “perfectly” match your real or treated unit. The word perfect is misleading. In terms of hierarchy or propensity for accuracy, my order will be DiD > SCM. Yes, parallel trends is also a tough assumption to adhere to. But at least you have a real control unit and not a made up one. In terms of SCM we are two levels removed from reality.
+
+I agree on the perfect fit idea. Perfect pre-treatment fit is rare, and in practice is relegated to approximate pre-treatment fit. However, the words “real” and “synthetic” seem to be doing a lot of heavy lifting. Put another way, these weights are not a bug or an aberration; they are a feature of how we compute treatment effects and iROAS at all. Some seem to hear the word “synthetic” and think that the SCM weights themselves are a black box fabrication that is somehow less based in reality than DID’s weights or some other method. But as we’ve just gone over, there’s nothing particularly special about what is happening with DID. DID, as I’ve formulated it, simply imposes uniform weights over the donor pool with an intercept adjustment. The imposition of uniform weights, in other words, is completely and totally arbitrary. There’s nothing more real or less made up about DID’s artificial counterfactual than one we could obtain from SCM or even nearest neighbor matching.
+
+The main question, then, is what structure we as researchers should impose upon the weights, and when we should prefer one set of weights to another. In the case of an RCT, we trust randomization to give us unconfoundedness. In DID, we rely on the assumption of parallel trends. In SCM, we choose a combination of controls that best approximates the treated unit in the pre-intervention period. In the end, the weights that the econometrician believes to be the best representation of reality, by some criterion, are what determine the estimator we use.
+
+# What Are We Weighting For?
+
+Therefore, to ask “what are we weighting for?” is to ask: what are the conditions under which our weighted control group is valid? All three designs are estimators that weight control outcomes to estimate the untreated potential outcome for the treated unit. The validity of the underlying econometric assumptions is what determines the answer to this question. But make no mistake about it: the assumptions that go into making a valid weighted control group are not locked in here with us, [we econometricians and data scientsts are locked in with them](https://www.imdb.com/title/tt0409459/characters/nm0355097/?item=qt0523428&ref_=ext_shr_lnk).

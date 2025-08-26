@@ -392,7 +392,7 @@ $$
 \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_1]
 $$
 
-But what does this mean, anyways? What does it mean for tre trend of one time series to be parallel to another one? As it turns out, DID can be written as a simple convex optimization problem where we assume uniform weights over the control units. We define the DID estimator by solving:
+But what does this mean, anyways? What does it mean for tre trend of one time series to be parallel to another one? As it turns out, DID can be written as a simple convex optimization problem where we assume uniform weights over the control units:
 
 $$
 \beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}} 
@@ -408,7 +408,7 @@ $$
 \quad \text{subject to} \quad w_j = \frac{1}{N_0}, \quad \forall j \in \mathcal{N}_0
 $$
 
-Here, the weights $w_j$ are fixed to be uniform. That is, DID does not even estimate the weights; it takes the arithmetic average of the control outcomes and simply adjusts for the mean level difference between that average and the treated unit. In other words, they are imposed instead of analytically derived. The only parameter to solve for is $\beta$, the scalar that minimizes the pre-treatment discrepancy.
+Here, the weights $w_j$ are fixed to be uniform. That is, DID does not even estimate the weights; it takes the arithmetic average of the control outcomes and simply adjusts for the mean level difference between that average and the treated unit. In other words, these weights are fixed rather than estimated. The only parameter to solve for is $\beta$, the scalar that minimizes the pre-treatment discrepancy.
 
 Let us behold the closed form solution. Sure we could rely on `cvxpy` to give us the solution, but let's go into the details. I'll confess to never having done this before (or at least not since I solved least squares by hand!!!), so this was actually quite rewarding for me. We can start by defining the uniform average of the controls as: $\bar{\mathbf{y}}_0 =  N_0^{-1} \sum_{j=1}^{N_0} \mathbf{y}_{j \in \mathcal{N}_0}$. We may rewrite the optimization problem as:
 
@@ -464,7 +464,7 @@ $$
 \frac{\mathrm{d} f}{\mathrm{d} \beta} = -2 \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta).
 $$
 
-Okay chain rule over! These are what we cll our first order conditions. Now we can set the derivative equal to zero:
+Okay chain rule over! This result is what we call our first order conditions, or the point at which our first derivative is equal to zero. Now we can set the derivative equal to zero:
 
 $$
 -2\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta) = 0.
@@ -499,7 +499,7 @@ $$
 (\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}))-\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}) - T_0 \beta = 0-\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 $$
 
-This returns this result:
+The first term cancels, and for the RHS zero simply becomes the value we're subtracting by. This returns this result:
 
 $$
 -T_0 \beta = - \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
@@ -523,7 +523,27 @@ $$
 \beta^\ast = \frac{1}{T_0} \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 $$
 
-Thus, the optimal $\beta^\ast$ is simply the average pre-treatment difference between the treated unit and the control group. What does this mean, then, in terms of parallel pre-intervention trends? This means that for PTA to hold exactly, the difference of the control group, with respect to the treatment group, needs to be equal to $\beta$ at each point in the pre-treatment period (of course in practice we expect this to be a gradient that holds approximately in real life). The degree to which the control group's differs from $\beta$ is where non-parallel pre-intervention trends bias comes from.
+Thus, the optimal $\beta^\ast$ is simply the average pre-treatment difference between the treated unit and the control group. We can even check the second dervative, should we wish:
+
+$$
+\frac{\mathrm{d}^2 f}{\mathrm{d} \beta^2} = \frac{\mathrm{d}}{\mathrm{d}\beta} \left(-2 \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)\right).
+$$
+
+Since $y_{1t}$ and $\bar{y}_{0t}$ are constants with respect to $\beta$, and $\frac{\mathrm{d}}{\mathrm{d}\beta}(-\beta) = -1$, their derivatives are 0. Thus, this this simplifies to:
+
+$$
+= -2 \sum_{t=1}^{T_0} \frac{\mathrm{d}}{\mathrm{d}\beta} (y_{1t} - \bar{y}_{0t} - \beta) = -2 \sum_{t=1}^{T_0} (-1) = -2 \times (-T_0) = 2 T_0.
+$$
+
+Since $T_0$ is the number of pre-treatment time periods and is positive, the second derivative is positive:
+
+$$
+\frac{\mathrm{d}^2 f}{\mathrm{d} \beta^2} = 2 T_0 > 0,
+$$
+
+which means the function $f(\beta)$ is strictly convex in $\beta$, guaranteeing a unique global minimum.
+
+What does this mean, then, in terms of parallel pre-intervention trends? For one, DID has a closed form solution whose solution is guaranteed to be unique, unlike SCM. However, this means that for the parallel trends assumption to hold exactly, and for this minimizer to be useful to us, the difference between the treated unit and the control group should be equal to $\beta$ at each point in the pre-treatment period. In practice, this is rarely exact but expected to hold approximately. Deviations from this constant difference, i.e., systematic divergences in trends, indicate violations of the parallel trends assumption, which can lead to bias in the DID estimator.
 
 ## Using `cvxpy`
 

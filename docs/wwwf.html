@@ -299,7 +299,7 @@ window.Quarto = {
 19 &amp; 21 &amp; 20 \\
 \end{bmatrix}
 \]</span></p>
-<div id="febf3ccf" class="cell" data-execution_count="1">
+<div id="f0c928b4" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -313,9 +313,9 @@ window.Quarto = {
 \bar{\mathbf{y}} = \mathbf{Y}_0 \cdot \mathbf{w},
 \quad \text{where } \mathbf{w} =
 \begin{bmatrix}
-{\color{red}\frac{1}{3}} \\
 {\color{blue}\frac{1}{3}} \\
-{\color{purple}\frac{1}{3}} \\
+{\color{blue}\frac{1}{3}} \\
+{\color{blue}\frac{1}{3}} \\
 \end{bmatrix}
 \]</span></p>
 <p>Then, the calculation is:</p>
@@ -386,16 +386,16 @@ window.Quarto = {
 \begin{bmatrix}
 {\color{red}0.15} \\
 {\color{blue}0.70} \\
-{\color{purple}0.15} \\
+{\color{red}0.15} \\
 \end{bmatrix}
 \quad \text{(Color Coded Weights)} \\
 &amp;=
 \begin{bmatrix}
-(12 \times {\color{red}0.15}) + (14 \times {\color{blue}0.70}) + (13 \times {\color{purple}0.15}) \\
-(15 \times {\color{red}0.15}) + (16 \times {\color{blue}0.70}) + (15 \times {\color{purple}0.15}) \\
-(18 \times {\color{red}0.15}) + (20 \times {\color{blue}0.70}) + (19 \times {\color{purple}0.15}) \\
-(17 \times {\color{red}0.15}) + (18 \times {\color{blue}0.70}) + (17 \times {\color{purple}0.15}) \\
-(19 \times {\color{red}0.15}) + (21 \times {\color{blue}0.70}) + (20 \times {\color{purple}0.15}) \\
+(12 \times {\color{red}0.15}) + (14 \times {\color{blue}0.70}) + (13 \times {\color{red}0.15}) \\
+(15 \times {\color{red}0.15}) + (16 \times {\color{blue}0.70}) + (15 \times {\color{red}0.15}) \\
+(18 \times {\color{red}0.15}) + (20 \times {\color{blue}0.70}) + (19 \times {\color{red}0.15}) \\
+(17 \times {\color{red}0.15}) + (18 \times {\color{blue}0.70}) + (17 \times {\color{red}0.15}) \\
+(19 \times {\color{red}0.15}) + (21 \times {\color{blue}0.70}) + (20 \times {\color{red}0.15}) \\
 \end{bmatrix}
 \quad \text{(Multiply)} \\
 &amp;=
@@ -471,7 +471,7 @@ window.Quarto = {
 \end{aligned}
 \]</span></p>
 <p>As we can see, this is just copying Hotel B’s bookings directly. None of this is voodoo, it is just linear algebra. In fact, we can compute all of it in good ole <code>numpy</code>:</p>
-<div id="d2f2854e" class="cell" data-execution_count="2">
+<div id="7f7a925d" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
@@ -584,7 +584,7 @@ window.Quarto = {
 <p>The result here is a scalar, since it is a dot product of vectors. The ATE is the difference between these dot products: <span class="math display">\[
 \widehat{\text{ATE}} = \bar{y}_1 - \bar{y}_0 = \mathbf{w}_1^\top \mathbf{Y}_1 - \mathbf{w}_0^\top \mathbf{Y}_0 = 6 - 9 = -3
 \]</span> Again, no tricks at all. In Python this looks like:</p>
-<div id="eb37ae9b" class="cell" data-execution_count="3">
+<div id="fc5fd6d9" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define treated and control outcomes</span></span>
@@ -608,36 +608,114 @@ window.Quarto = {
 </section>
 <section id="difference-in-differences" class="level1">
 <h1>Difference-in-Differences</h1>
-<p>Unlike RCTs, which rely on randomization, DID tackles settings where baseline differences exist. Unlike the RCT, which assumes treated and control groups are balanced in <strong><em>both</em></strong> levels and trends before treatment, DID acknowledges this assumption is often violated. Precisely, DID counts on the parallel trends assumption. Parallel trends says that the mean difference in outcomes between treated and control groups would remain constant over time in the absence of treatment</p>
+<p>Unlike randomized controlled trials (RCTs), which rely on random assignment to balance treatment and control groups in both levels and trends, DID is designed for observational data where such balance rarely holds. DID acknowledges that baseline differences may exist, and instead assumes that the treated and control groups would have followed parallel trends in the absence of treatment. The parallel trends assumption states that the expected difference between the treated unit’s counterfactual outcome <span class="math inline">\(y_{1t}(0)\)</span> and the control group’s mean outcome <span class="math inline">\(\bar{y}_{0t}\)</span> remains constant over time:</p>
 <p><span class="math display">\[
-\mathbb{E}[y_{1t}(0) - \bar{y}_{0t} | t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} | t \in \mathcal{T}_1]
-\]</span> This states that the expected difference between the treated unit’s counterfactual outcome (<span class="math inline">\(y_{1t}(0)\)</span> and the control group’s mean outcome (<span class="math inline">\(\bar{y}_{0t}\)</span>) is constant across pre-treatment (<span class="math inline">\(\mathcal{T}_1\)</span>) and post-treatment (<span class="math inline">\(\mathcal{T}_2\)</span>) periods. Equivalently, in terms of trends, parallel trends implies that the expected change in the treated unit’s counterfactual outcome matches the expected change in the control group’s mean outcome: <span class="math display">\[
-\mathbb{E}[y_{1t}(0) - y_{1s}(0) | t, s \in \mathcal{T}_2] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s} | t, s \in \mathcal{T}_2],
-\]</span> where <span class="math inline">\(s\)</span> is another point in the same time period. Since pre-treatment outcomes for the treated unit are observed (<span class="math inline">\(y_{1t} = y_{1t}(0) \, \forall \: t \in \mathcal{T}_1\)</span>), we can assess this assumption by checking: <span class="math display">\[
-\mathbb{E}[y_{1t}(0) - y_{1s}(0) | t, s \in \mathcal{T}_1] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s} | t, s \in \mathcal{T}_1]
+\mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_1]
 \]</span></p>
-<p>In other words, even if the treated and control groups differ in baseline levels, their pre-treatment <em>trends</em> are similar enough that the control group’s time trend can serve as a valid proxy for the counterfactual trend in the treated group.</p>
-<p>From this, the weights in DID are uniform across control units. Why? That’s what it means for the weights to be uniform as an arithmetic average! Same as we’ve discussed above. Formally, the DID weighting problem satisfies:</p>
+<p>Equivalently, we can restate this in terms of time differences. For any <span class="math inline">\(t, s \in \mathcal{T}_2\)</span>:</p>
 <p><span class="math display">\[
-\mathbf{w}^\ast = \operatorname*{argmin}_{\mathbf{w} \in \mathbb{R}^{N_0}}
+\mathbb{E}[y_{1t}(0) - y_{1s}(0)] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s}]
+\]</span></p>
+<p>Since <span class="math inline">\(y_{1t}(0)\)</span> is observed in the pre-treatment period (that is, <span class="math inline">\(y_{1t}(0) = y_{1t}\)</span> for <span class="math inline">\(t \in \mathcal{T}_1\)</span>), we can use this to check the plausibility of parallel trends:</p>
+<p><span class="math display">\[
+\mathbb{E}[y_{1t} - y_{1s}] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s}] \quad \text{for all } t, s \in \mathcal{T}_1
+\]</span></p>
+<p>This allows us to focus on differences in trends rather than levels. So even if the treated and control groups differ in their baseline outcomes… DID remains valid as long as the pre-treatment trends are sufficiently parallel.</p>
+<p>DID can be written as a simple convex optimization problem where we assume uniform weights over the control units. We define the DID estimator by solving:</p>
+<p><span class="math display">\[
+\beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}}
 \left\|
 \underbrace{
 \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}
 }_{\text{Fit}}
 -
 \underbrace{
-\boldsymbol{\beta}
+\beta
 }_{\text{Mean difference}}
 \right\|_2^2
-\quad
-\text{subject to}
-\quad
-w_j = \frac{1}{N_0},
-\quad \forall j \in \mathcal{N}_0.
+\quad \text{subject to} \quad w_j = \frac{1}{N_0}, \quad \forall j \in \mathcal{N}_0
 \]</span></p>
-<p>Here, the weights <span class="math inline">\(\mathbf{w}\)</span> are assigned <em>a priori</em> as uniform weights—essentially computing the arithmetic mean of the control units. Thus, we are not optimizing the weights, as they are already chosen for us. The solution to this optimization, therefore, is trivial, being the pre-treatment average difference <span class="math inline">\(\boldsymbol{\beta}\)</span> through this formulation.</p>
-<p>Using the classic Prop 99 dataset from my Github, we can prove that DID for this instance is a simple convex optimization problem:</p>
-<div id="c94f930e" class="cell" data-execution_count="4">
+<p>Here, the weights <span class="math inline">\(w_j\)</span> are fixed to be uniform. That is, DID does not even estimate the weights; it takes the arithmetic average of the control outcomes and simply adjusts for the mean level difference between that average and the treated unit. In other words, they are imposed instead of analytically derived. The only parameter to solve for is <span class="math inline">\(\beta\)</span>, the scalar that minimizes the pre-treatment discrepancy.</p>
+<p>But how can we tell? Let us behold the closed form solution. I’ll confess to never having done this before (or at least not since I solved least squares by hand!!!), so this was actually quite rewarding for me. First, define the uniform average of the controls as:</p>
+<p><span class="math display">\[
+\bar{\mathbf{y}}_0 = \frac{1}{N_0} \sum_{j=1}^{N_0} \mathbf{y}_0^{(j)}
+\]</span></p>
+<p>We may rewrite the optimization problem as:</p>
+<p><span class="math display">\[
+\beta^\ast = \operatorname*{argmin}_{\beta} \left\| \mathbf{y}_1 - \bar{\mathbf{y}}_0 - \beta \right\|_2^2.
+\]</span></p>
+<p>Now, we can expand expand the squared Euclidean norm:</p>
+<p><span class="math display">\[
+f(\beta) = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)^2.
+\]</span></p>
+<p>To find the value of <span class="math inline">\(\beta\)</span> that minimizes the objective, we take the derivative of <span class="math inline">\(f(\beta)\)</span> with respect to <span class="math inline">\(\beta\)</span>. We’ll need the <a href="https://www.youtube.com/watch?v=z1lwai-lIzY">power rule</a> and <a href="https://www.youtube.com/watch?v=XIQ-KnsAsbg">chain rule</a>.</p>
+<p>We start with the objective function:</p>
+<p><span class="math display">\[
+f(\beta) = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)^2
+\]</span></p>
+<p>We want to compute its derivative with respect to <span class="math inline">\(\beta\)</span>:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d} f}{\mathrm{d} \beta} = \frac{\mathrm{d}}{\mathrm{d} \beta} \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)^2
+\]</span></p>
+<p>By the linearity of the derivative, we bring the derivative inside the sum:</p>
+<p><span class="math display">\[
+= \sum_{t=1}^{T_0} \frac{\mathrm{d}}{\mathrm{d} \beta} (y_{1t} - \bar{y}_{0t} - \beta)^2
+\]</span></p>
+<p>Now, let:</p>
+<p><span class="math display">\[
+u_t(\beta) = y_{1t} - \bar{y}_{0t} - \beta
+\]</span></p>
+<p>To differentiate <span class="math inline">\(u_t(\beta)^2\)</span> with respect to <span class="math inline">\(\beta\)</span>, we use the chain rule. The chain rule states that for a composite function <span class="math inline">\(f(x) = g(h(x))\)</span>, the derivative is</p>
+<p><span class="math display">\[
+\frac{\mathrm{d} f}{\mathrm{d} x} = g'(h(x)) \cdot h'(x).
+\]</span></p>
+<p>In our case, the outer function is <span class="math inline">\(g(u) = u^2\)</span> and the inner function is <span class="math inline">\(h(\beta) = u_t(\beta) = y_{1t} - \bar{y}_{0t} - \beta\)</span>.</p>
+<p>Differentiating the outer function with respect to <span class="math inline">\(u\)</span> gives</p>
+<p><span class="math display">\[
+g'(u) = 2u.
+\]</span></p>
+<p>Differentiating the inner function with respect to <span class="math inline">\(\beta\)</span> gives</p>
+<p><span class="math display">\[
+\frac{\mathrm{d} u_t}{\mathrm{d} \beta} = \frac{\mathrm{d}}{\mathrm{d} \beta} (y_{1t} - \bar{y}_{0t} - \beta) = 0 - 0 - 1 = -1.
+\]</span></p>
+<p>Applying the chain rule, we multiply these derivatives:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}}{\mathrm{d} \beta} u_t(\beta)^2 = 2 u_t(\beta) \cdot (-1) = -2 (y_{1t} - \bar{y}_{0t} - \beta).
+\]</span></p>
+<p>Finally, summing over all <span class="math inline">\(t\)</span>:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d} f}{\mathrm{d} \beta} = -2 \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta).
+\]</span></p>
+<p>Okay chain rule over! Now we can set the derivative equal to zero:</p>
+<p><span class="math display">\[
+-2\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta^\ast) = 0
+\]</span></p>
+<p>and solve. Divide both sides by <span class="math inline">\(-2\)</span> (which does not affect the equality):</p>
+<p><span class="math display">\[
+\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta) = 0.
+\]</span></p>
+<p>Distribute the sum over subtraction:</p>
+<p><span class="math display">\[
+\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}) - \sum_{t=1}^{T_0} \beta = 0.
+\]</span></p>
+<p><span class="math inline">\(\beta\)</span> does not depend on <span class="math inline">\(t\)</span>. By linearity of summation, and since <span class="math inline">\(\beta\)</span> has no variable attatched to it, this is equivalent to doing <span class="math inline">\(\sum_{t=1}^{T_0} \beta = \beta + \beta + \cdots + \beta = T_0 \beta.\)</span> This gives us:</p>
+<p><span class="math display">\[
+\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}) - T_0 \beta = 0.
+\]</span> Rearrange to isolate <span class="math inline">\(\beta\)</span> by subtracting the first term:</p>
+<p><span class="math display">\[
+-T_0 \beta = - \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
+\]</span></p>
+<p>Now we both sides by <span class="math inline">\(-1\)</span>:</p>
+<p><span class="math display">\[
+T_0 \beta = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
+\]</span></p>
+<p>Finally, divide both sides by <span class="math inline">\(T_0\)</span>:</p>
+<p><span class="math display">\[
+\beta^\ast = \frac{1}{T_0} \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
+\]</span></p>
+<p>Thus, the optimal <span class="math inline">\(\beta^\ast\)</span> is simply the average pre-treatment difference between the treated unit and the control group.</p>
+<p>Of course, we never do this by hand, which is why we can fire up <code>cvxpy</code>. Using the classic Prop 99 dataset from my Github, we can do exactly this:</p>
+<div id="d4a63e7e" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd <span class="co"># To work with panel data</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.datautils <span class="im">import</span> dataprep</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
@@ -717,8 +795,8 @@ w_j = \frac{1}{N_0},
 </div>
 </div>
 </div>
-<p>This plot is the in and out of sample predictions of the DID estimator. As we can see, it is just the donor pool mean, minus 14.35. The ATT is roughly -27, which Abadie and Co frame as an overstatment stamming from violation of the parallel pre-trends assumption.</p>
-<p>I did not use any mathematical tricks, I simply used optimization to find the beta and then I used it to compute the counterfactual. Of course again, DID can be a lot more complicated, especially when you begin to account for staggered adoption, non-absorbing treatments, continuous treatments, potential violations to parallel trends, and so on and so forth. The simple point being made here is that, at its core, DID assigns weights too! It just does not tell you about them. Other estimators, yes, even the ones I like, are not absolved of this either: sometimes, in fact, we can even modify the parallel pre-trends assumption to <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">something more flexible</a>. But it is sill a weighting estimator, nonetheless.</p>
+<p>This plot is the in and out of sample predictions of the DID estimator. As we can see, it is just the donor pool mean, minus 14.35. The ATT, or the mean post-treatment difference between the treated unit’s outcomes and the counterfactual, is roughly -27, which Abadie and Co frame as an overstatment stemming from violation of the parallel pre-trends assumption. I did not use any mathematical tricks, I simply used optimization to find the beta and then I used it to compute the counterfactual. Of course again, DID can be a lot more complicated, especially when you begin to account for staggered adoption, non-absorbing treatments, continuous treatments, potential violations to parallel trends, and so on and so forth.</p>
+<p>The simple point being made here is that, at its core, DID assigns weights too! It just does not tell you about them. Other estimators, even the ones I program, are not absolved of this either: <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">Forward DID</a> is beholden to the exact same weights, the only difference is that we choose a control group to use for the DID method.</p>
 </section>
 <section id="scm" class="level1">
 <h1>SCM</h1>
@@ -734,7 +812,7 @@ w_j = \frac{1}{N_0},
 <p><span class="math display">\[
 \hat{\tau}_\text{SCM} = |\mathcal{T}_2|^{-1} \sum_{t \in \mathcal{T}_2} \left( y_{1t} - \sum_{j \in \mathcal{N}_0} w_j^\ast y_{jt} \right).
 \]</span> The key thing here is that the weights are not voodoo magic, and they do not come from a black box. There’s a well defined optimization (<a href="https://link.springer.com/article/10.1007/s10614-023-10471-7">usually</a>) that is used to return the weights. Let’s apply a flavor of SCM, per the above.</p>
-<div id="b0d9d4a7" class="cell" data-execution_count="5">
+<div id="a7bd1811" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM <span class="co"># The method of interest</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
@@ -946,16 +1024,15 @@ Note
 <p><a href="https://youtu.be/oDNaOpNK6G4?t=1701">Abadie</a> has spoken about this idea before as well, that when he and his coauthors began to present this idea to other economists and statisticians, oftentimes they would ask “Well, why don’t you just run a regression,” or perhaps, why don’t you run a DID model? Sometimes, they would quip with them on the weights, saying “Japan should not matter as much as the SCM says.” Well, in the DID model or regression weights (depending on the donor pool size), sometimes units that we think should not matter, matter even more with the DID model.</p>
 </div>
 </div>
-<p>Now, I am not taking a position on the most accurate form of the weights, for reasons I have argued elsewhere. But it does trouble me to hear the remarks people sometimes make about DID versus SCM and their supposed differences. Some people <a href="https://segmentstream.com/blog/articles/why-geo-lift-testing-falls-short-measure-true-ads-incrementality">have argued</a> that “this Synthetic Control and those Weights are the biggest problem of Geo-Lift tests.” I have even heard some people say things such as this comment on LinkedIn, which argues:</p>
+<p>Now, I am not taking a position on the most accurate form of the weights, for reasons I have argued elsewhere. But it does trouble me to hear the remarks people sometimes make about DID versus SCM and their supposed differences. I have heard some people say things such as <a href="https://www.linkedin.com/feed/update/urn:li:activity:7365393748484108288?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7365393748484108288%2C7365623440445198338%29&amp;dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287365623440445198338%2Curn%3Ali%3Aactivity%3A7365393748484108288%29">this comment on LinkedIn</a>, which argues:</p>
 <blockquote class="blockquote">
-<p>No control unit be it real or synthetic will ever “perfectly” match your real or treated unit. The word perfect is misleading. In terms of hierarchy or propensity for accuracy, my order will be DiD &gt; SCM. Yes, parallel trends is also a tough assumption to adhere to. But at least you have a real control unit and not a made up one. In terms of SCM we are two levels removed from reality.</p>
+<p>One need not get into mathematical complexity to see why DiD or any method that has a real control group / unit will have higher propensity for accuracy than a method which does not have any real control group e.g.&nbsp;SCM.</p>
 </blockquote>
-<p>I agree on the perfect fit idea. Perfect pre-treatment fit is rare, and in practice is relegated to approximate pre-treatment fit. However, the words “real” and “synthetic” seem to be doing a lot of heavy lifting. Put another way, these weights are not a bug or an aberration; they are a feature of how we compute treatment effects and iROAS at all. Some seem to hear the word “synthetic” and think that the SCM weights themselves are a black box fabrication that is somehow less based in reality than DID’s weights or some other method. But as we’ve just gone over, there’s nothing particularly special about what is happening with DID. DID, as I’ve formulated it, simply imposes uniform weights over the donor pool with an intercept adjustment. The imposition of uniform weights, in other words, is completely and totally arbitrary. There’s nothing more real or less made up about DID’s artificial counterfactual than one we could obtain from SCM or even nearest neighbor matching.</p>
-<p>The main question, then, is what structure we as researchers should impose upon the weights, and when we should prefer one set of weights to another. In the case of an RCT, we trust randomization to give us unconfoundedness. In DID, we rely on the assumption of parallel trends. In SCM, we choose a combination of controls that best approximates the treated unit in the pre-intervention period. In the end, the weights that the econometrician believes to be the best representation of reality, by some criterion, are what determine the estimator we use.</p>
+<p>The words “real control group” are doing <strong>a lot</strong> of heavy lifting here. DID does not have “a real control group” any more than SCM does; the control group is a decision made by the econometrician at runtime, and they are not passed down from the heavens. In other words, the control group employed is a deisng decision, one which you must be prepared to made and defend. Beyond this, weights are a feature (not a bug) of how we compute treatment effects and iROAS. The SCM weights themselves are not a black box fabrication that is somehow less based in reality than DID’s weights or some other method, they’re derived from an optimization problem. DID’s imposition of uniform weights, if anyhting, is a prior of sorts that must be defended. There’s nothing more real/valid about DID’s uniform weights than those we could obtain from SCM or even nearest neighbor matching. The main question then, for the applied researcher, is what structure should impose upon the weights, and when we should prefer one set of weights to another. In the case of an RCT, we count on randomization to give us unconfoundedness. In DID, we rely on the assumption of parallel trends. In SCM, we choose a combination of controls that best approximates the treated unit in the pre-intervention period. In the end, the best weights are those whose identification assumptions can best be defended.</p>
 </section>
 <section id="what-are-we-weighting-for" class="level1">
 <h1>What Are We Weighting For?</h1>
-<p>Therefore, to ask “what are we weighting for?” is to ask: what are the conditions under which our weighted control group is valid? All three designs are estimators that weight control outcomes to estimate the untreated potential outcome for the treated unit. The validity of the underlying econometric assumptions is what determines the answer to this question. But make no mistake about it: the assumptions that go into making a valid weighted control group are not locked in here with us, <a href="https://www.imdb.com/title/tt0409459/characters/nm0355097/?item=qt0523428&amp;ref_=ext_shr_lnk">we econometricians and data scientsts are locked in with them</a>.</p>
+<p>Therefore, to ask “what are we weighting for?” is to ask: what are the conditions under which our weighted control group is valid? RCTs, DID, and SCM are estimators that weight control outcomes to estimate the untreated potential outcome for the treated unit. The validity of the underlying econometric assumptions is what determines the answer to this question. But make no mistake about it: the assumptions that go into making a valid weighted control group are not locked in here with us, <a href="https://www.imdb.com/title/tt0409459/characters/nm0355097/?item=qt0523428&amp;ref_=ext_shr_lnk">we econometricians and data scientsts are locked in with them</a>.</p>
 
 
 
@@ -963,7 +1040,7 @@ Note
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1756203659722" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1756217384067" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -987,7 +1064,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1756203659722" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1756217384068" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -1011,7 +1088,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1756203659722" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1756217384068" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1035,7 +1112,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1756203659727" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1756217384073" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -1059,7 +1136,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1756203659728" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1756217384074" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -1083,7 +1160,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1756203659725" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1756217384071" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -1105,7 +1182,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1756203659725" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1756217384071" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1129,7 +1206,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1756203659728" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1756217384074" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1151,7 +1228,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1756203659728" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1756217384073" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1173,7 +1250,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1756203659728" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1756217384074" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1197,7 +1274,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1756203659722" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1756217384068" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1221,7 +1298,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1756203710149" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1756217434170" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -1235,7 +1312,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1756203659722" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1756217384068" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

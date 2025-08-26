@@ -302,7 +302,7 @@ window.Quarto = {
 19 &amp; 21 &amp; 20 \\
 \end{bmatrix}
 \]</span></p>
-<div id="9885d23d" class="cell" data-execution_count="1">
+<div id="885b877a" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -474,7 +474,7 @@ window.Quarto = {
 \end{aligned}
 \]</span></p>
 <p>As we can see, this is just copying Hotel B’s bookings directly. None of this is voodoo, it is just arithmetic. In fact, we can compute all of it in good ole <code>numpy</code> with zero change from the manual version:</p>
-<div id="7c00fc78" class="cell" data-execution_count="2">
+<div id="c39f0bc0" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
@@ -587,7 +587,7 @@ window.Quarto = {
 <p>The result here is a scalar, since it is a dot product of vectors. The ATE is the difference between these dot products: <span class="math display">\[
 \widehat{\text{ATE}} = \bar{y}_1 - \bar{y}_0 = \mathbf{w}_1^\top \mathbf{Y}_1 - \mathbf{w}_0^\top \mathbf{Y}_0 = 6 - 9 = -3
 \]</span> Again, no tricks at all. In Python this looks like:</p>
-<div id="9048e672" class="cell" data-execution_count="3">
+<div id="67744c1f" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define treated and control outcomes</span></span>
@@ -615,7 +615,7 @@ window.Quarto = {
 <p><span class="math display">\[
 \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_1]
 \]</span></p>
-<p>But what does this mean, anyways? What does it mean for tre trend of one time series to be parallel to another one? As it turns out, DID can be written as a simple convex optimization problem where we assume uniform weights over the control units. We define the DID estimator by solving:</p>
+<p>But what does this mean, anyways? What does it mean for tre trend of one time series to be parallel to another one? As it turns out, DID can be written as a simple convex optimization problem where we assume uniform weights over the control units:</p>
 <p><span class="math display">\[
 \beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}}
 \left\|
@@ -629,7 +629,7 @@ window.Quarto = {
 \right\|_2^2
 \quad \text{subject to} \quad w_j = \frac{1}{N_0}, \quad \forall j \in \mathcal{N}_0
 \]</span></p>
-<p>Here, the weights <span class="math inline">\(w_j\)</span> are fixed to be uniform. That is, DID does not even estimate the weights; it takes the arithmetic average of the control outcomes and simply adjusts for the mean level difference between that average and the treated unit. In other words, they are imposed instead of analytically derived. The only parameter to solve for is <span class="math inline">\(\beta\)</span>, the scalar that minimizes the pre-treatment discrepancy.</p>
+<p>Here, the weights <span class="math inline">\(w_j\)</span> are fixed to be uniform. That is, DID does not even estimate the weights; it takes the arithmetic average of the control outcomes and simply adjusts for the mean level difference between that average and the treated unit. In other words, these weights are fixed rather than estimated. The only parameter to solve for is <span class="math inline">\(\beta\)</span>, the scalar that minimizes the pre-treatment discrepancy.</p>
 <p>Let us behold the closed form solution. Sure we could rely on <code>cvxpy</code> to give us the solution, but let’s go into the details. I’ll confess to never having done this before (or at least not since I solved least squares by hand!!!), so this was actually quite rewarding for me. We can start by defining the uniform average of the controls as: <span class="math inline">\(\bar{\mathbf{y}}_0 =  N_0^{-1} \sum_{j=1}^{N_0} \mathbf{y}_{j \in \mathcal{N}_0}\)</span>. We may rewrite the optimization problem as:</p>
 <p><span class="math display">\[
 \beta^\ast = \operatorname*{argmin}_{\beta} \left\| \mathbf{y}_1 - \bar{\mathbf{y}}_0 - \beta \right\|_2^2.
@@ -666,7 +666,7 @@ g'(u) = 2u.
 <p><span class="math display">\[
 \frac{\mathrm{d} f}{\mathrm{d} \beta} = -2 \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta).
 \]</span></p>
-<p>Okay chain rule over! These are what we cll our first order conditions. Now we can set the derivative equal to zero:</p>
+<p>Okay chain rule over! This result is what we call our first order conditions, or the point at which our first derivative is equal to zero. Now we can set the derivative equal to zero:</p>
 <p><span class="math display">\[
 -2\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta) = 0.
 \]</span></p>
@@ -689,7 +689,7 @@ g'(u) = 2u.
 <p><span class="math display">\[
 (\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}))-\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}) - T_0 \beta = 0-\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 \]</span></p>
-<p>This returns this result:</p>
+<p>The first term cancels, and for the RHS zero simply becomes the value we’re subtracting by. This returns this result:</p>
 <p><span class="math display">\[
 -T_0 \beta = - \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 \]</span></p>
@@ -705,11 +705,24 @@ T_0 \beta = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 <p><span class="math display">\[
 \beta^\ast = \frac{1}{T_0} \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 \]</span></p>
-<p>Thus, the optimal <span class="math inline">\(\beta^\ast\)</span> is simply the average pre-treatment difference between the treated unit and the control group. What does this mean, then, in terms of parallel pre-intervention trends? This means that for PTA to hold exactly, the difference of the control group, with respect to the treatment group, needs to be equal to <span class="math inline">\(\beta\)</span> at each point in the pre-treatment period (of course in practice we expect this to be a gradient that holds approximately in real life). The degree to which the control group’s differs from <span class="math inline">\(\beta\)</span> is where non-parallel pre-intervention trends bias comes from.</p>
+<p>Thus, the optimal <span class="math inline">\(\beta^\ast\)</span> is simply the average pre-treatment difference between the treated unit and the control group. We can even check the second dervative, should we wish:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}^2 f}{\mathrm{d} \beta^2} = \frac{\mathrm{d}}{\mathrm{d}\beta} \left(-2 \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)\right).
+\]</span></p>
+<p>Since <span class="math inline">\(y_{1t}\)</span> and <span class="math inline">\(\bar{y}_{0t}\)</span> are constants with respect to <span class="math inline">\(\beta\)</span>, and <span class="math inline">\(\frac{\mathrm{d}}{\mathrm{d}\beta}(-\beta) = -1\)</span>, their derivatives are 0. Thus, this this simplifies to:</p>
+<p><span class="math display">\[
+= -2 \sum_{t=1}^{T_0} \frac{\mathrm{d}}{\mathrm{d}\beta} (y_{1t} - \bar{y}_{0t} - \beta) = -2 \sum_{t=1}^{T_0} (-1) = -2 \times (-T_0) = 2 T_0.
+\]</span></p>
+<p>Since <span class="math inline">\(T_0\)</span> is the number of pre-treatment time periods and is positive, the second derivative is positive:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}^2 f}{\mathrm{d} \beta^2} = 2 T_0 &gt; 0,
+\]</span></p>
+<p>which means the function <span class="math inline">\(f(\beta)\)</span> is strictly convex in <span class="math inline">\(\beta\)</span>, guaranteeing a unique global minimum.</p>
+<p>What does this mean, then, in terms of parallel pre-intervention trends? For one, DID has a closed form solution whose solution is guaranteed to be unique, unlike SCM. However, this means that for the parallel trends assumption to hold exactly, and for this minimizer to be useful to us, the difference between the treated unit and the control group should be equal to <span class="math inline">\(\beta\)</span> at each point in the pre-treatment period. In practice, this is rarely exact but expected to hold approximately. Deviations from this constant difference, i.e., systematic divergences in trends, indicate violations of the parallel trends assumption, which can lead to bias in the DID estimator.</p>
 <section id="using-cvxpy" class="level2">
 <h2 class="anchored" data-anchor-id="using-cvxpy">Using <code>cvxpy</code></h2>
 <p>Of course, we never do this by hand, which is why we can fire up <code>cvxpy</code>. Using the classic Prop 99 dataset from my Github, we can do exactly this:</p>
-<div id="cbfcf678" class="cell" data-execution_count="4">
+<div id="4a8ceadc" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd <span class="co"># To work with panel data</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.datautils <span class="im">import</span> dataprep</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
@@ -806,7 +819,7 @@ T_0 \beta = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
 <p><span class="math display">\[
 \hat{\tau}_\text{SCM} = |\mathcal{T}_2|^{-1} \sum_{t \in \mathcal{T}_2} \left( y_{1t} - \sum_{j \in \mathcal{N}_0} w_j^\ast y_{jt} \right).
 \]</span> The key thing here is that the weights are not voodoo magic, and they do not come from a black box. There’s a well defined optimization (<a href="https://link.springer.com/article/10.1007/s10614-023-10471-7">usually</a>) that is used to return the weights. Let’s apply a flavor of SCM, per the above.</p>
-<div id="ed92f9d9" class="cell" data-execution_count="5">
+<div id="e408a317" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM <span class="co"># The method of interest</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
@@ -1038,7 +1051,7 @@ Note
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1756220009749" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1756221105956" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -1062,7 +1075,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1756220009750" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1756221105957" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -1086,7 +1099,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1756220009750" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1756221105957" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1110,7 +1123,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1756220009755" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1756221105962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -1134,7 +1147,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1756220009756" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1756221105962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -1158,7 +1171,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1756220009752" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1756221105959" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -1180,7 +1193,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1756220009752" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1756221105959" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1204,7 +1217,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1756220009755" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1756221105962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1226,7 +1239,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1756220009755" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1756221105962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1248,7 +1261,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1756220009755" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1756221105962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1272,7 +1285,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1756220009750" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1756221105956" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1296,7 +1309,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1756220068058" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="11" data-listing-file-modified-sort="1756221159131" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
@@ -1310,7 +1323,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1756220009749" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1756221105956" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>

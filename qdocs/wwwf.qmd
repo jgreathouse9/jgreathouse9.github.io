@@ -114,9 +114,9 @@ $$
 \bar{\mathbf{y}} = \mathbf{Y}_0 \cdot \mathbf{w}, 
 \quad \text{where } \mathbf{w} = 
 \begin{bmatrix}
-{\color{red}\frac{1}{3}} \\
 {\color{blue}\frac{1}{3}} \\
-{\color{purple}\frac{1}{3}} \\
+{\color{blue}\frac{1}{3}} \\
+{\color{blue}\frac{1}{3}} \\
 \end{bmatrix}
 $$
 
@@ -194,16 +194,16 @@ $$
 \begin{bmatrix}
 {\color{red}0.15} \\
 {\color{blue}0.70} \\
-{\color{purple}0.15} \\
+{\color{red}0.15} \\
 \end{bmatrix}
 \quad \text{(Color Coded Weights)} \\
 &=
 \begin{bmatrix}
-(12 \times {\color{red}0.15}) + (14 \times {\color{blue}0.70}) + (13 \times {\color{purple}0.15}) \\
-(15 \times {\color{red}0.15}) + (16 \times {\color{blue}0.70}) + (15 \times {\color{purple}0.15}) \\
-(18 \times {\color{red}0.15}) + (20 \times {\color{blue}0.70}) + (19 \times {\color{purple}0.15}) \\
-(17 \times {\color{red}0.15}) + (18 \times {\color{blue}0.70}) + (17 \times {\color{purple}0.15}) \\
-(19 \times {\color{red}0.15}) + (21 \times {\color{blue}0.70}) + (20 \times {\color{purple}0.15}) \\
+(12 \times {\color{red}0.15}) + (14 \times {\color{blue}0.70}) + (13 \times {\color{red}0.15}) \\
+(15 \times {\color{red}0.15}) + (16 \times {\color{blue}0.70}) + (15 \times {\color{red}0.15}) \\
+(18 \times {\color{red}0.15}) + (20 \times {\color{blue}0.70}) + (19 \times {\color{red}0.15}) \\
+(17 \times {\color{red}0.15}) + (18 \times {\color{blue}0.70}) + (17 \times {\color{red}0.15}) \\
+(19 \times {\color{red}0.15}) + (21 \times {\color{blue}0.70}) + (20 \times {\color{red}0.15}) \\
 \end{bmatrix}
 \quad \text{(Multiply)} \\
 &=
@@ -386,47 +386,168 @@ print(f"ATE (difference of dot products): {ate}")
 
 Of course, I'm aware that in real life experiments do not in fact have 4 observations, and I know they are a lot more complicated than I am making them out to be here. But, the point I'm trying to make, is that the control group is still a weighted average, valid only on the condition that we've randomized well, SUTVA is not violated, and compliance is reasonable.
 
+
 # Difference-in-Differences
 
-Unlike RCTs, which rely on randomization, DID tackles settings where baseline differences exist. Unlike the RCT, which assumes treated and control groups are balanced in ***both*** levels and trends before treatment, DID acknowledges this assumption is often violated. Precisely, DID counts on the parallel trends assumption. Parallel trends says that the mean difference in outcomes between treated and control groups would remain constant over time in the absence of treatment
+Unlike randomized controlled trials (RCTs), which rely on random assignment to balance treatment and control groups in both levels and trends, DID is designed for observational data where such balance rarely holds. DID acknowledges that baseline differences may exist, and instead assumes that the treated and control groups would have followed parallel trends in the absence of treatment. The parallel trends assumption states that the expected difference between the treated unit's counterfactual outcome $y_{1t}(0)$ and the control group’s mean outcome $\bar{y}_{0t}$ remains constant over time:
 
 $$
-\mathbb{E}[y_{1t}(0) - \bar{y}_{0t} | t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} | t \in \mathcal{T}_1]
-$$
-This states that the expected difference between the treated unit’s counterfactual outcome ($y_{1t}(0)$ and the control group’s mean outcome ($\bar{y}_{0t}$) is constant across pre-treatment ($\mathcal{T}_1$) and post-treatment ($\mathcal{T}_2$) periods. Equivalently, in terms of trends, parallel trends implies that the expected change in the treated unit’s counterfactual outcome matches the expected change in the control group’s mean outcome:
-$$
-\mathbb{E}[y_{1t}(0) - y_{1s}(0) | t, s \in \mathcal{T}_2] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s} | t, s \in \mathcal{T}_2],
-$$
-where $s$ is another point in the same time period. Since pre-treatment outcomes for the treated unit are observed ($y_{1t} = y_{1t}(0) \, \forall \: t \in \mathcal{T}_1$), we can assess this assumption by checking:
-$$
-\mathbb{E}[y_{1t}(0) - y_{1s}(0) | t, s \in \mathcal{T}_1] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s} | t, s \in \mathcal{T}_1]
+\mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_2] = \mathbb{E}[y_{1t}(0) - \bar{y}_{0t} \mid t \in \mathcal{T}_1]
 $$
 
-In other words, even if the treated and control groups differ in baseline levels, their pre-treatment *trends* are similar enough that the control group’s time trend can serve as a valid proxy for the counterfactual trend in the treated group.
-
-From this, the weights in DID are uniform across control units. Why? That's what it means for the weights to be uniform as an arithmetic average! Same as we've discussed above. Formally, the DID weighting problem satisfies:
+Equivalently, we can restate this in terms of time differences. For any $t, s \in \mathcal{T}_2$:
 
 $$
-\mathbf{w}^\ast = \operatorname*{argmin}_{\mathbf{w} \in \mathbb{R}^{N_0}} 
+\mathbb{E}[y_{1t}(0) - y_{1s}(0)] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s}]
+$$
+
+Since $y_{1t}(0)$ is observed in the pre-treatment period (that is, $y_{1t}(0) = y_{1t}$ for $t \in \mathcal{T}_1$), we can use this to check the plausibility of parallel trends:
+
+$$
+\mathbb{E}[y_{1t} - y_{1s}] = \mathbb{E}[\bar{y}_{0t} - \bar{y}_{0s}] \quad \text{for all } t, s \in \mathcal{T}_1
+$$
+
+This allows us to focus on differences in trends rather than levels. So even if the treated and control groups differ in their baseline outcomes... DID remains valid as long as the pre-treatment trends are sufficiently parallel.
+
+DID can be written as a simple convex optimization problem where we assume uniform weights over the control units. We define the DID estimator by solving:
+
+$$
+\beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}} 
 \left\| 
 \underbrace{ 
 \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} 
 }_{\text{Fit}} 
 - 
 \underbrace{ 
-\boldsymbol{\beta} 
+\beta 
 }_{\text{Mean difference}} 
 \right\|_2^2 
-\quad 
-\text{subject to} 
-\quad 
-w_j = \frac{1}{N_0}, 
-\quad \forall j \in \mathcal{N}_0.
+\quad \text{subject to} \quad w_j = \frac{1}{N_0}, \quad \forall j \in \mathcal{N}_0
 $$
 
-Here, the weights $\mathbf{w}$ are assigned *a priori* as uniform weights—essentially computing the arithmetic mean of the control units. Thus, we are not optimizing the weights, as they are already chosen for us. The solution to this optimization, therefore, is trivial, being the pre-treatment average difference $\boldsymbol{\beta}$ through this formulation.
+Here, the weights $w_j$ are fixed to be uniform. That is, DID does not even estimate the weights; it takes the arithmetic average of the control outcomes and simply adjusts for the mean level difference between that average and the treated unit. In other words, they are imposed instead of analytically derived. The only parameter to solve for is $\beta$, the scalar that minimizes the pre-treatment discrepancy.
 
-Using the classic Prop 99 dataset from my Github, we can prove that DID for this instance is a simple convex optimization problem:
+But how can we tell? Let us behold the closed form solution. I'll confess to never having done this before (or at least not since I solved least squares by hand!!!), so this was actually quite rewarding for me. First, define the uniform average of the controls as:
+
+$$
+\bar{\mathbf{y}}_0 = \frac{1}{N_0} \sum_{j=1}^{N_0} \mathbf{y}_0^{(j)}
+$$
+
+We may rewrite the optimization problem as:
+
+$$
+\beta^\ast = \operatorname*{argmin}_{\beta} \left\| \mathbf{y}_1 - \bar{\mathbf{y}}_0 - \beta \right\|_2^2.
+$$
+
+Now, we can expand expand the squared Euclidean norm:
+
+$$
+f(\beta) = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)^2.
+$$
+
+To find the value of $\beta$ that minimizes the objective, we take the derivative of $f(\beta)$ with respect to $\beta$. We'll need the [power rule](https://www.youtube.com/watch?v=z1lwai-lIzY) and [chain rule](https://www.youtube.com/watch?v=XIQ-KnsAsbg).
+
+We start with the objective function:
+
+$$
+f(\beta) = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)^2
+$$
+
+We want to compute its derivative with respect to $\beta$:
+
+$$
+\frac{\mathrm{d} f}{\mathrm{d} \beta} = \frac{\mathrm{d}}{\mathrm{d} \beta} \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta)^2
+$$
+
+By the linearity of the derivative, we bring the derivative inside the sum:
+
+$$
+= \sum_{t=1}^{T_0} \frac{\mathrm{d}}{\mathrm{d} \beta} (y_{1t} - \bar{y}_{0t} - \beta)^2
+$$
+
+Now, let:
+
+$$
+u_t(\beta) = y_{1t} - \bar{y}_{0t} - \beta
+$$
+
+To differentiate $u_t(\beta)^2$ with respect to $\beta$, we use the chain rule. The chain rule states that for a composite function $f(x) = g(h(x))$, the derivative is
+
+$$
+\frac{\mathrm{d} f}{\mathrm{d} x} = g'(h(x)) \cdot h'(x).
+$$
+
+In our case, the outer function is $g(u) = u^2$ and the inner function is $h(\beta) = u_t(\beta) = y_{1t} - \bar{y}_{0t} - \beta$.
+
+Differentiating the outer function with respect to $u$ gives
+
+$$
+g'(u) = 2u.
+$$
+
+Differentiating the inner function with respect to $\beta$ gives
+
+$$
+\frac{\mathrm{d} u_t}{\mathrm{d} \beta} = \frac{\mathrm{d}}{\mathrm{d} \beta} (y_{1t} - \bar{y}_{0t} - \beta) = 0 - 0 - 1 = -1.
+$$
+
+Applying the chain rule, we multiply these derivatives:
+
+$$
+\frac{\mathrm{d}}{\mathrm{d} \beta} u_t(\beta)^2 = 2 u_t(\beta) \cdot (-1) = -2 (y_{1t} - \bar{y}_{0t} - \beta).
+$$
+
+Finally, summing over all $t$:
+
+$$
+\frac{\mathrm{d} f}{\mathrm{d} \beta} = -2 \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta).
+$$
+
+Okay chain rule over! Now we can set the derivative equal to zero:
+
+$$
+-2\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta^\ast) = 0
+$$
+
+and solve. Divide both sides by $-2$ (which does not affect the equality):
+
+$$
+\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t} - \beta) = 0.
+$$
+
+Distribute the sum over subtraction:
+
+$$
+\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}) - \sum_{t=1}^{T_0} \beta = 0.
+$$
+
+$\beta$ does not depend on $t$. By linearity of summation, and since $\beta$ has no variable attatched to it, this is equivalent to doing $\sum_{t=1}^{T_0} \beta = \beta + \beta + \cdots + \beta = T_0 \beta.$ This gives us:
+
+$$
+\sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}) - T_0 \beta = 0.
+$$
+Rearrange to isolate $\beta$ by subtracting the first term:
+
+$$
+-T_0 \beta = - \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
+$$
+
+Now we both sides by $-1$:
+
+$$
+T_0 \beta = \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
+$$
+
+Finally, divide both sides by $T_0$:
+
+$$
+\beta^\ast = \frac{1}{T_0} \sum_{t=1}^{T_0} (y_{1t} - \bar{y}_{0t}).
+$$
+
+Thus, the optimal $\beta^\ast$ is simply the average pre-treatment difference between the treated unit and the control group.
+
+
+Of course, we never do this by hand, which is why we can fire up `cvxpy`. Using the classic Prop 99 dataset from my Github, we can do exactly this:
 
 
 ```{python}
@@ -503,9 +624,9 @@ plt.legend()
 plt.grid(True)
 plt.show()
 ```
-This plot is the in and out of sample predictions of the DID estimator. As we can see, it is just the donor pool mean, minus 14.35. The ATT is roughly -27, which Abadie and Co frame as an overstatment stamming from violation of the parallel pre-trends assumption.
+This plot is the in and out of sample predictions of the DID estimator. As we can see, it is just the donor pool mean, minus 14.35. The ATT, or the mean post-treatment difference between the treated unit's outcomes and the counterfactual, is roughly -27, which Abadie and Co frame as an overstatment stemming from violation of the parallel pre-trends assumption. I did not use any mathematical tricks, I simply used optimization to find the beta and then I used it to compute the counterfactual. Of course again, DID can be a lot more complicated, especially when you begin to account for staggered adoption, non-absorbing treatments, continuous treatments, potential violations to parallel trends, and so on and so forth.
 
-I did not use any mathematical tricks, I simply used optimization to find the beta and then I used it to compute the counterfactual. Of course again, DID can be a lot more complicated, especially when you begin to account for staggered adoption, non-absorbing treatments, continuous treatments, potential violations to parallel trends, and so on and so forth. The simple point being made here is that, at its core, DID assigns weights too! It just does not tell you about them. Other estimators, yes, even the ones I like, are not absolved of this either: sometimes, in fact, we can even modify the parallel pre-trends assumption to [something more flexible](https://mlsynth.readthedocs.io/en/latest/fdid.html). But it is sill a weighting estimator, nonetheless.
+The simple point being made here is that, at its core, DID assigns weights too! It just does not tell you about them. Other estimators, even the ones I program, are not absolved of this either: [Forward DID](https://mlsynth.readthedocs.io/en/latest/fdid.html) is beholden to the exact same weights, the only difference is that we choose a control group to use for the DID method.
 
 # SCM
 
@@ -566,14 +687,12 @@ Now, the key question is: what makes these weights so much different from the DI
 [Abadie](https://youtu.be/oDNaOpNK6G4?t=1701) has spoken about this idea before as well, that when he and his coauthors began to present this idea to other economists and statisticians, oftentimes they would ask “Well, why don’t you just run a regression,” or perhaps, why don’t you run a DID model? Sometimes, they would quip with them on the weights, saying “Japan should not matter as much as the SCM says.” Well, in the DID model or regression weights (depending on the donor pool size), sometimes units that we think should not matter, matter even more with the DID model.
 :::
 
-Now, I am not taking a position on the most accurate form of the weights, for reasons I have argued elsewhere. But it does trouble me to hear the remarks people sometimes make about DID versus SCM and their supposed differences. Some people [have argued](https://segmentstream.com/blog/articles/why-geo-lift-testing-falls-short-measure-true-ads-incrementality) that "this Synthetic Control and those Weights are the biggest problem of Geo-Lift tests." I have even heard some people say things such as this comment on LinkedIn, which argues:
+Now, I am not taking a position on the most accurate form of the weights, for reasons I have argued elsewhere. But it does trouble me to hear the remarks people sometimes make about DID versus SCM and their supposed differences. I have heard some people say things such as [this comment on LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7365393748484108288?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7365393748484108288%2C7365623440445198338%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287365623440445198338%2Curn%3Ali%3Aactivity%3A7365393748484108288%29), which argues:
 
-> No control unit be it real or synthetic will ever “perfectly” match your real or treated unit. The word perfect is misleading. In terms of hierarchy or propensity for accuracy, my order will be DiD > SCM. Yes, parallel trends is also a tough assumption to adhere to. But at least you have a real control unit and not a made up one. In terms of SCM we are two levels removed from reality.
+> One need not get into mathematical complexity to see why DiD or any method that has a real control group / unit will have higher propensity for accuracy than a method which does not have any real control group e.g. SCM.
 
-I agree on the perfect fit idea. Perfect pre-treatment fit is rare, and in practice is relegated to approximate pre-treatment fit. However, the words “real” and “synthetic” seem to be doing a lot of heavy lifting. Put another way, these weights are not a bug or an aberration; they are a feature of how we compute treatment effects and iROAS at all. Some seem to hear the word “synthetic” and think that the SCM weights themselves are a black box fabrication that is somehow less based in reality than DID’s weights or some other method. But as we’ve just gone over, there’s nothing particularly special about what is happening with DID. DID, as I’ve formulated it, simply imposes uniform weights over the donor pool with an intercept adjustment. The imposition of uniform weights, in other words, is completely and totally arbitrary. There’s nothing more real or less made up about DID’s artificial counterfactual than one we could obtain from SCM or even nearest neighbor matching.
-
-The main question, then, is what structure we as researchers should impose upon the weights, and when we should prefer one set of weights to another. In the case of an RCT, we trust randomization to give us unconfoundedness. In DID, we rely on the assumption of parallel trends. In SCM, we choose a combination of controls that best approximates the treated unit in the pre-intervention period. In the end, the weights that the econometrician believes to be the best representation of reality, by some criterion, are what determine the estimator we use.
+The words "real control group" are doing **a lot** of heavy lifting here. DID does not have "a real control group" any more than SCM does; the control group is a decision made by the econometrician at runtime, and they are not passed down from the heavens. In other words, the control group employed is a deisng decision, one which you must be prepared to made and defend. Beyond this, weights are a feature (not a bug) of how we compute treatment effects and iROAS. The SCM weights themselves are not a black box fabrication that is somehow less based in reality than DID’s weights or some other method, they're derived from an optimization problem. DID's imposition of uniform weights, if anyhting, is a prior of sorts that must be defended. There’s nothing more real/valid about DID’s uniform weights than those we could obtain from SCM or even nearest neighbor matching. The main question then, for the applied researcher, is what structure should impose upon the weights, and when we should prefer one set of weights to another. In the case of an RCT, we count on randomization to give us unconfoundedness. In DID, we rely on the assumption of parallel trends. In SCM, we choose a combination of controls that best approximates the treated unit in the pre-intervention period. In the end, the best weights are those whose identification assumptions can best be defended.
 
 # What Are We Weighting For?
 
-Therefore, to ask “what are we weighting for?” is to ask: what are the conditions under which our weighted control group is valid? All three designs are estimators that weight control outcomes to estimate the untreated potential outcome for the treated unit. The validity of the underlying econometric assumptions is what determines the answer to this question. But make no mistake about it: the assumptions that go into making a valid weighted control group are not locked in here with us, [we econometricians and data scientsts are locked in with them](https://www.imdb.com/title/tt0409459/characters/nm0355097/?item=qt0523428&ref_=ext_shr_lnk).
+Therefore, to ask "what are we weighting for?" is to ask: what are the conditions under which our weighted control group is valid? RCTs, DID, and SCM are estimators that weight control outcomes to estimate the untreated potential outcome for the treated unit. The validity of the underlying econometric assumptions is what determines the answer to this question. But make no mistake about it: the assumptions that go into making a valid weighted control group are not locked in here with us, [we econometricians and data scientsts are locked in with them](https://www.imdb.com/title/tt0409459/characters/nm0355097/?item=qt0523428&ref_=ext_shr_lnk).

@@ -136,17 +136,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This is the landing page for the mini-ecosystem <code>mlsynth</code>. In terms of the number of SCM estimators, it is the largest open source library that exists.</p>
+<p>This is the landing page for the mini-ecosystem <code>mlsynth</code>. In terms of the raw number of synthetic control estimators, it is the largest open source library that exists.</p>
 <p><strong>Contributors</strong>: Jared Greathouse</p>
 <p><strong>Status</strong>: Beta version released. Documentation and app are in active development.</p>
 <section id="philosophy" class="level2">
 <h2 class="anchored" data-anchor-id="philosophy">Philosophy</h2>
-<p>The mlsynth library implements machine learning based synthetic control estimators. It offers a convenient API, unlike other libraries which rely on numerous methods for plotting, weights, and estimation. Instead, mlsynth classes rely on a simple <code>.fit()</code> method to run any given estiamtor, where users may customize the options via a simple input dictionary.</p>
+<p>The mlsynth library implements machine learning–based synthetic control estimators. Unlike other libraries that require users to juggle separate methods for fitting, prediction, plotting, weights, etc., <code>mlsynth</code> simplifies everything into a single <code>.fit()</code> call. All estimator options are passed through a single configuration dictionary. This means you can switch between models within a class with almost no change in your code, or change classes at will. For example,</p>
+<div id="8dd03c6c" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward SCM, Forward Augmented SCM, and Forward Differnece-in-Differences</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM, FDID</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># base config</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward SCM</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> FSCM(config).fit()</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Augmented Forward SCM</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>config_aug <span class="op">=</span> <span class="bu">dict</span>(config)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>config_aug[<span class="st">"use_augmented"</span>] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>arco_aug <span class="op">=</span> FSCM(config_aug).fit()</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward Difference-in-Differences</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>fdid <span class="op">=</span> FDID(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>runs two different flavors of the <a href="https://mlsynth.readthedocs.io/en/latest/fscm.html">Forward Selected SCM</a> and <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">Forward DID</a>. Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary.</p>
 </section>
 <section id="github-repo" class="level2">
 <h2 class="anchored" data-anchor-id="github-repo">GitHub Repo</h2>
 <p>Here is the GitHub <a href="https://github.com/jgreathouse9/mlsynth">repo</a>. You may install mlsynth by doing</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>in your terminal.</p>
 </section>
 <section id="documentation" class="level2">

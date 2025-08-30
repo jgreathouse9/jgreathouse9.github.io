@@ -4,14 +4,14 @@
     "href": "mlsynthlanding.html",
     "title": "MLSYNTH",
     "section": "",
-    "text": "This is the landing page for the mini-ecosystem mlsynth. In terms of the number of SCM estimators, it is the largest open source library that exists.\nContributors: Jared Greathouse\nStatus: Beta version released. Documentation and app are in active development."
+    "text": "This is the landing page for the mini-ecosystem mlsynth. In terms of the raw number of synthetic control estimators, it is the largest open source library that exists.\nContributors: Jared Greathouse\nStatus: Beta version released. Documentation and app are in active development."
   },
   {
     "objectID": "mlsynthlanding.html#philosophy",
     "href": "mlsynthlanding.html#philosophy",
     "title": "MLSYNTH",
     "section": "Philosophy",
-    "text": "Philosophy\nThe mlsynth library implements machine learning based synthetic control estimators. It offers a convenient API, unlike other libraries which rely on numerous methods for plotting, weights, and estimation. Instead, mlsynth classes rely on a simple .fit() method to run any given estiamtor, where users may customize the options via a simple input dictionary."
+    "text": "Philosophy\nThe mlsynth library implements machine learning–based synthetic control estimators. Unlike other libraries that require users to juggle separate methods for fitting, prediction, plotting, weights, etc., mlsynth simplifies everything into a single .fit() call. All estimator options are passed through a single configuration dictionary. This means you can switch between models within a class with almost no change in your code, or change classes at will. For example,\n\n# Forward SCM, Forward Augmented SCM, and Forward Differnece-in-Differences\n\nimport pandas as pd\nfrom mlsynth import FSCM, FDID\n\nurl = \"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv\"\ndata = pd.read_csv(url)\n\n# base config\nconfig = {\n    \"df\": data,\n    \"outcome\": data.columns[2],\n    \"treat\": data.columns[-1],\n    \"unitid\": data.columns[0],\n    \"time\": data.columns[1],\n    \"display_graphs\": True,\n    \"save\": False,\n    \"counterfactual_color\": [\"red\"]\n}\n\n# Forward SCM\narco = FSCM(config).fit()\n\n# Augmented Forward SCM\nconfig_aug = dict(config)\nconfig_aug[\"use_augmented\"] = True\narco_aug = FSCM(config_aug).fit()\n\n# Forward Difference-in-Differences\nfdid = FDID(config).fit()\n\nruns two different flavors of the Forward Selected SCM and Forward DID. Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary."
   },
   {
     "objectID": "mlsynthlanding.html#github-repo",

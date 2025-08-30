@@ -11,7 +11,55 @@ This is the landing page for the mini-ecosystem `mlsynth`. In terms of the numbe
 
 ## Philosophy
 
-The mlsynth library implements machine learning based synthetic control estimators. It offers a convenient API, unlike other libraries which rely on numerous methods for plotting, weights, and estimation. Instead, mlsynth classes rely on a simple `.fit()` method to run any given estiamtor, where users may customize the options via a simple input dictionary.
+The mlsynth library implements machine learning based synthetic control estimators. It offers a convenient API, unlike other libraries which rely on numerous methods for plotting, weights, and estimation. Instead, mlsynth classes rely on a simple `.fit()` method to run any given estiamtor, where users may customize the options via a simple input dictionary. For example:
+
+
+```{python}
+#| eval: false
+
+# Forward SCM
+
+import pandas as pd
+from mlsynth import FSCM
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+data = pd.read_csv(url)
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"]}
+arco = FSCM(config).fit()
+```
+
+and
+
+```{python}
+#| eval: false
+
+# Augmented Forward SCM
+
+import pandas as pd
+from mlsynth import FSCM
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+data = pd.read_csv(url)
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"], "use_augmented": True}
+arco = FSCM(config).fit()
+```
+
+runs two different flavors of the Forward Selected SCM, with essentially zero change in the data expectations or input requirements beyond the change to a dictionary.
+
 
 ## GitHub Repo
 

@@ -11,54 +11,44 @@ This is the landing page for the mini-ecosystem `mlsynth`. In terms of the numbe
 
 ## Philosophy
 
-The mlsynth library implements machine learning based synthetic control estimators. It offers a convenient API, unlike other libraries which rely on numerous methods for plotting, weights, and estimation. Instead, mlsynth classes rely on a simple `.fit()` method to run any given estiamtor, where users may customize the options via a simple input dictionary. For example:
-
+The mlsynth library implements machine learning–based synthetic control estimators. Unlike other libraries that require users to juggle separate methods for fitting, prediction, plotting, weights, etc., `mlsynth` simplifies everything into a single `.fit()` call. All estimator options are passed through a single configuration dictionary. This means you can switch between models within a class with almost no change in your code, or change classes at will. For example,
 
 ```{python}
 #| eval: false
+
+# Forward SCM, Forward Augmented SCM, and Forward Differnece-in-Differences
+
+import pandas as pd
+from mlsynth import FSCM, FDID
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
+data = pd.read_csv(url)
+
+# base config
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"]
+}
 
 # Forward SCM
-
-import pandas as pd
-from mlsynth import FSCM
-url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
-data = pd.read_csv(url)
-config = {
-    "df": data,
-    "outcome": data.columns[2],
-    "treat": data.columns[-1],
-    "unitid": data.columns[0],
-    "time": data.columns[1],
-    "display_graphs": True,
-    "save": False,
-    "counterfactual_color": ["red"]}
 arco = FSCM(config).fit()
-```
-
-and
-
-```{python}
-#| eval: false
 
 # Augmented Forward SCM
+config_aug = dict(config)
+config_aug["use_augmented"] = True
+arco_aug = FSCM(config_aug).fit()
 
-import pandas as pd
-from mlsynth import FSCM
-url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
-data = pd.read_csv(url)
-config = {
-    "df": data,
-    "outcome": data.columns[2],
-    "treat": data.columns[-1],
-    "unitid": data.columns[0],
-    "time": data.columns[1],
-    "display_graphs": True,
-    "save": False,
-    "counterfactual_color": ["red"], "use_augmented": True}
-arco = FSCM(config).fit()
+# Forward Difference-in-Differences
+fdid = FDID(config).fit()
 ```
 
-runs two different flavors of the Forward Selected SCM, with essentially zero change in the data expectations or input requirements beyond the change to a dictionary.
+runs two different flavors of the [Forward Selected SCM](https://mlsynth.readthedocs.io/en/latest/fscm.html) and [Forward DID](https://mlsynth.readthedocs.io/en/latest/fdid.html). Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary.
 
 
 ## GitHub Repo

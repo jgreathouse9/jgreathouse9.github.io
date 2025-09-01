@@ -141,8 +141,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Status</strong>: Beta version released. Documentation and app are in active development.</p>
 <section id="philosophy" class="level2">
 <h2 class="anchored" data-anchor-id="philosophy">Philosophy</h2>
-<p>The mlsynth library implements machine learning–based synthetic control estimators. Unlike other libraries that require users to juggle separate methods for fitting, prediction, plotting, weights, etc., <code>mlsynth</code> simplifies everything into a single <code>.fit()</code> call. All estimator options are passed through a single configuration dictionary. This means you can switch between models within a class with almost no change in your code, or change classes at will. For example,</p>
-<div id="8dd03c6c" class="cell" data-execution_count="1">
+<p>The <code>mlsynth</code> library implements machine learning–based synthetic control estimators with a focus on simplicity and flexibility. Unlike other libraries that require juggling multiple methods for data prep, fitting, prediction, and plotting, <code>mlsynth</code> streamlines everything into a single <code>.fit()</code> call. All estimator options are passed through a configuration dictionary, allowing you to switch between models or classes with minimal code changes. For example,</p>
+<div id="2d1f8712" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward SCM, Forward Augmented SCM, and Forward Differnece-in-Differences</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -174,7 +174,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Forward Difference-in-Differences</span></span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>fdid <span class="op">=</span> FDID(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>runs two different flavors of the <a href="https://mlsynth.readthedocs.io/en/latest/fscm.html">Forward Selected SCM</a> and <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">Forward DID</a>. Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary.</p>
+<p>runs two different flavors of the <a href="https://mlsynth.readthedocs.io/en/latest/fscm.html">Forward Selected SCM</a> and <a href="https://mlsynth.readthedocs.io/en/latest/fdid.html">Forward DID</a>.</p>
+<p>Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary. Each <code>.fit()</code> call returns a comprehensive <code>BaseEstimatorResults</code> object containing treatment effects, fit diagnostics (e.g., RMSE, R-squared), time-series data, and (where applicable) donor weights, ready for analysis or visualization.</p>
+<p><code>mlsynth</code> is also customizable too. For advanced users, <code>mlsynth</code>’s design has a submodule for each class, and each class has its own unique configuration dictionary. This mean that if you want to add your very own proprietary method, you need only add it to <a href="https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/config_models.py">the base models</a>, update the <a href="https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/__init__.py">init.py</a> locally/forked at your own repo, and take advantage of the existing helpers/utils to make a brand new method.</p>
 </section>
 <section id="github-repo" class="level2">
 <h2 class="anchored" data-anchor-id="github-repo">GitHub Repo</h2>

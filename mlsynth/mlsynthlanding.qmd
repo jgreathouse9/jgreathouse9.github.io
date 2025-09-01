@@ -11,7 +11,7 @@ This is the landing page for the mini-ecosystem `mlsynth`. In terms of the raw n
 
 ## Philosophy
 
-The mlsynth library implements machine learning–based synthetic control estimators. Unlike other libraries that require users to juggle separate methods for fitting, prediction, plotting, weights, etc., `mlsynth` simplifies everything into a single `.fit()` call. All estimator options are passed through a single configuration dictionary. This means you can switch between models within a class with almost no change in your code, or change classes at will. For example,
+The `mlsynth` library implements machine learning–based synthetic control estimators with a focus on simplicity and flexibility. Unlike other libraries that require juggling multiple methods for data prep, fitting, prediction, and plotting, `mlsynth` streamlines everything into a single `.fit()` call. All estimator options are passed through a configuration dictionary, allowing you to switch between models or classes with minimal code changes. For example,
 
 ```{python}
 #| eval: false
@@ -48,7 +48,12 @@ arco_aug = FSCM(config_aug).fit()
 fdid = FDID(config).fit()
 ```
 
-runs two different flavors of the [Forward Selected SCM](https://mlsynth.readthedocs.io/en/latest/fscm.html) and [Forward DID](https://mlsynth.readthedocs.io/en/latest/fdid.html). Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary.
+runs two different flavors of the [Forward Selected SCM](https://mlsynth.readthedocs.io/en/latest/fscm.html) and [Forward DID](https://mlsynth.readthedocs.io/en/latest/fdid.html).
+
+
+Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary. Each `.fit()` call returns a comprehensive `BaseEstimatorResults` object containing treatment effects, fit diagnostics (e.g., RMSE, R-squared), time-series data, and (where applicable) donor weights, ready for analysis or visualization.
+
+`mlsynth` is also customizable too. For advanced users, `mlsynth`’s design has a submodule for each class, and each class has its own unique configuration dictionary. This mean that if you want to add your very own proprietary method, you need only add it to [the base models](https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/config_models.py), update the [init.py](https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/__init__.py) locally/forked at your own repo, and take advantage of the existing helpers/utils to make a brand new method.
 
 
 ## GitHub Repo

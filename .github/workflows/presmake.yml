@@ -6,14 +6,14 @@ on:
       - master
     paths:
       - 'qprez/**'
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   render:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write  # Ensures the workflow can push changes
 
     steps:
     - name: Checkout the repository
@@ -34,7 +34,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
 
-    - name: List qprez folder and .qmd files
+    - name: List files in qprez
       run: |
         echo "Listing qprez directory structure:"
         if [ -d "qprez" ]; then
@@ -42,13 +42,19 @@ jobs:
         else
           echo "qprez folder not found"
         fi
-        echo "Listing .qmd files in qprez:"
-        find qprez -name "*.qmd" -print
 
     - name: Render all Quarto presentations
       run: |
         echo "Rendering all .qmd files in qprez/..."
-        quarto render qprez/
+        qmd_files=$(find qprez -name "*.qmd")
+        if [ -z "$qmd_files" ]; then
+          echo "No .qmd files found in qprez/"
+          exit 0
+        fi
+        for f in $qmd_files; do
+          echo "Rendering $f..."
+          quarto render "$f"
+        done
 
     - name: Set up Git configuration
       run: |
@@ -60,5 +66,5 @@ jobs:
         git fetch origin master
         git reset --soft origin/master
         git add -A
-        git commit -m "Rendered Quarto presentations" || echo "No changes to commit"
+        git commit -m "Rendered Quarto presentation" || echo "No changes to commit"
         git push origin master

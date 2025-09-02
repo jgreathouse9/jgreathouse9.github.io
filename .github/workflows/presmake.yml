@@ -6,14 +6,14 @@ on:
       - master
     paths:
       - 'qprez/**'
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:
 
 jobs:
   render:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Ensures the workflow can push changes
+      contents: write
 
     steps:
     - name: Checkout the repository
@@ -27,14 +27,14 @@ jobs:
     - name: Set up Quarto
       uses: quarto-dev/quarto-actions/setup@v2
       with:
-        version: "1.7.8"  # Specify the exact Quarto version
+        version: "1.7.8"
 
     - name: Install required Python packages
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
 
-    - name: List files in qprez
+    - name: List qprez folder and .qmd files
       run: |
         echo "Listing qprez directory structure:"
         if [ -d "qprez" ]; then
@@ -42,15 +42,13 @@ jobs:
         else
           echo "qprez folder not found"
         fi
+        echo "Listing .qmd files in qprez:"
+        find qprez -name "*.qmd" -print
 
-    - name: Render Quarto Presentation
+    - name: Render all Quarto presentations
       run: |
-        echo "Checking for .qmd files..."
-        if ls qprez/*.qmd 1> /dev/null 2>&1; then
-          quarto render qprez/*.qmd
-        else
-          echo "No .qmd files found in qprez/"
-        fi
+        echo "Rendering all .qmd files in qprez/..."
+        quarto render qprez/
 
     - name: Set up Git configuration
       run: |
@@ -59,8 +57,8 @@ jobs:
 
     - name: Commit and push rendered content
       run: |
-        git fetch origin master  # Fetch latest changes
-        git reset --soft origin/master  # Align local history with remote while keeping changes
+        git fetch origin master
+        git reset --soft origin/master
         git add -A
-        git commit -m "Rendered Quarto presentation" || echo "No changes to commit"
+        git commit -m "Rendered Quarto presentations" || echo "No changes to commit"
         git push origin master

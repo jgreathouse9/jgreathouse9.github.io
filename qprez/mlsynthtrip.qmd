@@ -1,0 +1,193 @@
+---
+title: "No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor"
+author: "Jared Greathouse"
+format: 
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+    
+    scrollable: true
+---
+
+::: {.panel-tabset}
+
+## Synthetic Controls
+
+SCMs are widely used in public policy and business analytics to measure the causal effect of interventions.
+
+However, many modern SCM advances are hard to use *in practice* due to fragmented or non-production-ready code.
+
+
+
+## Modern SCMs
+
+| Estimator                                                        | Public Code? | Language   | Production-Ready?               |
+| ---------------------------------------------------------------- | ------------ | ---------- | ------------------------------- |
+| [Forward DID](https://doi.org/10.1287/mksc.2022.0212)            | ✅          | R          | ❌ Free, but needs lots of user input. |
+| [Forward SCM](https://doi.org/10.1016/j.econlet.2024.111976)     | ⚠️ Limited   | Stata      | ❌ Not free, not streamlined    |
+| [Two-Step SCM](https://doi.org/10.1287/mnsc.2023.4878)           | ✅            | Matlab     | ❌ Not free, not streamlined   |
+| [Robust PCA Synth](https://academicworks.cuny.edu/gc_etds/4984/) | ❌            | R + Python | ❌ Need to know two softwares.              |
+
+:::
+
+
+---
+
+
+## Practical Problems
+
+Standard SCM packages often fail to:
+
+- Handle multiple modern estimators seamlessly.
+- Provide diagnostics or effect-size statistics automatically.
+- Allow easy comparison between methods.
+
+Ideally, we should have a simple, unified grammar:
+
+- Input: unit, time, treatment, outcome
+- Output: effect estimates + diagnostics
+- Minimal memorization of multiple functions
+
+
+---
+
+
+
+## Enter `mlsynth`
+
+In response to these difficulties, I developed `mlsynth`. `mlsynth` is
+
+- A lightweight Python package with many modern SCM estimators. Each class relies on a single grammar.
+
+- Many of these employ machine learning methodologies to select donor pools, deal with noisy outcomes, or adjust for contamination/spillover effects.
+
+---
+
+## Why use ``mlsynth``?
+
+- **For beginners**:  
+  - Simple, clear API  
+  - One syntax with many estimators  
+  - Employ various SCM designs "as is" without needing to switch to/learn softwares or reorganize data structures. 
+
+- **For developers**:  
+  - Easy to extend with custom estimators  
+  - Unified grammar means new models plug right in  
+  - Lower **technical debt** → faster experimentation  
+
+---
+
+## Empirical Example: [Barcelona Hotel Moratorium](https://doi.org/10.1080/13504851.2021.1927958)
+
+- Intervention: City-wide hotel moratorium
+- Outcome: Indexed hotel prices over time, derived from Booking.com
+- Donors: 83 cities (16 Mediterranean)
+- Pre-treatment period: 224 weeks (intervention began July 2015)
+- Objective: Compare multiple SCM approaches to estimate the causal effect
+- `mlsynth` allows this to be done seamlessly in Python in under 3 minutes
+
+
+---
+
+
+## Simple Syntax
+
+```{python}
+
+#| echo: true
+
+import pandas as pd
+from mlsynth import FSCM, CLUSTERSC, PDA
+
+url = "https://raw.githubusercontent.com/jgreathouse9/GSUmetricspolicy/refs/heads/main/data/RawData/hotelex.csv"
+data = pd.read_csv(url)
+# base config
+config = {
+    "df": data,
+    "outcome": "indexed_price",
+    "treat": "treat",
+    "unitid": "fullname",
+    "time": "time",
+    "display_graphs": False
+}
+
+arco = FSCM(config).fit()
+
+y_obs = arco.sub_method_results['FSCM'].time_series.observed_outcome
+y_FSCM = arco.sub_method_results['FSCM'].time_series.counterfactual_outcome
+
+T0 = arco.raw_results['Fit']['Pre-Periods'] # number of pre intervention periods
+
+
+config_pda = dict(config)
+config_pda["method"] = "l2"
+
+l2pda = PDA(config_pda).fit()
+
+y_l2relaxed = l2pda.time_series.model_extra['synthetic_outcome']
+
+config_RSC = dict(config)
+
+config_RSC["method"], config_RSC["cluster"]= "PCR", False
+
+PCR = CLUSTERSC(config_RSC).fit()
+
+
+y_PCR = PCR.sub_method_results['PCR'].time_series.counterfactual_outcome
+
+
+```
+
+## Plot of Predictions
+
+```{python}
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Flatten all arrays
+y_obs_flat = np.ravel(y_obs)
+y_FSCM_flat = np.ravel(y_FSCM)
+y_l2relaxed_flat = np.ravel(y_l2relaxed)
+y_PCR_flat = np.ravel(y_PCR)
+
+time_index = np.arange(len(y_obs_flat))
+
+plt.plot(time_index, y_obs_flat, label="Barcelona (Observed Unit)", color="black", linewidth=2)
+plt.plot(time_index, y_FSCM_flat, label="Forward SCM", color="blue")
+plt.plot(time_index, y_l2relaxed_flat, label="PDA L2", color="orange")
+plt.plot(time_index, y_PCR_flat, label="Robust SCM", color="red")
+
+# Mark treatment
+plt.axvline(x=T0, color="black", linestyle="--", label="Hotel Moratorium")
+
+plt.xlabel("Time")
+plt.ylabel("Indexed Price")
+plt.title("Comparison of SCM Estimators (mlsynth)")
+plt.legend()
+plt.show()
+
+```
+
+---
+
+# What ``mlsynth`` does differently
+
+As we can see, we were able to estimate the causal impact of Barcelona's hotel moratorium using 3 different approaches in under two minutes, not hours. 
+
+Barring changes to the base dictionary call, there is a single general grammar across all classes, allowing us to switch between estimators very quickly without needing to learn a new syntax structure.
+
+- Now, if you wish to compare and contrast these methods against one another or even model average them together, this task is readily accomplished.
+
+---
+
+## Key Takeaways
+
+* `mlsynth` substantially removes barriers to access modern SCMs.
+* Unified grammar = faster, cleaner workflows.
+* All estimators are **Python-native & production-ready**.
+* Extensible design makes adding new estimators trivial. We could just as easily add a new Bayesian estimator or some other newer method without interfering with the other classes.
+
+With `mlsynth` there are no layovers: you need not wait around for your team to learn `R` or dig up old `MATLAB` notes to then, maybe, be able to use it. Therefore, you will have no reservations about using it for impact analysis. You may estimate counterfactuals with confidence.

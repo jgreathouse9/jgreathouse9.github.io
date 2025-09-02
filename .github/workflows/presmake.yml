@@ -34,9 +34,23 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
 
+    - name: List files in qprez
+      run: |
+        echo "Listing qprez directory structure:"
+        if [ -d "qprez" ]; then
+          find qprez -type f -print
+        else
+          echo "qprez folder not found"
+        fi
+
     - name: Render Quarto Presentation
       run: |
-        quarto render qprez/*.qmd  # Render the .qmd file(s) in the qprez folder
+        echo "Checking for .qmd files..."
+        if ls qprez/*.qmd 1> /dev/null 2>&1; then
+          quarto render qprez/*.qmd
+        else
+          echo "No .qmd files found in qprez/"
+        fi
 
     - name: Set up Git configuration
       run: |

@@ -1,5 +1,6 @@
 ---
-title: "No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor Using [mlsynth](https://jgreathouse9.github.io/mlsynth/webdir/mlsynthlanding.html)"
+title: "No Layovers, No Reservations"
+subtitle: "Productionizing Synthetic Controls for Tripadvisor Using [mlsynth](https://jgreathouse9.github.io/mlsynth/webdir/mlsynthlanding.html)"
 author:
   - name: "Jared Greathouse"
     url: "https://jgreathouse9.github.io"
@@ -17,27 +18,24 @@ highlight-style: github
 
 ## Executive Summary
 
-- **The problem**: Synthetic Control Methods (SCMs) are critical for Tripadvisor’s geo-testing and policy evaluation but their deployment into production is slowed by technical debt:
-  - Fragmented libraries across R or Python and
-  - Inconsistent syntax and manual processes mean
-  - Using SCM is not production-ready for scalable workflows.
+- **The problem**: SCMs are essential for geo-testing and policy analysis, but current tools are fragmented and hard to automate.
 
-- **The solution**: `mlsynth` — a lightweight Python library unifying over 20 SCMs with one singular syntax. With `mlsynth`, analysts may plug and play different SCMs quicker than they could with any other open source package.
+- **The solution**: `mlsynth` — a lightweight Python library that unifies 20+ SCMs behind one API and runs cleanly in CI/CD.
 
 - **The impact**:
-  - Analysts using `mlsynth` may estimate multiple SCMs in a few minutes with no change to their data and small changes to syntax.
-  - Seamlessly integrate `mlsynth` into CI/CD pipelines for automated geo-testing
-  - Therefore, insights for ad campaigns and tourism policies are delivered faster.
+  - Multi-method estimates in minutes (minimal learning curve)
+  - Automated geo-tests via GitHub Actions
+  - Faster, reproducible insights for ad campaigns and policy
 
-- **Tripadvisor benefit**: Transition from R to Python, aligning with your team's expertise and production needs.
+- **Tripadvisor benefit**: Python-first workflows that match team skills and production needs.
 
 ---
 
-::: {.panel-tabset}
-
 ## What Are SCMs?
 
-Synthetic Control Methods (SCMs) estimate causal effects by creating a weighted average of untreated units, ideal for:
+Synthetic Control Methods (SCMs)estimate *what would have happened* without the intervention by building a counterfactual from similar markets.SCMs estimate counterfacutals by creating a weighted average of untreated units.
+
+SCMs are ideal for:
 
 - Geo-testing ad campaigns across markets
 
@@ -54,16 +52,6 @@ The econometrics literature in recent years has seen a variety of SCM advances. 
 - The first cost is purely software: not all SCMs are offered in one software. Furthermore, not all software is free.
 
 - This makes it difficult to test different SCMs in a pipeline, especially given that other existing libraries (e.g., `pysoncon`, `tidysynth`, `augsynth`) differ in terms of data input expectations, options, and dependencies.
-
-
-| Estimator | Language | Challenges |
-|-----------|----------|------------|
-| [Forward DID](https://doi.org/10.1287/mksc.2022.0212) | R | Free, but requires extensive user input |
-| [Forward SCM](https://doi.org/10.1016/j.econlet.2024.111976) | Stata | Not free, not streamlined |
-| [Two-Step SCM](https://doi.org/10.1287/mnsc.2023.4878) | Matlab | Not free, not streamlined |
-| [Robust PCA Synth](https://academicworks.cuny.edu/gc_etds/4984/) | R + Python | Requires two languages |
-
-:::
 
 ---
 
@@ -133,7 +121,7 @@ A streamlined SCM workflow for Tripadvisor should include:
 
 ## Using `mlsynth`
 
-This chart shows the hotel building moratorium increased the prices of hotel rooms by ~12%.
+Here are the findings from three models.
 
 ```{python}
 
@@ -253,9 +241,9 @@ fig.show()
 ::: column
 ### Before (Ad-Hoc R/Python Workflows)
 
-- Hard to automate (GitHub Actions)  
-- Fragile dependencies/differing syntaxes inherent to different libraries
-- Limited variety of SCMs to use
+- ❌ Hard to automate (GitHub Actions)  
+- ❌ Fragile dependencies/differing syntaxes inherent to different libraries
+- ❌ Limited variety of SCMs to use
 
 :::
 
@@ -263,9 +251,9 @@ fig.show()
 
 ### After (mlsynth in Python)
 
-- Easy automation in Python (CI/CD ready)  
-- One consistent syntax
-- Numerous, reproducible, production-ready methods
+- ✅ Easy automation in Python (CI/CD ready)  
+- ✅ One consistent syntax
+- ✅ Numerous, reproducible, production-ready methods
 
 :::
 :::
@@ -294,7 +282,17 @@ Partner with **Jared Greathouse** to:
 :::
 
 :::
-## Appendix
+## Appendix, Page 1
+
+| Estimator | Language | Challenges |
+|-----------|----------|------------|
+| [Forward DID](https://doi.org/10.1287/mksc.2022.0212) | R | Free, but requires extensive user input |
+| [Forward SCM](https://doi.org/10.1016/j.econlet.2024.111976) | Stata | Not free, not streamlined |
+| [Two-Step SCM](https://doi.org/10.1287/mnsc.2023.4878) | Matlab | Not free, not streamlined |
+| [Robust PCA Synth](https://academicworks.cuny.edu/gc_etds/4984/) | R + Python | Requires two languages |
+
+
+## Appendix, Page 2
 
 This is the code used to produce the plot.
 

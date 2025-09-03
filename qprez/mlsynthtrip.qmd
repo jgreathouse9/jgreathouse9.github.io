@@ -147,7 +147,7 @@ config = {
 # Fit Forward SCM
 arco = FSCM(config).fit()
 y_obs = arco.sub_method_results['FSCM'].time_series.observed_outcome
-y_FSCM = arco.sub_method_results['FSCM'].time_series.counterfactual_outcome
+y_FSCM = arco.sub_method_results['FSCM'].time_series.counterfactual_outcome.flatten()
 T0 = arco.raw_results['Fit']['Pre-Periods']
 
 # Fit PDA (L2 method)
@@ -160,7 +160,7 @@ y_l2relaxed = l2pda.time_series.model_extra['synthetic_outcome']
 config_RSC = dict(config)
 config_RSC["method"], config_RSC["cluster"] = "PCR", False
 RSC = CLUSTERSC(config_RSC).fit()
-y_RSC = RSC.sub_method_results['PCR'].time_series.counterfactual_outcome
+y_RSC = RSC.sub_method_results['PCR'].time_series.counterfactual_outcome.flatten()
 ```
 
 **Tripadvisor benefit**: Automate this pipeline for geo-testing or policy analysis.
@@ -172,8 +172,6 @@ y_RSC = RSC.sub_method_results['PCR'].time_series.counterfactual_outcome
 This chart compares Barcelona’s observed hotel prices to three SCM counterfactuals, highlighting the moratorium’s ~12% price increase.
 
 ```{python}
-
-import plotly.graph_objects as go
 
 # Create Plotly figure
 fig = go.Figure()
@@ -189,22 +187,22 @@ fig.add_trace(go.Scatter(
 
 # Add counterfactuals
 fig.add_trace(go.Scatter(
-    x=list(range(len(y_obs))),
+    x=list(range(len(y_FSCM))),
     y=y_FSCM,
     mode='lines',
     name='Forward SCM',
     line=dict(color='#1E90FF', width=1.5)
 ))
 fig.add_trace(go.Scatter(
-    x=list(range(len(y_obs))),
+    x=list(range(len(y_l2relaxed))),
     y=y_l2relaxed,
     mode='lines',
     name='PDA L2',
     line=dict(color='#FFA500', width=1.5)
 ))
 fig.add_trace(go.Scatter(
-    x=list(range(len(y_obs))),
-    y=y_RSC,
+    x=list(range(len(y_PCR))),
+    y=y_PCR,
     mode='lines',
     name='Robust SCM',
     line=dict(color='#FF4500', width=1.5)
@@ -221,7 +219,7 @@ fig.add_vline(
 
 # Update layout
 fig.update_layout(
-    title="mlsynth Estimates of Barcelona Hotel Prices",
+    title="mlsynth Estimates of Moratorium's Impact on Barcelona Hotel Prices",
     title_font_size=18,
     xaxis_title="Time (Weeks)",
     yaxis_title="Indexed Price",
@@ -234,7 +232,6 @@ fig.update_layout(
 
 # Show plot
 fig.show()
-
 
 
 ```

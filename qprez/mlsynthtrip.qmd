@@ -14,14 +14,18 @@ format:
 highlight-style: github
 ---
 
+*Python-native, production-ready causal inference methods for policy and business impact analysis*
+
 
 ::: {.panel-tabset}
 
 ## Synthetic Control Methods
 
-SCMs are widely used in public policy and business analytics to measure the causal effect of laws or marketing interventions. However, many modern SCMs are *practically* hard to use due to technical debt.
+SCMs are widely used to measure the causal effect of public policy changes or marketing interventions. However, many modern SCMs are *practically* hard to use due to technical debt.
 
 ## Examples
+
+Many new and useful SCM methods have serious adoption barriers — different languages, different syntax, and not production-ready.
 
 | Estimator                                                        | Public Code? | Language   | Production-Ready?               |
 | ---------------------------------------------------------------- | ------------ | ---------- | ------------------------------- |
@@ -30,63 +34,71 @@ SCMs are widely used in public policy and business analytics to measure the caus
 | [Two-Step SCM](https://doi.org/10.1287/mnsc.2023.4878)           | ✅            | Matlab     | ❌ Not free, not streamlined   |
 | [Robust PCA Synth](https://academicworks.cuny.edu/gc_etds/4984/) | ❌            | R + Python | ❌ Need to know two softwares.              |
 
+
+
 :::
 
 
 ---
 
-
 ## Practical Problems
 
 Standard SCM packages often fail to:
 
-- Handle multiple estimators seamlessly.
-- Provide diagnostics or effect-size statistics automatically.
-- Allow easy comparison between methods.
+- Handle multiple methods seamlessly
+- Provide diagnostics or effect-size statistics automatically
+- Allow easy comparison between methods
+
+**Impact:** These barriers slow down analysis, create bottlenecks for decision-making, and increase costs of adoption.
 
 Ideally, we should have a simple, unified grammar:
 
 - Input: long `pandas.DataFrame`, with one column for the unit (string), time, treatment (dummy variable =1 if and when a unit is treated), outcome
 - Output: effect estimates + diagnostics
-- One `fit()` method.
+- One `.fit()` method.
 
 
 ---
 
+## Traveling Lightly: Enter `mlsynth`
 
+In response to these constraints, I developed `mlsynth`. 
 
-## Enter `mlsynth`
-
-In response to these difficulties, I developed `mlsynth`. `mlsynth` is
-
-- A lightweight Python package with many machine learning based SCM estimators. Each class relies on a single grammar.
-
+- A lightweight Python library with many machine learning based SCMs. Each class relies on a single grammar.
 - Easily integrated into Github Actions or other CI/CD workflows.
+
+**Result:** Analysts can focus on insights, not software logistics.
 
 ---
 
 ## Why use `mlsynth`?
 
-- **For beginners**:  
-  - Simple, clear API  
-  - One base syntax with many estimators  
-  - Employ various SCM designs "as is" without needing to switch to/learn softwares or reorganize data structures. 
+- **For teams:**  
+  - Quick onboarding  
+  - One consistent syntax across methods  
+  - No need to learn R, Stata, or Matlab  
 
-- **For developers**:  
-  - Easy to extend with custom estimators 
+- **For organizations:**  
+  - Production-ready workflows  
+  - Seamless integration with CI/CD pipelines  
+  - Lower technical debt, faster iteration  
 
-  - Lower technical debt means faster experimentation with different models.
+- **For analysts:**  
+  - Extensible, transparent design  
+  - Easy to add new estimators without rewriting pipelines  
+
 
 ---
 
 ## Empirical Example: [Barcelona Hotel Moratorium](https://doi.org/10.1080/13504851.2021.1927958)
 
-- Intervention: City-wide hotel building moratorium
-- Outcome: Normalized hotel prices over time, derived from Booking.com
-- Donors: 83 cities (16 Mediterranean)
-- Pre-treatment period: 224 weeks (2011 Week 1, intervention began July 2015)
-- Objective: Compare multiple SCM approaches to estimate the causal effect
-- `mlsynth` allows this to be done seamlessly in Python in under 3 minutes and in under 30 lines of code
+- **Intervention:** City-wide hotel building moratorium  
+- **Outcome:** Normalized hotel prices over time, derived from Booking.com  
+- **Donors:** 83 cities (16 Mediterranean)  
+- **Pre-treatment period:** 224 weeks (2011 Week 1–2015 July)  
+- **Objective:** Compare multiple SCM approaches to estimate the causal effect  
+
+**With `mlsynth`:** Accomplished seamlessly in under 3 minutes and <30 lines of code.
 
 
 ---
@@ -142,6 +154,8 @@ y_PCR = PCR.sub_method_results['PCR'].time_series.counterfactual_outcome
 
 ## Plot of Predictions
 
+This plot shows the observed series for Barcelona alongside three counterfactual estimates.
+
 ```{python}
 
 
@@ -172,21 +186,23 @@ plt.show()
 
 ```
 
-# What `mlsynth` does differently
+## Why `mlsynth` is different
 
-We were able to estimate the causal impact of Barcelona's hotel moratorium using 3 different approaches in under two minutes, not hours. 
+We estimated the causal impact of Barcelona's hotel moratorium using three different methods with under 50 lines of code.  
 
-Barring changes to the base dictionary call, `mlsynth`'s common base syntax allows us to switch between estimators without needing to learn a new syntax structure.
+- Common syntax allows switching SCMs without retraining analysts  
+- Counterfactual estimates can be compared, averaged, or extended with minimal effort  
+- Entirely Python-native, no cross-language dependency  
 
-- Now, if you wish to compare and contrast these methods against one another or even model average them together, this task is readily accomplished.
+**In short:** Faster, more reliable causal analysis with dramatically lower overhead.
 
 ---
 
 ## Key Takeaways
 
-* `mlsynth` substantially removes barriers to access modern SCMs.
-* Unified grammar = faster, cleaner workflows.
-* All estimators are **Python-native & production-ready**.
-* Extensible design makes adding new estimators trivial. We could just as easily add a new Bayesian estimator or some other newer method without interfering with the other classes.
+- `mlsynth` removes major barriers to using modern SCMs  
+- Unified grammar = faster, cleaner workflows  
+- All methods are Python-native and production-ready  
+- Extensible design supports rapid experimentation  
 
-With `mlsynth` there are no layovers: you need not wait around for your team to learn `R` or dig up old `MATLAB` notes to then, maybe, be able to use it. Therefore, you will have no reservations about using it for impact analysis. You may estimate counterfactuals with confidence.
+**Bottom line:** `mlsynth` delivers causal insights faster, with fewer resources, and without the delays of switching tools or languages.  

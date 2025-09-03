@@ -173,36 +173,69 @@ y_RSC = RSC.sub_method_results['PCR'].time_series.counterfactual_outcome
 This chart compares Barcelona’s observed hotel prices to three SCM counterfactuals, highlighting the moratorium’s ~12% price increase.
 
 ```{python}
-import matplotlib.pyplot as plt
-import numpy as np
 
-# Flatten arrays (as in your original code)
-y_obs_flat = np.ravel(y_obs)
-y_FSCM_flat = np.ravel(y_FSCM)
-y_l2relaxed_flat = np.ravel(y_l2relaxed)
-y_PCR_flat = np.ravel(y_RSC)
-time_index = np.arange(len(y_obs_flat))
+# Create Plotly figure
+fig = go.Figure()
 
-# Create enhanced plot
-plt.figure(figsize=(10, 6))
-plt.plot(time_index, y_obs_flat, label="Barcelona (Observed)", color="#000000", linewidth=2.5)
-plt.plot(time_index, y_FSCM_flat, label="Forward SCM", color="#1E90FF", linewidth=1.5)
-plt.plot(time_index, y_l2relaxed_flat, label="PDA L2", color="#FFA500", linewidth=1.5)
-plt.plot(time_index, y_PCR_flat, label="Robust SCM", color="#FF4500", linewidth=1.5)
+# Add observed prices
+fig.add_trace(go.Scatter(
+    x=list(range(len(y_obs))),
+    y=y_obs,
+    mode='lines',
+    name='Barcelona (Observed)',
+    line=dict(color='#000000', width=2.5)
+))
 
-# Mark treatment
-plt.axvline(x=T0, color="#000000", linestyle="--", label="Hotel Moratorium", linewidth=1.5)
-plt.text(T0 + 2, max(y_obs_flat) * 0.95, "Moratorium (~12% Increase)", fontsize=10, color="#000000")
+# Add counterfactuals
+fig.add_trace(go.Scatter(
+    x=list(range(len(y_obs))),
+    y=y_FSCM,
+    mode='lines',
+    name='Forward SCM',
+    line=dict(color='#1E90FF', width=1.5)
+))
+fig.add_trace(go.Scatter(
+    x=list(range(len(y_obs))),
+    y=y_l2relaxed,
+    mode='lines',
+    name='PDA L2',
+    line=dict(color='#FFA500', width=1.5)
+))
+fig.add_trace(go.Scatter(
+    x=list(range(len(y_obs))),
+    y=y_PCR,
+    mode='lines',
+    name='Robust SCM',
+    line=dict(color='#FF4500', width=1.5)
+))
 
-# Styling
-plt.xlabel("Time (Weeks)", fontsize=12)
-plt.ylabel("Indexed Price", fontsize=12)
-plt.title("SCM Estimates of Barcelona Hotel Prices (mlsynth)", fontsize=14, pad=10)
-plt.legend(fontsize=10, loc="upper left")
-plt.grid(True, linestyle="--", alpha=0.7)
-plt.tight_layout()
+# Add treatment line
+fig.add_vline(
+    x=T0,
+    line=dict(color='#000000', width=2, dash='dash'),
+    annotation_text="Hotel Moratorium (~10% Increase)",
+    annotation_position="top left",
+    annotation=dict(font_size=12)
+)
 
-plt.show()
+# Update layout
+fig.update_layout(
+    title="mlsynth Estimates of Barcelona Hotel Prices",
+    title_font_size=18,
+    xaxis_title="Time (Weeks)",
+    yaxis_title="Indexed Price",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    template="plotly_white",
+    showlegend=True,
+    margin=dict(t=100),
+    font=dict(size=12)
+)
+
+# Show plot
+fig.show()
+
+
+
 ```
 
 ---

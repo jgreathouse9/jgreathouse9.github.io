@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="mlsynthtrip_files/libs/clipboard/clipboard.min.js"></script>
+<script src="mlsynthtrip_files/libs/quarto-html/tabby.min.js"></script>
+<script src="mlsynthtrip_files/libs/quarto-html/popper.min.js"></script>
+<script src="mlsynthtrip_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="mlsynthtrip_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="mlsynthtrip_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="mlsynthtrip_files/libs/quarto-html/quarto-syntax-highlighting-fae04a4dda57acfb7da1e58796bfa73f.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.7.8">
+
+  <meta name="author" content="Jared Greathouse">
+  <title>No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="mlsynthtrip_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="mlsynthtrip_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="mlsynthtrip_files/libs/revealjs/dist/theme/quarto-423d414d36ce366a9d05f36d06304417.css">
+  <link href="mlsynthtrip_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="mlsynthtrip_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="mlsynthtrip_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="mlsynthtrip_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Jared Greathouse 
+</div>
+</div>
+</div>
+
+</section>
+<section class="slide level2">
+
+<div class="panel-tabset">
+<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Synthetic Control Methods</a></li><li><a href="#tabset-1-2">Modern SCMs</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1">
+<p>SCMs are widely used in public policy and business analytics to measure the causal effect of laws or marketing interventions.</p>
+<p>However, many modern SCMs are practical hard to use due to non-production-ready code.</p>
+</div>
+<div id="tabset-1-2">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Estimator</th>
+<th>Public Code?</th>
+<th>Language</th>
+<th>Production-Ready?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://doi.org/10.1287/mksc.2022.0212">Forward DID</a></td>
+<td>✅</td>
+<td>R</td>
+<td>❌ Free, but needs lots of user input.</td>
+</tr>
+<tr class="even">
+<td><a href="https://doi.org/10.1016/j.econlet.2024.111976">Forward SCM</a></td>
+<td>⚠️ Limited</td>
+<td>Stata</td>
+<td>❌ Not free, not streamlined</td>
+</tr>
+<tr class="odd">
+<td><a href="https://doi.org/10.1287/mnsc.2023.4878">Two-Step SCM</a></td>
+<td>✅</td>
+<td>Matlab</td>
+<td>❌ Not free, not streamlined</td>
+</tr>
+<tr class="even">
+<td><a href="https://academicworks.cuny.edu/gc_etds/4984/">Robust PCA Synth</a></td>
+<td>❌</td>
+<td>R + Python</td>
+<td>❌ Need to know two softwares.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="practical-problems" class="slide level2">
+<h2>Practical Problems</h2>
+<p>Standard SCM packages often fail to:</p>
+<ul>
+<li>Handle multiple modern estimators seamlessly.</li>
+<li>Provide diagnostics or effect-size statistics automatically.</li>
+<li>Allow easy comparison between methods.</li>
+</ul>
+<p>Ideally, we should have a simple, unified grammar:</p>
+<ul>
+<li>Input: unit, time, treatment, outcome</li>
+<li>Output: effect estimates + diagnostics</li>
+<li>Minimal memorization of multiple functions</li>
+</ul>
+</section>
+<section id="enter-mlsynth" class="slide level2">
+<h2>Enter <code>mlsynth</code></h2>
+<p>In response to these difficulties, I developed <code>mlsynth</code>. <code>mlsynth</code> is</p>
+<ul>
+<li><p>A lightweight Python package with many modern SCM estimators. Each class relies on a single grammar.</p></li>
+<li><p>Many of these employ machine learning methodologies to select donor pools, deal with noisy outcomes, or adjust for contamination/spillover effects.</p></li>
+</ul>
+</section>
+<section id="why-use-mlsynth" class="slide level2">
+<h2>Why use <code>mlsynth</code>?</h2>
+<ul>
+<li><strong>For beginners</strong>:
+<ul>
+<li>Simple, clear API<br>
+</li>
+<li>One syntax with many estimators<br>
+</li>
+<li>Employ various SCM designs “as is” without needing to switch to/learn softwares or reorganize data structures.</li>
+</ul></li>
+<li><strong>For developers</strong>:
+<ul>
+<li>Easy to extend with custom estimators<br>
+</li>
+<li>Unified grammar means new models plug right in<br>
+</li>
+<li>Lower <strong>technical debt</strong> → faster experimentation</li>
+</ul></li>
+</ul>
+</section>
+<section id="empirical-example-barcelona-hotel-moratorium" class="slide level2">
+<h2>Empirical Example: <a href="https://doi.org/10.1080/13504851.2021.1927958">Barcelona Hotel Moratorium</a></h2>
+<ul>
+<li>Intervention: City-wide hotel moratorium</li>
+<li>Outcome: Indexed hotel prices over time, derived from Booking.com</li>
+<li>Donors: 83 cities (16 Mediterranean)</li>
+<li>Pre-treatment period: 224 weeks (intervention began July 2015)</li>
+<li>Objective: Compare multiple SCM approaches to estimate the causal effect</li>
+<li><code>mlsynth</code> allows this to be done seamlessly in Python in under 3 minutes</li>
+</ul>
+</section>
+<section id="simple-syntax" class="slide level2">
+<h2>Simple Syntax</h2>
+<div id="c3e39615" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM, CLUSTERSC, PDA</span>
+<span id="cb1-3"><a href=""></a></span>
+<span id="cb1-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/GSUmetricspolicy/refs/heads/main/data/RawData/hotelex.csv"</span></span>
+<span id="cb1-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb1-6"><a href=""></a><span class="co"># base config</span></span>
+<span id="cb1-7"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb1-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb1-9"><a href=""></a>    <span class="st">"outcome"</span>: <span class="st">"indexed_price"</span>,</span>
+<span id="cb1-10"><a href=""></a>    <span class="st">"treat"</span>: <span class="st">"treat"</span>,</span>
+<span id="cb1-11"><a href=""></a>    <span class="st">"unitid"</span>: <span class="st">"fullname"</span>,</span>
+<span id="cb1-12"><a href=""></a>    <span class="st">"time"</span>: <span class="st">"time"</span>,</span>
+<span id="cb1-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span></span>
+<span id="cb1-14"><a href=""></a>}</span>
+<span id="cb1-15"><a href=""></a></span>
+<span id="cb1-16"><a href=""></a>arco <span class="op">=</span> FSCM(config).fit()</span>
+<span id="cb1-17"><a href=""></a></span>
+<span id="cb1-18"><a href=""></a>y_obs <span class="op">=</span> arco.sub_method_results[<span class="st">'FSCM'</span>].time_series.observed_outcome</span>
+<span id="cb1-19"><a href=""></a>y_FSCM <span class="op">=</span> arco.sub_method_results[<span class="st">'FSCM'</span>].time_series.counterfactual_outcome</span>
+<span id="cb1-20"><a href=""></a></span>
+<span id="cb1-21"><a href=""></a>T0 <span class="op">=</span> arco.raw_results[<span class="st">'Fit'</span>][<span class="st">'Pre-Periods'</span>] <span class="co"># number of pre intervention periods</span></span>
+<span id="cb1-22"><a href=""></a></span>
+<span id="cb1-23"><a href=""></a></span>
+<span id="cb1-24"><a href=""></a>config_pda <span class="op">=</span> <span class="bu">dict</span>(config)</span>
+<span id="cb1-25"><a href=""></a>config_pda[<span class="st">"method"</span>] <span class="op">=</span> <span class="st">"l2"</span></span>
+<span id="cb1-26"><a href=""></a></span>
+<span id="cb1-27"><a href=""></a>l2pda <span class="op">=</span> PDA(config_pda).fit()</span>
+<span id="cb1-28"><a href=""></a></span>
+<span id="cb1-29"><a href=""></a>y_l2relaxed <span class="op">=</span> l2pda.time_series.model_extra[<span class="st">'synthetic_outcome'</span>]</span>
+<span id="cb1-30"><a href=""></a></span>
+<span id="cb1-31"><a href=""></a>config_RSC <span class="op">=</span> <span class="bu">dict</span>(config)</span>
+<span id="cb1-32"><a href=""></a></span>
+<span id="cb1-33"><a href=""></a>config_RSC[<span class="st">"method"</span>], config_RSC[<span class="st">"cluster"</span>]<span class="op">=</span> <span class="st">"PCR"</span>, <span class="va">False</span></span>
+<span id="cb1-34"><a href=""></a></span>
+<span id="cb1-35"><a href=""></a>PCR <span class="op">=</span> CLUSTERSC(config_RSC).fit()</span>
+<span id="cb1-36"><a href=""></a></span>
+<span id="cb1-37"><a href=""></a></span>
+<span id="cb1-38"><a href=""></a>y_PCR <span class="op">=</span> PCR.sub_method_results[<span class="st">'PCR'</span>].time_series.counterfactual_outcome</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="plot-of-predictions" class="slide level2">
+<h2>Plot of Predictions</h2>
+<div id="6ea6c97c" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="mlsynthtrip_files/figure-revealjs/cell-3-output-1.png" width="816" height="449"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section class="slide level2">
+
+</section>
+<section>
+<section id="what-mlsynth-does-differently" class="title-slide slide level1 center">
+<h1>What <code>mlsynth</code> does differently</h1>
+<p>As we can see, we were able to estimate the causal impact of Barcelona’s hotel moratorium using 3 different approaches in under two minutes, not hours.</p>
+<p>Barring changes to the base dictionary call, there is a single general grammar across all classes, allowing us to switch between estimators very quickly without needing to learn a new syntax structure.</p>
+<ul>
+<li>Now, if you wish to compare and contrast these methods against one another or even model average them together, this task is readily accomplished.</li>
+</ul>
+</section>
+<section id="key-takeaways" class="slide level2">
+<h2>Key Takeaways</h2>
+<ul>
+<li><code>mlsynth</code> substantially removes barriers to access modern SCMs.</li>
+<li>Unified grammar = faster, cleaner workflows.</li>
+<li>All estimators are <strong>Python-native &amp; production-ready</strong>.</li>
+<li>Extensible design makes adding new estimators trivial. We could just as easily add a new Bayesian estimator or some other newer method without interfering with the other classes.</li>
+</ul>
+<p>With <code>mlsynth</code> there are no layovers: you need not wait around for your team to learn <code>R</code> or dig up old <code>MATLAB</code> notes to then, maybe, be able to use it. Therefore, you will have no reservations about using it for impact analysis. You may estimate counterfactuals with confidence.</p>
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="mlsynthtrip_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="mlsynthtrip_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      }
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      }
+      toggleBodyColorPrimary();  
+      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+      tabsets.forEach(function(tabset) {
+        const tabby = new Tabby('#' + tabset.id);
+      });
+      const isCodeAnnotation = (el) => {
+        for (const clz of el.classList) {
+          if (clz.startsWith('code-annotation-')) {                     
+            return true;
+          }
+        }
+        return false;
+      }
+      const onCopySuccess = function(e) {
+        // button target
+        const button = e.trigger;
+        // don't keep focus
+        button.blur();
+        // flash "checked"
+        button.classList.add('code-copy-button-checked');
+        var currentTitle = button.getAttribute("title");
+        button.setAttribute("title", "Copied!");
+        let tooltip;
+        if (window.bootstrap) {
+          button.setAttribute("data-bs-toggle", "tooltip");
+          button.setAttribute("data-bs-placement", "left");
+          button.setAttribute("data-bs-title", "Copied!");
+          tooltip = new bootstrap.Tooltip(button, 
+            { trigger: "manual", 
+              customClass: "code-copy-button-tooltip",
+              offset: [0, -8]});
+          tooltip.show();    
+        }
+        setTimeout(function() {
+          if (tooltip) {
+            tooltip.hide();
+            button.removeAttribute("data-bs-title");
+            button.removeAttribute("data-bs-toggle");
+            button.removeAttribute("data-bs-placement");
+          }
+          button.setAttribute("title", currentTitle);
+          button.classList.remove('code-copy-button-checked');
+        }, 1000);
+        // clear code selection
+        e.clearSelection();
+      }
+      const getTextToCopy = function(trigger) {
+          const codeEl = trigger.previousElementSibling.cloneNode(true);
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+      }
+      const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+        text: getTextToCopy
+      });
+      clipboard.on('success', onCopySuccess);
+      if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+        const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+          text: getTextToCopy,
+          container: window.document.getElementById('quarto-embedded-source-code-modal')
+        });
+        clipboardModal.on('success', onCopySuccess);
+      }
+        var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+        var mailtoRegex = new RegExp(/^mailto:/);
+          var filterRegex = new RegExp('/' + window.location.host + '/');
+        var isInternal = (href) => {
+            return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+        }
+        // Inspect non-navigation links and adorn them if external
+     	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+        for (var i=0; i<links.length; i++) {
+          const link = links[i];
+          if (!isInternal(link.href)) {
+            // undo the damage that might have been done by quarto-nav.js in the case of
+            // links that we want to consider external
+            if (link.dataset.originalHref !== undefined) {
+              link.href = link.dataset.originalHref;
+            }
+          }
+        }
+      function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+        const config = {
+          allowHTML: true,
+          maxWidth: 500,
+          delay: 100,
+          arrow: false,
+          appendTo: function(el) {
+              return el.closest('section.slide') || el.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'light-border',
+          placement: 'bottom-start',
+        };
+        if (contentFn) {
+          config.content = contentFn;
+        }
+        if (onTriggerFn) {
+          config.onTrigger = onTriggerFn;
+        }
+        if (onUntriggerFn) {
+          config.onUntrigger = onUntriggerFn;
+        }
+          config['offset'] = [0,0];
+          config['maxWidth'] = 700;
+        window.tippy(el, config); 
+      }
+      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+      for (var i=0; i<noterefs.length; i++) {
+        const ref = noterefs[i];
+        tippyHover(ref, function() {
+          // use id or data attribute instead here
+          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+          try { href = new URL(href).hash; } catch {}
+          const id = href.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note) {
+            return note.innerHTML;
+          } else {
+            return "";
+          }
+        });
+      }
+      const findCites = (el) => {
+        const parentEl = el.parentElement;
+        if (parentEl) {
+          const cites = parentEl.dataset.cites;
+          if (cites) {
+            return {
+              el,
+              cites: cites.split(' ')
+            };
+          } else {
+            return findCites(el.parentElement)
+          }
+        } else {
+          return undefined;
+        }
+      };
+      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+      for (var i=0; i<bibliorefs.length; i++) {
+        const ref = bibliorefs[i];
+        const citeInfo = findCites(ref);
+        if (citeInfo) {
+          tippyHover(citeInfo.el, function() {
+            var popup = window.document.createElement('div');
+            citeInfo.cites.forEach(function(cite) {
+              var citeDiv = window.document.createElement('div');
+              citeDiv.classList.add('hanging-indent');
+              citeDiv.classList.add('csl-entry');
+              var biblioDiv = window.document.getElementById('ref-' + cite);
+              if (biblioDiv) {
+                citeDiv.innerHTML = biblioDiv.innerHTML;
+              }
+              popup.appendChild(citeDiv);
+            });
+            return popup.innerHTML;
+          });
+        }
+      }
+    });
+    </script>
+    
+
+</body></html>

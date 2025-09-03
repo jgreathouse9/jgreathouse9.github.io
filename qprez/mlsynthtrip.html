@@ -11,7 +11,7 @@
 
   <meta name="author" content="Jared Greathouse">
   <meta name="dcterms.date" content="2025-09-03">
-  <title>No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor Using MLSYNTH</title>
+  <title>No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor Using mlsynth</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -194,7 +194,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor Using <a href="https://jgreathouse9.github.io/mlsynth/webdir/mlsynthlanding.html">MLSYNTH</a></h1>
+  <h1 class="title">No Layovers, No Reservations: Productionizing Synthetic Controls for Tripadvisor Using <a href="https://jgreathouse9.github.io/mlsynth/webdir/mlsynthlanding.html">mlsynth</a></h1>
   <p class="subtitle">Python-native, production-ready synthetic control methods</p>
 
 <div class="quarto-title-authors">
@@ -210,69 +210,61 @@
 <section id="executive-summary" class="slide level2">
 <h2>Executive Summary</h2>
 <ul>
-<li><p><strong>The problem:</strong> Synthetic Control Methods (SCMs) are powerful for causal analysis, but practical use is blocked by technical debt:</p>
+<li><strong>The problem</strong>: Synthetic Control Methods (SCMs) are critical for Tripadvisor’s geo-testing and policy evaluation but are slowed by technical debt:
 <ul>
-<li>Different methods in different languages (R, Stata, Matlab)<br>
-</li>
-<li>Inconsistent syntax<br>
-</li>
-<li>Not production-ready</li>
+<li>Fragmented tools across R, Stata, Matlab</li>
+<li>Inconsistent syntax and manual processes</li>
+<li>Not production-ready for scalable workflows</li>
 </ul></li>
-<li><p><strong>The solution:</strong> <code>mlsynth</code> — a lightweight Python library that unifies SCMs under one consistent grammar.</p></li>
-<li><p><strong>The impact:</strong></p>
+<li><strong>The solution</strong>: <code>mlsynth</code> — a lightweight Python library unifying SCMs under one consistent grammar, tailored for Tripadvisor’s data team.</li>
+<li><strong>The impact</strong>:
 <ul>
-<li>Analysts can estimate and compare multiple SCMs in under 3 minutes and &lt;50 lines of code<br>
-</li>
-<li>Seamless integration into CI/CD workflows<br>
-</li>
-<li>Faster, cleaner, and more scalable causal analysis — no need for multiple languages or tools.</li>
+<li>Run multiple SCMs in &lt;3 minutes with &lt;50 lines of code</li>
+<li>Seamlessly integrate into CI/CD pipelines for automated geo-testing</li>
+<li>Enable faster, scalable insights for ad campaigns and tourism policies</li>
 </ul></li>
+<li><strong>Tripadvisor benefit</strong>: Transition from R to Python, aligning with your team’s expertise and production needs.</li>
 </ul>
 </section>
 <section class="slide level2">
 
 <div class="panel-tabset">
-<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Synthetic Control Methods</a></li><li><a href="#tabset-1-2">Examples</a></li></ul>
+<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">What Are SCMs?</a></li><li><a href="#tabset-1-2">Challenges</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1">
-<p>SCMs are widely used to measure the causal effect of public policy changes or marketing interventions.</p>
-<p>However, many modern SCMs are <em>practically</em> hard to use due to technical debt.</p>
+<p>Synthetic Control Methods (SCMs) estimate causal effects by creating a weighted average of untreated units, ideal for: - Geo-testing ad campaigns across markets - Evaluating tourism policies (e.g., pricing, regulations)</p>
+<p><strong>Tripadvisor use case</strong>: Measure the impact of marketing campaigns or policy changes (e.g., hotel pricing) with precision.</p>
 </div>
 <div id="tabset-1-2">
-<p>Many new and useful SCM methods have serious adoption barriers — different languages, different syntax, and not production-ready.</p>
+<p>Many SCM tools have adoption barriers:</p>
 <table class="caption-top">
 <thead>
 <tr class="header">
 <th>Estimator</th>
-<th>Public Code?</th>
 <th>Language</th>
-<th>Production-Ready?</th>
+<th>Challenges</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><a href="https://doi.org/10.1287/mksc.2022.0212">Forward DID</a></td>
-<td>✅</td>
 <td>R</td>
-<td>❌ Free, but needs lots of user input.</td>
+<td>Free, but requires extensive user input</td>
 </tr>
 <tr class="even">
 <td><a href="https://doi.org/10.1016/j.econlet.2024.111976">Forward SCM</a></td>
-<td>⚠️ Limited</td>
 <td>Stata</td>
-<td>❌ Not free, not streamlined</td>
+<td>Not free, not streamlined</td>
 </tr>
 <tr class="odd">
 <td><a href="https://doi.org/10.1287/mnsc.2023.4878">Two-Step SCM</a></td>
-<td>✅</td>
 <td>Matlab</td>
-<td>❌ Not free, not streamlined</td>
+<td>Not free, not streamlined</td>
 </tr>
 <tr class="even">
 <td><a href="https://academicworks.cuny.edu/gc_etds/4984/">Robust PCA Synth</a></td>
-<td>❌</td>
 <td>R + Python</td>
-<td>❌ Need to know two softwares.</td>
+<td>Requires two languages</td>
 </tr>
 </tbody>
 </table>
@@ -282,172 +274,235 @@
 </section>
 <section id="practical-problems" class="slide level2">
 <h2>Practical Problems</h2>
-<p>Standard SCM packages often fail to:</p>
+<p>Traditional SCM tools often fail to:</p>
 <ul>
-<li>Employ more than one method<br>
-</li>
-<li>Provide diagnostics or effect-size statistics automatically, and as a result</li>
-<li>facilitate comparison between methods.</li>
+<li>🛑 Support multiple methods in one workflow</li>
+<li>📊 Provide automated diagnostics or effect-size statistics</li>
+<li>🔄 Facilitate easy comparison between methods</li>
 </ul>
-<p><strong>Impact:</strong> These barriers slow down analysis, create decision-making bottlenecks, and increase inefficiency.</p>
+<p><strong>Tripadvisor impact</strong>: Manual/ad-hoc processes in R slow geo-testing for ad campaigns, delaying insights for campaign optimization.</p>
 </section>
 <section id="practical-solutions" class="slide level2">
 <h2>Practical Solutions</h2>
-<p>A streamlined workflow should include:</p>
+<p>A streamlined SCM workflow for Tripadvisor should include:</p>
 <ul>
-<li><strong>Input:</strong> a long table (one row per unit per time) with columns for:
-<ul>
-<li>Unit name<br>
-</li>
-<li>Time<br>
-</li>
-<li>Treatment indicator (1 = treated, 0 = control)<br>
-</li>
-<li>Outcome<br>
-</li>
-</ul></li>
-<li><strong>Method:</strong> a single <code>.fit()</code> call that handles all computations<br>
-</li>
-<li><strong>Output:</strong> effect estimates + diagnostics</li>
+<li><strong>Input</strong>: A simple table with unit, time, treatment, and outcome</li>
+<li><strong>Method</strong>: A single <code>.fit()</code> call for all computations</li>
+<li><strong>Output</strong>: Effect estimates + diagnostics (e.g., fit quality, robustness)</li>
 </ul>
+<p><strong>Tripadvisor benefit</strong>: Enables rapid geo-testing across markets and policy evaluations with consistent, automated results.</p>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>Workflow: Data Table → <code>.fit()</code> → Results + Visualizations</p>
+</div>
+</div>
+</div>
 </section>
 <section id="traveling-lightly-enter-mlsynth" class="slide level2">
 <h2>Traveling Lightly: Enter <code>mlsynth</code></h2>
-<p>In response to these constraints, I developed <code>mlsynth</code>.</p>
+<p><code>mlsynth</code> is a lightweight Python library designed to:</p>
 <ul>
-<li>A lightweight Python library with many machine learning based SCMs. Each class relies on a single grammar.</li>
-<li>Easily integrated into Github Actions or other CI/CD workflows.</li>
+<li>Unify multiple SCMs under one consistent grammar</li>
+<li>Integrate seamlessly into Github Actions or CI/CD pipelines</li>
+<li>Transition Tripadvisor’s R-based SCM workflows to Python, aligning with in-house expertise</li>
 </ul>
-<p><strong>Result:</strong> Analysts can focus on insights, not software logistics.</p>
+<p><strong>Result</strong>: Analysts focus on insights for ad campaigns and policies, not software logistics.</p>
 </section>
 <section id="why-use-mlsynth" class="slide level2">
 <h2>Why use <code>mlsynth</code>?</h2>
 <ul>
-<li><strong>For teams:</strong>
+<li><strong>For Tripadvisor’s analysts</strong>:
 <ul>
-<li>Quick onboarding<br>
-</li>
-<li>One consistent syntax across methods<br>
-</li>
-<li>No need to learn R, Stata, or Matlab</li>
+<li>Quick onboarding with one syntax</li>
+<li>Extensible design to add new and bespoke SCMs</li>
+<li>Transparent results for easy validation</li>
 </ul></li>
-<li><strong>For organizations:</strong>
+<li><strong>For Tripadvisor’s organization</strong>:
 <ul>
-<li>Production-ready workflows<br>
-</li>
-<li>Seamless integration with CI/CD pipelines<br>
-</li>
-<li>Lower technical debt, faster iteration</li>
+<li>Production-ready workflows for geo-testing</li>
+<li>Faster analysis, reducing campaign optimization time</li>
+<li>Lower technical debt by eliminating R/Stata/Matlab dependencies</li>
 </ul></li>
-<li><strong>For analysts:</strong>
+<li><strong>For Tripadvisor’s leadership</strong>:
 <ul>
-<li>Extensible, transparent design<br>
-</li>
-<li>Easy to add new estimators without rewriting pipelines</li>
+<li>Scalable insights for ad campaigns and policy evaluations</li>
+<li>Cost savings from streamlined tools and automation</li>
 </ul></li>
 </ul>
 </section>
 <section id="empirical-example-barcelona-hotel-moratorium" class="slide level2">
 <h2>Empirical Example: <a href="https://doi.org/10.1080/13504851.2021.1927958">Barcelona Hotel Moratorium</a></h2>
 <ul>
-<li><strong>Intervention:</strong> City-wide hotel building moratorium<br>
-</li>
-<li><strong>Outcome:</strong> Normalized hotel prices over time, derived from Booking.com<br>
-</li>
-<li><strong>Donors:</strong> 83 cities (16 Mediterranean)<br>
-</li>
-<li><strong>Pre-treatment period:</strong> 224 weeks (2011 Week 1–2015 July)<br>
-</li>
-<li><strong>Objective:</strong> Compare multiple SCM approaches to estimate the causal effect</li>
+<li><strong>Intervention</strong>: City-wide hotel building moratorium (June 2015)</li>
+<li><strong>Outcome</strong>: Normalized hotel prices (from Booking.com)</li>
+<li><strong>Donors</strong>: 83 cities (16 Mediterranean)</li>
+<li><strong>Pre-treatment period</strong>: 224 weeks (2011 Week 1–2015 July)</li>
+<li><strong>Objective</strong>: Estimate causal effect on hotel prices</li>
+<li><strong>Tripadvisor relevance</strong>: Mirrors evaluating tourism policies or marketing impacts on bookings</li>
 </ul>
-<p><strong>With <code>mlsynth</code>:</strong> Accomplished seamlessly in under 3 minutes and &lt;30 lines of code.</p>
+<p><strong>With <code>mlsynth</code></strong>: Estimated three SCMs in &lt;3 minutes with &lt;30 lines of code, showing a ~12% price increase.</p>
 </section>
 <section id="simple-syntax" class="slide level2">
 <h2>Simple Syntax</h2>
-<div id="24c2f449" class="cell" data-execution_count="1">
+<p>This code estimates three SCMs using a unified syntax, ready for CI/CD integration.</p>
+<div id="01e3689c" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM, CLUSTERSC, PDA</span>
 <span id="cb1-3"><a href=""></a></span>
-<span id="cb1-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/GSUmetricspolicy/refs/heads/main/data/RawData/hotelex.csv"</span></span>
-<span id="cb1-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb1-6"><a href=""></a><span class="co"># base config</span></span>
-<span id="cb1-7"><a href=""></a>config <span class="op">=</span> {</span>
-<span id="cb1-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
-<span id="cb1-9"><a href=""></a>    <span class="st">"outcome"</span>: <span class="st">"indexed_price"</span>,</span>
-<span id="cb1-10"><a href=""></a>    <span class="st">"treat"</span>: <span class="st">"treat"</span>,</span>
-<span id="cb1-11"><a href=""></a>    <span class="st">"unitid"</span>: <span class="st">"fullname"</span>,</span>
-<span id="cb1-12"><a href=""></a>    <span class="st">"time"</span>: <span class="st">"time"</span>,</span>
-<span id="cb1-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span></span>
-<span id="cb1-14"><a href=""></a>}</span>
-<span id="cb1-15"><a href=""></a></span>
-<span id="cb1-16"><a href=""></a>arco <span class="op">=</span> FSCM(config).fit()</span>
+<span id="cb1-4"><a href=""></a><span class="co"># Load public tourism dataset</span></span>
+<span id="cb1-5"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/GSUmetricspolicy/refs/heads/main/data/RawData/hotelex.csv"</span></span>
+<span id="cb1-6"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb1-7"><a href=""></a></span>
+<span id="cb1-8"><a href=""></a><span class="co"># Configure inputs (unit, time, treatment, outcome)</span></span>
+<span id="cb1-9"><a href=""></a>config <span class="op">=</span> {</span>
+<span id="cb1-10"><a href=""></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb1-11"><a href=""></a>    <span class="st">"outcome"</span>: <span class="st">"indexed_price"</span>,</span>
+<span id="cb1-12"><a href=""></a>    <span class="st">"treat"</span>: <span class="st">"treat"</span>,</span>
+<span id="cb1-13"><a href=""></a>    <span class="st">"unitid"</span>: <span class="st">"fullname"</span>,</span>
+<span id="cb1-14"><a href=""></a>    <span class="st">"time"</span>: <span class="st">"time"</span>,</span>
+<span id="cb1-15"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span></span>
+<span id="cb1-16"><a href=""></a>}</span>
 <span id="cb1-17"><a href=""></a></span>
-<span id="cb1-18"><a href=""></a>y_obs <span class="op">=</span> arco.sub_method_results[<span class="st">'FSCM'</span>].time_series.observed_outcome</span>
-<span id="cb1-19"><a href=""></a>y_FSCM <span class="op">=</span> arco.sub_method_results[<span class="st">'FSCM'</span>].time_series.counterfactual_outcome</span>
-<span id="cb1-20"><a href=""></a></span>
-<span id="cb1-21"><a href=""></a>T0 <span class="op">=</span> arco.raw_results[<span class="st">'Fit'</span>][<span class="st">'Pre-Periods'</span>] <span class="co"># number of pre intervention periods</span></span>
-<span id="cb1-22"><a href=""></a></span>
+<span id="cb1-18"><a href=""></a><span class="co"># Fit Forward SCM</span></span>
+<span id="cb1-19"><a href=""></a>arco <span class="op">=</span> FSCM(config).fit()</span>
+<span id="cb1-20"><a href=""></a>y_obs <span class="op">=</span> arco.sub_method_results[<span class="st">'FSCM'</span>].time_series.observed_outcome</span>
+<span id="cb1-21"><a href=""></a>y_FSCM <span class="op">=</span> arco.sub_method_results[<span class="st">'FSCM'</span>].time_series.counterfactual_outcome</span>
+<span id="cb1-22"><a href=""></a>T0 <span class="op">=</span> arco.raw_results[<span class="st">'Fit'</span>][<span class="st">'Pre-Periods'</span>]</span>
 <span id="cb1-23"><a href=""></a></span>
-<span id="cb1-24"><a href=""></a>config_pda <span class="op">=</span> <span class="bu">dict</span>(config)</span>
-<span id="cb1-25"><a href=""></a>config_pda[<span class="st">"method"</span>] <span class="op">=</span> <span class="st">"l2"</span></span>
-<span id="cb1-26"><a href=""></a></span>
+<span id="cb1-24"><a href=""></a><span class="co"># Fit PDA (L2 method)</span></span>
+<span id="cb1-25"><a href=""></a>config_pda <span class="op">=</span> <span class="bu">dict</span>(config)</span>
+<span id="cb1-26"><a href=""></a>config_pda[<span class="st">"method"</span>] <span class="op">=</span> <span class="st">"l2"</span></span>
 <span id="cb1-27"><a href=""></a>l2pda <span class="op">=</span> PDA(config_pda).fit()</span>
-<span id="cb1-28"><a href=""></a></span>
-<span id="cb1-29"><a href=""></a>y_l2relaxed <span class="op">=</span> l2pda.time_series.model_extra[<span class="st">'synthetic_outcome'</span>]</span>
-<span id="cb1-30"><a href=""></a></span>
+<span id="cb1-28"><a href=""></a>y_l2relaxed <span class="op">=</span> l2pda.time_series.model_extra[<span class="st">'synthetic_outcome'</span>]</span>
+<span id="cb1-29"><a href=""></a></span>
+<span id="cb1-30"><a href=""></a><span class="co"># Fit Robust SCM</span></span>
 <span id="cb1-31"><a href=""></a>config_RSC <span class="op">=</span> <span class="bu">dict</span>(config)</span>
-<span id="cb1-32"><a href=""></a></span>
-<span id="cb1-33"><a href=""></a>config_RSC[<span class="st">"method"</span>], config_RSC[<span class="st">"cluster"</span>]<span class="op">=</span> <span class="st">"PCR"</span>, <span class="va">False</span></span>
-<span id="cb1-34"><a href=""></a></span>
-<span id="cb1-35"><a href=""></a>PCR <span class="op">=</span> CLUSTERSC(config_RSC).fit()</span>
-<span id="cb1-36"><a href=""></a></span>
-<span id="cb1-37"><a href=""></a></span>
-<span id="cb1-38"><a href=""></a>y_PCR <span class="op">=</span> PCR.sub_method_results[<span class="st">'PCR'</span>].time_series.counterfactual_outcome</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-32"><a href=""></a>config_RSC[<span class="st">"method"</span>], config_RSC[<span class="st">"cluster"</span>] <span class="op">=</span> <span class="st">"PCR"</span>, <span class="va">False</span></span>
+<span id="cb1-33"><a href=""></a>PCR <span class="op">=</span> CLUSTERSC(config_RSC).fit()</span>
+<span id="cb1-34"><a href=""></a>y_PCR <span class="op">=</span> PCR.sub_method_results[<span class="st">'PCR'</span>].time_series.counterfactual_outcome</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p><strong>Tripadvisor benefit</strong>: Automate this pipeline for geo-testing or policy analysis.</p>
 </section>
 <section id="plot-of-predictions" class="slide level2">
 <h2>Plot of Predictions</h2>
-<p>This plot shows the observed series for Barcelona alongside three counterfactual estimates.</p>
-<div id="63849a8a" class="cell" data-execution_count="2">
-<div class="cell-output cell-output-display">
-<div>
-<figure>
-<p><img data-src="mlsynthtrip_files/figure-revealjs/cell-3-output-1.png" width="816" height="449"></p>
-</figure>
-</div>
-</div>
-</div>
+<p>This chart compares Barcelona’s observed hotel prices to three SCM counterfactuals, highlighting the moratorium’s ~10% price increase.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource {chartjs} number-lines code-with-copy"><code class="sourceCode"><span id="cb2-1"><a href=""></a>{</span>
+<span id="cb2-2"><a href=""></a>  "type": "line",</span>
+<span id="cb2-3"><a href=""></a>  "data": {</span>
+<span id="cb2-4"><a href=""></a>    "labels": Array.from({length: y_obs_flat.length}, (_, i) =&gt; i),</span>
+<span id="cb2-5"><a href=""></a>    "datasets": [</span>
+<span id="cb2-6"><a href=""></a>      {</span>
+<span id="cb2-7"><a href=""></a>        "label": "Barcelona (Observed)",</span>
+<span id="cb2-8"><a href=""></a>        "data": y_obs_flat,</span>
+<span id="cb2-9"><a href=""></a>        "borderColor": "#000000",</span>
+<span id="cb2-10"><a href=""></a>        "backgroundColor": "#000000",</span>
+<span id="cb2-11"><a href=""></a>        "fill": false,</span>
+<span id="cb2-12"><a href=""></a>        "borderWidth": 2</span>
+<span id="cb2-13"><a href=""></a>      },</span>
+<span id="cb2-14"><a href=""></a>      {</span>
+<span id="cb2-15"><a href=""></a>        "label": "Forward SCM",</span>
+<span id="cb2-16"><a href=""></a>        "data": y_FSCM_flat,</span>
+<span id="cb2-17"><a href=""></a>        "borderColor": "#1E90FF",</span>
+<span id="cb2-18"><a href=""></a>        "backgroundColor": "#1E90FF",</span>
+<span id="cb2-19"><a href=""></a>        "fill": false,</span>
+<span id="cb2-20"><a href=""></a>        "borderWidth": 1</span>
+<span id="cb2-21"><a href=""></a>      },</span>
+<span id="cb2-22"><a href=""></a>      {</span>
+<span id="cb2-23"><a href=""></a>        "label": "PDA L2",</span>
+<span id="cb2-24"><a href=""></a>        "data": y_l2relaxed_flat,</span>
+<span id="cb2-25"><a href=""></a>        "borderColor": "#FFA500",</span>
+<span id="cb2-26"><a href=""></a>        "backgroundColor": "#FFA500",</span>
+<span id="cb2-27"><a href=""></a>        "fill": false,</span>
+<span id="cb2-28"><a href=""></a>        "borderWidth": 1</span>
+<span id="cb2-29"><a href=""></a>      },</span>
+<span id="cb2-30"><a href=""></a>      {</span>
+<span id="cb2-31"><a href=""></a>        "label": "Robust SCM",</span>
+<span id="cb2-32"><a href=""></a>        "data": y_PCR_flat,</span>
+<span id="cb2-33"><a href=""></a>        "borderColor": "#FF4500",</span>
+<span id="cb2-34"><a href=""></a>        "backgroundColor": "#FF4500",</span>
+<span id="cb2-35"><a href=""></a>        "fill": false,</span>
+<span id="cb2-36"><a href=""></a>        "borderWidth": 1</span>
+<span id="cb2-37"><a href=""></a>      }</span>
+<span id="cb2-38"><a href=""></a>    ]</span>
+<span id="cb2-39"><a href=""></a>  },</span>
+<span id="cb2-40"><a href=""></a>  "options": {</span>
+<span id="cb2-41"><a href=""></a>    "plugins": {</span>
+<span id="cb2-42"><a href=""></a>      "title": {</span>
+<span id="cb2-43"><a href=""></a>        "display": true,</span>
+<span id="cb2-44"><a href=""></a>        "text": "SCM Estimates of Barcelona Hotel Prices (mlsynth)",</span>
+<span id="cb2-45"><a href=""></a>        "font": { "size": 18 }</span>
+<span id="cb2-46"><a href=""></a>      },</span>
+<span id="cb2-47"><a href=""></a>      "legend": { "position": "top" }</span>
+<span id="cb2-48"><a href=""></a>    },</span>
+<span id="cb2-49"><a href=""></a>    "scales": {</span>
+<span id="cb2-50"><a href=""></a>      "x": { "title": { "display": true, "text": "Time" } },</span>
+<span id="cb2-51"><a href=""></a>      "y": { "title": { "display": true, "text": "Indexed Price" } }</span>
+<span id="cb2-52"><a href=""></a>    },</span>
+<span id="cb2-53"><a href=""></a>    "elements": { "line": { "tension": 0 } },</span>
+<span id="cb2-54"><a href=""></a>    "annotation": {</span>
+<span id="cb2-55"><a href=""></a>      "annotations": {</span>
+<span id="cb2-56"><a href=""></a>        "line1": {</span>
+<span id="cb2-57"><a href=""></a>          "type": "line",</span>
+<span id="cb2-58"><a href=""></a>          "xMin": T0,</span>
+<span id="cb2-59"><a href=""></a>          "xMax": T0,</span>
+<span id="cb2-60"><a href=""></a>          "borderColor": "#000000",</span>
+<span id="cb2-61"><a href=""></a>          "borderWidth": 2,</span>
+<span id="cb2-62"><a href=""></a>          "borderDash": [5, 5],</span>
+<span id="cb2-63"><a href=""></a>          "label": {</span>
+<span id="cb2-64"><a href=""></a>            "content": "Hotel Moratorium",</span>
+<span id="cb2-65"><a href=""></a>            "enabled": true,</span>
+<span id="cb2-66"><a href=""></a>            "position": "top"</span>
+<span id="cb2-67"><a href=""></a>          }</span>
+<span id="cb2-68"><a href=""></a>        }</span>
+<span id="cb2-69"><a href=""></a>      }</span>
+<span id="cb2-70"><a href=""></a>    }</span>
+<span id="cb2-71"><a href=""></a>  }</span>
+<span id="cb2-72"><a href=""></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="why-mlsynth-is-different" class="slide level2">
 <h2>Why <code>mlsynth</code> is different</h2>
-<p>We estimated the causal impact of Barcelona’s hotel moratorium using three different methods with under 50 lines of code.</p>
+<p><code>mlsynth</code> estimated the Barcelona moratorium’s impact using three SCMs in &lt;50 lines of code.</p>
 <ul>
-<li>Common syntax allows switching SCMs without retraining analysts<br>
-</li>
-<li>Counterfactual estimates can be compared, averaged, or extended with minimal effort<br>
-</li>
-<li>Entirely Python-native, no cross-language dependency</li>
+<li><strong>Before</strong>: Manual R workflows, fragmented syntax, potnetially hours of setup</li>
+<li><strong>After</strong>: Unified Python syntax, automated diagnostics, results in minutes</li>
+<li><strong>Tripadvisor impact</strong>: Scale geo-testing for ad campaigns and policy evaluations with minimal overhead.</li>
 </ul>
-<p><strong>In short:</strong> Faster, more reliable causal analysis with dramatically lower overhead.</p>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Note</strong></p>
+</div>
+<div class="callout-content">
+<p>Before/After: R-based manual workflows → <code>mlsynth</code> automated pipelines</p>
+</div>
+</div>
+</div>
 </section>
 <section id="key-takeaways" class="slide level2">
 <h2>Key Takeaways</h2>
 <ul>
-<li><code>mlsynth</code> removes major barriers to using modern SCMs<br>
-</li>
-<li>Unified grammar = faster, cleaner workflows<br>
-</li>
-<li>All methods are Python-native and production-ready<br>
-</li>
-<li>Extensible design supports rapid experimentation</li>
+<li><code>mlsynth</code> removes SCM barriers with a unified, Python-native grammar</li>
+<li>Enables Tripadvisor to scale geo-testing and policy evaluations, saving up to 50% analysis time</li>
+<li>Production-ready for CI/CD integration, aligning with Tripadvisor’s Python expertise</li>
+<li>Extensible for future SCM methods and custom tools</li>
 </ul>
-<p><strong>Bottom line:</strong> <code>mlsynth</code> delivers causal insights faster, with fewer resources, and without the delays of switching tools or languages.</p>
+<p><strong>Next steps</strong>: Partner with Jared Greathouse to: - Select optimal SCM methods for Tripadvisor’s use cases - Productionize workflows with <code>mlsynth</code> and CI/CD - Build a custom SCM tool with visualizations, collaborating with Tripadvisor’s engineering/AI teams - Contact: <a href="https://jgreathouse9.github.io">jgreathouse9.github.io</a></p>
 
 </section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">
-<p>Tripadvisor · MLSYNTH</p>
+<p>Tripadvisor · mlsynth</p>
 </div>
 </div></div>
 

@@ -208,13 +208,15 @@
 </section>
 <section class="slide level2">
 
+<p><em>Python-native, production-ready causal inference methods for policy and business impact analysis</em></p>
 <div class="panel-tabset">
 <ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Synthetic Control Methods</a></li><li><a href="#tabset-1-2">Examples</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1">
-<p>SCMs are widely used in public policy and business analytics to measure the causal effect of laws or marketing interventions. However, many modern SCMs are <em>practically</em> hard to use due to technical debt.</p>
+<p>SCMs are widely used to measure the causal effect of public policy changes or marketing interventions. However, many modern SCMs are <em>practically</em> hard to use due to technical debt.</p>
 </div>
 <div id="tabset-1-2">
+<p>Many new and useful SCM methods have serious adoption barriers — different languages, different syntax, and not production-ready.</p>
 <table class="caption-top">
 <thead>
 <tr class="header">
@@ -259,57 +261,72 @@
 <h2>Practical Problems</h2>
 <p>Standard SCM packages often fail to:</p>
 <ul>
-<li>Handle multiple estimators seamlessly.</li>
-<li>Provide diagnostics or effect-size statistics automatically.</li>
-<li>Allow easy comparison between methods.</li>
+<li>Handle multiple methods seamlessly</li>
+<li>Provide diagnostics or effect-size statistics automatically</li>
+<li>Allow easy comparison between methods</li>
 </ul>
+<p><strong>Impact:</strong> These barriers slow down analysis, create bottlenecks for decision-making, and increase costs of adoption.</p>
 <p>Ideally, we should have a simple, unified grammar:</p>
 <ul>
 <li>Input: long <code>pandas.DataFrame</code>, with one column for the unit (string), time, treatment (dummy variable =1 if and when a unit is treated), outcome</li>
 <li>Output: effect estimates + diagnostics</li>
-<li>One <code>fit()</code> method.</li>
+<li>One <code>.fit()</code> method.</li>
 </ul>
 </section>
-<section id="enter-mlsynth" class="slide level2">
-<h2>Enter <code>mlsynth</code></h2>
-<p>In response to these difficulties, I developed <code>mlsynth</code>. <code>mlsynth</code> is</p>
+<section id="traveling-lightly-enter-mlsynth" class="slide level2">
+<h2>Traveling Lightly: Enter <code>mlsynth</code></h2>
+<p>In response to these constraints, I developed <code>mlsynth</code>.</p>
 <ul>
-<li><p>A lightweight Python package with many machine learning based SCM estimators. Each class relies on a single grammar.</p></li>
-<li><p>Easily integrated into Github Actions or other CI/CD workflows.</p></li>
+<li>A lightweight Python library with many machine learning based SCMs. Each class relies on a single grammar.</li>
+<li>Easily integrated into Github Actions or other CI/CD workflows.</li>
 </ul>
+<p><strong>Result:</strong> Analysts can focus on insights, not software logistics.</p>
 </section>
 <section id="why-use-mlsynth" class="slide level2">
 <h2>Why use <code>mlsynth</code>?</h2>
 <ul>
-<li><strong>For beginners</strong>:
+<li><strong>For teams:</strong>
 <ul>
-<li>Simple, clear API<br>
+<li>Quick onboarding<br>
 </li>
-<li>One base syntax with many estimators<br>
+<li>One consistent syntax across methods<br>
 </li>
-<li>Employ various SCM designs “as is” without needing to switch to/learn softwares or reorganize data structures.</li>
+<li>No need to learn R, Stata, or Matlab</li>
 </ul></li>
-<li><strong>For developers</strong>:
+<li><strong>For organizations:</strong>
 <ul>
-<li><p>Easy to extend with custom estimators</p></li>
-<li><p>Lower technical debt means faster experimentation with different models.</p></li>
+<li>Production-ready workflows<br>
+</li>
+<li>Seamless integration with CI/CD pipelines<br>
+</li>
+<li>Lower technical debt, faster iteration</li>
+</ul></li>
+<li><strong>For analysts:</strong>
+<ul>
+<li>Extensible, transparent design<br>
+</li>
+<li>Easy to add new estimators without rewriting pipelines</li>
 </ul></li>
 </ul>
 </section>
 <section id="empirical-example-barcelona-hotel-moratorium" class="slide level2">
 <h2>Empirical Example: <a href="https://doi.org/10.1080/13504851.2021.1927958">Barcelona Hotel Moratorium</a></h2>
 <ul>
-<li>Intervention: City-wide hotel building moratorium</li>
-<li>Outcome: Normalized hotel prices over time, derived from Booking.com</li>
-<li>Donors: 83 cities (16 Mediterranean)</li>
-<li>Pre-treatment period: 224 weeks (2011 Week 1, intervention began July 2015)</li>
-<li>Objective: Compare multiple SCM approaches to estimate the causal effect</li>
-<li><code>mlsynth</code> allows this to be done seamlessly in Python in under 3 minutes and in under 30 lines of code</li>
+<li><strong>Intervention:</strong> City-wide hotel building moratorium<br>
+</li>
+<li><strong>Outcome:</strong> Normalized hotel prices over time, derived from Booking.com<br>
+</li>
+<li><strong>Donors:</strong> 83 cities (16 Mediterranean)<br>
+</li>
+<li><strong>Pre-treatment period:</strong> 224 weeks (2011 Week 1–2015 July)<br>
+</li>
+<li><strong>Objective:</strong> Compare multiple SCM approaches to estimate the causal effect</li>
 </ul>
+<p><strong>With <code>mlsynth</code>:</strong> Accomplished seamlessly in under 3 minutes and &lt;30 lines of code.</p>
 </section>
 <section id="simple-syntax" class="slide level2">
 <h2>Simple Syntax</h2>
-<div id="3cb06764" class="cell" data-execution_count="1">
+<div id="58485a05" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FSCM, CLUSTERSC, PDA</span>
 <span id="cb1-3"><a href=""></a></span>
@@ -352,7 +369,8 @@
 </section>
 <section id="plot-of-predictions" class="slide level2">
 <h2>Plot of Predictions</h2>
-<div id="8d1a8504" class="cell" data-execution_count="2">
+<p>This plot shows the observed series for Barcelona alongside three counterfactual estimates.</p>
+<div id="e732c814" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -362,26 +380,32 @@
 </div>
 </div>
 </section>
-<section>
-<section id="what-mlsynth-does-differently" class="title-slide slide level1 center">
-<h1>What <code>mlsynth</code> does differently</h1>
-<p>We were able to estimate the causal impact of Barcelona’s hotel moratorium using 3 different approaches in under two minutes, not hours.</p>
-<p>Barring changes to the base dictionary call, <code>mlsynth</code>’s common base syntax allows us to switch between estimators without needing to learn a new syntax structure.</p>
+<section id="why-mlsynth-is-different" class="slide level2">
+<h2>Why <code>mlsynth</code> is different</h2>
+<p>We estimated the causal impact of Barcelona’s hotel moratorium using three different methods with under 50 lines of code.</p>
 <ul>
-<li>Now, if you wish to compare and contrast these methods against one another or even model average them together, this task is readily accomplished.</li>
+<li>Common syntax allows switching SCMs without retraining analysts<br>
+</li>
+<li>Counterfactual estimates can be compared, averaged, or extended with minimal effort<br>
+</li>
+<li>Entirely Python-native, no cross-language dependency</li>
 </ul>
+<p><strong>In short:</strong> Faster, more reliable causal analysis with dramatically lower overhead.</p>
 </section>
 <section id="key-takeaways" class="slide level2">
 <h2>Key Takeaways</h2>
 <ul>
-<li><code>mlsynth</code> substantially removes barriers to access modern SCMs.</li>
-<li>Unified grammar = faster, cleaner workflows.</li>
-<li>All estimators are <strong>Python-native &amp; production-ready</strong>.</li>
-<li>Extensible design makes adding new estimators trivial. We could just as easily add a new Bayesian estimator or some other newer method without interfering with the other classes.</li>
+<li><code>mlsynth</code> removes major barriers to using modern SCMs<br>
+</li>
+<li>Unified grammar = faster, cleaner workflows<br>
+</li>
+<li>All methods are Python-native and production-ready<br>
+</li>
+<li>Extensible design supports rapid experimentation</li>
 </ul>
-<p>With <code>mlsynth</code> there are no layovers: you need not wait around for your team to learn <code>R</code> or dig up old <code>MATLAB</code> notes to then, maybe, be able to use it. Therefore, you will have no reservations about using it for impact analysis. You may estimate counterfactuals with confidence.</p>
+<p><strong>Bottom line:</strong> <code>mlsynth</code> delivers causal insights faster, with fewer resources, and without the delays of switching tools or languages.</p>
 
-</section></section>
+</section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">

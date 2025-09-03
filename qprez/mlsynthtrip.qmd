@@ -6,7 +6,7 @@ author:
 date: today
 format:
   revealjs:
-    theme: sky
+    theme: simple
     slide-number: true
     transition: fade
     scrollable: true
@@ -22,7 +22,7 @@ highlight-style: github
   - Not production-ready for scalable workflows
 - **The solution**: `mlsynth` — a lightweight Python library unifying over 20 SCMs under one consistent grammar, easily integrated with Tripadvisor’s preference for Python.
 - **The impact**:
-  - Run multiple SCMs in <3 minutes with <50 lines of code
+  - Run multiple SCMs in under 5 minutes with very few lines of code
   - Seamlessly integrate into CI/CD pipelines for automated geo-testing
   - Enable faster, scalable insights for ad campaigns and tourism policies
 - **Tripadvisor benefit**: Transition from R to Python, aligning with your team’s expertise and production needs.
@@ -43,7 +43,12 @@ Synthetic Control Methods (SCMs) estimate causal effects by creating a weighted 
 
 ## Practical Problems
 
-Several advances that Tripadvisor may benefit from have non-trivial adoption barriers. The first barrier is purely software: not all useful methods are offered in one software, and fragmentation makes integerating different estimators into a single workflow difficult.
+- Several SCM advances that Tripadvisor may benefit from unfortuantely have non-trivial startup costs to using them effectively.
+
+- The first cost is purely software: not all methods are offered in one software, not all software are free.
+
+- This makes testing different SCMs in a single workflow difficult, especially given that other existing libraries differ in terms of data input expectations, options, and dependencies.
+
 
 | Estimator | Language | Challenges |
 |-----------|----------|------------|
@@ -85,7 +90,9 @@ A streamlined SCM workflow for Tripadvisor should include:
 `mlsynth` is a lightweight Python library designed to:
 
 - Unify multiple SCMs under one consistent grammar
+
 - Integrate seamlessly into Github Actions or CI/CD pipelines
+
 - Transition Tripadvisor’s R-based SCM workflows to Python, aligning with in-house expertise
 
 **Result**: Analysts focus on insights for ad campaigns and policies, not software logistics.
@@ -111,19 +118,20 @@ A streamlined SCM workflow for Tripadvisor should include:
 ## Empirical Example: [Barcelona Hotel Moratorium](https://doi.org/10.1080/13504851.2021.1927958)
 
 - **Intervention**: City-wide hotel building moratorium (June 2015)
-- **Outcome**: Normalized hotel prices (from Booking.com)
-- **Donors**: 83 cities (16 Mediterranean)
-- **Pre-treatment period**: 224 weeks (2011 Week 1–2015 July)
+- **Outcome**: Normalized hotel prices (anonymized, from Booking.com)
+- **Control Units**: 83 cities (16 Mediterranean)
+- **Pre-Treatment Period**: 224 weeks (2011 Week 1–2015 July)
+- **Post-Treatment Period**: July 1st 2015 To Week 34 of 2017.
 - **Objective**: Estimate causal effect on hotel prices
 - **Tripadvisor relevance**: Mirrors evaluating tourism policies or marketing impacts on bookings
 
-**With `mlsynth`**: Estimated three SCMs in less than 3 minutes with <30 lines of code, showing a ~12% price increase.
+**With `mlsynth`**: Estimated three SCMs in a few minutes with very few lines of code, showing a ~12% price increase.
 
 ---
 
-## Simple Syntax
+## Using `mlsynth`
 
-This code estimates three SCMs using a unified syntax, ready for CI/CD integration.
+This code estimates three SCMs using `mlsynth`.
 
 ```{python}
 #| echo: true
@@ -169,7 +177,7 @@ y_RSC = RSC.sub_method_results['PCR'].time_series.counterfactual_outcome.flatten
 
 ## Plot of Predictions
 
-This chart compares Barcelona’s observed hotel prices to three SCM counterfactuals, highlighting the moratorium’s ~12% price increase.
+This chart shows the moratorium’s ~12% price increase.
 
 ```{python}
 
@@ -242,9 +250,7 @@ fig.show()
 
 ## Why `mlsynth` is different
 
-`mlsynth` estimated the Barcelona moratorium’s impact using one library with a few lines of code.
-
-- **Before**: Manual R workflows, fragmented syntax, potentially hours of setup
+- **Before**: Manual R workflows, fragmented syntaxes, potentially hours of setup
 - **After**: Unified Python syntax, automated diagnostics, results in minutes
 - **Tripadvisor impact**: Scale geo-testing for ad campaigns and policy evaluations with minimal overhead.
 
@@ -256,7 +262,7 @@ Before/After: R-based manual workflows → `mlsynth` automated pipelines
 
 ## Key Takeaways
 
-- `mlsynth` removes SCM barriers with a unified, Python-native grammar
+- `mlsynth` removes barriers to using advanced SCMs with a unified, Python-native grammar
 - Enables Tripadvisor to scale geo-testing and policy evaluations, saving up to 50% analysis time
 - Production-ready for CI/CD integration, aligning with Tripadvisor’s Python expertise
 - Extensible for future SCM methods and custom tools

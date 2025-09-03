@@ -18,10 +18,10 @@ highlight-style: github
 ## Executive Summary
 
 - **The problem**: Synthetic Control Methods (SCMs) are critical for Tripadvisor’s geo-testing and policy evaluation but are slowed by technical debt:
-  - Fragmented tools across R, Stata, Matlab
+  - Fragmented tools across R or Python
   - Inconsistent syntax and manual processes
   - Not production-ready for scalable workflows
-- **The solution**: `mlsynth` — a lightweight Python library unifying SCMs under one consistent grammar, tailored for Tripadvisor’s data team.
+- **The solution**: `mlsynth` — a lightweight Python library unifying over 20 SCMs under one consistent grammar, easily integrated with Tripadvisor’s preference for Python.
 - **The impact**:
   - Run multiple SCMs in <3 minutes with <50 lines of code
   - Seamlessly integrate into CI/CD pipelines for automated geo-testing
@@ -35,14 +35,16 @@ highlight-style: github
 ## What Are SCMs?
 
 Synthetic Control Methods (SCMs) estimate causal effects by creating a weighted average of untreated units, ideal for:
+
 - Geo-testing ad campaigns across markets
+
 - Evaluating tourism policies (e.g., pricing, regulations)
 
 **Tripadvisor use case**: Measure the impact of marketing campaigns or policy changes (e.g., hotel pricing) with precision.
 
-## Challenges
+## Practical Problems
 
-Many SCM tools have adoption barriers:
+Several advances that Tripadvisor may benefit from have non-trivial adoption barriers. The first barrier is purely software: not all useful methods are offered in one software, and fragmentation makes integerating different estimators into a single workflow difficult.
 
 | Estimator | Language | Challenges |
 |-----------|----------|------------|
@@ -55,9 +57,9 @@ Many SCM tools have adoption barriers:
 
 ---
 
-## Practical Problems
+## Practical Problems cont.
 
-Traditional SCM tools often fail to:
+Beyond simple software constraints, SCM tools often fail to:
 
 - 🛑 Support multiple methods in one workflow
 - 📊 Provide automated diagnostics or effect-size statistics
@@ -76,10 +78,6 @@ A streamlined SCM workflow for Tripadvisor should include:
 - **Output**: Effect estimates + diagnostics (e.g., fit quality, robustness)
 
 **Tripadvisor benefit**: Enables rapid geo-testing across markets and policy evaluations with consistent, automated results.
-
-::: {.callout-note}
-Workflow: Data Table → `.fit()` → Results + Visualizations
-:::
 
 ---
 
@@ -104,7 +102,7 @@ Workflow: Data Table → `.fit()` → Results + Visualizations
 - **For Tripadvisor’s organization**:
   - Production-ready workflows for geo-testing
   - Faster analysis, reducing campaign optimization time
-  - Lower technical debt by eliminating R/Stata/Matlab dependencies
+  - Lower technical debt by eliminating R dependencies
 - **For Tripadvisor’s leadership**:
   - Scalable insights for ad campaigns and policy evaluations
   - Cost savings from streamlined tools and automation
@@ -120,7 +118,7 @@ Workflow: Data Table → `.fit()` → Results + Visualizations
 - **Objective**: Estimate causal effect on hotel prices
 - **Tripadvisor relevance**: Mirrors evaluating tourism policies or marketing impacts on bookings
 
-**With `mlsynth`**: Estimated three SCMs in <3 minutes with <30 lines of code, showing a ~12% price increase.
+**With `mlsynth`**: Estimated three SCMs in less than 3 minutes with <30 lines of code, showing a ~12% price increase.
 
 ---
 
@@ -162,8 +160,8 @@ y_l2relaxed = l2pda.time_series.model_extra['synthetic_outcome']
 # Fit Robust SCM
 config_RSC = dict(config)
 config_RSC["method"], config_RSC["cluster"] = "PCR", False
-PCR = CLUSTERSC(config_RSC).fit()
-y_PCR = PCR.sub_method_results['PCR'].time_series.counterfactual_outcome
+RSC = CLUSTERSC(config_RSC).fit()
+y_RSC = RSC.sub_method_results['PCR'].time_series.counterfactual_outcome
 ```
 
 **Tripadvisor benefit**: Automate this pipeline for geo-testing or policy analysis.
@@ -172,90 +170,48 @@ y_PCR = PCR.sub_method_results['PCR'].time_series.counterfactual_outcome
 
 ## Plot of Predictions
 
-This chart compares Barcelona’s observed hotel prices to three SCM counterfactuals, highlighting the moratorium’s ~10% price increase.
+This chart compares Barcelona’s observed hotel prices to three SCM counterfactuals, highlighting the moratorium’s ~12% price increase.
 
-```{chartjs}
-{
-  "type": "line",
-  "data": {
-    "labels": Array.from({length: y_obs_flat.length}, (_, i) => i),
-    "datasets": [
-      {
-        "label": "Barcelona (Observed)",
-        "data": y_obs_flat,
-        "borderColor": "#000000",
-        "backgroundColor": "#000000",
-        "fill": false,
-        "borderWidth": 2
-      },
-      {
-        "label": "Forward SCM",
-        "data": y_FSCM_flat,
-        "borderColor": "#1E90FF",
-        "backgroundColor": "#1E90FF",
-        "fill": false,
-        "borderWidth": 1
-      },
-      {
-        "label": "PDA L2",
-        "data": y_l2relaxed_flat,
-        "borderColor": "#FFA500",
-        "backgroundColor": "#FFA500",
-        "fill": false,
-        "borderWidth": 1
-      },
-      {
-        "label": "Robust SCM",
-        "data": y_PCR_flat,
-        "borderColor": "#FF4500",
-        "backgroundColor": "#FF4500",
-        "fill": false,
-        "borderWidth": 1
-      }
-    ]
-  },
-  "options": {
-    "plugins": {
-      "title": {
-        "display": true,
-        "text": "SCM Estimates of Barcelona Hotel Prices (mlsynth)",
-        "font": { "size": 18 }
-      },
-      "legend": { "position": "top" }
-    },
-    "scales": {
-      "x": { "title": { "display": true, "text": "Time" } },
-      "y": { "title": { "display": true, "text": "Indexed Price" } }
-    },
-    "elements": { "line": { "tension": 0 } },
-    "annotation": {
-      "annotations": {
-        "line1": {
-          "type": "line",
-          "xMin": T0,
-          "xMax": T0,
-          "borderColor": "#000000",
-          "borderWidth": 2,
-          "borderDash": [5, 5],
-          "label": {
-            "content": "Hotel Moratorium",
-            "enabled": true,
-            "position": "top"
-          }
-        }
-      }
-    }
-  }
-}
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Flatten arrays (as in your original code)
+y_obs_flat = np.ravel(y_obs)
+y_FSCM_flat = np.ravel(y_FSCM)
+y_l2relaxed_flat = np.ravel(y_l2relaxed)
+y_PCR_flat = np.ravel(y_RSC)
+time_index = np.arange(len(y_obs_flat))
+
+# Create enhanced plot
+plt.figure(figsize=(10, 6))
+plt.plot(time_index, y_obs_flat, label="Barcelona (Observed)", color="#000000", linewidth=2.5)
+plt.plot(time_index, y_FSCM_flat, label="Forward SCM", color="#1E90FF", linewidth=1.5)
+plt.plot(time_index, y_l2relaxed_flat, label="PDA L2", color="#FFA500", linewidth=1.5)
+plt.plot(time_index, y_PCR_flat, label="Robust SCM", color="#FF4500", linewidth=1.5)
+
+# Mark treatment
+plt.axvline(x=T0, color="#000000", linestyle="--", label="Hotel Moratorium", linewidth=1.5)
+plt.text(T0 + 2, max(y_obs_flat) * 0.95, "Moratorium (~12% Increase)", fontsize=10, color="#000000")
+
+# Styling
+plt.xlabel("Time (Weeks)", fontsize=12)
+plt.ylabel("Indexed Price", fontsize=12)
+plt.title("SCM Estimates of Barcelona Hotel Prices (mlsynth)", fontsize=14, pad=10)
+plt.legend(fontsize=10, loc="upper left")
+plt.grid(True, linestyle="--", alpha=0.7)
+plt.tight_layout()
+
+plt.show()
 ```
 
 ---
 
 ## Why `mlsynth` is different
 
-`mlsynth` estimated the Barcelona moratorium’s impact using three SCMs in <50 lines of code.
+`mlsynth` estimated the Barcelona moratorium’s impact using one library with a few lines of code.
 
-- **Before**: Manual R workflows, fragmented syntax, potnetially hours of setup
+- **Before**: Manual R workflows, fragmented syntax, potentially hours of setup
 - **After**: Unified Python syntax, automated diagnostics, results in minutes
 - **Tripadvisor impact**: Scale geo-testing for ad campaigns and policy evaluations with minimal overhead.
 

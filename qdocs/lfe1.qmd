@@ -357,6 +357,70 @@ plt.show()
 
 ```
 
+
+We can also show how the error changes, given a change in $w_1$.
+
+```{python}
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Treated unit
+y = np.array([50, 60])
+
+# Donors
+y1 = np.array([20, 22])
+y2 = np.array([48, 50])
+
+# Compute synthetic control at the constrained minimum (w1=0, w2=1)
+w1_min = 0
+w2_min = 1
+y_hat_min = w1_min*y1 + w2_min*y2
+
+# Compute residual
+residual = y - y_hat_min
+
+# Generate a range of w1 values for objective
+w1_vals = np.linspace(0, 1, 200)
+w2_vals = 1 - w1_vals
+f_vals = np.array([np.sum((y - (w1*y1 + w2*y2))**2) for w1, w2 in zip(w1_vals, w2_vals)])
+
+# Plot
+fig, axs = plt.subplots(1, 2, figsize=(12,5))
+
+# --- Subplot 1: 2D feature space with residual ---
+axs[0].plot(y1[0], y1[1], 'bo', label='Donor 1')
+axs[0].plot(y2[0], y2[1], 'go', label='Donor 2')
+axs[0].plot(y[0], y[1], 'r*', markersize=12, label='Treated Unit')
+axs[0].plot(y_hat_min[0], y_hat_min[1], 'ms', markersize=10, label='Synthetic Control')
+
+# Convex hull line
+axs[0].plot([y1[0], y2[0]], [y1[1], y2[1]], 'k-.', label='Convex Hull')
+
+# Draw residual vector from synthetic control to treated unit
+axs[0].arrow(y_hat_min[0], y_hat_min[1], residual[0], residual[1],
+             head_width=0.8, head_length=1.0, fc='orange', ec='orange', linewidth=2, label='Residual')
+
+axs[0].set_xlabel('Feature 1')
+axs[0].set_ylabel('Feature 2')
+axs[0].legend()
+axs[0].grid(True)
+axs[0].set_title('2D Feature Space with Residual')
+
+# --- Subplot 2: Objective function f(w1) ---
+axs[1].plot(w1_vals, f_vals, 'b-', label=r'$f(w_1) = ||y - \hat{y}||^2$')
+axs[1].plot(w1_min, f_vals[0], 'ro', label='Minimum (constrained)')
+axs[1].axvline(x=w1_min, color='r', linestyle='--')
+axs[1].set_xlabel(r'$w_1$')
+axs[1].set_ylabel('Objective value')
+axs[1].legend()
+axs[1].grid(True)
+axs[1].set_title('Objective Function vs. $w_1$')
+
+plt.tight_layout()
+plt.show()
+```
+
 Already, some of you who got this far will be asking "Jared, why did you go through the trouble of showing us all this? Who cares about the KKT conditions or the Hilbert Space Projection or any of those idea? I'll never literally do this at work, so why bother doing this?" The answer is because the moment you intuit SCM in these terms, you can oftentimes get a good read as to how an analysis will look before you even run a single SCM model. I oftentimes say that a great diagnostic is to literally just plot your target unit against your donors, and you'll discover a lot. We're about to see why this is in the content below.
 
 # Australia's Carbon Tax

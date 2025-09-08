@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Jared Greathouse">
+<meta name="dcterms.date" content="2025-09-09">
+
+<title>Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes – Policy Analysis, Data Science, and Causal Inference</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-listing/list.min.js"></script>
+<script src="site_libs/quarto-listing/quarto-listing.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-fae04a4dda57acfb7da1e58796bfa73f.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-a1f88f28ec1f3e74216516ad3a05ba84.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-listing .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-date','listing-title','listing-author','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Policy Analysis, Data Science, and Causal Inference</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://jgreathouse9.github.io"> 
+<span class="menu-text">About Jared</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#a-simple-synthetic-control" id="toc-a-simple-synthetic-control" class="nav-link" data-scroll-target="#a-simple-synthetic-control">A Simple Synthetic Control</a>
+  <ul class="collapse">
+  <li><a href="#deriving-the-weights" id="toc-deriving-the-weights" class="nav-link" data-scroll-target="#deriving-the-weights">Deriving the Weights</a></li>
+  <li><a href="#a-visuzalization-in-python" id="toc-a-visuzalization-in-python" class="nav-link" data-scroll-target="#a-visuzalization-in-python">A Visuzalization in Python</a></li>
+  </ul></li>
+  <li><a href="#australias-carbon-tax" id="toc-australias-carbon-tax" class="nav-link" data-scroll-target="#australias-carbon-tax">Australia’s Carbon Tax</a></li>
+  </ul>
+</nav>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(14)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(8)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Jared Greathouse </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 9, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>What is an applied econometrician or data scientist? At its simplest, both are practitioners of statistics who apply econometric or statistical theory to answer questions that economists, businesses, or other organizations care about. Unless your role is narrowly defined as “standard” analytics (mostly SQL and dashboards, as far as I understand), this is true whether you work in causal inference, deep learning, computer vision, or some other branch of the field.</p>
+<p>We often talk about “delivering value” or “providing insights.” But pause for a moment — look out your window. Do you see insights floating around? Of course not. Insights do not exist in nature; they’re created. They are <em>derived</em> through data analysis. And what makes that analysis scientific — and not just guessing with sexed up software tools — is its theoretical foundation. Even if you’re not proving lemmas in your day job, those underpinnings are exactly what allow us to trust our results.</p>
+<p>Some authors describe synthetic controls as a <a href="https://bookdown.org/mike/data_analysis/sec-synthetic-control.html">black box</a> <a href="https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished">function</a>, suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you’re dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.</p>
+<p>This matters even more because, as <a href="https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8">this Medium post</a> observes, industry often values <em>breadth and speed</em> over <em>theoretical depth</em>. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It lets you move quickly <em>and</em> diagnose problems effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. In this blog post, first, I’ll compute a synthetic control <em>by hand</em> (how often do we do such a thing?). Then, I’ll walk through a recent real-world application, showing how theoretical depth very easily informs the way we get and interpret results.</p>
+</section>
+<section id="a-simple-synthetic-control" class="level1">
+<h1>A Simple Synthetic Control</h1>
+<p>We will compute the synthetic control weights by hand, and then show how we get the same solution in <code>cvxpy.</code></p>
+<section id="deriving-the-weights" class="level2">
+<h2 class="anchored" data-anchor-id="deriving-the-weights">Deriving the Weights</h2>
+<p>Suppose we have a treated unit and two donor units in 2D:</p>
+<p><span class="math display">\[
+\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}, \quad
+\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
+\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}
+\]</span></p>
+<p>We aim to find a synthetic control as a convex combination of the donors that matches the target vector as closely as possible:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{w}^{\ast} &amp;= \underset{\mathbf w \in \mathbb{R}_{\ge 0}^2}{\operatorname*{argmin}} \;\; \|\mathbf y - \mathbf Y \mathbf w\|_2^2 \\
+\text{s.t.} \quad &amp; \mathbf 1^\top \mathbf w = 1,
+\end{aligned}
+\]</span></p>
+<p>where <span class="math inline">\(\mathbf{Y} = \begin{bmatrix} \mathbf{y}_1 &amp; \mathbf{y}_2 \end{bmatrix} = \begin{bmatrix} 20 &amp; 48 \\ 22 &amp; 50 \end{bmatrix}\)</span>.</p>
+<p>This is the standard matrix formulation, but we can express it slightly simpler for the purposes of the derivation:</p>
+<p><span class="math display">\[
+\hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2, \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
+\]</span></p>
+<p>We have two weights here. So, since we have a linear constraint, the solution for one weight determines the solution for the other one. So, to simplify the exposition, we can write <span class="math inline">\(\hat{\mathbf{y}}\)</span> in terms of <span class="math inline">\(w_1\)</span>:</p>
+<p><span class="math display">\[
+\hat{y}_1 = 48 - 28 w_1, \quad
+\hat{y}_2 = 50 - 28 w_1.
+\]</span></p>
+<p>As a vector this looks like:</p>
+<p><span class="math display">\[
+\hat{\mathbf{y}}(w_1) = \mathbf{y}_2 + w_1 (\mathbf{y}_1 - \mathbf{y}_2), \quad
+\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+\]</span></p>
+<p>To begin, consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the <a href="https://www.youtube.com/watch?v=eRCkfBmnzqk">Hilbert Projection Theorem</a>.</p>
+<div id="hilbert-projection" class="theorem">
+<p><strong>Hilbert Projection Theorem.</strong> Let <span class="math inline">\(C \subset \mathbb{R}^T\)</span> be a nonempty closed convex set and <span class="math inline">\(\mathbf{y} \in \mathbb{R}^T\)</span>. Then there exists a unique point <span class="math inline">\(\hat{\mathbf{y}} \in C\)</span> such that <span class="math display">\[
+\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
+\]</span> and the residual <span class="math inline">\(\mathbf{y} - \hat{\mathbf{y}}\)</span> satisfies the residual projection condition <span class="math display">\[
+\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
+\]</span></p>
+</div>
+<p>Without getting too far off track, we can use this to frame the synthetic control problem as projecting <span class="math inline">\(\mathbf{y}\)</span> onto the convex hull <span class="math inline">\(C\)</span> of the donors <span class="math inline">\(\{\mathbf{y}_1, \mathbf{y}_2\}\)</span>, which is the line segment between <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>. The projection <span class="math inline">\(\hat{\mathbf{y}}\)</span> minimizes the Euclidean distance to <span class="math inline">\(\mathbf{y}\)</span>, and the residual is orthogonal (or obtuse) to directions within <span class="math inline">\(C\)</span>. The function to minimize is:</p>
+<p><span class="math display">\[
+f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2 = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
+\]</span></p>
+<p>where the residual components come from:</p>
+<p><span class="math display">\[
+\mathbf{y} - \hat{\mathbf{y}}(w_1) = \begin{bmatrix} 50 \\ 60 \end{bmatrix} - \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix} = \begin{bmatrix} 2 + 28 w_1 \\ 10 + 28 w_1 \end{bmatrix}.
+\]</span></p>
+<p>Thus, the objective function is the sum of the squared residual components:</p>
+<p><span class="math display">\[
+f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2.
+\]</span></p>
+<p>Let’s define the two calculus rules we’ll use:</p>
+<div id="sum-rule" class="definition">
+<p><strong>Sum Rule.</strong> If a function <span class="math inline">\(f(x) = g(x) + h(x)\)</span>, where <span class="math inline">\(g(x)\)</span> and <span class="math inline">\(h(x)\)</span> are differentiable functions, then the derivative of <span class="math inline">\(f(x)\)</span> with respect to <span class="math inline">\(x\)</span> is the sum of the derivatives of the individual functions:</p>
+<p><span class="math display">\[
+f'(x) = g'(x) + h'(x).
+\]</span></p>
+<p>This rule allows us to differentiate each term of a sum separately and then add the results.</p>
+</div>
+<div id="chain-rule" class="definition">
+<p><strong>Chain Rule.</strong> If a function is composed as <span class="math inline">\(f(x) = g(h(x))\)</span>, where <span class="math inline">\(h(x)\)</span> is the inner function and <span class="math inline">\(g(u)\)</span> is the outer function (with <span class="math inline">\(u = h(x)\)</span>), then the derivative of <span class="math inline">\(f(x)\)</span> with respect to <span class="math inline">\(x\)</span> is:</p>
+<p><span class="math display">\[
+f'(x) = g'(h(x)) \cdot h'(x).
+\]</span></p>
+<p>In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to <span class="math inline">\(x\)</span>.</p>
+</div>
+<p>Now we just apply these rules to <span class="math inline">\(f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2\)</span>. Since the function is a sum of two terms, we use the sum rule to differentiate each term separately.</p>
+<p>Here is the inner function of term one:</p>
+<p><span class="math display">\[
+u = 2 + 28 w_1.
+\]</span></p>
+<p>and here is the outer function:</p>
+<p><span class="math display">\[
+g(u) = u^2
+\]</span></p>
+<p>Let’s start by differentiating the outer function: <span class="math display">\[
+g(u) = u^2 \implies g'(u) = 2u.
+\]</span></p>
+<p>Now let’s do the inner function: <span class="math display">\[
+h(w_1) = 2 + 28 w_1 \implies h'(w_1) = 28.
+\]</span></p>
+<p>By application of the chain rule, <span class="math display">\[
+\frac{d}{dw_1} (2 + 28 w_1)^2 = g'(h(w_1)) \cdot h'(w_1) = 2 (2 + 28 w_1) \cdot 28.
+\]</span></p>
+<p>Now let’s do the same for term two. We have the inner function:</p>
+<p><span class="math display">\[
+v = 10 + 28 w_1.
+\]</span></p>
+<p>And the outer function</p>
+<p><span class="math display">\[
+u = $v^2.
+\]</span></p>
+<p>We apply the power rule to the outer function: <span class="math display">\[
+g(v) = v^2 \implies g'(v) = 2v.
+\]</span></p>
+<p>Now we differentiate the inner function: <span class="math display">\[
+h(w_1) = 10 + 28 w_1 \implies h'(w_1) = 28.
+\]</span></p>
+<p>Now by the chain rule, <span class="math display">\[
+\frac{d}{dw_1} (10 + 28 w_1)^2 = g'(h(w_1)) \cdot h'(w_1) = 2 (10 + 28 w_1) \cdot 28.
+\]</span></p>
+<p>Okay these are the first two terms. Using the sum rule, the derivative of <span class="math inline">\(f(w_1)\)</span> is the sum of the derivatives of the two terms:</p>
+<p><span class="math display">\[
+f'(w_1) = \frac{d}{dw_1} (2 + 28 w_1)^2 + \frac{d}{dw_1} (10 + 28 w_1)^2 = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
+\]</span></p>
+<p>Factor out the common terms:</p>
+<p><span class="math display">\[
+f'(w_1) = 2 \cdot 28 \cdot (2 + 28 w_1) + 2 \cdot 28 \cdot (10 + 28 w_1) = 56 (2 + 28 w_1) + 56 (10 + 28 w_1).
+\]</span></p>
+<p>Combine the terms inside:</p>
+<p><span class="math display">\[
+(2 + 28 w_1) + (10 + 28 w_1) = 2 + 10 + 28 w_1 + 28 w_1 = 12 + 56 w_1.
+\]</span></p>
+<p>Thus:</p>
+<p><span class="math display">\[
+f'(w_1) = 56 (12 + 56 w_1).
+\]</span></p>
+<p>To find critical points of the objective function</p>
+<p><span class="math display">\[
+f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2,
+\]</span></p>
+<p>we first set the derivative to zero:</p>
+<p><span class="math display">\[
+f'(w_1) = 56(12 + 56 w_1) = 0
+\implies w_1 = -\frac{3}{14} \approx -0.214.
+\]</span></p>
+<p>This is the unconstrained minimum. However, this value of <span class="math inline">\(w_1\)</span> lies outside the feasible set <span class="math inline">\([0,1]\)</span> of convex weights. Since this is outside the feasible set <span class="math inline">\([0,1]\)</span>, the Hilbert Projection Theorem guarantees the true minimizer lies on the boundary of the convex hull.</p>
+<p>Evaluate the objective function at the boundaries:</p>
+<p><span class="math display">\[
+f(0) = 2^2 + 10^2 = 104, \quad
+f(1) = 30^2 + 38^2 = 2344.
+\]</span></p>
+<p>The minimum occurs at <span class="math inline">\(w_1 = 0, w_2 = 1\)</span>, giving</p>
+<p><span class="math display">\[
+\hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
+\]</span></p>
+<p>As we can see, it is a copy of one of the donors. To confirm this, we can look at the residual orthogonality condition</p>
+<div id="residual-orthogonality" class="lemma">
+<p><strong>Residual Orthogonality Condition.</strong> Let <span class="math inline">\(\hat{\mathbf{y}}\)</span> be the projection of <span class="math inline">\(\mathbf{y}\)</span> onto a convex set <span class="math inline">\(C\)</span>. Then for all <span class="math inline">\(\mathbf{z} \in C\)</span>: <span class="math display">\[
+\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0.
+\]</span></p>
+</div>
+<p>The residual vector is just the difference between the target vector and the synthetic control:</p>
+<p><span class="math display">\[
+\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix} 2 \\ 10 \end{bmatrix}.
+\]</span></p>
+<p>The direction spanning <span class="math inline">\(C\)</span> from <span class="math inline">\(\hat{\mathbf{y}} = \mathbf{y}_2\)</span> is:</p>
+<p><span class="math display">\[
+\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+\]</span></p>
+<p>Check the Hilbert Projection condition:</p>
+<p><span class="math display">\[
+\langle \mathbf{r}, \mathbf{y}_1 - \mathbf{y}_2 \rangle = 2(-28) + 10(-28) = -336 \le 0.
+\]</span></p>
+<p>The negative dot product confirms that moving toward <span class="math inline">\(\mathbf{y}_1\)</span> would increase the distance, so <span class="math inline">\(\hat{\mathbf{y}} = \mathbf{y}_2\)</span> is indeed the projection onto the closest face of the convex hull, exactly as predicted by the Hilbert Projection Theorem.</p>
+<p>We further know this must be true because of <a href="https://www.youtube.com/watch?v=RquUIXUMLcc">Minkowski-Weyl theorem</a></p>
+<div id="minkowski" class="theorem">
+<p><strong>Minkowski-Weyl Theorem.</strong> Let <span class="math inline">\(C \subset \mathbb{R}^T\)</span> be a compact convex set. Then every point in <span class="math inline">\(C\)</span> can be expressed as a convex combination of extreme points of <span class="math inline">\(C\)</span>.</p>
+</div>
+<p>The convex set <span class="math inline">\(C\)</span> is the compact line segment between <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>, with extreme points <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>. The projection <span class="math inline">\(\hat{\mathbf{y}} = \mathbf{y}_2\)</span> is itself an extreme point, expressed as the convex combination with weights <span class="math inline">\(w_1 = 0\)</span>, <span class="math inline">\(w_2 = 1\)</span>.</p>
+<p>If we want, we can even check whether we have arrived at the minimal point. To do this, we need to derive the <a href="https://mdav.ece.gatech.edu/ece-3803-fall2021/notes/17-notes-3803-f21.pdf">Karush-Kuhn-Tucker</a></p>
+<div id="kkt" class="theorem">
+<p><strong>KKT Optimality Conditions.</strong> At the optimum <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, there exist Lagrange multipliers <span class="math inline">\(\lambda \in \mathbb{R}\)</span> (for equality) and <span class="math inline">\(\mu \ge 0\)</span> (for inequality) such that:</p>
+<p><span class="math display">\[
+2 \mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y}) + \lambda \mathbf{1} - \mu = 0, \quad
+\mu_i w_i^{\ast} = 0, \quad i=1,\dots,N.
+\]</span></p>
+</div>
+<p>Now we confirm the KKT conditions for the optimization problem:</p>
+<p><span class="math display">\[
+\min_{\mathbf{w} \in \mathbb{R}^2} \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2, \quad \text{s.t.} \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
+\]</span></p>
+<p>For the candidate <span class="math inline">\(\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}\)</span>, compute <span class="math inline">\(\mathbf{Y} \mathbf{w}^{\ast} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}\)</span>, so:</p>
+<p><span class="math display">\[
+\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
+\]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[
+\mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y}) = \begin{bmatrix} 20 &amp; 22 \\ 48 &amp; 50 \end{bmatrix} \begin{bmatrix} -2 \\ -10 \end{bmatrix} = \begin{bmatrix} 20 \cdot (-2) + 22 \cdot (-10) \\ 48 \cdot (-2) + 50 \cdot (-10) \end{bmatrix} = \begin{bmatrix} -40 - 220 \\ -96 - 500 \end{bmatrix} = \begin{bmatrix} -260 \\ -596 \end{bmatrix}.
+\]</span></p>
+<p>The stationarity condition is:</p>
+<p><span class="math display">\[
+2 \begin{bmatrix} -260 \\ -596 \end{bmatrix} + \lambda \begin{bmatrix} 1 \\ 1 \end{bmatrix} - \begin{bmatrix} \mu_1 \\ \mu_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix} \implies \begin{bmatrix} -520 + \lambda - \mu_1 \\ -1192 + \lambda - \mu_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+\]</span></p>
+<p>Complementary slackness: <span class="math inline">\(\mu_1 w_1 = \mu_1 \cdot 0 = 0\)</span>, <span class="math inline">\(\mu_2 w_2 = \mu_2 \cdot 1 = 0 \implies \mu_2 = 0\)</span>.</p>
+<p>From the second equation: <span class="math inline">\(-1192 + \lambda - 0 = 0 \implies \lambda = 1192\)</span>.</p>
+<p>From the first equation: <span class="math inline">\(-520 + 1192 - \mu_1 = 0 \implies \mu_1 = 672 \ge 0\)</span>.</p>
+<p>All conditions hold: stationarity, primal feasibility (<span class="math inline">\(w_1^{\ast} \ge 0\)</span>, <span class="math inline">\(w_2^{\ast} \ge 0\)</span>, sum to 1), dual feasibility (<span class="math inline">\(\mu \ge 0\)</span>), and complementary slackness. Thus, <span class="math inline">\(\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}\)</span> is optimal.</p>
+</section>
+<section id="a-visuzalization-in-python" class="level2">
+<h2 class="anchored" data-anchor-id="a-visuzalization-in-python">A Visuzalization in Python</h2>
+<p>Again, none of this is voodoo, just a lot of hairy math.</p>
+<div id="2c1e8ce1" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 0: Setup</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Treated unit</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.array([<span class="dv">50</span>, <span class="dv">60</span>])</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Donors</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> np.array([<span class="dv">20</span>, <span class="dv">22</span>])</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> np.array([<span class="dv">48</span>, <span class="dv">50</span>])</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> np.vstack([d1, d2])</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># CVXPY SCM</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Each column is a donor</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>donors_cvx <span class="op">=</span> np.column_stack([d1, d2])</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>n_donors <span class="op">=</span> donors_cvx.shape[<span class="dv">1</span>]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># CVXPY variable for weights</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> cp.Variable(n_donors, nonneg<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Objective: minimize squared Euclidean distance</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>objective <span class="op">=</span> cp.Minimize(cp.sum_squares(x <span class="op">-</span> donors_cvx <span class="op">@</span> w))</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Constraint: sum of weights = 1</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> [cp.<span class="bu">sum</span>(w) <span class="op">==</span> <span class="dv">1</span>]</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Solve the problem</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>prob <span class="op">=</span> cp.Problem(objective, constraints)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>prob.solve()</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>x_hat_cvx <span class="op">=</span> donors_cvx <span class="op">@</span> w.value</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Time steps</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.arange(<span class="bu">len</span>(x))</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot as subfigures</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>,<span class="dv">5</span>))</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 1: 2D feature plot ---</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(d1[<span class="dv">0</span>], d1[<span class="dv">1</span>], <span class="st">'bo'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(d2[<span class="dv">0</span>], d2[<span class="dv">1</span>], <span class="st">'go'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(x[<span class="dv">0</span>], x[<span class="dv">1</span>], <span class="st">'r*'</span>, markersize<span class="op">=</span><span class="dv">12</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(x_hat_cvx[<span class="dv">0</span>], x_hat_cvx[<span class="dv">1</span>], <span class="st">'ms'</span>, markersize<span class="op">=</span><span class="dv">10</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>)</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull as a dashed line</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot([d1[<span class="dv">0</span>], d2[<span class="dv">0</span>]], [d1[<span class="dv">1</span>], d2[<span class="dv">1</span>]], <span class="st">'k-.'</span>, label<span class="op">=</span><span class="st">'Convex Hull'</span>)</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="co"># Add literal rectangle around convex hull</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>x_min, x_max <span class="op">=</span> np.<span class="bu">min</span>(donors[:,<span class="dv">0</span>]), np.<span class="bu">max</span>(donors[:,<span class="dv">0</span>])</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>y_min, y_max <span class="op">=</span> np.<span class="bu">min</span>(donors[:,<span class="dv">1</span>]), np.<span class="bu">max</span>(donors[:,<span class="dv">1</span>])</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>rect <span class="op">=</span> plt.Rectangle((x_min, y_min), x_max<span class="op">-</span>x_min, y_max<span class="op">-</span>y_min,</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>                     linewidth<span class="op">=</span><span class="dv">1</span>, edgecolor<span class="op">=</span><span class="st">'gray'</span>, facecolor<span class="op">=</span><span class="st">'none'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="st">'Hull Bounding Box'</span>)</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].add_patch(rect)</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">'Feature 1'</span>)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">'Feature 2'</span>)</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].legend()</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].grid(<span class="va">True</span>)</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">'2D Feature Space'</span>)</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 2: Time series plot ---</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, x, <span class="st">'r*-'</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>, markersize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, d1, <span class="st">'bo-'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, d2, <span class="st">'go-'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, x_hat_cvx, <span class="st">'ms-'</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>, markersize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull shading</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>donor_min <span class="op">=</span> np.<span class="bu">min</span>(donors, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>donor_max <span class="op">=</span> np.<span class="bu">max</span>(donors, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(t, donor_min, donor_max, color<span class="op">=</span><span class="st">'gray'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, label<span class="op">=</span><span class="st">'Donor Convex Hull'</span>)</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">'Time'</span>)</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylabel(<span class="st">'Outcome'</span>)</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].grid(<span class="va">True</span>)</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">'Time Series with Convex Hull Highlight'</span>)</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lfe1_files/figure-html/cell-2-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Already, some of you who got this far will be asking “Jared, why did you go through the trouble of showing us all this? Who cares about the KKT conditions or the Hilbert Space Projection or any of those idea? I’ll never literally do this at work, so why bother doing this?” The answer is because the moment you intuit SCM in these terms, you can oftentimes get a good read as to how an analysis will look before you even run a single SCM model. I oftentimes say that a great diagnostic is to literally just plot your target unit against your donors, and you’ll discover a lot. We’re about to see why this is in the content below.</p>
+</section>
+</section>
+<section id="australias-carbon-tax" class="level1">
+<h1>Australia’s Carbon Tax</h1>
+<p>While scrolling through LinkedIn recently, I came across <a href="https://www.linkedin.com/posts/jakob-simmerding_australias-carbon-tax-price-impacts-activity-7356333483717189636-0DDR?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw">a seminar paper</a> which studies the impact of Australia’s Carbon tax on prices of electricity. When I read SCM papers, the applied ones anyways, I immediately go to the figures to see how everything looks in terms of in sample fit and which donor were picked. On page 12, we see the Australia versus its synthetic control. My initial thought was “Hmmm, not bad! But… I see a little degradation of fit for 2009 (the beginning of the time series) to 2011 (a year-ish before the treatment happens). I wondered why this was. I read on. The authors go on to note about their analysis:</p>
+<blockquote class="blockquote">
+<p>However, caution is warranted due to the limited donor pool: the synthetic control consists almost entirely of Italy and Norway (81.5% and 18.49%), with other countries receiving negligible weights (&lt;0.01%). This makes the estimates potentially sensitive to idiosyncratic shocks in those two countries.</p>
+</blockquote>
+<p>I then thought to myself “Hmmmm… 80 20 split out of 10 donors… I wonder what the treated versus control units look like?” Fortunately, they answered this question on Appendix page 32 (I reproduce a version of the plot below, focusing on the in-sample period.)</p>
+<div id="62e72846" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> PDA, TSSC, FDID</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/qdocs/Data/PPI%20Countries%20Normalized%20(2009).csv"</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove quotes if any</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quarter'</span>] <span class="op">=</span> df[<span class="st">'Quarter'</span>].<span class="bu">str</span>.replace(<span class="st">'"'</span>, <span class="st">''</span>).<span class="bu">str</span>.strip()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace space to match pandas expected format</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quarter'</span>] <span class="op">=</span> df[<span class="st">'Quarter'</span>].<span class="bu">str</span>.replace(<span class="st">' '</span>, <span class="st">''</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to Period and then to timestamp</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Date'</span>] <span class="op">=</span> pd.PeriodIndex(df[<span class="st">'Quarter'</span>], freq<span class="op">=</span><span class="st">'Q'</span>).to_timestamp()</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for Q1 2009 to Q4 2018</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[(df[<span class="st">'Date'</span>] <span class="op">&gt;=</span> <span class="st">'2009-01-01'</span>) <span class="op">&amp;</span> (df[<span class="st">'Date'</span>] <span class="op">&lt;=</span> <span class="st">'2018-12-31'</span>)]</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep relevant columns</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[[<span class="st">'Date'</span>, <span class="st">'Country'</span>, <span class="st">'Price_Index_Interp'</span>]]</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Create treated dummy</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'treated'</span>] <span class="op">=</span> ((df[<span class="st">'Country'</span>] <span class="op">==</span> <span class="st">'AUS'</span>) <span class="op">&amp;</span> (df[<span class="st">'Date'</span>] <span class="op">&gt;</span> <span class="st">'2012-09-30'</span>)).astype(<span class="bu">int</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort by country and date</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.sort_values(by<span class="op">=</span>[<span class="st">'Country'</span>, <span class="st">'Date'</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#df = df[df['Country'] != 'NOR'].copy()</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: df.columns[<span class="dv">1</span>],</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]}</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>df_in_sample <span class="op">=</span> df.copy()</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>df_in_sample <span class="op">=</span> df_in_sample[df_in_sample[<span class="st">'Date'</span>] <span class="op">&lt;=</span> <span class="st">'2012-12-01'</span>]  <span class="co"># keep only in-sample</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>config_in_sample <span class="op">=</span> {</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df_in_sample,</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df_in_sample.columns[<span class="dv">2</span>],</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df_in_sample.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: df_in_sample.columns[<span class="dv">1</span>],</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df_in_sample.columns[<span class="dv">0</span>],</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>sc_diagplot([config_in_sample])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lfe1_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Geometrically, Australia effectively lies near the boundary of the convex hull spanned by the donor countries for much of the pre-treatment period. Think of the donor pool as forming a polygon in space. If Australia’s trajectory sits deep inside, SCM can mix donors smoothly. But if Australia hugs the edge, the projection is forced to land on just one or two vertices, no matter how much data you throw at it. Some of the donors intersect with Australia for the first two periods, but for all intents and purposes, for all quarters from 2009 to 2011, Australia is tracked by maybe 3 donors, and then only a little bit afterwards before the treatment began.</p>
+<p>The authors noted they were worried about “idiosyncratic shocks in [Italy and Norway]”. While true, the deeper reason about WHY its true lies in the convex geometry we’ve derived above. As we have discussed, the SCM projection is constrained to the nearest vertices — Italy and Norway — producing a corner solution. Given that Australia is so close to the boundary of the convex hull for most of the in sample period, the SCM is forced to rely on what effectively are the closest few neighbors that minimize the MSE. The synthetic control is what it is because it’s the only donors the algorithm could possibly match on in the first place. The authors note elsewhere:</p>
+<blockquote class="blockquote">
+<p>a problem arises when conducting the leave-one-out test (E1.2). Excluding Norway reduces the RMSPE ratio to 3.39; excluding Italy causes the ratio to fall to 0.8, effectively eliminating the observed effect. This underscores the importance of Italy as a core component of the synthetic control and implies that a causal interpretation relies on it being a valid counterfactual.</p>
+</blockquote>
+<p>These results make sense. For the reasons we’ve discussed above, Italy in this instance NEEDS to be a donor that gets weight, otherwise the algorithm will only match on worse donors that are farther away from Australia’s target trajectory.</p>
+<p>I thought to myself “Yeah this is definitely gonna need an intercept of some kind!!! Couldn’t fit the treated vector otherwise.” So, I ran <a href="https://mlsynth.readthedocs.io/en/latest/tssc.html">the Two-Step SCM</a>. The TSSC method was developed in part by one of my favorite econometricians, <a href="https://sites.utexas.edu/kathleenli/">Kathy Li</a>. The method is predicated on a simple idea: Sometimes treated units are simply <em>too extreme</em> relative to their donor pool. When this happens, vanilla SCM can struggle, and analysts may need to allow for intercepts or relax the non-negativity constraint. The challenge, however, is that it’s rarely obvious <em>ex ante</em> which modification is appropriate.</p>
+<p>TSSC chooses between a few candidate estimators. First is MSCa: Intercept, Convex Hull</p>
+<p><span class="math display">\[
+\underset{\mathbf{w},\,\beta}{\text{argmin}} \;\; \| \mathbf{y}_1 - \mathbf{Y}\mathbf{w} - \beta \mathbf{1} \|_2^2
+\quad \text{s.t.} \;\; \mathbf{w} \geq 0, \; \mathbf{1}^\top \mathbf{w} = 1, \; \beta \in \mathbb{R}.
+\]</span></p>
+<p>This is SCM with an intercept, which shifts the treated unit vertically inside the convex hull. We also have MSCb: No Intercept, Nonnegative Weights</p>
+<p><span class="math display">\[
+\underset{\mathbf{w}}{\text{argmin}} \;\; \| \mathbf{y}_1 - \mathbf{Y}\mathbf{w} \|_2^2
+\quad \text{s.t.} \;\; \mathbf{w} \geq 0.
+\]</span></p>
+<p>This drops the intercept but allows weights to be any nonnegative values (not required to sum to one). Geometrically, the treated unit is projected onto the convex cone generated by the donors. Finally, we have MSCc: Intercept + Nonnegative Weights</p>
+<p><span class="math display">\[
+\underset{\mathbf{w},\,\beta}{\text{argmin}} \;\; \| \mathbf{y}_1 - \mathbf{Y}\mathbf{w} - \beta \mathbf{1} \|_2^2
+\quad \text{s.t.} \;\; \mathbf{w} \geq 0.
+\]</span></p>
+<p>This combines both relaxations: an intercept plus nonnegative weights. The treated unit is projected onto a shifted convex cone, which is especially useful when the treated unit differs systematically in slope or level from the donor pool.</p>
+<p>TSSC begins by testing the joint null hypothesis that both restrictions are valid:</p>
+<p><span class="math display">\[
+H_0: \; \mathbf{1}^\top \mathbf{w} = 1 \quad \text{and} \quad \beta = 0
+\]</span></p>
+<p>against the alternative that at least one fails. If the null is rejected, each restriction is tested separately, yielding up to three possible modifications (MSCa, MSCb, or MSCc).</p>
+<p>The test statistic compares the restricted SCM solution against the most flexible specification, MSCc. Let <span class="math inline">\((\hat{\mathbf{w}}^{SC}, \hat{\beta}^{SC})\)</span> be the restricted solution and <span class="math inline">\((\hat{\mathbf{w}}^{MSCc}, \hat{\beta}^{MSCc})\)</span> the flexible one. The statistic takes the form</p>
+<p><span class="math display">\[
+T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat{\theta}^{SC} - \hat{\theta}^{MSCc}),
+\]</span></p>
+<p>where <span class="math inline">\(\hat{\theta}\)</span> stacks the estimated weights and intercept, and <span class="math inline">\(\hat{\Sigma}\)</span> is a covariance estimate obtained by subsampling the pre-treatment period. Intuitively, <span class="math inline">\(T\)</span> measures how far the SCM solution lies from the flexible cone-based solution, scaled by sampling variability. If <span class="math inline">\(T\)</span> is small, the convex-hull assumption holds; if large, the data support a more flexible geometry. Here is the result we get when we fit the TSSC estimator to the Australia case.</p>
+<div id="fb2cb7b7" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>TSSC_res <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lfe1_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="d297fa27" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># SCM / TSSC results</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Method"</span>: [<span class="st">"SCM"</span>, <span class="st">"MSCc"</span>],</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ATT"</span>: [<span class="fl">31.049</span>, <span class="op">-</span><span class="fl">30.713</span>],</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Intercept"</span>: [<span class="fl">0.000</span>, <span class="fl">62.872</span>],</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Key Weights"</span>: [</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Italy: 0.815, Norway: 0.185"</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Norway: 0.089, South Africa: 0.288"</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to Markdown table</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>md_table <span class="op">=</span> results_df.to_markdown(index<span class="op">=</span><span class="va">False</span>).split(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Adjust alignment: left for Method/Key Weights, center for numbers</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>md_table[<span class="dv">1</span>] <span class="op">=</span> <span class="st">"|:------------|:------:|:--------:|:---------------------------|"</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Display nicely in notebook</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>.join(md_table)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 13%">
+<col style="width: 16%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Method</th>
+<th style="text-align: center;">ATT</th>
+<th style="text-align: center;">Intercept</th>
+<th style="text-align: left;">Key Weights</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">SCM</td>
+<td style="text-align: center;">31.049</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: left;">Italy: 0.815, Norway: 0.185</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MSCc</td>
+<td style="text-align: center;">-30.713</td>
+<td style="text-align: center;">62.872</td>
+<td style="text-align: left;">Norway: 0.089, South Africa: 0.288</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we’ve ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept.</p>
+<p>Note that the sign reversal is not always true. Consider the Basque example:</p>
+<div id="71d480dc" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> TSSC</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]}</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lfe1_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Here our ATT is -0.8, whereas the original SCM’s was -0.69. With an intercept of 0.583, MSCc assigns weight to Cataluna: 0.533, Madrid (Comunidad De): 0.067, Principado De Asturias: 0.115, and Rioja (La): 0.289. In contrast, Cataluna’s weight at first was 0.826, Madrid’s was 0.168, and Austurias was 0.005 (these differ a little from the 2003 paper because I do not employ covariates).</p>
+
+
+
+</section>
+
+<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
+<div class="list quarto-listing-default">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757360224323" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('V2ViJTIwU2NyYXBpbmc='); return false;">Web Scraping</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('UHl0aG9u'); return false;">Python</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./aaascrape.html" class="no-external">
+<div class="listing-date">
+Jan 29, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757360224324" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('R2l0aHVi'); return false;">Github</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('QXV0b21hdGlvbg=='); return false;">Automation</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./gitact.html" class="no-external">
+<div class="listing-date">
+Jan 31, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757360224324" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('TWFjaGluZSUyMExlYXJuaW5n'); return false;">Machine Learning</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./fscm.html" class="no-external">
+<div class="listing-date">
+Apr 2, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757360224329" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scmo.html" class="no-external">
+<div class="listing-date">
+Apr 16, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757360224330" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./synthinter.html" class="no-external">
+<div class="listing-date">
+Apr 29, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757360224326" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./sccare.html" class="no-external">
+<div class="listing-date">
+May 12, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757360224326" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./nsc.html" class="no-external">
+<div class="listing-date">
+May 19, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757360224329" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./spillsynth.html" class="no-external">
+<div class="listing-date">
+Jul 9, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757360224329" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./shc.html" class="no-external">
+<div class="listing-date">
+Jul 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757360224329" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./sparsdens.html" class="no-external">
+<div class="listing-date">
+Aug 12, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757360224324" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./fasc.html" class="no-external">
+<div class="listing-date">
+Aug 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757360224330" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./wwwf.html" class="no-external">
+<div class="listing-date">
+Aug 25, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757360224323" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./consulting.html" class="no-external">👋 Welcome</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./consulting.html" class="no-external">
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757360282191" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./index.html" class="no-external">
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="listing-no-matching d-none">No matching items</div>
+</div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/jgreathouse9\.github\.io\/docs\/");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2025 Jared Greathouse</p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

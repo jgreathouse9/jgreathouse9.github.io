@@ -58,7 +58,7 @@ $$
 \mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
 $$
 
-To begin, consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the [Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk).
+Consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the [Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk).
 
 ::: {.theorem #hilbert-projection}
 **Hilbert Projection Theorem.** Let $C \subset \mathbb{R}^T$ be a nonempty closed convex set and $\mathbf{y} \in \mathbb{R}^T$. Then there exists a unique point $\hat{\mathbf{y}} \in C$ such that
@@ -111,103 +111,59 @@ $$
 In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to $x$.
 :::
 
-Now we just apply these rules to $f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2$. Since the function is a sum of two terms, we use the sum rule to differentiate each term separately.
-
-
-Here is the inner function of term one:
+Okay so let's begin. We are interested in finding the weight $w_1$ that minimizes the sum of squared residuals between the treated unit and a convex combination of the donor units:
 
 $$
-u = 2 + 28 w_1.
+f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
 $$
 
-and here is the outer function:
+where the residuals come from
 
 $$
-g(u) = u^2
+\mathbf{y} - \hat{\mathbf{y}}(w_1) = \begin{bmatrix} 50 \\ 60 \end{bmatrix} - \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix} = \begin{bmatrix} 2 + 28 w_1 \\ 10 + 28 w_1 \end{bmatrix}.
 $$
 
-Let's start by differentiating the outer function:
-$$
-g(u) = u^2 \implies g'(u) = 2u.
-$$
+To find the minimizing weight, we differentiate $f(w_1)$ with respect to $w_1$. Since $f(w_1)$ is a sum of two terms, the linearity of differentiation allows us to differentiate each term separately and then sum the results.
 
-Now let's do the inner function:
-$$
-h(w_1) = 2 + 28 w_1 \implies h'(w_1) = 28.
-$$
-
-By application of the chain rule,
-$$
-\frac{d}{dw_1} (2 + 28 w_1)^2 = g'(h(w_1)) \cdot h'(w_1) = 2 (2 + 28 w_1) \cdot 28.
-$$
-
-Now let's do the same for term two. We have the inner function:
+For the first term, $(2 + 28 w_1)^2$, we see it as a composition of two functions: the inner linear function $h_1(w_1) = 2 + 28 w_1$ and the outer quadratic function $g_1(u) = u^2$, with $u = h_1(w_1)$. By the power rule, the derivative of the outer function is $\frac{\mathrm{d} g_1}{\mathrm{d} u} = 2 u$, and the derivative of the inner function is $\frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 28$. Applying the chain rule, as we've defined it, we obtain
 
 $$
-v = 10 + 28 w_1.
+\frac{\mathrm{d}}{\mathrm{d} w_1} (2 + 28 w_1)^2 = 2 (2 + 28 w_1) \cdot 28.
 $$
 
-And the outer function
+The second term, $(10 + 28 w_1)^2$, is handled in exactly the same way. The inner function is $h_2(w_1) = 10 + 28 w_1$ and the outer function is $g_2(v) = v^2$, giving derivatives $\frac{\mathrm{d} g_2}{\mathrm{d} v} = 2v$ and $\frac{\mathrm{d} h_2}{\mathrm{d} w_1} = 28$. By the chain rule, we then have
 
 $$
-u = $v^2.
+\frac{\mathrm{d}}{\mathrm{d} w_1} (10 + 28 w_1)^2 = 2 (10 + 28 w_1) \cdot 28.
 $$
 
-We apply the power rule to the outer function:
-$$
-g(v) = v^2 \implies g'(v) = 2v.
-$$
-
-Now we differentiate the inner function:
-$$
-h(w_1) = 10 + 28 w_1 \implies h'(w_1) = 28.
-$$
-
-Now by the chain rule,
-$$
-\frac{d}{dw_1} (10 + 28 w_1)^2 = g'(h(w_1)) \cdot h'(w_1) = 2 (10 + 28 w_1) \cdot 28.
-$$
-
-Okay these are the first two terms. Using the sum rule, the derivative of $f(w_1)$ is the sum of the derivatives of the two terms:
+Combining the two terms, the derivative of the full function is
 
 $$
-f'(w_1) = \frac{d}{dw_1} (2 + 28 w_1)^2 + \frac{d}{dw_1} (10 + 28 w_1)^2 = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
+\frac{\mathrm{d}}{\mathrm{d} w_1} f(w_1) = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
 $$
 
-Factor out the common terms:
+Setting this derivative equal to zero gives the stationary point of $f(w_1)$:
 
 $$
-f'(w_1) = 2 \cdot 28 \cdot (2 + 28 w_1) + 2 \cdot 28 \cdot (10 + 28 w_1) = 56 (2 + 28 w_1) + 56 (10 + 28 w_1).
+2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28 = 0.
 $$
 
-Combine the terms inside:
+We can begin by simplifying. Factoring out the common term $2 \cdot 28 = 56$, we get
 
 $$
-(2 + 28 w_1) + (10 + 28 w_1) = 2 + 10 + 28 w_1 + 28 w_1 = 12 + 56 w_1.
+(2 + 28 w_1) + (10 + 28 w_1) = 0 \quad \implies \quad 12 + 56 w_1 = 0.
 $$
 
-Thus:
+Solving for $w_1$ gives the unconstrained minimizer
 
 $$
-f'(w_1) = 56 (12 + 56 w_1).
+w_1 = -\frac{12}{56} = -\frac{3}{14}.
 $$
 
-To find critical points of the objective function
+However, this value of $w_1$ lies outside the weight constraint $w \in [0,1]$. Since this is outside the feasible set $[0,1]$, the Hilbert Projection Theorem guarantees the true minimizer lies on the boundary of the convex hull.
 
-$$
-f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2,
-$$
-
-we first set the derivative to zero:
-
-$$
-f'(w_1) = 56(12 + 56 w_1) = 0 
-\implies w_1 = -\frac{3}{14} \approx -0.214.
-$$
-
-This is the unconstrained minimum. However, this value of $w_1$ lies outside the feasible set $[0,1]$ of convex weights. Since this is outside the feasible set $[0,1]$, the Hilbert Projection Theorem guarantees the true minimizer lies on the boundary of the convex hull.
-
-Evaluate the objective function at the boundaries:
+Now we can evaluate the objective function at the boundaries:
 
 $$
 f(0) = 2^2 + 10^2 = 104, \quad
@@ -220,37 +176,27 @@ $$
 \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
 $$
 
-As we can see, it is a copy of one of the donors. To confirm this, we can look at the residual orthogonality condition
-
-
-::: {.lemma #residual-orthogonality}
-**Residual Orthogonality Condition.** Let $\hat{\mathbf{y}}$ be the projection of $\mathbf{y}$ onto a convex set $C$. Then for all $\mathbf{z} \in C$:
-$$
-\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0.
-$$
-:::
-
-The residual vector is just the difference between the target vector and the synthetic control:
+Geometrically, this corresponds to projecting the treated vector $\mathbf{y}$ onto the line segment defined by the donor units. The residual vector is
 
 $$
-\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix} 2 \\ 10 \end{bmatrix}.
+\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix} 2 \\ 10 \end{bmatrix},
 $$
 
-The direction spanning $C$ from $\hat{\mathbf{y}} = \mathbf{y}_2$ is:
+and the direction spanning the convex set from $\hat{\mathbf{y}}$ is
 
 $$
 \mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
 $$
 
-Check the Hilbert Projection condition:
+The Hilbert Projection Theorem guarantees that the residual is obtuse (or orthogonal) to all directions within the convex set. Indeed, the dot product
 
 $$
-\langle \mathbf{r}, \mathbf{y}_1 - \mathbf{y}_2 \rangle = 2(-28) + 10(-28) = -336 \le 0.
+\langle \mathbf{r}, \mathbf{y}_1 - \mathbf{y}_2 \rangle = 2(-28) + 10(-28) = -336 \le 0
 $$
 
-The negative dot product confirms that moving toward $\mathbf{y}_1$ would increase the distance, so $\hat{\mathbf{y}} = \mathbf{y}_2$ is indeed the projection onto the closest face of the convex hull, exactly as predicted by the Hilbert Projection Theorem.
+confirms that moving toward $\mathbf{y}_1$ would increase the distance, so $\hat{\mathbf{y}} = \mathbf{y}_2$ is indeed the projection onto the closest face of the convex hull, exactly as predicted by the Hilbert Projection Theorem.
 
-We further know this must be true because of [Minkowski-Weyl theorem](https://www.youtube.com/watch?v=RquUIXUMLcc)
+This result is consistent with the [Minkowski-Weyl theorem](https://www.youtube.com/watch?v=RquUIXUMLcc)
 
 ::: {.theorem #minkowski}
 **Minkowski-Weyl Theorem.** Let $C \subset \mathbb{R}^T$ be a compact convex set. Then every point in $C$ can be expressed as a convex combination of extreme points of $C$.
@@ -258,7 +204,9 @@ We further know this must be true because of [Minkowski-Weyl theorem](https://ww
 
 The convex set $C$ is the compact line segment between $\mathbf{y}_1$ and $\mathbf{y}_2$, with extreme points $\mathbf{y}_1$ and $\mathbf{y}_2$. The projection $\hat{\mathbf{y}} = \mathbf{y}_2$ is itself an extreme point, expressed as the convex combination with weights $w_1 = 0$, $w_2 = 1$.
 
-If we want, we can even check whether we have arrived at the minimal point. To do this, we need to derive the [Karush-Kuhn-Tucker](https://mdav.ece.gatech.edu/ece-3803-fall2021/notes/17-notes-3803-f21.pdf)
+Or, every point in a compact convex set can be expressed as a convex combination of its extreme points.
+
+If we wish for an algebraic interpretation of this, we can always use the [Karush-Kuhn-Tucker](https://mdav.ece.gatech.edu/ece-3803-fall2021/notes/17-notes-3803-f21.pdf) conditions.
 
 ::: {.theorem #kkt}
 **KKT Optimality Conditions.** At the optimum $\mathbf{w}^{\ast}$, there exist Lagrange multipliers $\lambda \in \mathbb{R}$ (for equality) and $\mu \ge 0$ (for inequality) such that:
@@ -269,7 +217,7 @@ $$
 $$
 :::
 
-Now we confirm the KKT conditions for the optimization problem:
+Here is our general optimization problem:
 
 $$
 \min_{\mathbf{w} \in \mathbb{R}^2} \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2, \quad \text{s.t.} \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
@@ -300,6 +248,18 @@ From the second equation: $-1192 + \lambda - 0 = 0 \implies \lambda = 1192$.
 From the first equation: $-520 + 1192 - \mu_1 = 0 \implies \mu_1 = 672 \ge 0$.
 
 All conditions hold: stationarity, primal feasibility ($w_1^{\ast} \ge 0$, $w_2^{\ast} \ge 0$, sum to 1), dual feasibility ($\mu \ge 0$), and complementary slackness. Thus, $\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$ is optimal.
+
+We have already verified using the KKT conditions that the optimal weights for this example are
+
+$$
+\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix},
+$$
+
+with Lagrange multipliers $\mu_1 = 672$, $\mu_2 = 0$, and $\lambda = 1192$. These multipliers quantify how the constraints influence the solution: the nonnegativity of $w_1$ is active, which is why $\mu_1 > 0$, while $w_2$ is strictly positive and unconstrained, resulting in $\mu_2 = 0$. The stationarity condition ensures that the gradient of the objective function is exactly balanced by the constraints, while complementary slackness explains why only the active constraint has a nonzero multiplier. Primal and dual feasibility confirm that the candidate solution satisfies both the original weight constraints and the nonnegativity of the multipliers. Taken together, the KKT conditions rigorously establish that this choice of weights is optimal.
+
+Geometrically, this optimization problem can be viewed as projecting the treated vector $\mathbf{y}$ onto the convex hull of the donor vectors. The Hilbert Projection Theorem guarantees that there is a unique closest point within the convex hull and that the residual vector, defined as the difference between the treated vector and the projection, forms an obtuse angle or is orthogonal with respect to all directions inside the convex set. In our case, the unconstrained least squares solution would have required $w_1 < 0$, which lies outside the feasible convex hull. The KKT conditions formalize this by showing that the constraint $w_1 \ge 0$ is active, enforcing the feasible solution algebraically. From the geometric perspective, HPT explains that because the unconstrained minimum is infeasible, the closest feasible point lies on the boundary of the convex hull, specifically at the extreme point $\mathbf{y}_2$.
+
+In this way, the KKT conditions and the Hilbert Projection Theorem provide complementary perspectives. HPT offers a geometric intuition, showing that the solution is a projection onto the convex set, while KKT confirms algebraically which constraints are active, how the gradient is modified, and that the solution is indeed optimal under the given constraints. Together, they give a complete understanding of why the synthetic control solution lands on the boundary of the convex hull and how the residual aligns with the constraints.
 
 
 ## A Visuzalization in Python

@@ -1,0 +1,587 @@
+---
+title: "Lessons from Econometrics, Part 1: Synthetic Controls Aren't Black Boxes"
+date: 2025-09-09
+---
+
+# Introduction
+
+What is an applied econometrician or data scientist? At its simplest, both are practitioners of statistics who apply econometric or statistical theory to answer questions that economists, businesses, or other organizations care about. Unless your role is narrowly defined as "standard" analytics (mostly SQL and dashboards, as far as I understand), this is true whether you work in causal inference, deep learning, computer vision, or some other branch of the field.
+
+We often talk about "delivering value" or "providing insights." But pause for a moment — look out your window. Do you see insights floating around? Of course not. Insights do not exist in nature; they're created. They are *derived* through data analysis. And what makes that analysis scientific — and not just guessing with sexed up software tools — is its theoretical foundation. Even if you're not proving lemmas in your day job, those underpinnings are exactly what allow us to trust our results.
+
+Some authors describe synthetic controls as a [black box](https://bookdown.org/mike/data_analysis/sec-synthetic-control.html) [function](https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished), suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you're dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.
+
+This matters even more because, as [this Medium post](https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8) observes, industry often values *breadth and speed* over *theoretical depth*. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It lets you move quickly *and* diagnose problems effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. In this blog post, first, I'll compute a synthetic control *by hand* (how often do we do such a thing?). Then, I'll walk through a recent real-world application, showing how theoretical depth very easily informs the way we get and interpret results.
+
+# A Simple Synthetic Control
+
+We will compute the synthetic control weights by hand, and then show how we get the same solution in `cvxpy.`
+
+## Deriving the Weights
+
+Suppose we have a treated unit and two donor units in 2D:
+
+$$
+\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}, \quad 
+\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
+\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}
+$$
+
+We aim to find a synthetic control as a convex combination of the donors that matches the target vector as closely as possible:
+
+$$
+\begin{aligned}
+\mathbf{w}^{\ast} &= \underset{\mathbf w \in \mathbb{R}_{\ge 0}^2}{\operatorname*{argmin}} \;\; \|\mathbf y - \mathbf Y \mathbf w\|_2^2 \\
+\text{s.t.} \quad & \mathbf 1^\top \mathbf w = 1,
+\end{aligned}
+$$
+
+where $\mathbf{Y} = \begin{bmatrix} \mathbf{y}_1 & \mathbf{y}_2 \end{bmatrix} = \begin{bmatrix} 20 & 48 \\ 22 & 50 \end{bmatrix}$.
+
+This is the standard matrix formulation, but we can express it slightly simpler for the purposes of the derivation:
+
+$$
+\hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2, \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
+$$
+
+We have two weights here. So, since we have a linear constraint, the solution for one weight determines the solution for the other one. So, to simplify the exposition, we can write $\hat{\mathbf{y}}$ in terms of $w_1$:
+
+$$
+\hat{y}_1 = 48 - 28 w_1, \quad
+\hat{y}_2 = 50 - 28 w_1.
+$$
+
+As a vector this looks like:
+
+$$
+\hat{\mathbf{y}}(w_1) = \mathbf{y}_2 + w_1 (\mathbf{y}_1 - \mathbf{y}_2), \quad
+\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+$$
+
+To begin, consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the [Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk).
+
+::: {.theorem #hilbert-projection}
+**Hilbert Projection Theorem.** Let $C \subset \mathbb{R}^T$ be a nonempty closed convex set and $\mathbf{y} \in \mathbb{R}^T$. Then there exists a unique point $\hat{\mathbf{y}} \in C$ such that
+$$
+\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
+$$
+and the residual $\mathbf{y} - \hat{\mathbf{y}}$ satisfies the residual projection condition
+$$
+\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
+$$
+:::
+
+Without getting too far off track, we can use this to frame the synthetic control problem as projecting $\mathbf{y}$ onto the convex hull $C$ of the donors $\{\mathbf{y}_1, \mathbf{y}_2\}$, which is the line segment between $\mathbf{y}_1$ and $\mathbf{y}_2$. The projection $\hat{\mathbf{y}}$ minimizes the Euclidean distance to $\mathbf{y}$, and the residual is orthogonal (or obtuse) to directions within $C$. The function to minimize is:
+
+$$
+f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2 = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
+$$
+
+where the residual components come from:
+
+$$
+\mathbf{y} - \hat{\mathbf{y}}(w_1) = \begin{bmatrix} 50 \\ 60 \end{bmatrix} - \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix} = \begin{bmatrix} 2 + 28 w_1 \\ 10 + 28 w_1 \end{bmatrix}.
+$$
+
+Thus, the objective function is the sum of the squared residual components:
+
+$$
+f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2.
+$$
+
+Let's define the two calculus rules we'll use:
+
+::: {.definition #sum-rule}
+**Sum Rule.** If a function $f(x) = g(x) + h(x)$, where $g(x)$ and $h(x)$ are differentiable functions, then the derivative of $f(x)$ with respect to $x$ is the sum of the derivatives of the individual functions:
+
+$$
+f'(x) = g'(x) + h'(x).
+$$
+
+This rule allows us to differentiate each term of a sum separately and then add the results.
+:::
+
+::: {.definition #chain-rule}
+**Chain Rule.** If a function is composed as $f(x) = g(h(x))$, where $h(x)$ is the inner function and $g(u)$ is the outer function (with $u = h(x)$), then the derivative of $f(x)$ with respect to $x$ is:
+
+$$
+f'(x) = g'(h(x)) \cdot h'(x).
+$$
+
+In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to $x$.
+:::
+
+Now we just apply these rules to $f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2$. Since the function is a sum of two terms, we use the sum rule to differentiate each term separately.
+
+
+Here is the inner function of term one:
+
+$$
+u = 2 + 28 w_1.
+$$
+
+and here is the outer function:
+
+$$
+g(u) = u^2
+$$
+
+Let's start by differentiating the outer function:
+$$
+g(u) = u^2 \implies g'(u) = 2u.
+$$
+
+Now let's do the inner function:
+$$
+h(w_1) = 2 + 28 w_1 \implies h'(w_1) = 28.
+$$
+
+By application of the chain rule,
+$$
+\frac{d}{dw_1} (2 + 28 w_1)^2 = g'(h(w_1)) \cdot h'(w_1) = 2 (2 + 28 w_1) \cdot 28.
+$$
+
+Now let's do the same for term two. We have the inner function:
+
+$$
+v = 10 + 28 w_1.
+$$
+
+And the outer function
+
+$$
+u = $v^2.
+$$
+
+We apply the power rule to the outer function:
+$$
+g(v) = v^2 \implies g'(v) = 2v.
+$$
+
+Now we differentiate the inner function:
+$$
+h(w_1) = 10 + 28 w_1 \implies h'(w_1) = 28.
+$$
+
+Now by the chain rule,
+$$
+\frac{d}{dw_1} (10 + 28 w_1)^2 = g'(h(w_1)) \cdot h'(w_1) = 2 (10 + 28 w_1) \cdot 28.
+$$
+
+Okay these are the first two terms. Using the sum rule, the derivative of $f(w_1)$ is the sum of the derivatives of the two terms:
+
+$$
+f'(w_1) = \frac{d}{dw_1} (2 + 28 w_1)^2 + \frac{d}{dw_1} (10 + 28 w_1)^2 = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
+$$
+
+Factor out the common terms:
+
+$$
+f'(w_1) = 2 \cdot 28 \cdot (2 + 28 w_1) + 2 \cdot 28 \cdot (10 + 28 w_1) = 56 (2 + 28 w_1) + 56 (10 + 28 w_1).
+$$
+
+Combine the terms inside:
+
+$$
+(2 + 28 w_1) + (10 + 28 w_1) = 2 + 10 + 28 w_1 + 28 w_1 = 12 + 56 w_1.
+$$
+
+Thus:
+
+$$
+f'(w_1) = 56 (12 + 56 w_1).
+$$
+
+To find critical points of the objective function
+
+$$
+f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2,
+$$
+
+we first set the derivative to zero:
+
+$$
+f'(w_1) = 56(12 + 56 w_1) = 0 
+\implies w_1 = -\frac{3}{14} \approx -0.214.
+$$
+
+This is the unconstrained minimum. However, this value of $w_1$ lies outside the feasible set $[0,1]$ of convex weights. Since this is outside the feasible set $[0,1]$, the Hilbert Projection Theorem guarantees the true minimizer lies on the boundary of the convex hull.
+
+Evaluate the objective function at the boundaries:
+
+$$
+f(0) = 2^2 + 10^2 = 104, \quad
+f(1) = 30^2 + 38^2 = 2344.
+$$
+
+The minimum occurs at $w_1 = 0, w_2 = 1$, giving
+
+$$
+\hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
+$$
+
+As we can see, it is a copy of one of the donors. To confirm this, we can look at the residual orthogonality condition
+
+
+::: {.lemma #residual-orthogonality}
+**Residual Orthogonality Condition.** Let $\hat{\mathbf{y}}$ be the projection of $\mathbf{y}$ onto a convex set $C$. Then for all $\mathbf{z} \in C$:
+$$
+\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0.
+$$
+:::
+
+The residual vector is just the difference between the target vector and the synthetic control:
+
+$$
+\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix} 2 \\ 10 \end{bmatrix}.
+$$
+
+The direction spanning $C$ from $\hat{\mathbf{y}} = \mathbf{y}_2$ is:
+
+$$
+\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+$$
+
+Check the Hilbert Projection condition:
+
+$$
+\langle \mathbf{r}, \mathbf{y}_1 - \mathbf{y}_2 \rangle = 2(-28) + 10(-28) = -336 \le 0.
+$$
+
+The negative dot product confirms that moving toward $\mathbf{y}_1$ would increase the distance, so $\hat{\mathbf{y}} = \mathbf{y}_2$ is indeed the projection onto the closest face of the convex hull, exactly as predicted by the Hilbert Projection Theorem.
+
+We further know this must be true because of [Minkowski-Weyl theorem](https://www.youtube.com/watch?v=RquUIXUMLcc)
+
+::: {.theorem #minkowski}
+**Minkowski-Weyl Theorem.** Let $C \subset \mathbb{R}^T$ be a compact convex set. Then every point in $C$ can be expressed as a convex combination of extreme points of $C$.
+:::
+
+The convex set $C$ is the compact line segment between $\mathbf{y}_1$ and $\mathbf{y}_2$, with extreme points $\mathbf{y}_1$ and $\mathbf{y}_2$. The projection $\hat{\mathbf{y}} = \mathbf{y}_2$ is itself an extreme point, expressed as the convex combination with weights $w_1 = 0$, $w_2 = 1$.
+
+If we want, we can even check whether we have arrived at the minimal point. To do this, we need to derive the [Karush-Kuhn-Tucker](https://mdav.ece.gatech.edu/ece-3803-fall2021/notes/17-notes-3803-f21.pdf)
+
+::: {.theorem #kkt}
+**KKT Optimality Conditions.** At the optimum $\mathbf{w}^{\ast}$, there exist Lagrange multipliers $\lambda \in \mathbb{R}$ (for equality) and $\mu \ge 0$ (for inequality) such that:
+
+$$
+2 \mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y}) + \lambda \mathbf{1} - \mu = 0, \quad
+\mu_i w_i^{\ast} = 0, \quad i=1,\dots,N.
+$$
+:::
+
+Now we confirm the KKT conditions for the optimization problem:
+
+$$
+\min_{\mathbf{w} \in \mathbb{R}^2} \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2, \quad \text{s.t.} \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
+$$
+
+For the candidate $\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$, compute $\mathbf{Y} \mathbf{w}^{\ast} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}$, so:
+
+$$
+\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
+$$
+
+Then:
+
+$$
+\mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y}) = \begin{bmatrix} 20 & 22 \\ 48 & 50 \end{bmatrix} \begin{bmatrix} -2 \\ -10 \end{bmatrix} = \begin{bmatrix} 20 \cdot (-2) + 22 \cdot (-10) \\ 48 \cdot (-2) + 50 \cdot (-10) \end{bmatrix} = \begin{bmatrix} -40 - 220 \\ -96 - 500 \end{bmatrix} = \begin{bmatrix} -260 \\ -596 \end{bmatrix}.
+$$
+
+The stationarity condition is:
+
+$$
+2 \begin{bmatrix} -260 \\ -596 \end{bmatrix} + \lambda \begin{bmatrix} 1 \\ 1 \end{bmatrix} - \begin{bmatrix} \mu_1 \\ \mu_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix} \implies \begin{bmatrix} -520 + \lambda - \mu_1 \\ -1192 + \lambda - \mu_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+$$
+
+Complementary slackness: $\mu_1 w_1 = \mu_1 \cdot 0 = 0$, $\mu_2 w_2 = \mu_2 \cdot 1 = 0 \implies \mu_2 = 0$.
+
+From the second equation: $-1192 + \lambda - 0 = 0 \implies \lambda = 1192$.
+
+From the first equation: $-520 + 1192 - \mu_1 = 0 \implies \mu_1 = 672 \ge 0$.
+
+All conditions hold: stationarity, primal feasibility ($w_1^{\ast} \ge 0$, $w_2^{\ast} \ge 0$, sum to 1), dual feasibility ($\mu \ge 0$), and complementary slackness. Thus, $\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$ is optimal.
+
+
+## A Visuzalization in Python
+
+Again, none of this is voodoo, just a lot of hairy math.
+
+```{python}
+
+import numpy as np
+import matplotlib.pyplot as plt
+import cvxpy as cp
+
+# =====================
+# Step 0: Setup
+# =====================
+# Treated unit
+x = np.array([50, 60])
+
+# Donors
+d1 = np.array([20, 22])
+d2 = np.array([48, 50])
+donors = np.vstack([d1, d2])
+
+# =====================
+# CVXPY SCM
+# =====================
+# Each column is a donor
+donors_cvx = np.column_stack([d1, d2])
+n_donors = donors_cvx.shape[1]
+
+# CVXPY variable for weights
+w = cp.Variable(n_donors, nonneg=True)
+
+# Objective: minimize squared Euclidean distance
+objective = cp.Minimize(cp.sum_squares(x - donors_cvx @ w))
+
+# Constraint: sum of weights = 1
+constraints = [cp.sum(w) == 1]
+
+# Solve the problem
+prob = cp.Problem(objective, constraints)
+prob.solve()
+
+x_hat_cvx = donors_cvx @ w.value
+
+# Time steps
+t = np.arange(len(x))
+
+# =====================
+# Plot as subfigures
+# =====================
+fig, axs = plt.subplots(1, 2, figsize=(12,5))
+
+# --- Subplot 1: 2D feature plot ---
+axs[0].plot(d1[0], d1[1], 'bo', label='Donor 1')
+axs[0].plot(d2[0], d2[1], 'go', label='Donor 2')
+axs[0].plot(x[0], x[1], 'r*', markersize=12, label='Treated Unit')
+axs[0].plot(x_hat_cvx[0], x_hat_cvx[1], 'ms', markersize=10, label='Synthetic Control')
+
+# Convex hull as a dashed line
+axs[0].plot([d1[0], d2[0]], [d1[1], d2[1]], 'k-.', label='Convex Hull')
+
+# Add literal rectangle around convex hull
+x_min, x_max = np.min(donors[:,0]), np.max(donors[:,0])
+y_min, y_max = np.min(donors[:,1]), np.max(donors[:,1])
+rect = plt.Rectangle((x_min, y_min), x_max-x_min, y_max-y_min,
+                     linewidth=1, edgecolor='gray', facecolor='none', linestyle='--', label='Hull Bounding Box')
+axs[0].add_patch(rect)
+
+axs[0].set_xlabel('Feature 1')
+axs[0].set_ylabel('Feature 2')
+axs[0].legend()
+axs[0].grid(True)
+axs[0].set_title('2D Feature Space')
+
+# --- Subplot 2: Time series plot ---
+axs[1].plot(t, x, 'r*-', label='Treated Unit', markersize=10)
+axs[1].plot(t, d1, 'bo-', label='Donor 1')
+axs[1].plot(t, d2, 'go-', label='Donor 2')
+axs[1].plot(t, x_hat_cvx, 'ms-', label='Synthetic Control', markersize=8)
+
+# Convex hull shading
+donor_min = np.min(donors, axis=0)
+donor_max = np.max(donors, axis=0)
+axs[1].fill_between(t, donor_min, donor_max, color='gray', alpha=0.2, label='Donor Convex Hull')
+
+axs[1].set_xlabel('Time')
+axs[1].set_ylabel('Outcome')
+axs[1].legend()
+axs[1].grid(True)
+axs[1].set_title('Time Series with Convex Hull Highlight')
+
+plt.tight_layout()
+plt.show()
+
+```
+
+Already, some of you who got this far will be asking "Jared, why did you go through the trouble of showing us all this? Who cares about the KKT conditions or the Hilbert Space Projection or any of those idea? I'll never literally do this at work, so why bother doing this?" The answer is because the moment you intuit SCM in these terms, you can oftentimes get a good read as to how an analysis will look before you even run a single SCM model. I oftentimes say that a great diagnostic is to literally just plot your target unit against your donors, and you'll discover a lot. We're about to see why this is in the content below.
+
+# Australia's Carbon Tax
+
+While scrolling through LinkedIn recently, I came across [a seminar paper](https://www.linkedin.com/posts/jakob-simmerding_australias-carbon-tax-price-impacts-activity-7356333483717189636-0DDR?utm_source=share&utm_medium=member_desktop&rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw) which studies the impact of Australia's Carbon tax on prices of electricity. When I read SCM papers, the applied ones anyways, I immediately go to the figures to see how everything looks in terms of in sample fit and which donor were picked. On page 12, we see the Australia versus its synthetic control. My initial thought was "Hmmm, not bad! But... I see a little degradation of fit for 2009 (the beginning of the time series) to 2011 (a year-ish before the treatment happens). I wondered why this was. I read on. The authors go on to note about their analysis:
+
+> However, caution is warranted due to the limited donor pool: the synthetic control consists almost entirely of Italy and Norway (81.5% and 18.49%), with other countries receiving negligible weights (<0.01%). This makes the estimates potentially sensitive to idiosyncratic shocks in those two countries.
+
+I then thought to myself "Hmmmm... 80 20 split out of 10 donors... I wonder what the treated versus control units look like?" Fortunately, they answered this question on Appendix page 32 (I reproduce a version of the plot below, focusing on the in-sample period.)
+
+
+```{python}
+
+
+import pandas as pd
+import numpy as np
+from mlsynth.utils.helperutils import sc_diagplot
+from mlsynth import PDA, TSSC, FDID
+
+url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/qdocs/Data/PPI%20Countries%20Normalized%20(2009).csv"
+df = pd.read_csv(url)
+
+# Remove quotes if any
+df['Quarter'] = df['Quarter'].str.replace('"', '').str.strip()
+
+# Replace space to match pandas expected format
+df['Quarter'] = df['Quarter'].str.replace(' ', '')
+
+# Convert to Period and then to timestamp
+df['Date'] = pd.PeriodIndex(df['Quarter'], freq='Q').to_timestamp()
+
+# Filter for Q1 2009 to Q4 2018
+df = df[(df['Date'] >= '2009-01-01') & (df['Date'] <= '2018-12-31')]
+
+# Keep relevant columns
+df = df[['Date', 'Country', 'Price_Index_Interp']]
+
+# Create treated dummy
+df['treated'] = ((df['Country'] == 'AUS') & (df['Date'] > '2012-09-30')).astype(int)
+
+# Sort by country and date
+df = df.sort_values(by=['Country', 'Date']).reset_index(drop=True)
+
+#df = df[df['Country'] != 'NOR'].copy()
+
+config = {
+    "df": df,
+    "outcome": df.columns[2],
+    "treat": df.columns[-1],
+    "unitid": df.columns[1],
+    "time": df.columns[0],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"]}
+
+df_in_sample = df.copy()
+df_in_sample = df_in_sample[df_in_sample['Date'] <= '2012-12-01']  # keep only in-sample
+
+config_in_sample = {
+    "df": df_in_sample,
+    "outcome": df_in_sample.columns[2],
+    "treat": df_in_sample.columns[-1],
+    "unitid": df_in_sample.columns[1],
+    "time": df_in_sample.columns[0],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"]
+}
+
+sc_diagplot([config_in_sample])
+```
+
+Geometrically, Australia effectively lies near the boundary of the convex hull spanned by the donor countries for much of the pre-treatment period. Think of the donor pool as forming a polygon in space. If Australia’s trajectory sits deep inside, SCM can mix donors smoothly. But if Australia hugs the edge, the projection is forced to land on just one or two vertices, no matter how much data you throw at it. Some of the donors intersect with Australia for the first two periods, but for all intents and purposes, for all quarters from 2009 to 2011, Australia is tracked by maybe 3 donors, and then only a little bit afterwards before the treatment began.
+
+The authors noted they were worried about "idiosyncratic shocks in [Italy and Norway]". While true, the deeper reason about WHY its true lies in the convex geometry we've derived above.  As we have discussed, the SCM projection is constrained to the nearest vertices — Italy and Norway — producing a corner solution.  Given that Australia is so close to the boundary of the convex hull for most of the in sample period, the SCM is forced to rely on what effectively are the closest few neighbors that minimize the MSE. The synthetic control is what it is because it's the only donors the algorithm could possibly match on in the first place. The authors note elsewhere:
+
+> a problem arises when conducting the leave-one-out test (E1.2). Excluding Norway reduces the RMSPE ratio to 3.39; excluding Italy causes the ratio to fall to 0.8, effectively eliminating the observed effect. This underscores the importance of Italy as a core component of the synthetic control and implies that a causal interpretation relies on it being a valid counterfactual.
+
+These results make sense. For the reasons we've discussed above, Italy in this instance NEEDS to be a donor that gets weight, otherwise the algorithm will only match on worse donors that are farther away from Australia's target trajectory.
+
+I thought to myself "Yeah this is definitely gonna need an intercept of some kind!!! Couldn't fit the treated vector otherwise." So, I ran [the Two-Step SCM](https://mlsynth.readthedocs.io/en/latest/tssc.html). The TSSC method was developed in part by one of my favorite econometricians, [Kathy Li](https://sites.utexas.edu/kathleenli/). The method is predicated on a simple idea:  Sometimes treated units are simply *too extreme* relative to their donor pool. When this happens, vanilla SCM can struggle, and analysts may need to allow for intercepts or relax the non-negativity constraint. The challenge, however, is that it’s rarely obvious *ex ante* which modification is appropriate. 
+
+TSSC chooses between a few candidate estimators. First is MSCa: Intercept, Convex Hull
+
+$$
+\underset{\mathbf{w},\,\beta}{\text{argmin}} \;\; \| \mathbf{y}_1 - \mathbf{Y}\mathbf{w} - \beta \mathbf{1} \|_2^2
+\quad \text{s.t.} \;\; \mathbf{w} \geq 0, \; \mathbf{1}^\top \mathbf{w} = 1, \; \beta \in \mathbb{R}.
+$$
+
+This is SCM with an intercept, which shifts the treated unit vertically inside the convex hull. We also have MSCb: No Intercept, Nonnegative Weights
+
+$$
+\underset{\mathbf{w}}{\text{argmin}} \;\; \| \mathbf{y}_1 - \mathbf{Y}\mathbf{w} \|_2^2
+\quad \text{s.t.} \;\; \mathbf{w} \geq 0.
+$$
+
+This drops the intercept but allows weights to be any nonnegative values (not required to sum to one). Geometrically, the treated unit is projected onto the convex cone generated by the donors. Finally, we have MSCc: Intercept + Nonnegative Weights
+
+$$
+\underset{\mathbf{w},\,\beta}{\text{argmin}} \;\; \| \mathbf{y}_1 - \mathbf{Y}\mathbf{w} - \beta \mathbf{1} \|_2^2
+\quad \text{s.t.} \;\; \mathbf{w} \geq 0.
+$$
+
+This combines both relaxations: an intercept plus nonnegative weights. The treated unit is projected onto a shifted convex cone, which is especially useful when the treated unit differs systematically in slope or level from the donor pool.
+
+TSSC begins by testing the joint null hypothesis that both restrictions are valid:
+
+$$
+H_0: \; \mathbf{1}^\top \mathbf{w} = 1 \quad \text{and} \quad \beta = 0
+$$
+
+against the alternative that at least one fails. If the null is rejected, each restriction is tested separately, yielding up to three possible modifications (MSCa, MSCb, or MSCc).
+
+The test statistic compares the restricted SCM solution against the most flexible specification, MSCc. Let $(\hat{\mathbf{w}}^{SC}, \hat{\beta}^{SC})$ be the restricted solution and $(\hat{\mathbf{w}}^{MSCc}, \hat{\beta}^{MSCc})$ the flexible one. The statistic takes the form
+
+$$
+T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat{\theta}^{SC} - \hat{\theta}^{MSCc}),
+$$
+
+where $\hat{\theta}$ stacks the estimated weights and intercept, and $\hat{\Sigma}$ is a covariance estimate obtained by subsampling the pre-treatment period. Intuitively, $T$ measures how far the SCM solution lies from the flexible cone-based solution, scaled by sampling variability. If $T$ is small, the convex-hull assumption holds; if large, the data support a more flexible geometry. Here is the result we get when we fit the TSSC estimator to the Australia case.
+
+
+
+```{python}
+
+TSSC_res = TSSC(config).fit()
+
+
+```
+
+```{python}
+import numpy as np
+import pandas as pd
+from IPython.display import display, Markdown
+
+# SCM / TSSC results
+results_df = pd.DataFrame({
+    "Method": ["SCM", "MSCc"],
+    "ATT": [31.049, -30.713],
+    "Intercept": [0.000, 62.872],
+    "Key Weights": [
+        "Italy: 0.815, Norway: 0.185",
+        "Norway: 0.089, South Africa: 0.288"
+    ]
+})
+
+# Convert to Markdown table
+md_table = results_df.to_markdown(index=False).split('\n')
+
+# Adjust alignment: left for Method/Key Weights, center for numbers
+md_table[1] = "|:------------|:------:|:--------:|:---------------------------|"
+
+# Display nicely in notebook
+display(Markdown('\n'.join(md_table)))
+```
+
+The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we've ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept.
+
+Note that the sign reversal is not always true. Consider the Basque example:
+
+
+```{python}
+
+import pandas as pd
+from mlsynth import TSSC
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
+data = pd.read_csv(url)
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"]}
+
+arco = TSSC(config).fit()
+
+
+
+```
+
+Here our ATT is -0.8, whereas the original SCM's was -0.69. With an intercept of 0.583, MSCc assigns weight to Cataluna: 0.533, Madrid (Comunidad De): 0.067, Principado De Asturias: 0.115, and Rioja (La): 0.289. In contrast, Cataluna's weight at first was 0.826, Madrid's was 0.168, and Austurias was 0.005 (these differ a little from the 2003 paper because I do not employ covariates).
+
+
+

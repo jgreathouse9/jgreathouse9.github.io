@@ -5,11 +5,9 @@ date: 2025-09-09
 
 # Introduction
 
-What is an applied econometrician or data scientist? At its simplest, both are practitioners of statistics who apply econometric or statistical theory to answer questions that economists, businesses, or other organizations care about. Unless your role is narrowly defined as "standard" analytics (mostly SQL and dashboards, as far as I understand), this is true whether you work in causal inference, deep learning, computer vision, or some other branch of the field.
+What is an applied econometrician or data scientist? At its simplest, both are practitioners of statistics who apply econometric or statistical theory to answer questions that economists, businesses, or other organizations care about. Unless your role is narrowly defined as "standard" analytics (mostly SQL and dashboards, as far as I understand), this is true whether you work in causal inference, deep learning, computer vision, or some other branch of the field. We often talk about "delivering value" or "providing insights." Some folks [claim](https://www.linkedin.com/feed/update/urn:li:activity:7313552572710035456?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7313641726202531842%29&replyUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7314391420637720578%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287313641726202531842%2Curn%3Ali%3Aactivity%3A7313552572710035456%29&dashReplyUrn=urn%3Ali%3Afsd_comment%3A%287314391420637720578%2Curn%3Ali%3Aactivity%3A7313552572710035456%29) that deep business experience (which can be learned like other mindsets) matters more than technical knowledge, and that some data science teams "fail due to being too scientific". But pause for a moment — look out your window. Do you see insights, or "business sense" floating around? Of course not. Insights do not exist in nature; they're created. They are *derived* through data analysis. Business sense does not exist in a vacuum, it is informed by empirical observations about the real world. And what makes that analysis scientific, and business sense sensbile (not just guessing with sexed up software tools) is the theoretical source under which we arrive at these conclusions. Even if you're not proving lemmas in your day job (I don't), those underpinnings are exactly what allow us to trust our results.
 
-We often talk about "delivering value" or "providing insights." But pause for a moment — look out your window. Do you see insights floating around? Of course not. Insights do not exist in nature; they're created. They are *derived* through data analysis. And what makes that analysis scientific — and not just guessing with sexed up software tools — is its theoretical foundation. Even if you're not proving lemmas in your day job, those underpinnings are exactly what allow us to trust our results.
-
-Some authors describe synthetic controls as a [black box](https://bookdown.org/mike/data_analysis/sec-synthetic-control.html) [function](https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished), suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you're dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.
+By extension, some authors describe synthetic controls as a [black box](https://bookdown.org/mike/data_analysis/sec-synthetic-control.html) [function](https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished), suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you're dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.
 
 This matters even more because, as [this Medium post](https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8) observes, industry often values *breadth and speed* over *theoretical depth*. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It lets you move quickly *and* diagnose problems effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. In this blog post, first, I'll compute a synthetic control *by hand* (how often do we do such a thing?). Then, I'll walk through a recent real-world application, showing how theoretical depth very easily informs the way we get and interpret results.
 
@@ -57,7 +55,7 @@ $$
 = \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix}.
 $$
 
-This is just the predicted outcome if we put weight $w_1$ on donor 1 and weight $1-w_1$ on donor 2 (again, defining weight 1 in terms of weight 2). By definition, the residuals are the **differences between the treated outcomes and the synthetic prediction**:
+This is just the predicted outcome if we put weight $w_1$ on donor 1 and weight $1-w_1$ on donor 2 (again, defining weight 1 in terms of weight 2). By definition, the residuals are the differences between the treated outcomes and the synthetic prediction:
 
 $$
 \mathbf{r}(w_1) = \mathbf{y} - \hat{\mathbf{y}}(w_1).
@@ -81,7 +79,7 @@ $$
 Let's define the two calculus rules we'll use:
 
 ::: {.definition #sum-rule}
-**Sum Rule.** If a function $f(x) = g(x) + h(x)$, where $g(x)$ and $h(x)$ are differentiable functions, then the derivative of $f(x)$ with respect to $x$ is the sum of the derivatives of the individual functions:
+Sum Rule. If a function $f(x) = g(x) + h(x)$, where $g(x)$ and $h(x)$ are differentiable functions, then the derivative of $f(x)$ with respect to $x$ is the sum of the derivatives of the individual functions:
 
 $$
 f'(x) = g'(x) + h'(x).
@@ -91,7 +89,7 @@ This rule allows us to differentiate each term of a sum separately and then add 
 :::
 
 ::: {.definition #chain-rule}
-**Chain Rule.** If a function is composed as $f(x) = g(h(x))$, where $h(x)$ is the inner function and $g(u)$ is the outer function (with $u = h(x)$), then the derivative of $f(x)$ with respect to $x$ is:
+Chain Rule. If a function is composed as $f(x) = g(h(x))$, where $h(x)$ is the inner function and $g(u)$ is the outer function (with $u = h(x)$), then the derivative of $f(x)$ with respect to $x$ is:
 
 $$
 f'(x) = g'(h(x)) \cdot h'(x).
@@ -208,10 +206,10 @@ $$
 
 where $\mathbf{1} = (1,1)^\top$ and $\mu = (\mu_1, \mu_2)^\top$. Primal feasibility is the requirement that the candidate weight vector satisfy the original constraints $w_1 \ge 0$, $w_2 \ge 0$, $w_1 + w_2 = 1$. Dual feasibility means the multipliers associated with inequality constraints obey $\mu_1 \ge 0$, $\mu_2 \ge 0$. Complementary slackness ties the primal and dual together: for each inequality constraint, the product of the multiplier and the primal slack is zero, so $\mu_i w_i = 0$ for $i = 1, 2$. In words, complementary slackness says that if a constraint is active (the primal variable is on the boundary) its multiplier may be positive, and if the constraint is slack (strictly satisfied) the corresponding multiplier must be zero.
 
-From calculus, we expect the constrained minimizer to be $\mathbf{w}^* = (0,1)^\top$, which corresponds to taking donor two alone as the synthetic control. Verifying this candidate requires computing the residual at that point and solving the stationarity equations for the multipliers. At $\mathbf{w}^*$ we have $\mathbf{Y}\mathbf{w}^* = \mathbf{y}_2 = (48,50)^\top$ and the residual $\mathbf{Y}\mathbf{w}^* - \mathbf{y} = (-2,-10)^\top$. Multiplying by $2 \mathbf{Y}^\top$ yields
+From calculus, we expect the constrained minimizer to be $\mathbf{w}^{\ast} = (0,1)^\top$, which corresponds to taking donor two alone as the synthetic control. Verifying this candidate requires computing the residual at that point and solving the stationarity equations for the multipliers. At $\mathbf{w}^{\ast}$ we have $\mathbf{Y}\mathbf{w}^{\ast} = \mathbf{y}_2 = (48,50)^\top$ and the residual $\mathbf{Y}\mathbf{w}^{\ast} - \mathbf{y} = (-2,-10)^\top$. Multiplying by $2 \mathbf{Y}^\top$ yields
 
 $$
-2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w}^* - \mathbf{y}) = 2 \begin{bmatrix}20 & 22 \\ 48 & 50\end{bmatrix} \begin{bmatrix}-2 \\ -10\end{bmatrix} = 2 \begin{bmatrix}-260 \\ -596\end{bmatrix} = \begin{bmatrix}-520 \\ -1192\end{bmatrix}.
+2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w}^{\ast} - \mathbf{y}) = 2 \begin{bmatrix}20 & 22 \\ 48 & 50\end{bmatrix} \begin{bmatrix}-2 \\ -10\end{bmatrix} = 2 \begin{bmatrix}-260 \\ -596\end{bmatrix} = \begin{bmatrix}-520 \\ -1192\end{bmatrix}.
 $$
 
 Plugging this into the stationarity condition gives the two scalar equations
@@ -220,51 +218,81 @@ $$
 -520 + \lambda - \mu_1 = 0, \qquad -1192 + \lambda - \mu_2 = 0.
 $$
 
-Complementary slackness applied to the candidate $w_1^* = 0, w_2^* = 1$ implies $\mu_2 = 0$ because $w_2^* > 0$ forces the corresponding multiplier to vanish, while $\mu_1$ is unconstrained by slackness other than being nonnegative. Using $\mu_2 = 0$ in the second scalar equation yields $\lambda = 1192$. Substituting $\lambda = 1192$ into the first equation gives $\mu_1 = 672$, which satisfies dual feasibility since $672 \ge 0$. Thus stationarity, primal feasibility, dual feasibility, and complementary slackness all hold for the candidate, and because the objective is convex (its Hessian is $2 \mathbf{Y}^\top \mathbf{Y}$, which is positive semidefinite) these KKT conditions guarantee global optimality. Therefore $\mathbf{w}^* = (0,1)^\top$ is the solution, the residual is $\mathbf{y} - \hat{\mathbf{y}} = (2,10)^\top$, the Lagrange multiplier for the equality constraint is $\lambda = 1192$, and the dual variables are $\mu_1 = 672$, $\mu_2 = 0$.
+Complementary slackness applied to the candidate $w_1^{\ast} = 0, w_2^{\ast} = 1$ implies $\mu_2 = 0$ because $w_2^{\ast} > 0$ forces the corresponding multiplier to vanish, while $\mu_1$ is unconstrained by slackness other than being nonnegative. Using $\mu_2 = 0$ in the second scalar equation yields $\lambda = 1192$. Substituting $\lambda = 1192$ into the first equation gives $\mu_1 = 672$, which satisfies dual feasibility since $672 \ge 0$. Thus stationarity, primal feasibility, dual feasibility, and complementary slackness all hold for the candidate, and because the objective is convex (its Hessian is $2 \mathbf{Y}^\top \mathbf{Y}$, which is positive semidefinite) these KKT conditions guarantee global optimality. Therefore $\mathbf{w}^{\ast} = (0,1)^\top$ is the solution, the residual is $\mathbf{y} - \hat{\mathbf{y}} = (2,10)^\top$, the Lagrange multiplier for the equality constraint is $\lambda = 1192$, and the dual variables are $\mu_1 = 672$, $\mu_2 = 0$.
 
 To summarize in words: we formed the Lagrangian to incorporate constraints into the objective, set its gradient with respect to the primal variables to zero (stationarity), required the primal variables to satisfy the original constraints (primal feasibility), required inequality multipliers to be nonnegative (dual feasibility), and enforced that no multiplier is positive while its corresponding primal variable is strictly positive (complementary slackness). Solving these conditions gave the boundary solution $w_1 = 0, w_2 = 1$, which is the projection of $\mathbf{y}$ onto the convex hull of the donors when the unconstrained projection lies outside that hull. The KKT verification thus formalizes what we already knew.
 
 
-## Frank–Wolfe Geometric Solution (2-Donor Example)
 
-Now for the pure geometry. We again want to approximate $\mathbf{y} = \begin{bmatrix}50\\60\end{bmatrix}$ using a convex combination of donors $\mathbf{y}_1 = \begin{bmatrix}20\\22\end{bmatrix}$ and $\mathbf{y}_2 = \begin{bmatrix}48\\50\end{bmatrix}$. The feasible set of synthetic predictions is the convex hull $\operatorname{conv}\{\mathbf{y}_1, \mathbf{y}_2\}$, i.e., the line segment connecting the two donors. Minimizing the squared distance $\|\mathbf{y} - \hat{\mathbf{y}}\|^2$ is equivalent to projecting $\mathbf{y}$ onto this segment.
 
-The Frank–Wolfe algorithm formalizes this as an iterative procedure. It starts at the donor closest to $\mathbf{y}$ in Euclidean distance. Computing the squared distances, we find
+## Frank–Wolfe Geometric Solution and Hilbert Projection
 
-$$
-\|\mathbf{y} - \mathbf{y}_1\|^2 = 2344, \quad \|\mathbf{y} - \mathbf{y}_2\|^2 = 104,
-$$
-
-so $\mathbf{y}_2$ is the initial point $x^{(0)}$, with weights $w^{(0)} = (0,1)$. The gradient of the objective $f(x) = \frac{1}{2}\|\mathbf{y}-x\|^2$ at $x^{(0)}$ is $x^{(0)} - \mathbf{y} = \begin{bmatrix}-2\\-10\end{bmatrix}$. Frank–Wolfe then chooses a vertex $s \in \{\mathbf{y}_1,\mathbf{y}_2\}$ that minimizes the inner product $\langle \nabla f(x^{(0)}), s \rangle$. Computing
+For a final expression, we can also arrive at the solution via pure geometry. We seek to approximate
 
 $$
-\langle \nabla f(x^{(0)}), \mathbf{y}_1 \rangle = -260, \quad \langle \nabla f(x^{(0)}), \mathbf{y}_2 \rangle = -596,
+\mathbf{y} = \begin{bmatrix}50\\60\end{bmatrix}
 $$
 
-the minimum occurs at $\mathbf{y}_2$, meaning the Frank–Wolfe search direction points toward $\mathbf{y}_2$—we are already there. Attempting to move toward $\mathbf{y}_1$, the direction is $d = \mathbf{y}_1 - x^{(0)} = \begin{bmatrix}-28\\-28\end{bmatrix}$, and the optimal step along this direction is
+using a convex combination of donors
 
 $$
-\gamma^* = \frac{\langle \mathbf{y}-x^{(0)}, d \rangle}{\|d\|^2} = -0.214,
+\mathbf{y}_1 = \begin{bmatrix}20\\22\end{bmatrix}, \quad 
+\mathbf{y}_2 = \begin{bmatrix}48\\50\end{bmatrix}.
 $$
 
-which is outside the feasible range $[0,1]$, so it is clamped to $\gamma=0$. The update $x^{(1)} = x^{(0)} + \gamma d = \mathbf{y}_2$ confirms that the closest feasible point is the boundary vertex $\mathbf{y}_2$, with weights $w^* = (0,1)$ and residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2\\10\end{bmatrix}$.
-
-This geometric reasoning mirrors the KKT derivation. In the KKT solution, the unconstrained minimizer $w_1 = -3/14$ lay outside the feasible $[0,1]$ interval, forcing the solution onto the boundary $w_1 = 0$. The KKT multipliers and complementary slackness conditions algebraically enforce that the residual cannot point “into” the feasible set along any direction allowed by the convex hull, exactly paralleling the Frank–Wolfe observation that moving toward $\mathbf{y}_1$ would increase the distance.
-
-The connection to the Hilbert Projection Theorem makes this precise: for any closed convex set $C$ (here, the convex hull of donors) and point $\mathbf{y}$, there exists a unique projection $\hat{\mathbf{y}} \in C$ minimizing $\|\mathbf{y}-\hat{\mathbf{y}}\|$, and the residual satisfies
+The feasible set of synthetic predictions is the convex hull
 
 $$
-\langle \mathbf{y}-\hat{\mathbf{y}}, \mathbf{z}-\hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
+C = \operatorname{conv}\{\mathbf{y}_1, \mathbf{y}_2\},
 $$
 
-In our example, $\mathbf{y}$ lies outside the convex hull line segment, so the projection lands on the nearest endpoint $\mathbf{y}_2$. The residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}}$ forms an obtuse angle with the segment toward $\mathbf{y}_1$, satisfying the Hilbert Projection condition. Both the KKT derivation and the Frank–Wolfe geometric solution are algebraic and iterative realizations of this fundamental projection principle: when the unconstrained solution falls outside the convex hull, the closest feasible point lies on the boundary, producing $w^* = (0,1)$ and residual $\mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2\\10\end{bmatrix}$.
+which is the line segment connecting the two donors. Minimizing the squared Euclidean distance
 
-In summary, the Hilbert Projection Theorem unifies the algebraic KKT perspective and the iterative geometric Frank–Wolfe approach: the synthetic control problem is fundamentally about projecting $\mathbf{y}$ onto a convex set of donors, and when the treated unit lies outside that convex hull, the optimal weights correspond to the nearest boundary point.
+$$
+f(\hat{\mathbf{y}}) = \|\mathbf{y} - \hat{\mathbf{y}}\|_2^2
+$$
 
-### Intuition
+is equivalent to projecting $\mathbf{y}$ onto this convex hull.
 
-In this way, the KKT conditions and the Hilbert Projection Theorem provide complementary perspectives. HPT offers a geometric intuition, showing that the solution is a projection onto the convex set, while KKT confirms algebraically which constraints are active, how the gradient is modified, and that the solution is indeed optimal under the given constraints. Together, they give a complete understanding of why the synthetic control solution lands on the boundary of the convex hull and how the residual aligns with the constraints.
+To give ourselves a frameowrk to work with we can employ [the Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk). This states that if $C \subset \mathbb{R}^n$ is a nonempty, closed, convex set and $\mathbf{y} \in \mathbb{R}^n$, then there exists a unique point $\hat{\mathbf{y}} \in C$ such that
 
+$$
+\hat{\mathbf{y}} = \underset{\mathbf{z} \in C}{\operatorname{argmin}} \|\mathbf{y} - \mathbf{z}\|_2,
+$$
+
+and the residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}}$ satisfies the variational inequality
+
+$$
+\langle \mathbf{r}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0 \quad \forall \mathbf{z} \in C.
+$$
+
+This inequality expresses the geometric fact that the residual forms an obtuse or right angle with any vector pointing from the projection to a feasible point in $C$; in other words, one cannot move from the projection along any direction in $C$ and reduce the distance to $\mathbf{y}$.
+
+Applying this to our two-donor synthetic control problem, the convex hull is the line segment connecting $\mathbf{y}_1$ and $\mathbf{y}_2$, and the point $\mathbf{y}$ lies outside this segment. Computing the Euclidean distances yields $\|\mathbf{y} - \mathbf{y}_1\|^2 = 2344$ and $\|\mathbf{y} - \mathbf{y}_2\|^2 = 104$, so the closest donor is $\mathbf{y}_2$, which we take as the initial point $x^{(0)}$ in a Frank–Wolfe iteration with corresponding weights $w^{(0)} = (0,1)$. The gradient of the objective at $x^{(0)}$ is $\nabla f(x^{(0)}) = x^{(0)} - \mathbf{y} = \begin{bmatrix}-2\\-10\end{bmatrix}$. The Frank–Wolfe algorithm then searches for a vertex $s \in \{\mathbf{y}_1, \mathbf{y}_2\}$ minimizing the inner product $\langle \nabla f(x^{(0)}), s \rangle$. Computing $\langle \nabla f(x^{(0)}), \mathbf{y}_1 \rangle = -260$ and $\langle \nabla f(x^{(0)}), \mathbf{y}_2 \rangle = -596$ shows that the minimum occurs at $\mathbf{y}_2$, meaning the search direction points toward the vertex we are already at. Attempting to move toward $\mathbf{y}_1$ along the direction $d = \mathbf{y}_1 - x^{(0)} = \begin{bmatrix}-28\\-28\end{bmatrix}$ gives an optimal unconstrained step
+
+$$
+\gamma^{\ast} = \frac{\langle \mathbf{y}-x^{(0)}, d \rangle}{\|d\|^2} = -0.214,
+$$
+
+which lies outside the feasible range $[0,1]$. Clamping to $\gamma = 0$ results in the update $x^{(1)} = x^{(0)} = \mathbf{y}_2$, confirming that the closest feasible point is the boundary vertex $\mathbf{y}_2$. The residual is therefore $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2\\10\end{bmatrix}$, which satisfies the Hilbert variational inequality because it forms an obtuse angle with the direction toward $\mathbf{y}_1$.
+
+This geometric reasoning mirrors the calculus derivation. In the unconstrained formulation, the minimizer of
+
+$$
+f(w_1) = \|\mathbf{y} - (w_1 \mathbf{y}_1 + (1-w_1) \mathbf{y}_2)\|^2
+$$
+
+occurs at $w_1 = -3/14$, which is outside the feasible interval $[0,1]$. By the Hilbert Projection Theorem, the optimal feasible point must lie on the nearest boundary, which corresponds to $w_1 = 0, w_2 = 1$. The gradient computation in calculus signals that the slope of the objective points toward the infeasible region, exactly reflecting the fact that the residual cannot be reduced by moving along the feasible set.
+
+The KKT derivation provides an algebraic realization of the same geometric principle. The stationarity condition
+
+$$
+2\mathbf{Y}^\top (\mathbf{Y}\mathbf{w}-\mathbf{y}) + \lambda \mathbf{1} - \mu = 0,
+$$
+
+together with complementary slackness $\mu_i w_i = 0$ and dual feasibility $\mu_i \ge 0$, ensures that the residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}}$ is orthogonal to any feasible direction in the convex hull, encoding precisely the variational inequality from the Hilbert Projection Theorem. Active inequality constraints correspond to nonzero multipliers, signaling that the projection lies on the boundary, while slack constraints have zero multipliers, corresponding to interior directions where the unconstrained minimum is feasible. In this example, the boundary solution $w_1 = 0, w_2 = 1$ with residual $\mathbf{r} = (2,10)^\top$ and Lagrange multipliers $\lambda = 1192, \mu_1 = 672, \mu_2 = 0$ satisfies all KKT conditions and simultaneously fulfills the Hilbert projection criterion.
+
+Thus, the Frank–Wolfe geometric approach, the calculus, and the KKT system are three perspectives on the same underlying fact: the optimal synthetic control is the projection of $\mathbf{y}$ onto the convex hull of donors, and when the unconstrained minimizer lies outside the hull, the solution is constrained to the nearest boundary point, with the residual aligned according to the Hilbert Projection Theorem. 
 
 ## A Visuzalization in Python
 
@@ -286,24 +314,14 @@ x = np.array([50, 60])
 d1 = np.array([20, 22])
 d2 = np.array([48, 50])
 donors = np.vstack([d1, d2])
-
-# =====================
-# CVXPY SCM
-# =====================
-# Each column is a donor
 donors_cvx = np.column_stack([d1, d2])
 n_donors = donors_cvx.shape[1]
 
-# CVXPY variable for weights
 w = cp.Variable(n_donors, nonneg=True)
 
-# Objective: minimize squared Euclidean distance
 objective = cp.Minimize(cp.sum_squares(x - donors_cvx @ w))
 
-# Constraint: sum of weights = 1
 constraints = [cp.sum(w) == 1]
-
-# Solve the problem
 prob = cp.Problem(objective, constraints)
 prob.solve()
 
@@ -425,7 +443,10 @@ plt.tight_layout()
 plt.show()
 ```
 
+From this figure, we see what we already solved for. Any weight for $w_1$ greater than 0 increases our error solution for our objective function.
+
 Already, some of you who got this far will be asking "Jared, why did you go through the trouble of showing us all this? Who cares about the KKT conditions or the Hilbert Space Projection or any of those idea? I'll never literally do this at work, so why bother doing this?" The answer is because the moment you intuit SCM in these terms, you can oftentimes get a good read as to how an analysis will look before you even run a single SCM model. I oftentimes say that a great diagnostic is to literally just plot your target unit against your donors, and you'll discover a lot. We're about to see why this is in the content below.
+
 
 # Australia's Carbon Tax
 
@@ -505,7 +526,9 @@ The authors noted they were worried about "idiosyncratic shocks in [Italy and No
 
 These results make sense. For the reasons we've discussed above, Italy in this instance NEEDS to be a donor that gets weight, otherwise the algorithm will only match on worse donors that are farther away from Australia's target trajectory.
 
-I thought to myself "Yeah this is definitely gonna need an intercept of some kind!!! Couldn't fit the treated vector otherwise." So, I ran [the Two-Step SCM](https://mlsynth.readthedocs.io/en/latest/tssc.html). The TSSC method was developed in part by one of my favorite econometricians, [Kathy Li](https://sites.utexas.edu/kathleenli/). The method is predicated on a simple idea:  Sometimes treated units are simply *too extreme* relative to their donor pool. When this happens, vanilla SCM can struggle, and analysts may need to allow for intercepts or relax the non-negativity constraint. The challenge, however, is that it’s rarely obvious *ex ante* which modification is appropriate. 
+## The Two-Step Synthetic Control
+
+I thought to myself "Yeah this is definitely gonna need an intercept of some kind!!! Couldn't fit the treated vector otherwise." So, I ran [the Two-Step SCM](https://mlsynth.readthedocs.io/en/latest/tssc.html). The TSSC method was developed in part by one of my favorite econometricians, [Kathy Li](https://sites.utexas.edu/kathleenli/). The method is predicated on a simple idea:  Sometimes treated units are simply *too extreme* relative to their donor pool, such as Australia. When this happens, vanilla SCM can struggle, and analysts may need to allow for intercepts or relax the non-negativity constraint. The challenge, however, is that it’s rarely obvious *ex ante* which modification is appropriate. 
 
 TSSC chooses between a few candidate estimators. First is MSCa: Intercept, Convex Hull
 
@@ -544,7 +567,15 @@ $$
 T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat{\theta}^{SC} - \hat{\theta}^{MSCc}),
 $$
 
-where $\hat{\theta}$ stacks the estimated weights and intercept, and $\hat{\Sigma}$ is a covariance estimate obtained by subsampling the pre-treatment period. Intuitively, $T$ measures how far the SCM solution lies from the flexible cone-based solution, scaled by sampling variability. If $T$ is small, the convex-hull assumption holds; if large, the data support a more flexible geometry. Here is the result we get when we fit the TSSC estimator to the Australia case.
+where $\hat{\theta}$ stacks the estimated weights and intercept, and $\hat{\Sigma}$ is a covariance estimate obtained by subsampling the pre-treatment period. Intuitively, $T$ measures how far the SCM solution lies from the flexible cone-based solution, scaled by sampling variability. If $T$ is small, the convex-hull assumption holds; if large, the data support a more flexible geometry.
+
+## Connecting the Theory to Practice
+
+Geometrically, adding an intercept in TSSC shifts the treated vector vertically into the interior of the convex hull formed by the donor pool. In Hilbert space terms, this expands the feasible set for the projection: rather than projecting a point outside or on the boundary, the algorithm now projects a point inside the convex hull. This allows the synthetic control weights to spread across multiple donors rather than collapsing to a corner solution. From the KKT perspective, the intercept introduces an additional degree of freedom, modifying the constraints but still satisfying stationarity, dual feasibility, and complementary slackness on the adjusted feasible set. Consequently, TSSC can produce a solution where multiple donors receive meaningful weight, resolving the boundary limitations of standard SCM.
+
+## Results
+
+Here is the result we get when we fit the TSSC estimator to the Australia case.
 
 
 
@@ -581,9 +612,7 @@ md_table[1] = "|:------------|:------:|:--------:|:---------------------------|"
 display(Markdown('\n'.join(md_table)))
 ```
 
-The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we've ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept.
-
-Note that the sign reversal is not always true. Consider the Basque example:
+The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we've ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept. Note that the sign reversal is not always true. Consider the Basque example:
 
 
 ```{python}
@@ -611,13 +640,12 @@ arco = TSSC(config).fit()
 
 Here our ATT is -0.8, whereas the original SCM's was -0.69. With an intercept of 0.583, MSCc assigns weight to Cataluna: 0.533, Madrid (Comunidad De): 0.067, Principado De Asturias: 0.115, and Rioja (La): 0.289. In contrast, Cataluna's weight at first was 0.826, Madrid's was 0.168, and Austurias was 0.005 (these differ a little from the 2003 paper because I do not employ covariates).
 
-
 # Conclusion: Why SCM Theory Matters
 
-By now, it should be clear why a solid grasp of underlying SCM theory is essential. In incrementality testing, SCM informs marketing mix models, shapes campaigns, guides pricing strategies, and helps determine which channels are truly incremental. While SCM is widely used, its effectiveness depends on understanding the geometric constraints of the optimization and the implications of weight restrictions.
+By now, it should be clear why a solid grasp of underlying SCM theory is essential. SCM is not a black box. While there are [interesting computational challenges](https://link.springer.com/article/10.1007/s10614-023-10471-7) associated with SCM, especially when we have covariates, the math of the standard form without covairates is actually pretty knowable. [Idiots](https://www.youtube.com/watch?v=kkcvUxYeBII) will tell you that the math behind the models is not essential to understand for machine-learning/real world business science, or that [there are diminishing returns](https://www.linkedin.com/feed/update/urn:li:activity:7313552572710035456?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7313641726202531842%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287313641726202531842%2Curn%3Ali%3Aactivity%3A7313552572710035456%29) to scientific depth in data science, but this is ridiculous. Only by having a decent understanding of and confort with the internal logic of the models can you hope to use them effectively, and that understanding sometimes takes years of work. To use these models, yet not understand how they work, is the equivalent of having a Ferarri or Maybach but never having learned to drive.
 
-Ignoring these principles can lead to costly mistakes. As we’ve seen in real-world examples, poor donor pool selection or extreme treated units can even flip the sign of estimated effects—turning an apparent price increase into a decrease, or vice versa. For ad spending, this translates directly into misallocated budgets, wasted resources, and missed opportunities. Simple checks, like plotting treated versus donor trajectories upfront, can reveal these vulnerabilities immediately.
+In marketing or policy contexts, the stakes are tangible: overstating a 20% campaign lift may inflate budgets unnecessarily, while underestimating a dip could delay corrective action and cost market share. In incrementality testing for example, SCM informs marketing mix models, shapes campaigns, guides pricing strategies, and helps determine which channels truely affct KPIs in a causal manner. Understanding the convex hull structure, the behavior of boundary solutions, and how constraints interact via KKT conditions ensures that analysts interpret the results correctly. Ignoring these principles can lead to costly mistakes.
 
-A theoretically informed scientist can quickly diagnose issues and apply remedies—such as adding intercepts, relaxing non-negativity constraints, or other potential fixes, even if they never write a Lemma a day in their working lives. These SCM methods can be very powerful, but only if the practitioner understands *when* and *why* to apply them, and what yo do when the standard toolkit breaks.
+Poor donor pool selection, extreme treated units, or ignoring the need for adjustments like intercepts/other issues can lead top optimal solutions, but are poor for having a robust causal estimand, sometimes flipping the sign of estimated effects. For ad spending, this translates directly into misappropriating millions of dollars. Simple checks that do not involve mathematics, like plotting treated versus donor trajectories upfront, can reveal these vulnerabilities immediately. A theoretically informed scientist can diagnose these issues and apply remedies. SCMs are powerful, and have much potenital, but only if the practitioner understands *when* and *why* to apply them, and what to do when the standard toolkit produces needs to be adjusted.
 
-In marketing/policy contexts, the stakes are tangible: overstating a 20% campaign lift may inflate budgets unnecessarily, while underestimating a dip could delay corrective action and cost market share. By understanding even the basic theory behind SCM, teams can move quickly and effectively, being able to derive robust and actionable insights. Theory, in short, is what transforms SCM from a sexed-up calculus solver into a powerful instrument for business impact.
+By understanding the basic theory behind SCM, and how methods like TSSC and other recent advances expand the toolkit away from normal SCM or [CausalImpact](https://medium.com/@mrmaster907/how-to-use-causal-impact-in-python-example-18d27623e896), teams can anticipate problems, interpret results correctly, and derive robust insights using modern methods equipped to address causal inference fro real problems. Theory, in addition to contextual experience, transforms SCM from a black-box solver into a reliable instrument for business and policy impact.

@@ -56,20 +56,7 @@ $$
 \mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
 $$
 
-Consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the [Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk).
-
-::: {.theorem #hilbert-projection}
-**Hilbert Projection Theorem.** Let $C \subset \mathbb{R}^T$ be a nonempty closed convex set and $\mathbf{y} \in \mathbb{R}^T$. Then there exists a unique point $\hat{\mathbf{y}} \in C$ such that
-$$
-\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
-$$
-and the residual $\mathbf{y} - \hat{\mathbf{y}}$ satisfies the residual projection condition
-$$
-\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
-$$
-:::
-
-Without getting too far off track, we can use this to frame the synthetic control problem as projecting $\mathbf{y}$ onto the convex hull $C$ of the donors $\{\mathbf{y}_1, \mathbf{y}_2\}$, which is the line segment between $\mathbf{y}_1$ and $\mathbf{y}_2$. The projection $\hat{\mathbf{y}}$ minimizes the Euclidean distance to $\mathbf{y}$, and the residual is orthogonal (or obtuse) to directions within $C$. The function to minimize is:
+The function to minimize is:
 
 $$
 f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2 = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
@@ -399,6 +386,23 @@ $$
 $$
 
 is oblique to the hull, confirming moving along the segment toward $\mathbf{y}_1$ would increase the distance.
+
+Consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the [Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk).
+
+::: {.theorem #hilbert-projection}
+**Hilbert Projection Theorem.** Let $C \subset \mathbb{R}^T$ be a nonempty closed convex set and $\mathbf{y} \in \mathbb{R}^T$. Then there exists a unique point $\hat{\mathbf{y}} \in C$ such that
+$$
+\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
+$$
+and the residual $\mathbf{y} - \hat{\mathbf{y}}$ satisfies the residual projection condition
+$$
+\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
+$$
+:::
+
+Without getting too far off track, we can use this to frame the synthetic control problem as projecting $\mathbf{y}$ onto the convex hull $C$ of the donors $\{\mathbf{y}_1, \mathbf{y}_2\}$, which is the line segment between $\mathbf{y}_1$ and $\mathbf{y}_2$. The projection $\hat{\mathbf{y}}$ minimizes the Euclidean distance to $\mathbf{y}$, and the residual is orthogonal (or obtuse) to directions within $C$. 
+
+### Intuition
 
 In this way, the KKT conditions and the Hilbert Projection Theorem provide complementary perspectives. HPT offers a geometric intuition, showing that the solution is a projection onto the convex set, while KKT confirms algebraically which constraints are active, how the gradient is modified, and that the solution is indeed optimal under the given constraints. Together, they give a complete understanding of why the synthetic control solution lands on the boundary of the convex hull and how the residual aligns with the constraints.
 

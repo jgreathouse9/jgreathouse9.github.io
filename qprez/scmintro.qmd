@@ -1,0 +1,167 @@
+---
+title: "The Synthetic Control Method"
+author:
+  - name: "Jared Greathouse"
+    url: "https://jgreathouse9.github.io"
+date: today
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
+    scrollable: true
+    background-color: "#EAF7F1"
+highlight-style: github
+---
+
+
+# What Is An Average?
+
+Before we continue, we need to be explicit about what an average is. An average is just a weighted combination of numbers. Most people are familiar with the arithmetic mean.
+
+::: {.panel-tabset}
+
+### Scalars
+
+The arithmetic mean of scalars $x_1, x_2, \dots, x_n \in \mathbb{R}$ is:
+
+$$
+\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i
+$$
+
+For example, with 12 and 18:
+
+$$
+\frac{12 + 18}{2} = 15, \quad \text{or equivalently} \quad \frac{1}{2}(12 + 18) = (6 + 9) = 15
+$$
+
+### Vectors
+
+This idea generalizes to vectors:
+
+$$
+\bar{x} = \mathbf{w}^\top \mathbf{x}, 
+\quad \text{where} \quad 
+\mathbf{w} = \left(\frac{1}{n}, \dots, \frac{1}{n}\right)^\top, 
+\quad \mathbf{x} = \left(x_1, \dots, x_n\right)^\top
+$$
+
+Here, $\mathbf{w}$ contains the weights and $\mathbf{x}$ the values. The weighted sum $\mathbf{w}^\top \mathbf{x}$ generalizes the arithmetic mean.
+
+### Matrices
+
+The same logic extends to matrices. Let $\mathbf{Y}_0 \in \mathbb{R}^{T \times N}$ be a matrix of values, and $\mathbf{w} \in \mathbb{R}^N$ a vector of weights:
+
+$$
+\bar{\mathbf{y}} = \mathbf{Y}_0 \cdot \mathbf{w}
+$$
+
+Each element is:
+
+$$
+\bar{y}_t = \sum_{j=1}^N w_j y_{tj}, \quad \forall \, t \in \{1, \dots, T\}
+$$
+
+This shows the "average across units" for every point in time.
+
+:::
+
+
+# Objectives
+
+DID:
+
+$$
+\begin{align}
+&\beta^\ast = 
+\operatorname*{argmin}_{\beta \in \mathbb{R}}
+\left\|
+\underbrace{\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}}_{\text{Fit}}
+-
+\underbrace{\beta}_{\text{Mean difference}}
+\right\|_2^2 \\
+&\text{subject to} \quad w_j = \frac{1}{N_0}, \quad \forall j \in \mathcal{N}_0
+\end{align}
+$$
+SCM:
+
+$$
+\mathbf{w}^\ast = \underset{\mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0}, \ \mathbf{1}^\top \mathbf{w} = 1}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2
+$$
+
+
+# Example Plot
+
+
+```{python}
+
+#| echo: False
+#| fig.show: False
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation, PillowWriter
+import pandas as pd
+from mlsynth.utils.datautils import dataprep
+
+# --- Load data ---
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
+data = pd.read_csv(url)
+
+# --- Preprocess ---
+prepped_data = dataprep(data, "regionname", "year", "gdpcap", "Terrorism")
+Ywide_data = prepped_data["Ywide"]
+
+# --- Extract treated and donors ---
+y = Ywide_data["Basque"].values
+Y0 = Ywide_data[["Cataluna", "Madrid (Comunidad De)"]].values
+
+# --- Target final weights ---
+w_final = np.array([0.85, 0.15])
+
+# --- Initialize weights ---
+w_start = np.array([0.1, 0.9])
+steps = 50
+weights_history = np.array([w_start + (w_final - w_start) * t/(steps-1) for t in range(steps)])
+
+# --- Set up plot ---
+fig, ax = plt.subplots(figsize=(8, 4))
+line_y, = ax.plot(y, label="Treated (Basque)", color="red", linewidth=2)
+line_hatY, = ax.plot(w_start[0] * Y0[:, 0] + w_start[1] * Y0[:, 1],
+                     label="Weighted combo", color="purple", linestyle="--")
+line_cataluna, = ax.plot(Y0[:, 0], label="Cataluna", color="green", alpha=0.5)
+line_madrid, = ax.plot(Y0[:, 1], label="Madrid", color="blue", alpha=0.5)
+
+ax.legend()
+ax.set_ylim(y.min() - 1, y.max() + 1)
+
+# --- Animation function ---
+def update(frame):
+    w_curr = weights_history[frame]
+    hatY = w_curr[0] * Y0[:, 0] + w_curr[1] * Y0[:, 1]
+    line_hatY.set_ydata(hatY)
+
+    if frame == steps - 1:
+        line_cataluna.set_visible(False)
+        line_madrid.set_visible(False)
+        ax.set_title(f"Final SCM: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}")
+    else:
+        ax.set_title(f"Frame {frame + 1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}")
+
+    return line_hatY, line_cataluna, line_madrid
+
+# --- Animate ---
+ani = FuncAnimation(fig, update, frames=steps, blit=False)
+
+# --- Save GIF ---
+gif_filename = "scm_weighted_combo.gif"
+ani.save(gif_filename, writer=PillowWriter(fps=10))
+# Close the figure to prevent static display
+plt.close(fig)
+```
+
+![](scm_weighted_combo.gif)
+
+
+
+---

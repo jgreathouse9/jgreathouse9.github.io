@@ -36,43 +36,47 @@ $$
 
 where $\mathbf{Y} = \begin{bmatrix} \mathbf{y}_1 & \mathbf{y}_2 \end{bmatrix} = \begin{bmatrix} 20 & 48 \\ 22 & 50 \end{bmatrix}$.
 
-This is the standard matrix formulation, but we can express it slightly simpler for the purposes of the derivation:
+The synthetic control is a weighted average:
 
 $$
-\hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2, \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
+\hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2, 
+\quad w_1, w_2 \geq 0, \quad w_1 + w_2 = 1.
 $$
 
-We have two weights here. So, since we have a linear constraint, the solution for one weight determines the solution for the other one. So, to simplify the exposition, we can write $\hat{\mathbf{y}}$ in terms of $w_1$:
+In this case we have only two units. So it helpsus to define one weight in terms of the other. Substituting $w_2 = 1 - w_1$:
 
 $$
-\hat{y}_1 = 48 - 28 w_1, \quad
-\hat{y}_2 = 50 - 28 w_1.
+\hat{\mathbf{y}}(w_1) = w_1 \mathbf{y}_1 + (1 - w_1)\mathbf{y}_2 
+= \mathbf{y}_2 + w_1(\mathbf{y}_1 - \mathbf{y}_2),
 $$
 
-As a vector this looks like:
+and since $\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix}-28 \\ -28\end{bmatrix}$, we have
 
 $$
-\hat{\mathbf{y}}(w_1) = \mathbf{y}_2 + w_1 (\mathbf{y}_1 - \mathbf{y}_2), \quad
-\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+\hat{\mathbf{y}}(w_1) = \begin{bmatrix} 48 \\ 50 \end{bmatrix} + w_1 \begin{bmatrix}-28 \\ -28\end{bmatrix}
+= \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix}.
 $$
 
-The function to minimize is:
+This is just the predicted outcome if we put weight $w_1$ on donor 1 and weight $1-w_1$ on donor 2 (again, defining weight 1 in terms of weight 2). By definition, the residuals are the **differences between the treated outcomes and the synthetic prediction**:
 
 $$
-f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2 = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
+\mathbf{r}(w_1) = \mathbf{y} - \hat{\mathbf{y}}(w_1).
 $$
 
-where the residual components come from:
+Plugging in:
 
 $$
-\mathbf{y} - \hat{\mathbf{y}}(w_1) = \begin{bmatrix} 50 \\ 60 \end{bmatrix} - \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix} = \begin{bmatrix} 2 + 28 w_1 \\ 10 + 28 w_1 \end{bmatrix}.
+\mathbf{r}(w_1) = 
+\begin{bmatrix} 50 \\ 60 \end{bmatrix} - 
+\begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix}.
 $$
 
-Thus, the objective function is the sum of the squared residual components:
+So:
 
 $$
-f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2.
+\mathbf{r}(w_1) = \begin{bmatrix} 2 + 28w_1 \\ 10 + 28w_1 \end{bmatrix}.
 $$
+
 
 Let's define the two calculus rules we'll use:
 
@@ -96,7 +100,7 @@ $$
 In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to $x$.
 :::
 
-Okay so let's begin. We are interested in finding the weight $w_1$ that minimizes the sum of squared residuals between the treated unit and a convex combination of the donor units:
+Okay so now with the residuals neatly defined, we can begin. We are interested in finding the weight $w_1$ that minimizes the sum of squared residuals between the treated unit and a convex combination of the donor units:
 
 $$
 f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,

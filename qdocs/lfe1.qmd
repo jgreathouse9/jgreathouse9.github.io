@@ -227,120 +227,39 @@ To summarize in words: we formed the Lagrangian to incorporate constraints into 
 
 ## Frank–Wolfe Geometric Solution (2-Donor Example)
 
-Now for the pure geometry. We want to approximate:
+Now for the pure geometry. We again want to approximate $\mathbf{y} = \begin{bmatrix}50\\60\end{bmatrix}$ using a convex combination of donors $\mathbf{y}_1 = \begin{bmatrix}20\\22\end{bmatrix}$ and $\mathbf{y}_2 = \begin{bmatrix}48\\50\end{bmatrix}$. The feasible set of synthetic predictions is the convex hull $\operatorname{conv}\{\mathbf{y}_1, \mathbf{y}_2\}$, i.e., the line segment connecting the two donors. Minimizing the squared distance $\|\mathbf{y} - \hat{\mathbf{y}}\|^2$ is equivalent to projecting $\mathbf{y}$ onto this segment.
+
+The Frank–Wolfe algorithm formalizes this as an iterative procedure. It starts at the donor closest to $\mathbf{y}$ in Euclidean distance. Computing the squared distances, we find
 
 $$
-\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}
+\|\mathbf{y} - \mathbf{y}_1\|^2 = 2344, \quad \|\mathbf{y} - \mathbf{y}_2\|^2 = 104,
 $$
 
-using convex combinations of donors:
+so $\mathbf{y}_2$ is the initial point $x^{(0)}$, with weights $w^{(0)} = (0,1)$. The gradient of the objective $f(x) = \frac{1}{2}\|\mathbf{y}-x\|^2$ at $x^{(0)}$ is $x^{(0)} - \mathbf{y} = \begin{bmatrix}-2\\-10\end{bmatrix}$. Frank–Wolfe then chooses a vertex $s \in \{\mathbf{y}_1,\mathbf{y}_2\}$ that minimizes the inner product $\langle \nabla f(x^{(0)}), s \rangle$. Computing
 
 $$
-\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
-\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
+\langle \nabla f(x^{(0)}), \mathbf{y}_1 \rangle = -260, \quad \langle \nabla f(x^{(0)}), \mathbf{y}_2 \rangle = -596,
 $$
 
-The feasible set is the convex hull $\operatorname{conv}\{\mathbf{y}_1, \mathbf{y}_2\}$, i.e., all line segments between $\mathbf{y}_1$ and $\mathbf{y}_2$.
-
-Frank–Wolfe starts with the donor closest to $\mathbf{y}$:
+the minimum occurs at $\mathbf{y}_2$, meaning the Frank–Wolfe search direction points toward $\mathbf{y}_2$—we are already there. Attempting to move toward $\mathbf{y}_1$, the direction is $d = \mathbf{y}_1 - x^{(0)} = \begin{bmatrix}-28\\-28\end{bmatrix}$, and the optimal step along this direction is
 
 $$
-\|\mathbf{y} - \mathbf{y}_1\|^2 = (50-20)^2 + (60-22)^2 = 30^2 + 38^2 = 2344,
+\gamma^* = \frac{\langle \mathbf{y}-x^{(0)}, d \rangle}{\|d\|^2} = -0.214,
 $$
 
-$$
-\|\mathbf{y} - \mathbf{y}_2\|^2 = (50-48)^2 + (60-50)^2 = 2^2 + 10^2 = 104.
-$$
+which is outside the feasible range $[0,1]$, so it is clamped to $\gamma=0$. The update $x^{(1)} = x^{(0)} + \gamma d = \mathbf{y}_2$ confirms that the closest feasible point is the boundary vertex $\mathbf{y}_2$, with weights $w^* = (0,1)$ and residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2\\10\end{bmatrix}$.
 
-So we initialize:
+This geometric reasoning mirrors the KKT derivation. In the KKT solution, the unconstrained minimizer $w_1 = -3/14$ lay outside the feasible $[0,1]$ interval, forcing the solution onto the boundary $w_1 = 0$. The KKT multipliers and complementary slackness conditions algebraically enforce that the residual cannot point “into” the feasible set along any direction allowed by the convex hull, exactly paralleling the Frank–Wolfe observation that moving toward $\mathbf{y}_1$ would increase the distance.
 
-$$
-x^{(0)} = \mathbf{y}_2, \quad w^{(0)} = (0,1).
-$$
-
-Gradient of $f(x) = \frac{1}{2} \|\mathbf{y} - x\|^2$ at $x^{(0)}$:
+The connection to the Hilbert Projection Theorem makes this precise: for any closed convex set $C$ (here, the convex hull of donors) and point $\mathbf{y}$, there exists a unique projection $\hat{\mathbf{y}} \in C$ minimizing $\|\mathbf{y}-\hat{\mathbf{y}}\|$, and the residual satisfies
 
 $$
-\nabla f(x^{(0)}) = x^{(0)} - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
+\langle \mathbf{y}-\hat{\mathbf{y}}, \mathbf{z}-\hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
 $$
 
-Frank–Wolfe chooses the donor minimizing the inner product with the negative gradient:
+In our example, $\mathbf{y}$ lies outside the convex hull line segment, so the projection lands on the nearest endpoint $\mathbf{y}_2$. The residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}}$ forms an obtuse angle with the segment toward $\mathbf{y}_1$, satisfying the Hilbert Projection condition. Both the KKT derivation and the Frank–Wolfe geometric solution are algebraic and iterative realizations of this fundamental projection principle: when the unconstrained solution falls outside the convex hull, the closest feasible point lies on the boundary, producing $w^* = (0,1)$ and residual $\mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2\\10\end{bmatrix}$.
 
-$$
-s = \arg\min_{\mathbf{y}_i} \langle \nabla f(x^{(0)}), \mathbf{y}_i \rangle.
-$$
-
-Compute inner products:
-
-$$
-\langle \nabla f(x^{(0)}), \mathbf{y}_1 \rangle = (-2)(20) + (-10)(22) = -260,
-$$
-
-$$
-\langle \nabla f(x^{(0)}), \mathbf{y}_2 \rangle = (-2)(48) + (-10)(50) = -596.
-$$
-
-- Minimum occurs at $\mathbf{y}_2$ again.  
-- Frank–Wolfe direction points **toward $\mathbf{y}_2$**, meaning we stay put.
-
-If we attempt to move toward $\mathbf{y}_1$:
-
-$$
-d = \mathbf{y}_1 - x^{(0)} = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
-$$
-
-Line search coefficient:
-
-$$
-\gamma^\ast = \frac{\langle \mathbf{y} - x^{(0)}, d \rangle}{\|d\|^2}
-= \frac{(2)(-28) + (10)(-28)}{(-28)^2 + (-28)^2} = \frac{-336}{1568} \approx -0.214.
-$$
-
-Clamp to $[0,1]$:
-
-$$
-\gamma = 0.
-$$
-
-Update:
-
-$$
-x^{(1)} = x^{(0)} + \gamma d = x^{(0)} = \mathbf{y}_2, \quad w^{(1)} = (0,1).
-$$
-
-- Algorithm terminates immediately.  
-- Closest point in the convex hull is $\mathbf{y}_2$, the endpoint.  
-- Optimal weights:
-
-$$
-w^\ast = (0,1), \quad \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix}48 \\ 50\end{bmatrix}.
-$$
-
-- The convex hull of the donors is the line segment connecting $\mathbf{y}_1$ and $\mathbf{y}_2$.  
-- Treated point $\mathbf{y}$ lies outside the segment, closer to $\mathbf{y}_2$.  
-- Frank–Wolfe iteratively projects $\mathbf{y}$ toward the hull; in this simple case, it immediately lands on the closest boundary point.  
-- Residual vector:
-
-$$
-\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2 \\ 10\end{bmatrix}
-$$
-
-is oblique to the hull, confirming moving along the segment toward $\mathbf{y}_1$ would increase the distance.
-
-Consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the [Hilbert Projection Theorem](https://www.youtube.com/watch?v=eRCkfBmnzqk).
-
-::: {.theorem #hilbert-projection}
-**Hilbert Projection Theorem.** Let $C \subset \mathbb{R}^T$ be a nonempty closed convex set and $\mathbf{y} \in \mathbb{R}^T$. Then there exists a unique point $\hat{\mathbf{y}} \in C$ such that
-$$
-\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
-$$
-and the residual $\mathbf{y} - \hat{\mathbf{y}}$ satisfies the residual projection condition
-$$
-\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
-$$
-:::
-
-Without getting too far off track, we can use this to frame the synthetic control problem as projecting $\mathbf{y}$ onto the convex hull $C$ of the donors $\{\mathbf{y}_1, \mathbf{y}_2\}$, which is the line segment between $\mathbf{y}_1$ and $\mathbf{y}_2$. The projection $\hat{\mathbf{y}}$ minimizes the Euclidean distance to $\mathbf{y}$, and the residual is orthogonal (or obtuse) to directions within $C$. 
+In summary, the Hilbert Projection Theorem unifies the algebraic KKT perspective and the iterative geometric Frank–Wolfe approach: the synthetic control problem is fundamentally about projecting $\mathbf{y}$ onto a convex set of donors, and when the treated unit lies outside that convex hull, the optimal weights correspond to the nearest boundary point.
 
 ### Intuition
 

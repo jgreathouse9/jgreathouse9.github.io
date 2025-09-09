@@ -280,31 +280,34 @@ window.Quarto = {
 \end{aligned}
 \]</span></p>
 <p>where <span class="math inline">\(\mathbf{Y} = \begin{bmatrix} \mathbf{y}_1 &amp; \mathbf{y}_2 \end{bmatrix} = \begin{bmatrix} 20 &amp; 48 \\ 22 &amp; 50 \end{bmatrix}\)</span>.</p>
-<p>This is the standard matrix formulation, but we can express it slightly simpler for the purposes of the derivation:</p>
+<p>The synthetic control is a weighted average:</p>
 <p><span class="math display">\[
-\hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2, \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
+\hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2,&nbsp;
+\quad w_1, w_2 \geq 0, \quad w_1 + w_2 = 1.
 \]</span></p>
-<p>We have two weights here. So, since we have a linear constraint, the solution for one weight determines the solution for the other one. So, to simplify the exposition, we can write <span class="math inline">\(\hat{\mathbf{y}}\)</span> in terms of <span class="math inline">\(w_1\)</span>:</p>
+<p>In this case we have only two units. So it helpsus to define one weight in terms of the other. Substituting <span class="math inline">\(w_2 = 1 - w_1\)</span>:</p>
 <p><span class="math display">\[
-\hat{y}_1 = 48 - 28 w_1, \quad
-\hat{y}_2 = 50 - 28 w_1.
+\hat{\mathbf{y}}(w_1) = w_1 \mathbf{y}_1 + (1 - w_1)\mathbf{y}_2&nbsp;
+= \mathbf{y}_2 + w_1(\mathbf{y}_1 - \mathbf{y}_2),
 \]</span></p>
-<p>As a vector this looks like:</p>
+<p>and since <span class="math inline">\(\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix}-28 \\ -28\end{bmatrix}\)</span>, we have</p>
 <p><span class="math display">\[
-\hat{\mathbf{y}}(w_1) = \mathbf{y}_2 + w_1 (\mathbf{y}_1 - \mathbf{y}_2), \quad
-\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+\hat{\mathbf{y}}(w_1) = \begin{bmatrix} 48 \\ 50 \end{bmatrix} + w_1 \begin{bmatrix}-28 \\ -28\end{bmatrix}
+= \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix}.
 \]</span></p>
-<p>The function to minimize is:</p>
+<p>This is just the predicted outcome if we put weight <span class="math inline">\(w_1\)</span> on donor 1 and weight <span class="math inline">\(1-w_1\)</span> on donor 2 (again, defining weight 1 in terms of weight 2). By definition, the residuals are the <strong>differences between the treated outcomes and the synthetic prediction</strong>:</p>
 <p><span class="math display">\[
-f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2 = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
+\mathbf{r}(w_1) = \mathbf{y} - \hat{\mathbf{y}}(w_1).
 \]</span></p>
-<p>where the residual components come from:</p>
+<p>Plugging in:</p>
 <p><span class="math display">\[
-\mathbf{y} - \hat{\mathbf{y}}(w_1) = \begin{bmatrix} 50 \\ 60 \end{bmatrix} - \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix} = \begin{bmatrix} 2 + 28 w_1 \\ 10 + 28 w_1 \end{bmatrix}.
+\mathbf{r}(w_1) =&nbsp;
+\begin{bmatrix} 50 \\ 60 \end{bmatrix} -&nbsp;
+\begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix}.
 \]</span></p>
-<p>Thus, the objective function is the sum of the squared residual components:</p>
+<p>So:</p>
 <p><span class="math display">\[
-f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2.
+\mathbf{r}(w_1) = \begin{bmatrix} 2 + 28w_1 \\ 10 + 28w_1 \end{bmatrix}.
 \]</span></p>
 <p>Let’s define the two calculus rules we’ll use:</p>
 <div id="sum-rule" class="definition">
@@ -321,7 +324,7 @@ f'(x) = g'(h(x)) \cdot h'(x).
 \]</span></p>
 <p>In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to <span class="math inline">\(x\)</span>.</p>
 </div>
-<p>Okay so let’s begin. We are interested in finding the weight <span class="math inline">\(w_1\)</span> that minimizes the sum of squared residuals between the treated unit and a convex combination of the donor units:</p>
+<p>Okay so now with the residuals neatly defined, we can begin. We are interested in finding the weight <span class="math inline">\(w_1\)</span> that minimizes the sum of squared residuals between the treated unit and a convex combination of the donor units:</p>
 <p><span class="math display">\[
 f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
 \]</span></p>
@@ -567,7 +570,7 @@ w^\ast = (0,1), \quad \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix}48 \\ 50\
 <section id="a-visuzalization-in-python" class="level2">
 <h2 class="anchored" data-anchor-id="a-visuzalization-in-python">A Visuzalization in Python</h2>
 <p>Again, none of this is voodoo, just a lot of hairy math.</p>
-<div id="9317bf4f" class="cell" data-execution_count="1">
+<div id="920ebce8" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
@@ -663,7 +666,7 @@ w^\ast = (0,1), \quad \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix}48 \\ 50\
 </div>
 </div>
 <p>We can also show how the error changes, given a change in <span class="math inline">\(w_1\)</span>.</p>
-<div id="87a2fee1" class="cell" data-execution_count="2">
+<div id="3da07f1e" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -739,7 +742,7 @@ w^\ast = (0,1), \quad \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix}48 \\ 50\
 <p>However, caution is warranted due to the limited donor pool: the synthetic control consists almost entirely of Italy and Norway (81.5% and 18.49%), with other countries receiving negligible weights (&lt;0.01%). This makes the estimates potentially sensitive to idiosyncratic shocks in those two countries.</p>
 </blockquote>
 <p>I then thought to myself “Hmmmm… 80 20 split out of 10 donors… I wonder what the treated versus control units look like?” Fortunately, they answered this question on Appendix page 32 (I reproduce a version of the plot below, focusing on the in-sample period.)</p>
-<div id="99e578f3" class="cell" data-execution_count="3">
+<div id="892ffac1" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
@@ -837,7 +840,7 @@ H_0: \; \mathbf{1}^\top \mathbf{w} = 1 \quad \text{and} \quad \beta = 0
 T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat{\theta}^{SC} - \hat{\theta}^{MSCc}),
 \]</span></p>
 <p>where <span class="math inline">\(\hat{\theta}\)</span> stacks the estimated weights and intercept, and <span class="math inline">\(\hat{\Sigma}\)</span> is a covariance estimate obtained by subsampling the pre-treatment period. Intuitively, <span class="math inline">\(T\)</span> measures how far the SCM solution lies from the flexible cone-based solution, scaled by sampling variability. If <span class="math inline">\(T\)</span> is small, the convex-hull assumption holds; if large, the data support a more flexible geometry. Here is the result we get when we fit the TSSC estimator to the Australia case.</p>
-<div id="b1d2c8cc" class="cell" data-execution_count="4">
+<div id="84dc346e" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>TSSC_res <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
@@ -847,7 +850,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 </div>
 </div>
 </div>
-<div id="9c4c4e71" class="cell" data-execution_count="5">
+<div id="757ad356" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
@@ -906,7 +909,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 </div>
 <p>The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we’ve ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept.</p>
 <p>Note that the sign reversal is not always true. Consider the Basque example:</p>
-<div id="bc957b8e" class="cell" data-execution_count="6">
+<div id="c5e3f1b0" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> TSSC</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
@@ -946,7 +949,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757384826606" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757411747923" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -970,7 +973,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757384826607" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757411747924" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -994,7 +997,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757384826607" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757411747924" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1018,7 +1021,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757384826612" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757411747930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -1042,7 +1045,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757384826613" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757411747930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -1066,7 +1069,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757384826609" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757411747927" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -1088,7 +1091,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757384826609" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757411747927" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1112,7 +1115,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757384826613" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757411747930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1134,7 +1137,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757384826612" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757411747930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1156,7 +1159,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757384826612" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757411747930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1180,7 +1183,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757384826606" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757411747924" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1204,7 +1207,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757384826613" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757411747931" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -1226,7 +1229,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757384826606" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757411747924" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -1237,7 +1240,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757384893507" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757411811798" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

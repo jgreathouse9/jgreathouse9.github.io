@@ -100,18 +100,6 @@ $$
 In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to $x$.
 :::
 
-Okay so now with the residuals neatly defined, we can begin. We are interested in finding the weight $w_1$ that minimizes the sum of squared residuals between the treated unit and a convex combination of the donor units:
-
-$$
-f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
-$$
-
-where the residuals come from
-
-$$
-\mathbf{y} - \hat{\mathbf{y}}(w_1) = \begin{bmatrix} 50 \\ 60 \end{bmatrix} - \begin{bmatrix} 48 - 28 w_1 \\ 50 - 28 w_1 \end{bmatrix} = \begin{bmatrix} 2 + 28 w_1 \\ 10 + 28 w_1 \end{bmatrix}.
-$$
-
 To find the minimizing weight, we differentiate $f(w_1)$ with respect to $w_1$. Since $f(w_1)$ is a sum of two terms, the linearity of differentiation allows us to differentiate each term separately and then sum the results.
 
 For the first term, $(2 + 28 w_1)^2$, we see it as a composition of two functions: the inner linear function $h_1(w_1) = 2 + 28 w_1$ and the outer quadratic function $g_1(u) = u^2$, with $u = h_1(w_1)$. By the power rule, the derivative of the outer function is $\frac{\mathrm{d} g_1}{\mathrm{d} u} = 2 u$, and the derivative of the inner function is $\frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 28$. Applying the chain rule, as we've defined it, we obtain
@@ -180,9 +168,7 @@ $$
 w_1 = -\frac{3}{14}
 $$
 
-However, this value of $w_1$ lies outside the weight constraint $w \in [0,1]$. Since this is outside the feasible set $[0,1]$, the Hilbert Projection Theorem guarantees the true minimizer lies on the boundary of the convex hull.
-
-Now we can evaluate the objective function at the boundaries:
+However, this value of $w_1$ lies outside the weight constraint $w \in [0,1]$. Since this is outside the feasible set $[0,1]$, we assign $w_1$ the closest legal weight of 0. Now we can evaluate the objective function at the boundaries:
 
 $$
 f(0) = 2^2 + 10^2 = 104, \quad
@@ -197,97 +183,47 @@ $$
 
 ## KKT Derivation
 
-Now to the KKT solution. We want to approximate
+[The](https://youtu.be/HIm3Z0L90Co?si=nc_HFlmS9CAbd4EH) [Karush-Kuhn-Tucker](https://youtu.be/uh1Dk68cfWs?si=omWQT9IRw-iSiYNj) method formalizes what the calculus argument already suggested: because the unconstrained minimizer gives a negative weight, the constrained solution must sit on the boundary of the feasible set.
+
+KKT is useful here because it provides a systematic way to check all the optimality conditions at once—stationarity, feasibility, dual feasibility, and complementary slackness. This guarantees that the solution we find is not just locally valid but globally optimal for a convex quadratic problem. In this example, KKT confirms that the active constraint is $w_1 \ge 0$, leading to the boundary solution $w^\ast = (0,1)$.
+
+
+To form the KKT system, introduce a scalar [Lagrange multiplier](https://youtu.be/8mjcnxGMwFo?si=cT8SLJWLsQ0YDl60) $\lambda$ for the equality constraint $w_1 + w_2 = 1$ and nonnegative multipliers $\mu_1, \mu_2 \ge 0$ for the inequality constraints $w_1 \ge 0$, $w_2 \ge 0$. The Lagrangian is
 
 $$
-\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}
+\mathcal{L}(\mathbf{w}, \lambda, \mu) = \|\mathbf{y} - \mathbf{Y}\mathbf{w}\|_2^2 + \lambda (w_1 + w_2 - 1) - \mu_1 w_1 - \mu_2 w_2.
 $$
 
-using a convex combination of two donors:
+The negative sign in the terms $-\mu_i w_i$ is a sign convention chosen so that the multipliers $\mu_i$ are constrained to be nonnegative; this makes the statement of dual feasibility and complementary slackness straightforward. Stationarity means the gradient of the Lagrangian with respect to the primal variables vanishes. Differentiating the quadratic objective gives 
 
 $$
-\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
-\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
-$$
+\nabla_{\mathbf{w}} \|\mathbf{y} - \mathbf{Y}\mathbf{w}\|_2^2 = 2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w} - \mathbf{y}),
+$$ 
 
-The optimization problem is:
-
-$$
-\begin{aligned}
-\min_{\mathbf{w} \in \mathbb{R}^2} & \quad \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2 \\
-\text{s.t.} & \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1,
-\end{aligned}
-$$
-
-where 
+so stationarity requires
 
 $$
-\mathbf{Y} = \begin{bmatrix} \mathbf{y}_1 & \mathbf{y}_2 \end{bmatrix} 
-= \begin{bmatrix} 20 & 48 \\ 22 & 50 \end{bmatrix}.
+2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w} - \mathbf{y}) + \lambda \mathbf{1} - \mu = \mathbf{0},
 $$
 
-Introduce Lagrange multipliers $\lambda$ for the equality constraint and $\mu_1, \mu_2 \ge 0$ for the nonnegativity constraints:
+where $\mathbf{1} = (1,1)^\top$ and $\mu = (\mu_1, \mu_2)^\top$. Primal feasibility is the requirement that the candidate weight vector satisfy the original constraints $w_1 \ge 0$, $w_2 \ge 0$, $w_1 + w_2 = 1$. Dual feasibility means the multipliers associated with inequality constraints obey $\mu_1 \ge 0$, $\mu_2 \ge 0$. Complementary slackness ties the primal and dual together: for each inequality constraint, the product of the multiplier and the primal slack is zero, so $\mu_i w_i = 0$ for $i = 1, 2$. In words, complementary slackness says that if a constraint is active (the primal variable is on the boundary) its multiplier may be positive, and if the constraint is slack (strictly satisfied) the corresponding multiplier must be zero.
+
+From calculus, we expect the constrained minimizer to be $\mathbf{w}^* = (0,1)^\top$, which corresponds to taking donor two alone as the synthetic control. Verifying this candidate requires computing the residual at that point and solving the stationarity equations for the multipliers. At $\mathbf{w}^*$ we have $\mathbf{Y}\mathbf{w}^* = \mathbf{y}_2 = (48,50)^\top$ and the residual $\mathbf{Y}\mathbf{w}^* - \mathbf{y} = (-2,-10)^\top$. Multiplying by $2 \mathbf{Y}^\top$ yields
 
 $$
-\mathcal{L}(\mathbf{w}, \lambda, \mu) = \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2 + \lambda (w_1 + w_2 - 1) - \mu_1 w_1 - \mu_2 w_2.
+2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w}^* - \mathbf{y}) = 2 \begin{bmatrix}20 & 22 \\ 48 & 50\end{bmatrix} \begin{bmatrix}-2 \\ -10\end{bmatrix} = 2 \begin{bmatrix}-260 \\ -596\end{bmatrix} = \begin{bmatrix}-520 \\ -1192\end{bmatrix}.
 $$
 
-The gradient of the Lagrangian w.r.t. $\mathbf{w}$ is:
+Plugging this into the stationarity condition gives the two scalar equations
 
 $$
-\nabla_{\mathbf{w}} \mathcal{L} = 2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w} - \mathbf{y}) + \lambda \mathbf{1} - \mu
-= 0
+-520 + \lambda - \mu_1 = 0, \qquad -1192 + \lambda - \mu_2 = 0.
 $$
 
-with $\mathbf{1} = \begin{bmatrix}1 \\ 1\end{bmatrix}$ and $\mu = \begin{bmatrix}\mu_1 \\ \mu_2\end{bmatrix}$.
+Complementary slackness applied to the candidate $w_1^* = 0, w_2^* = 1$ implies $\mu_2 = 0$ because $w_2^* > 0$ forces the corresponding multiplier to vanish, while $\mu_1$ is unconstrained by slackness other than being nonnegative. Using $\mu_2 = 0$ in the second scalar equation yields $\lambda = 1192$. Substituting $\lambda = 1192$ into the first equation gives $\mu_1 = 672$, which satisfies dual feasibility since $672 \ge 0$. Thus stationarity, primal feasibility, dual feasibility, and complementary slackness all hold for the candidate, and because the objective is convex (its Hessian is $2 \mathbf{Y}^\top \mathbf{Y}$, which is positive semidefinite) these KKT conditions guarantee global optimality. Therefore $\mathbf{w}^* = (0,1)^\top$ is the solution, the residual is $\mathbf{y} - \hat{\mathbf{y}} = (2,10)^\top$, the Lagrange multiplier for the equality constraint is $\lambda = 1192$, and the dual variables are $\mu_1 = 672$, $\mu_2 = 0$.
 
-From geometric or derivative reasoning, we suspect the solution is at the boundary:
+To summarize in words: we formed the Lagrangian to incorporate constraints into the objective, set its gradient with respect to the primal variables to zero (stationarity), required the primal variables to satisfy the original constraints (primal feasibility), required inequality multipliers to be nonnegative (dual feasibility), and enforced that no multiplier is positive while its corresponding primal variable is strictly positive (complementary slackness). Solving these conditions gave the boundary solution $w_1 = 0, w_2 = 1$, which is the projection of $\mathbf{y}$ onto the convex hull of the donors when the unconstrained projection lies outside that hull. The KKT verification thus formalizes what we already knew.
 
-$$
-\mathbf{w}^\ast = \begin{bmatrix} 0 \\ 1 \end{bmatrix}.
-$$
-
-Compute:
-
-$$
-\mathbf{Y} \mathbf{w}^\ast = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}, \quad
-\mathbf{Y}\mathbf{w}^\ast - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
-$$
-
-$$
-2 \mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^\ast - \mathbf{y}) 
-= 2 \begin{bmatrix} 20 & 22 \\ 48 & 50 \end{bmatrix} \begin{bmatrix} -2 \\ -10 \end{bmatrix} 
-= 2 \begin{bmatrix} -260 \\ -596 \end{bmatrix} 
-= \begin{bmatrix} -520 \\ -1192 \end{bmatrix}.
-$$
-
-Stationarity requires:
-
-$$
-\begin{bmatrix} -520 \\ -1192 \end{bmatrix} + \lambda \begin{bmatrix}1 \\ 1\end{bmatrix} - \begin{bmatrix}\mu_1 \\ \mu_2\end{bmatrix} = \begin{bmatrix}0 \\ 0\end{bmatrix}.
-$$
-
-- Complementary slackness: $\mu_1 w_1^\ast = 0 \implies \mu_1 \ge 0$, $\mu_2 w_2^\ast = 0 \implies \mu_2 = 0$.  
-- Solve for $\lambda$: $-1192 + \lambda - 0 = 0 \implies \lambda = 1192$.  
-- Solve for $\mu_1$: $-520 + 1192 - \mu_1 = 0 \implies \mu_1 = 672 \ge 0$.
-
-1. **Stationarity:** satisfied  
-2. **Primal feasibility:** $w_1^\ast = 0 \ge 0$, $w_2^\ast = 1 \ge 0$, $w_1 + w_2 = 1$  
-3. **Dual feasibility:** $\mu_1, \mu_2 \ge 0$  
-4. **Complementary slackness:** $\mu_1 w_1 = 672*0 = 0$, $\mu_2 w_2 = 0*1 = 0$
-
-All conditions hold.
-
-The optimal synthetic control weights are:
-
-$$
-\mathbf{w}^\ast = \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \quad 
-\hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
-$$
-
-- Weight $w_1 = 0$ is active (boundary), $\mu_1 > 0$  
-- Weight $w_2 = 1$ is strictly positive, $\mu_2 = 0$  
-- Residual $\mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2 \\ 10\end{bmatrix}$ is consistent with projection onto the convex hull of donors.
 
 ## Frank–Wolfe Geometric Solution (2-Donor Example)
 

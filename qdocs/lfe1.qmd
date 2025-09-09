@@ -9,7 +9,7 @@ What is an applied econometrician or data scientist? At its simplest, both are p
 
 By extension, some authors describe synthetic controls as a [black box](https://bookdown.org/mike/data_analysis/sec-synthetic-control.html) [function](https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished), suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you're dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.
 
-This matters even more because, as [this Medium post](https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8) observes, industry often values *breadth and speed* over *theoretical depth*. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It lets you move quickly *and* diagnose problems effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. In this blog post, first, I'll compute a synthetic control *by hand* (how often do we do such a thing?). Then, I'll walk through a recent real-world application, showing how theoretical depth very easily informs the way we get and interpret results.
+This matters even more because, as [this Medium post](https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8) observes, industry often values *breadth and speed* over *theoretical depth*. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It lets you move quickly *and* diagnose problems effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. In this blog post, first, I'll compute a synthetic control *by hand* (how often do we do such a thing?) using calculus, KKT optimality conditions, and geometry. Then, I'll walk through a recent real-world application, showing how theory very easily informs the way we run our models and understand our results.
 
 # A Simple Synthetic Control
 
@@ -21,7 +21,39 @@ $$
 \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}
 $$
 
+Graphically this looks like
+
+```{python}
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define vectors
+y = np.array([50, 60])
+y1 = np.array([20, 22])
+y2 = np.array([48, 50])
+
+# Time index (0 and 1)
+t = np.arange(len(y))
+
+# Plot
+plt.figure(figsize=(8,5))
+plt.plot(t, y, 'r-o', label=r'$\mathbf{y}$', linewidth=2, label="Treated Unit")
+plt.plot(t, y1, 'b-o', label=r'$\mathbf{y}_1$', linewidth=2,  label="Donor 1")
+plt.plot(t, y2, 'g-o', label=r'$\mathbf{y}_2$', linewidth=2,  label="Donor 2")
+
+plt.xlabel('Time')
+plt.ylabel('Value')
+plt.title('Time Series Plot')
+plt.xticks(t)  # Show integer time steps
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
 ## Calculus
+
+Calculus is the heart of SCM, which is unsurprising given that it's an optimization problem. However, after years of reading about SCM, I've never ever seen somebody solve a simple synthetic control by hand. I do this below.
 
 
 <details>
@@ -45,7 +77,15 @@ $$
 \quad w_1, w_2 \geq 0, \quad w_1 + w_2 = 1.
 $$
 
-In this case we have only two units. So it helpsus to define one weight in terms of the other. Substituting $w_2 = 1 - w_1$:
+of control units. Specifically, it is a convex combination. A convex combination of a set of vectors $\mathbf{w}_1, \mathbf{w}_2, \dots, \mathbf{w}_n \in \mathbb{R}^N$ is any vector of the form
+
+$$
+\mathbf{w} = \sum_{i=1}^n \alpha_i \mathbf{w}_i \quad \text{subject to} \quad \alpha_i \ge 0 \text{ for all } i = 1, \dots, n, \quad \sum_{i=1}^n \alpha_i = 1.
+$$
+
+Notice how in this case two donor units. From the definition above, it helps us to define one weight in terms of the other; for example, if the optimal value for one weight is 0.2, the other one must be 0.8.
+
+Substituting $w_2 = 1 - w_1$:
 
 $$
 \hat{\mathbf{y}}(w_1) = w_1 \mathbf{y}_1 + (1 - w_1)\mathbf{y}_2 
@@ -79,11 +119,22 @@ $$
 \mathbf{r}(w_1) = \begin{bmatrix} 2 + 28w_1 \\ 10 + 28w_1 \end{bmatrix}.
 $$
 
+---
 
-Let's define the two calculus rules we'll use:
+Let's define the main calculus rules we'll use:
+
+::: {.definition #constant-multiple-rule}
+**Constant Multiple Rule**. If $f(x) = c \cdot g(x)$, where $c$ is a constant and $g(x)$ is differentiable, then the derivative of $f$ with respect to $x$ is:
+
+$$
+f'(x) = c \cdot g'(x).
+$$
+
+This rule allows you to pull constants out of derivatives.
+:::
 
 ::: {.definition #sum-rule}
-Sum Rule. If a function $f(x) = g(x) + h(x)$, where $g(x)$ and $h(x)$ are differentiable functions, then the derivative of $f(x)$ with respect to $x$ is the sum of the derivatives of the individual functions:
+**Sum Rule**. If $f(x) = g(x) + h(x)$, where $g(x)$ and $h(x)$ are differentiable functions, then the derivative of $f$ with respect to $x$ is the sum of the derivatives of the individual functions:
 
 $$
 f'(x) = g'(x) + h'(x).
@@ -93,103 +144,142 @@ This rule allows us to differentiate each term of a sum separately and then add 
 :::
 
 ::: {.definition #chain-rule}
-Chain Rule. If a function is composed as $f(x) = g(h(x))$, where $h(x)$ is the inner function and $g(u)$ is the outer function (with $u = h(x)$), then the derivative of $f(x)$ with respect to $x$ is:
+**Chain Rule**. If a function is composed as $f(x) = g(h(x))$, where $h(x)$ is the inner function and $g(u)$ is the outer function (with $u = h(x)$), then the derivative of $f(x)$ with respect to $x$ is:
 
 $$
 f'(x) = g'(h(x)) \cdot h'(x).
 $$
 
-In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to $x$.
+Differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to $x$.
 :::
 
-To find the minimizing weight, we differentiate $f(w_1)$ with respect to $w_1$. Since $f(w_1)$ is a sum of two terms, the linearity of differentiation allows us to differentiate each term separately and then sum the results.
 
-For the first term, $(2 + 28 w_1)^2$, we see it as a composition of two functions: the inner linear function $h_1(w_1) = 2 + 28 w_1$ and the outer quadratic function $g_1(u) = u^2$, with $u = h_1(w_1)$. By the power rule, the derivative of the outer function is $\frac{\mathrm{d} g_1}{\mathrm{d} u} = 2 u$, and the derivative of the inner function is $\frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 28$. Applying the chain rule, as we've defined it, we obtain
+To find the minimizing weight, we differentiate $f(w_1)$ with respect to $w_1$. 
+
+Since $f(w_1)$ is a sum of two terms, the **linearity of the derivative** (sum rule) allows us to differentiate each term separately and then sum the results:
 
 $$
-\frac{\mathrm{d}}{\mathrm{d} w_1} (2 + 28 w_1)^2 = 2 (2 + 28 w_1) \cdot 28.
+f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2
 $$
 
-The second term, $(10 + 28 w_1)^2$, is handled in exactly the same way. The inner function is $h_2(w_1) = 10 + 28 w_1$ and the outer function is $g_2(v) = v^2$, giving derivatives $\frac{\mathrm{d} g_2}{\mathrm{d} v} = 2v$ and $\frac{\mathrm{d} h_2}{\mathrm{d} w_1} = 28$. By the chain rule, we then have
+To find the minimizing weight, we differentiate $f(w_1)$ with respect to $w_1$. Since $f(w_1)$ is a sum of two terms, we can differentiate each term separately and then sum the results, according to the linearity of the derivative.
+
+---
+
+Let's begin with the first term: $(2 + 28 w_1)^2$. We recognize this as a composition of two functions, so we apply the chain rule. Let
+
+$$
+h_1(w_1) = 2 + 28 w_1 \quad \text{(inner function)}, \quad g_1(u) = u^2 \quad \text{(outer function)}.
+$$
+
+Now we compute the derivatives:
+
+$$
+\frac{\mathrm{d} g_1}{\mathrm{d} u} = 2 u, \quad \frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 28.
+$$
+
+The first result comes from the power rule applied to the outer function, and the second comes from differentiating the linear inner function. Applying the chain rule, we obtain
+
+$$
+\frac{\mathrm{d}}{\mathrm{d} w_1} (2 + 28 w_1)^2 = \frac{\mathrm{d} g_1}{\mathrm{d} u} \bigg|_{u = h_1(w_1)} \cdot \frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 2 (2 + 28 w_1) \cdot 28.
+$$
+
+---
+
+Next, consider the second term: $(10 + 28 w_1)^2$. Similarly, let
+
+$$
+h_2(w_1) = 10 + 28 w_1, \quad g_2(v) = v^2.
+$$
+
+The derivatives are
+
+$$
+\frac{\mathrm{d} g_2}{\mathrm{d} v} = 2 v, \quad \frac{\mathrm{d} h_2}{\mathrm{d} w_1} = 28.
+$$
+
+Again, these results come from the power rule for the quadratic outside function and the linear term inside the parentheses. By the chain rule, the derivative of the second term is
 
 $$
 \frac{\mathrm{d}}{\mathrm{d} w_1} (10 + 28 w_1)^2 = 2 (10 + 28 w_1) \cdot 28.
 $$
 
-Combining the two terms, the derivative of the full function is
+Combining the two terms by the sum rule, the derivative of the full objective function is
 
 $$
-\frac{\mathrm{d}}{\mathrm{d} w_1} f(w_1) = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
+\frac{\mathrm{d} f}{\mathrm{d} w_1} = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
 $$
 
-Setting this derivative equal to zero gives the stationary point of $f(w_1)$:
+---
+
+Now we have our first order conditions. We start by setting the derivative to zero
 
 $$
 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28 = 0.
 $$
 
-We can simplify. First factor out $2 \cdot 28$ from both terms:
+We can factor out $2 \cdot 28$:
 
 $$
-2 \cdot 28 \left[ (2 + 28 w_1) + (10 + 28 w_1) \right] = 0
+2 \cdot 28 \left[ (2 + 28 w_1) + (10 + 28 w_1) \right] = 0.
 $$
 
-Simplify inside the brackets:
-
-$$(2 + 28 w_1) + (10 + 28 w_1) = 12 + 56 w_1$$
-
-So the equation becomes:
+Simplifying inside the brackets gives
 
 $$
-2 \cdot 28 \cdot (12 + 56 w_1) = 0
+(2 + 28 w_1) + (10 + 28 w_1) = 12 + 56 w_1,
 $$
 
-Since $2 \cdot 28 \neq 0$, we only need:
+so the equation becomes
 
 $$
-12 + 56w_1 = 0.
+2 \cdot 28 \cdot (12 + 56 w_1) = 0.
 $$
 
-The largest common factor of 12 and 56 is 4. Divide both terms by 4:
+Since $2 \cdot 28 \neq 0$, we can safely divide both sides of the equation by this constant factor 56, isolating the parentheses that contains our variable:
 
 $$
-\frac{12}{4} + \frac{56}{4} w_1 = 0
+12 + 56 w_1 = 0.
 $$
 
+
+We see that we can simplify this with the greatest common factor. Dividing both terms by 4 yields
+
 $$
-3 + 14 w_1 = 0
+\frac{12}{4} + \frac{56}{4} w_1 = 0 \quad \implies \quad 3 + 14 w_1 = 0.
 $$
 
-Now we solve: 
+Finally, solving for $w_1$, we obtain
 
 $$
 14 w_1 = -3
 $$
 
-$$
-w_1 = -\frac{3}{14}
-$$
-
-However, this value of $w_1$ lies outside the weight constraint $w \in [0,1]$. Since this is outside the feasible set $[0,1]$, we assign $w_1$ the closest legal weight of 0. Now we can evaluate the objective function at the boundaries:
+and finally
 
 $$
-f(0) = 2^2 + 10^2 = 104, \quad
-f(1) = 30^2 + 38^2 = 2344.
+w_1 = -\frac{3}{14}.
 $$
 
-The minimum occurs at $w_1 = 0, w_2 = 1$, giving
+This is the unconstrained minimizer of $f(w_1)$. However, it lies outside the feasible interval $[0,1]$ for the weights. The constrained minimum is therefore at the nearest boundary of the feasible set, which is $w_1 = 0$. Correspondingly, $w_2 = 1$. Evaluating the objective at the boundary points: 
+
+$$
+f(0) = 2^2 + 10^2 = 104, \quad f(1) = 30^2 + 38^2 = 2344.
+$$
+
+The minimum occurs at $w_1 = 0, w_2 = 1$, giving the synthetic control 
 
 $$
 \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
 $$
-
+ 
 </details>
+
+The reason I chose a corner solution is because I wanted to think about the circumstnaces uner which the model will not work. Solving for the optimal and yet non-ideal answer provides interesting insights as to how we can think about applyinng SCM in practice, as I will show below.
 
 ## KKT Derivation
 
-[The](https://youtu.be/HIm3Z0L90Co?si=nc_HFlmS9CAbd4EH) [Karush-Kuhn-Tucker](https://youtu.be/uh1Dk68cfWs?si=omWQT9IRw-iSiYNj) method formalizes what the calculus argument already suggested: because the unconstrained minimizer gives a negative weight, the constrained solution must sit on the boundary of the feasible set.
-
-KKT is useful here because it provides a systematic way to check all the optimality conditions at once—stationarity, feasibility, dual feasibility, and complementary slackness. This guarantees that the solution we find is not just locally valid but globally optimal for a convex quadratic problem. In this example, KKT confirms that the active constraint is $w_1 \ge 0$, leading to the boundary solution $w^\ast = (0,1)$.
+[The](https://youtu.be/HIm3Z0L90Co?si=nc_HFlmS9CAbd4EH) [Karush-Kuhn-Tucker](https://youtu.be/uh1Dk68cfWs?si=omWQT9IRw-iSiYNj) method formalizes what the calculus argument already suggested: because the unconstrained minimizer gives a negative weight, the constrained solution must sit on the boundary of the feasible set. KKT is useful here because it provides a systematic way to check all the optimality conditions at once—stationarity, feasibility, dual feasibility, and complementary slackness. This guarantees that the solution we find is not just locally valid but globally optimal for a convex quadratic problem. In this example, KKT confirms that the active constraint is $w_1 \ge 0$, leading to the boundary solution $w^\ast = (0,1)$.
 
 
 <details>

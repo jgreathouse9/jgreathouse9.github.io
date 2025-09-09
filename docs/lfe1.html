@@ -259,9 +259,9 @@ window.Quarto = {
 
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
-<p>What is an applied econometrician or data scientist? At its simplest, both are practitioners of statistics who apply econometric or statistical theory to answer questions that economists, businesses, or other organizations care about. Unless your role is narrowly defined as “standard” analytics (mostly SQL and dashboards, as far as I understand), this is true whether you work in causal inference, deep learning, computer vision, or some other branch of the field. We often talk about “delivering value” or “providing insights.” Some folks <a href="https://www.linkedin.com/feed/update/urn:li:activity:7313552572710035456?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7313641726202531842%29&amp;replyUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7314391420637720578%29&amp;dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287313641726202531842%2Curn%3Ali%3Aactivity%3A7313552572710035456%29&amp;dashReplyUrn=urn%3Ali%3Afsd_comment%3A%287314391420637720578%2Curn%3Ali%3Aactivity%3A7313552572710035456%29">claim</a> that deep business experience (which can be learned like other mindsets) matters more than technical knowledge, and that some data science teams “fail due to being too scientific”. But pause for a moment — look out your window. Do you see insights, or “business sense” floating around? Of course not. Insights do not exist in nature; they’re created. They are <em>derived</em> through data analysis. Business sense does not exist in a vacuum, it is informed by empirical observations about the real world. And what makes that analysis scientific, and business sense sensbile (not just guessing with sexed up software tools) is the theoretical source under which we arrive at these conclusions. Even if you’re not proving lemmas in your day job (I don’t), those underpinnings are exactly what allow us to trust our results.</p>
-<p>By extension, some authors describe synthetic controls as a <a href="https://bookdown.org/mike/data_analysis/sec-synthetic-control.html">black box</a> <a href="https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished">function</a>, suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you’re dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.</p>
-<p>This matters even more because, as <a href="https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8">this Medium post</a> observes, industry often values <em>breadth and speed</em> over <em>theoretical depth</em>. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It lets you move quickly <em>and</em> diagnose problems effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. In this blog post, first, I’ll compute a synthetic control <em>by hand</em> (how often do we do such a thing?). Then, I’ll walk through a recent real-world application, showing how theoretical depth very easily informs the way we get and interpret results.</p>
+<p>What is an applied econometrician or data scientist? At its simplest, both are practitioners of statistics who apply econometric or statistical theory to answer questions that economists, businesses, or other organizations care about. Unless your role is narrowly defined as “standard” analytics (mostly SQL and dashboards, as far as I understand), this is true whether you work in causal inference, deep learning, computer vision, or some other branch of the field. We often talk about “delivering value” or “providing insights.” Some folks <a href="https://www.linkedin.com/feed/update/urn:li:activity:7313552572710035456?commentUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7313641726202531842%29&amp;replyUrn=urn%3Ali%3Acomment%3A%28activity%3A7313552572710035456%2C7314391420637720578%29&amp;dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287313641726202531842%2Curn%3Ali%3Aactivity%3A7313552572710035456%29&amp;dashReplyUrn=urn%3Ali%3Afsd_comment%3A%287314391420637720578%2Curn%3Ali%3Aactivity%3A7313552572710035456%29">claim</a> that deep business experience (which can be learned like other mindsets) matters more than technical knowledge, and that some data science teams “fail due to being too scientific”. But pause for a moment — look out your window. Do you see insights, or “business sense” floating around? Of course not. Insights do not exist in nature; they’re created. They are <em>derived</em> through data analysis. Business sense does not exist in a vacuum, it is informed by empirical observations about the real world. And what makes that analysis scientific, and business sense sensbile (not just guessing with sexed up software tools) is the theoretical source under which we arrive at these conclusions. Even if you’re not proving lemmas in your day job (I don’t), those underpinnings are exactly what allow us to trust our results. By extension, some authors describe synthetic controls as a <a href="https://bookdown.org/mike/data_analysis/sec-synthetic-control.html">black box</a> <a href="https://www.jeffthurk.com/mllecture07syntheticcontrolsfinished">function</a>, suggesting that arcane operations under the hood spit out a result. And while that temptation is understandable, unless you’re dealing with truly complex models (like neural nets or GenAI, which themselves rest on explainable math foundations), the math behind vanilla SCM is well understood.</p>
+<p>This matters even more because, as <a href="https://medium.com/@yannansu/from-academia-to-industry-a-shift-in-how-work-and-thinking-happens-cf3cfde1acf8">this Medium post</a> observes, industry often values <em>breadth and speed</em> over <em>theoretical depth</em>. This is correct, but it risks overlooking how theory actually accelerates practical work. Theory a force multiplier. It allows you move quickly <em>and</em> diagnose problems/suggests improvements effectively. It makes applied work more accurate, more explainable, and more trustworthy. Treating SCM (or any model) as a black box might get you a nice graph, but what separates practitioners who are effective and practitioners who are less so is the understanding and application of theory to the business question at hand. After all, our estimates are not produced for nothing, they are meant to inform the policy/business outcomes we care about. Just because <a href="https://infotrust.com/articles/interview-from-autoimmune-diseases-to-big-data-with-spongecells-byron-ellis/">Nobody Dies If This Estimate Is Wrong</a> is not a very conforting way to go about empirical analysis.</p>
+<p>In this blog post, first, I’ll compute a synthetic control <em>by hand</em> (how often do we do such a thing?) using calculus, KKT optimality conditions, and geometry. Then, I’ll walk through a recent real-world application, showing how theory very easily informs the way we run our models and understand our results.</p>
 </section>
 <section id="a-simple-synthetic-control" class="level1">
 <h1>A Simple Synthetic Control</h1>
@@ -271,8 +271,43 @@ window.Quarto = {
 \mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
 \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}
 \]</span></p>
+<p>Graphically this looks like</p>
+<div id="dd0bf881" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define vectors</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> np.array([<span class="dv">50</span>, <span class="dv">60</span>])</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.array([<span class="dv">20</span>, <span class="dv">22</span>])</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> np.array([<span class="dv">48</span>, <span class="dv">50</span>])</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Time index (0 and 1)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.arange(<span class="bu">len</span>(y))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>,<span class="dv">5</span>))</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>plt.plot(t, y, <span class="st">'r-o'</span>, label<span class="op">=</span><span class="vs">r'$\mathbf</span><span class="sc">{y}</span><span class="vs">$'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>plt.plot(t, y1, <span class="st">'b-o'</span>, label<span class="op">=</span><span class="vs">r'$\mathbf</span><span class="sc">{y}</span><span class="vs">_1$'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>plt.plot(t, y2, <span class="st">'g-o'</span>, label<span class="op">=</span><span class="vs">r'$\mathbf</span><span class="sc">{y}</span><span class="vs">_2$'</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Time'</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Value'</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'Time Series Plot'</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>plt.xticks(t)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lfe1_files/figure-html/cell-2-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
 <section id="calculus" class="level2">
 <h2 class="anchored" data-anchor-id="calculus">Calculus</h2>
+<p>Calculus is the heart of SCM, which is unsurprising given that it’s an optimization problem. However, after years of reading about SCM, I’ve never ever seen somebody solve a simple synthetic control by hand. I do this below. So, with the help of a little <a href="https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf">Boyd-ie</a>, I wenth through the process of finding the weights by hand.</p>
 <details>
 <summary>
 Solved By Calculus
@@ -290,7 +325,12 @@ Solved By Calculus
 \hat{\mathbf{y}} = w_1 \mathbf{y}_1 + w_2 \mathbf{y}_2,&nbsp;
 \quad w_1, w_2 \geq 0, \quad w_1 + w_2 = 1.
 \]</span></p>
-<p>In this case we have only two units. So it helpsus to define one weight in terms of the other. Substituting <span class="math inline">\(w_2 = 1 - w_1\)</span>:</p>
+<p>of control units. Specifically, it is a convex combination. A convex combination of a set of vectors <span class="math inline">\(\mathbf{w}_1, \mathbf{w}_2, \dots, \mathbf{w}_n \in \mathbb{R}^N\)</span> is any vector of the form</p>
+<p><span class="math display">\[
+\mathbf{w} = \sum_{i=1}^n \alpha_i \mathbf{w}_i \quad \text{subject to} \quad \alpha_i \ge 0 \text{ for all } i = 1, \dots, n, \quad \sum_{i=1}^n \alpha_i = 1.
+\]</span></p>
+<p>Notice how in this case two donor units. From the definition above, it helps us to define one weight in terms of the other; for example, if the optimal value for one weight is 0.2, the other one must be 0.8.</p>
+<p>Substituting <span class="math inline">\(w_2 = 1 - w_1\)</span>:</p>
 <p><span class="math display">\[
 \hat{\mathbf{y}}(w_1) = w_1 \mathbf{y}_1 + (1 - w_1)\mathbf{y}_2&nbsp;
 = \mathbf{y}_2 + w_1(\mathbf{y}_1 - \mathbf{y}_2),
@@ -314,81 +354,112 @@ Solved By Calculus
 <p><span class="math display">\[
 \mathbf{r}(w_1) = \begin{bmatrix} 2 + 28w_1 \\ 10 + 28w_1 \end{bmatrix}.
 \]</span></p>
-<p>Let’s define the two calculus rules we’ll use:</p>
+<hr>
+<p>Let’s define the main calculus rules we’ll use:</p>
+<div id="constant-multiple-rule" class="definition">
+<p><strong>Constant Multiple Rule</strong>. If <span class="math inline">\(f(x) = c \cdot g(x)\)</span>, where <span class="math inline">\(c\)</span> is a constant and <span class="math inline">\(g(x)\)</span> is differentiable, then the derivative of <span class="math inline">\(f\)</span> with respect to <span class="math inline">\(x\)</span> is:</p>
+<p><span class="math display">\[
+f'(x) = c \cdot g'(x).
+\]</span></p>
+<p>This rule allows you to pull constants out of derivatives.</p>
+</div>
 <div id="sum-rule" class="definition">
-<p>Sum Rule. If a function <span class="math inline">\(f(x) = g(x) + h(x)\)</span>, where <span class="math inline">\(g(x)\)</span> and <span class="math inline">\(h(x)\)</span> are differentiable functions, then the derivative of <span class="math inline">\(f(x)\)</span> with respect to <span class="math inline">\(x\)</span> is the sum of the derivatives of the individual functions:</p>
+<p><strong>Sum Rule</strong>. If <span class="math inline">\(f(x) = g(x) + h(x)\)</span>, where <span class="math inline">\(g(x)\)</span> and <span class="math inline">\(h(x)\)</span> are differentiable functions, then the derivative of <span class="math inline">\(f\)</span> with respect to <span class="math inline">\(x\)</span> is the sum of the derivatives of the individual functions:</p>
 <p><span class="math display">\[
 f'(x) = g'(x) + h'(x).
 \]</span></p>
 <p>This rule allows us to differentiate each term of a sum separately and then add the results.</p>
 </div>
 <div id="chain-rule" class="definition">
-<p>Chain Rule. If a function is composed as <span class="math inline">\(f(x) = g(h(x))\)</span>, where <span class="math inline">\(h(x)\)</span> is the inner function and <span class="math inline">\(g(u)\)</span> is the outer function (with <span class="math inline">\(u = h(x)\)</span>), then the derivative of <span class="math inline">\(f(x)\)</span> with respect to <span class="math inline">\(x\)</span> is:</p>
+<p><strong>Chain Rule</strong>. If a function is composed as <span class="math inline">\(f(x) = g(h(x))\)</span>, where <span class="math inline">\(h(x)\)</span> is the inner function and <span class="math inline">\(g(u)\)</span> is the outer function (with <span class="math inline">\(u = h(x)\)</span>), then the derivative of <span class="math inline">\(f(x)\)</span> with respect to <span class="math inline">\(x\)</span> is:</p>
 <p><span class="math display">\[
 f'(x) = g'(h(x)) \cdot h'(x).
 \]</span></p>
-<p>In other words, differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to <span class="math inline">\(x\)</span>.</p>
+<p>Differentiate the outer function with respect to the inner function, then multiply by the derivative of the inner function with respect to <span class="math inline">\(x\)</span>.</p>
 </div>
-<p>To find the minimizing weight, we differentiate <span class="math inline">\(f(w_1)\)</span> with respect to <span class="math inline">\(w_1\)</span>. Since <span class="math inline">\(f(w_1)\)</span> is a sum of two terms, the linearity of differentiation allows us to differentiate each term separately and then sum the results.</p>
-<p>For the first term, <span class="math inline">\((2 + 28 w_1)^2\)</span>, we see it as a composition of two functions: the inner linear function <span class="math inline">\(h_1(w_1) = 2 + 28 w_1\)</span> and the outer quadratic function <span class="math inline">\(g_1(u) = u^2\)</span>, with <span class="math inline">\(u = h_1(w_1)\)</span>. By the power rule, the derivative of the outer function is <span class="math inline">\(\frac{\mathrm{d} g_1}{\mathrm{d} u} = 2 u\)</span>, and the derivative of the inner function is <span class="math inline">\(\frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 28\)</span>. Applying the chain rule, as we’ve defined it, we obtain</p>
+<p>To find the minimizing weight, we differentiate <span class="math inline">\(f(w_1)\)</span> with respect to <span class="math inline">\(w_1\)</span>.</p>
+<p>Since <span class="math inline">\(f(w_1)\)</span> is a sum of two terms, the <strong>linearity of the derivative</strong> (sum rule) allows us to differentiate each term separately and then sum the results:</p>
 <p><span class="math display">\[
-\frac{\mathrm{d}}{\mathrm{d} w_1} (2 + 28 w_1)^2 = 2 (2 + 28 w_1) \cdot 28.
+f(w_1) = (2 + 28 w_1)^2 + (10 + 28 w_1)^2
 \]</span></p>
-<p>The second term, <span class="math inline">\((10 + 28 w_1)^2\)</span>, is handled in exactly the same way. The inner function is <span class="math inline">\(h_2(w_1) = 10 + 28 w_1\)</span> and the outer function is <span class="math inline">\(g_2(v) = v^2\)</span>, giving derivatives <span class="math inline">\(\frac{\mathrm{d} g_2}{\mathrm{d} v} = 2v\)</span> and <span class="math inline">\(\frac{\mathrm{d} h_2}{\mathrm{d} w_1} = 28\)</span>. By the chain rule, we then have</p>
+<p>To find the minimizing weight, we differentiate <span class="math inline">\(f(w_1)\)</span> with respect to <span class="math inline">\(w_1\)</span>. Since <span class="math inline">\(f(w_1)\)</span> is a sum of two terms, we can differentiate each term separately and then sum the results, according to the linearity of the derivative.</p>
+<hr>
+<p>Let’s begin with the first term: <span class="math inline">\((2 + 28 w_1)^2\)</span>. We recognize this as a composition of two functions, so we apply the chain rule. Let</p>
+<p><span class="math display">\[
+h_1(w_1) = 2 + 28 w_1 \quad \text{(inner function)}, \quad g_1(u) = u^2 \quad \text{(outer function)}.
+\]</span></p>
+<p>Now we compute the derivatives:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d} g_1}{\mathrm{d} u} = 2 u, \quad \frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 28.
+\]</span></p>
+<p>The first result comes from the power rule applied to the outer function, and the second comes from differentiating the linear inner function. Applying the chain rule, we obtain</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}}{\mathrm{d} w_1} (2 + 28 w_1)^2 = \frac{\mathrm{d} g_1}{\mathrm{d} u} \bigg|_{u = h_1(w_1)} \cdot \frac{\mathrm{d} h_1}{\mathrm{d} w_1} = 2 (2 + 28 w_1) \cdot 28.
+\]</span></p>
+<hr>
+<p>Next, consider the second term: <span class="math inline">\((10 + 28 w_1)^2\)</span>. Similarly, let</p>
+<p><span class="math display">\[
+h_2(w_1) = 10 + 28 w_1, \quad g_2(v) = v^2.
+\]</span></p>
+<p>The derivatives are</p>
+<p><span class="math display">\[
+\frac{\mathrm{d} g_2}{\mathrm{d} v} = 2 v, \quad \frac{\mathrm{d} h_2}{\mathrm{d} w_1} = 28.
+\]</span></p>
+<p>Again, these results come from the power rule for the quadratic outside function and the linear term inside the parentheses. By the chain rule, the derivative of the second term is</p>
 <p><span class="math display">\[
 \frac{\mathrm{d}}{\mathrm{d} w_1} (10 + 28 w_1)^2 = 2 (10 + 28 w_1) \cdot 28.
 \]</span></p>
-<p>Combining the two terms, the derivative of the full function is</p>
+<p>Combining the two terms by the sum rule, the derivative of the full objective function is</p>
 <p><span class="math display">\[
-\frac{\mathrm{d}}{\mathrm{d} w_1} f(w_1) = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
+\frac{\mathrm{d} f}{\mathrm{d} w_1} = 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28.
 \]</span></p>
-<p>Setting this derivative equal to zero gives the stationary point of <span class="math inline">\(f(w_1)\)</span>:</p>
+<hr>
+<p>Now we have our first order conditions. We start by setting the derivative to zero</p>
 <p><span class="math display">\[
 2 (2 + 28 w_1) \cdot 28 + 2 (10 + 28 w_1) \cdot 28 = 0.
 \]</span></p>
-<p>We can simplify. First factor out <span class="math inline">\(2 \cdot 28\)</span> from both terms:</p>
+<p>We can factor out <span class="math inline">\(2 \cdot 28\)</span>:</p>
 <p><span class="math display">\[
-2 \cdot 28 \left[ (2 + 28 w_1) + (10 + 28 w_1) \right] = 0
+2 \cdot 28 \left[ (2 + 28 w_1) + (10 + 28 w_1) \right] = 0.
 \]</span></p>
-<p>Simplify inside the brackets:</p>
-<p><span class="math display">\[(2 + 28 w_1) + (10 + 28 w_1) = 12 + 56 w_1\]</span></p>
-<p>So the equation becomes:</p>
+<p>Simplifying inside the brackets gives</p>
 <p><span class="math display">\[
-2 \cdot 28 \cdot (12 + 56 w_1) = 0
+(2 + 28 w_1) + (10 + 28 w_1) = 12 + 56 w_1,
 \]</span></p>
-<p>Since <span class="math inline">\(2 \cdot 28 \neq 0\)</span>, we only need:</p>
+<p>so the equation becomes</p>
 <p><span class="math display">\[
-12 + 56w_1 = 0.
+2 \cdot 28 \cdot (12 + 56 w_1) = 0.
 \]</span></p>
-<p>The largest common factor of 12 and 56 is 4. Divide both terms by 4:</p>
+<p>Since <span class="math inline">\(2 \cdot 28 \neq 0\)</span>, we can safely divide both sides of the equation by this constant factor 56, isolating the parentheses that contains our variable:</p>
 <p><span class="math display">\[
-\frac{12}{4} + \frac{56}{4} w_1 = 0
+12 + 56 w_1 = 0.
 \]</span></p>
+<p>We see that we can simplify this with the greatest common factor. Dividing both terms by 4 yields</p>
 <p><span class="math display">\[
-3 + 14 w_1 = 0
+\frac{12}{4} + \frac{56}{4} w_1 = 0 \quad \implies \quad 3 + 14 w_1 = 0.
 \]</span></p>
-<p>Now we solve:</p>
+<p>Finally, solving for <span class="math inline">\(w_1\)</span>, we obtain</p>
 <p><span class="math display">\[
 14 w_1 = -3
 \]</span></p>
+<p>and finally</p>
 <p><span class="math display">\[
-w_1 = -\frac{3}{14}
+w_1 = -\frac{3}{14}.
 \]</span></p>
-<p>However, this value of <span class="math inline">\(w_1\)</span> lies outside the weight constraint <span class="math inline">\(w \in [0,1]\)</span>. Since this is outside the feasible set <span class="math inline">\([0,1]\)</span>, we assign <span class="math inline">\(w_1\)</span> the closest legal weight of 0. Now we can evaluate the objective function at the boundaries:</p>
+<p>This is the unconstrained minimizer of <span class="math inline">\(f(w_1)\)</span>. However, it lies outside the feasible interval <span class="math inline">\([0,1]\)</span> for the weights. The constrained minimum is therefore at the nearest boundary of the feasible set, which is <span class="math inline">\(w_1 = 0\)</span>. Correspondingly, <span class="math inline">\(w_2 = 1\)</span>. Evaluating the objective at the boundary points:</p>
 <p><span class="math display">\[
-f(0) = 2^2 + 10^2 = 104, \quad
-f(1) = 30^2 + 38^2 = 2344.
+f(0) = 2^2 + 10^2 = 104, \quad f(1) = 30^2 + 38^2 = 2344.
 \]</span></p>
-<p>The minimum occurs at <span class="math inline">\(w_1 = 0, w_2 = 1\)</span>, giving</p>
+<p>The minimum occurs at <span class="math inline">\(w_1 = 0, w_2 = 1\)</span>, giving the synthetic control</p>
 <p><span class="math display">\[
 \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
 \]</span></p>
 </details>
+<p>The reason I chose a corner solution is because I wanted to think about the circumstnaces uner which the model will not work. Solving for the optimal and yet non-ideal answer provides interesting insights as to how we can think about applyinng SCM in practice, as I will show below.</p>
 </section>
 <section id="kkt-derivation" class="level2">
 <h2 class="anchored" data-anchor-id="kkt-derivation">KKT Derivation</h2>
-<p><a href="https://youtu.be/HIm3Z0L90Co?si=nc_HFlmS9CAbd4EH">The</a> <a href="https://youtu.be/uh1Dk68cfWs?si=omWQT9IRw-iSiYNj">Karush-Kuhn-Tucker</a> method formalizes what the calculus argument already suggested: because the unconstrained minimizer gives a negative weight, the constrained solution must sit on the boundary of the feasible set.</p>
-<p>KKT is useful here because it provides a systematic way to check all the optimality conditions at once—stationarity, feasibility, dual feasibility, and complementary slackness. This guarantees that the solution we find is not just locally valid but globally optimal for a convex quadratic problem. In this example, KKT confirms that the active constraint is <span class="math inline">\(w_1 \ge 0\)</span>, leading to the boundary solution <span class="math inline">\(w^\ast = (0,1)\)</span>.</p>
+<p><a href="https://youtu.be/HIm3Z0L90Co?si=nc_HFlmS9CAbd4EH">The</a> <a href="https://youtu.be/uh1Dk68cfWs?si=omWQT9IRw-iSiYNj">Karush-Kuhn-Tucker</a> method formalizes what the calculus argument already suggested: because the unconstrained minimizer gives a negative weight, the constrained solution must sit on the boundary of the feasible set. KKT is useful here because it provides a systematic way to check all the optimality conditions at once—stationarity, feasibility, dual feasibility, and complementary slackness. This guarantees that the solution we find is not just locally valid but globally optimal for a convex quadratic problem. In this example, KKT confirms that the active constraint is <span class="math inline">\(w_1 \ge 0\)</span>, leading to the boundary solution <span class="math inline">\(w^\ast = (0,1)\)</span>.</p>
 <details>
 <summary>
 Verified With KKT
@@ -473,150 +544,83 @@ f(w_1) = \|\mathbf{y} - (w_1 \mathbf{y}_1 + (1-w_1) \mathbf{y}_2)\|^2
 <section id="a-visuzalization-in-python" class="level2">
 <h2 class="anchored" data-anchor-id="a-visuzalization-in-python">A Visuzalization in Python</h2>
 <p>Again, none of this is voodoo, just a lot of hairy math.</p>
-<div id="16934cab" class="cell" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 0: Setup</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Treated unit</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.array([<span class="dv">50</span>, <span class="dv">60</span>])</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Donors</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> np.array([<span class="dv">20</span>, <span class="dv">22</span>])</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> np.array([<span class="dv">48</span>, <span class="dv">50</span>])</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> np.vstack([d1, d2])</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>donors_cvx <span class="op">=</span> np.column_stack([d1, d2])</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>n_donors <span class="op">=</span> donors_cvx.shape[<span class="dv">1</span>]</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> cp.Variable(n_donors, nonneg<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>objective <span class="op">=</span> cp.Minimize(cp.sum_squares(x <span class="op">-</span> donors_cvx <span class="op">@</span> w))</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> [cp.<span class="bu">sum</span>(w) <span class="op">==</span> <span class="dv">1</span>]</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>prob <span class="op">=</span> cp.Problem(objective, constraints)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>prob.solve()</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>x_hat_cvx <span class="op">=</span> donors_cvx <span class="op">@</span> w.value</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Time steps</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.arange(<span class="bu">len</span>(x))</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot as subfigures</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>,<span class="dv">5</span>))</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 1: 2D feature plot ---</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(d1[<span class="dv">0</span>], d1[<span class="dv">1</span>], <span class="st">'bo'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(d2[<span class="dv">0</span>], d2[<span class="dv">1</span>], <span class="st">'go'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(x[<span class="dv">0</span>], x[<span class="dv">1</span>], <span class="st">'r*'</span>, markersize<span class="op">=</span><span class="dv">12</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>)</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(x_hat_cvx[<span class="dv">0</span>], x_hat_cvx[<span class="dv">1</span>], <span class="st">'ms'</span>, markersize<span class="op">=</span><span class="dv">10</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull as a dashed line</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot([d1[<span class="dv">0</span>], d2[<span class="dv">0</span>]], [d1[<span class="dv">1</span>], d2[<span class="dv">1</span>]], <span class="st">'k-.'</span>, label<span class="op">=</span><span class="st">'Convex Hull'</span>)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Add literal rectangle around convex hull</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>x_min, x_max <span class="op">=</span> np.<span class="bu">min</span>(donors[:,<span class="dv">0</span>]), np.<span class="bu">max</span>(donors[:,<span class="dv">0</span>])</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>y_min, y_max <span class="op">=</span> np.<span class="bu">min</span>(donors[:,<span class="dv">1</span>]), np.<span class="bu">max</span>(donors[:,<span class="dv">1</span>])</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>rect <span class="op">=</span> plt.Rectangle((x_min, y_min), x_max<span class="op">-</span>x_min, y_max<span class="op">-</span>y_min,</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>                     linewidth<span class="op">=</span><span class="dv">1</span>, edgecolor<span class="op">=</span><span class="st">'gray'</span>, facecolor<span class="op">=</span><span class="st">'none'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="st">'Hull Bounding Box'</span>)</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].add_patch(rect)</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">'Feature 1'</span>)</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">'Feature 2'</span>)</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].legend()</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].grid(<span class="va">True</span>)</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">'2D Feature Space'</span>)</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 2: Time series plot ---</span></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, x, <span class="st">'r*-'</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>, markersize<span class="op">=</span><span class="dv">10</span>)</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, d1, <span class="st">'bo-'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, d2, <span class="st">'go-'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, x_hat_cvx, <span class="st">'ms-'</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>, markersize<span class="op">=</span><span class="dv">8</span>)</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull shading</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>donor_min <span class="op">=</span> np.<span class="bu">min</span>(donors, axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>donor_max <span class="op">=</span> np.<span class="bu">max</span>(donors, axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(t, donor_min, donor_max, color<span class="op">=</span><span class="st">'gray'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, label<span class="op">=</span><span class="st">'Donor Convex Hull'</span>)</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">'Time'</span>)</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylabel(<span class="st">'Outcome'</span>)</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].grid(<span class="va">True</span>)</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">'Time Series with Convex Hull Highlight'</span>)</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="lfe1_files/figure-html/cell-2-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>We can also show how the error changes, given a change in <span class="math inline">\(w_1\)</span>.</p>
-<div id="9c2e5a72" class="cell" data-execution_count="2">
+<div id="91145151" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Treated unit</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> np.array([<span class="dv">50</span>, <span class="dv">60</span>])</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Donors</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.array([<span class="dv">20</span>, <span class="dv">22</span>])</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> np.array([<span class="dv">48</span>, <span class="dv">50</span>])</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 0: Setup</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Treated unit</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.array([<span class="dv">50</span>, <span class="dv">60</span>])</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute synthetic control at the constrained minimum (w1=0, w2=1)</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>w1_min <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>w2_min <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>y_hat_min <span class="op">=</span> w1_min<span class="op">*</span>y1 <span class="op">+</span> w2_min<span class="op">*</span>y2</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute residual</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>residual <span class="op">=</span> y <span class="op">-</span> y_hat_min</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate a range of w1 values for objective</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>w1_vals <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">200</span>)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>w2_vals <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> w1_vals</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>f_vals <span class="op">=</span> np.array([np.<span class="bu">sum</span>((y <span class="op">-</span> (w1<span class="op">*</span>y1 <span class="op">+</span> w2<span class="op">*</span>y2))<span class="op">**</span><span class="dv">2</span>) <span class="cf">for</span> w1, w2 <span class="kw">in</span> <span class="bu">zip</span>(w1_vals, w2_vals)])</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>,<span class="dv">5</span>))</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 1: 2D feature space with residual ---</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y1[<span class="dv">0</span>], y1[<span class="dv">1</span>], <span class="st">'bo'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y2[<span class="dv">0</span>], y2[<span class="dv">1</span>], <span class="st">'go'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y[<span class="dv">0</span>], y[<span class="dv">1</span>], <span class="st">'r*'</span>, markersize<span class="op">=</span><span class="dv">12</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>)</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y_hat_min[<span class="dv">0</span>], y_hat_min[<span class="dv">1</span>], <span class="st">'ms'</span>, markersize<span class="op">=</span><span class="dv">10</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>)</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull line</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot([y1[<span class="dv">0</span>], y2[<span class="dv">0</span>]], [y1[<span class="dv">1</span>], y2[<span class="dv">1</span>]], <span class="st">'k-.'</span>, label<span class="op">=</span><span class="st">'Convex Hull'</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Donors</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> np.array([<span class="dv">20</span>, <span class="dv">22</span>])</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> np.array([<span class="dv">48</span>, <span class="dv">50</span>])</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> np.vstack([d1, d2])</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>donors_cvx <span class="op">=</span> np.column_stack([d1, d2])</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>n_donors <span class="op">=</span> donors_cvx.shape[<span class="dv">1</span>]</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> cp.Variable(n_donors, nonneg<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>objective <span class="op">=</span> cp.Minimize(cp.sum_squares(x <span class="op">-</span> donors_cvx <span class="op">@</span> w))</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> [cp.<span class="bu">sum</span>(w) <span class="op">==</span> <span class="dv">1</span>]</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>prob <span class="op">=</span> cp.Problem(objective, constraints)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>prob.solve()</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>x_hat_cvx <span class="op">=</span> donors_cvx <span class="op">@</span> w.value</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Time steps</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.arange(<span class="bu">len</span>(x))</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot as subfigures</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># =====================</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>,<span class="dv">5</span>))</span>
 <span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw residual vector from synthetic control to treated unit</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].arrow(y_hat_min[<span class="dv">0</span>], y_hat_min[<span class="dv">1</span>], residual[<span class="dv">0</span>], residual[<span class="dv">1</span>],</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>             head_width<span class="op">=</span><span class="fl">0.8</span>, head_length<span class="op">=</span><span class="fl">1.0</span>, fc<span class="op">=</span><span class="st">'orange'</span>, ec<span class="op">=</span><span class="st">'orange'</span>, linewidth<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">'Residual'</span>)</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">'Feature 1'</span>)</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">'Feature 2'</span>)</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].legend()</span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].grid(<span class="va">True</span>)</span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">'2D Feature Space with Residual'</span>)</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 2: Objective function f(w1) ---</span></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(w1_vals, f_vals, <span class="st">'b-'</span>, label<span class="op">=</span><span class="vs">r'$f(w_1) = ||y - \hat</span><span class="sc">{y}</span><span class="vs">||^2$'</span>)</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(w1_min, f_vals[<span class="dv">0</span>], <span class="st">'ro'</span>, label<span class="op">=</span><span class="st">'Minimum (constrained)'</span>)</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].axvline(x<span class="op">=</span>w1_min, color<span class="op">=</span><span class="st">'r'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>)</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="vs">r'$w_1$'</span>)</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylabel(<span class="st">'Objective value'</span>)</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].grid(<span class="va">True</span>)</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">'Objective Function vs. $w_1$'</span>)</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 1: 2D feature plot ---</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(d1[<span class="dv">0</span>], d1[<span class="dv">1</span>], <span class="st">'bo'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(d2[<span class="dv">0</span>], d2[<span class="dv">1</span>], <span class="st">'go'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(x[<span class="dv">0</span>], x[<span class="dv">1</span>], <span class="st">'r*'</span>, markersize<span class="op">=</span><span class="dv">12</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(x_hat_cvx[<span class="dv">0</span>], x_hat_cvx[<span class="dv">1</span>], <span class="st">'ms'</span>, markersize<span class="op">=</span><span class="dv">10</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>)</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull as a dashed line</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot([d1[<span class="dv">0</span>], d2[<span class="dv">0</span>]], [d1[<span class="dv">1</span>], d2[<span class="dv">1</span>]], <span class="st">'k-.'</span>, label<span class="op">=</span><span class="st">'Convex Hull'</span>)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Add literal rectangle around convex hull</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>x_min, x_max <span class="op">=</span> np.<span class="bu">min</span>(donors[:,<span class="dv">0</span>]), np.<span class="bu">max</span>(donors[:,<span class="dv">0</span>])</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>y_min, y_max <span class="op">=</span> np.<span class="bu">min</span>(donors[:,<span class="dv">1</span>]), np.<span class="bu">max</span>(donors[:,<span class="dv">1</span>])</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>rect <span class="op">=</span> plt.Rectangle((x_min, y_min), x_max<span class="op">-</span>x_min, y_max<span class="op">-</span>y_min,</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>                     linewidth<span class="op">=</span><span class="dv">1</span>, edgecolor<span class="op">=</span><span class="st">'gray'</span>, facecolor<span class="op">=</span><span class="st">'none'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="st">'Hull Bounding Box'</span>)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].add_patch(rect)</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">'Feature 1'</span>)</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">'Feature 2'</span>)</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].legend()</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].grid(<span class="va">True</span>)</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">'2D Feature Space'</span>)</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 2: Time series plot ---</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, x, <span class="st">'r*-'</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>, markersize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, d1, <span class="st">'bo-'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, d2, <span class="st">'go-'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(t, x_hat_cvx, <span class="st">'ms-'</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>, markersize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull shading</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>donor_min <span class="op">=</span> np.<span class="bu">min</span>(donors, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>donor_max <span class="op">=</span> np.<span class="bu">max</span>(donors, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(t, donor_min, donor_max, color<span class="op">=</span><span class="st">'gray'</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, label<span class="op">=</span><span class="st">'Donor Convex Hull'</span>)</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">'Time'</span>)</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylabel(<span class="st">'Outcome'</span>)</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].grid(<span class="va">True</span>)</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">'Time Series with Convex Hull Highlight'</span>)</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -625,8 +629,75 @@ f(w_1) = \|\mathbf{y} - (w_1 \mathbf{y}_1 + (1-w_1) \mathbf{y}_2)\|^2
 </div>
 </div>
 </div>
+<p>We can also show how the error changes, given a change in <span class="math inline">\(w_1\)</span>.</p>
+<div id="5a6fc9c2" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Treated unit</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> np.array([<span class="dv">50</span>, <span class="dv">60</span>])</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Donors</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.array([<span class="dv">20</span>, <span class="dv">22</span>])</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> np.array([<span class="dv">48</span>, <span class="dv">50</span>])</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute synthetic control at the constrained minimum (w1=0, w2=1)</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>w1_min <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>w2_min <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>y_hat_min <span class="op">=</span> w1_min<span class="op">*</span>y1 <span class="op">+</span> w2_min<span class="op">*</span>y2</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute residual</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>residual <span class="op">=</span> y <span class="op">-</span> y_hat_min</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate a range of w1 values for objective</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>w1_vals <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">200</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>w2_vals <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> w1_vals</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>f_vals <span class="op">=</span> np.array([np.<span class="bu">sum</span>((y <span class="op">-</span> (w1<span class="op">*</span>y1 <span class="op">+</span> w2<span class="op">*</span>y2))<span class="op">**</span><span class="dv">2</span>) <span class="cf">for</span> w1, w2 <span class="kw">in</span> <span class="bu">zip</span>(w1_vals, w2_vals)])</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>,<span class="dv">5</span>))</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 1: 2D feature space with residual ---</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y1[<span class="dv">0</span>], y1[<span class="dv">1</span>], <span class="st">'bo'</span>, label<span class="op">=</span><span class="st">'Donor 1'</span>)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y2[<span class="dv">0</span>], y2[<span class="dv">1</span>], <span class="st">'go'</span>, label<span class="op">=</span><span class="st">'Donor 2'</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y[<span class="dv">0</span>], y[<span class="dv">1</span>], <span class="st">'r*'</span>, markersize<span class="op">=</span><span class="dv">12</span>, label<span class="op">=</span><span class="st">'Treated Unit'</span>)</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot(y_hat_min[<span class="dv">0</span>], y_hat_min[<span class="dv">1</span>], <span class="st">'ms'</span>, markersize<span class="op">=</span><span class="dv">10</span>, label<span class="op">=</span><span class="st">'Synthetic Control'</span>)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Convex hull line</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].plot([y1[<span class="dv">0</span>], y2[<span class="dv">0</span>]], [y1[<span class="dv">1</span>], y2[<span class="dv">1</span>]], <span class="st">'k-.'</span>, label<span class="op">=</span><span class="st">'Convex Hull'</span>)</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw residual vector from synthetic control to treated unit</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].arrow(y_hat_min[<span class="dv">0</span>], y_hat_min[<span class="dv">1</span>], residual[<span class="dv">0</span>], residual[<span class="dv">1</span>],</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>             head_width<span class="op">=</span><span class="fl">0.8</span>, head_length<span class="op">=</span><span class="fl">1.0</span>, fc<span class="op">=</span><span class="st">'orange'</span>, ec<span class="op">=</span><span class="st">'orange'</span>, linewidth<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">'Residual'</span>)</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">'Feature 1'</span>)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">'Feature 2'</span>)</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].legend()</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].grid(<span class="va">True</span>)</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">'2D Feature Space with Residual'</span>)</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Subplot 2: Objective function f(w1) ---</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(w1_vals, f_vals, <span class="st">'b-'</span>, label<span class="op">=</span><span class="vs">r'$f(w_1) = ||y - \hat</span><span class="sc">{y}</span><span class="vs">||^2$'</span>)</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(w1_min, f_vals[<span class="dv">0</span>], <span class="st">'ro'</span>, label<span class="op">=</span><span class="st">'Minimum (constrained)'</span>)</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].axvline(x<span class="op">=</span>w1_min, color<span class="op">=</span><span class="st">'r'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>)</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="vs">r'$w_1$'</span>)</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylabel(<span class="st">'Objective value'</span>)</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].grid(<span class="va">True</span>)</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">'Objective Function vs. $w_1$'</span>)</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lfe1_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
 <p>From this figure, we see what we already solved for. Any weight for <span class="math inline">\(w_1\)</span> greater than 0 increases our error solution for our objective function.</p>
-<p>Already, some of you who got this far will be asking “Jared, why did you go through the trouble of showing us all this? Who cares about the KKT conditions or the Hilbert Space Projection or any of those idea? I’ll never literally do this at work, so why bother doing this?” The answer is because the moment you intuit SCM in these terms, you can oftentimes get a good read as to how an analysis will look before you even run a single SCM model. I oftentimes say that a great diagnostic is to literally just plot your target unit against your donors, and you’ll discover a lot. We’re about to see why this is in the content below.</p>
+<p>Already, some of you who got this far will be asking “Jared, why did you go through the trouble of showing us all this? Who cares about the KKT conditions or the Hilbert Space Projection or any of those ideas? I’ll never literally do this at work, so why bother showing me any of this?” The answer is because the moment you intuit SCM in these terms, you can oftentimes get a good read as to how an analysis will look <strong>before you even run a single SCM model</strong>. Not always, but sometimes. I oftentimes say that a great diagnostic is to literally just plot your target unit against your donors. You’ll discover a lot. We’re about to see why this is true in the content below.</p>
 </section>
 </section>
 <section id="australias-carbon-tax" class="level1">
@@ -636,67 +707,67 @@ f(w_1) = \|\mathbf{y} - (w_1 \mathbf{y}_1 + (1-w_1) \mathbf{y}_2)\|^2
 <p>However, caution is warranted due to the limited donor pool: the synthetic control consists almost entirely of Italy and Norway (81.5% and 18.49%), with other countries receiving negligible weights (&lt;0.01%). This makes the estimates potentially sensitive to idiosyncratic shocks in those two countries.</p>
 </blockquote>
 <p>I then thought to myself “Hmmmm… 80 20 split out of 10 donors… I wonder what the treated versus control units look like?” Fortunately, they answered this question on Appendix page 32 (I reproduce a version of the plot below, focusing on the in-sample period.)</p>
-<div id="27bd6524" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> PDA, TSSC, FDID</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/qdocs/Data/PPI%20Countries%20Normalized%20(2009).csv"</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove quotes if any</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quarter'</span>] <span class="op">=</span> df[<span class="st">'Quarter'</span>].<span class="bu">str</span>.replace(<span class="st">'"'</span>, <span class="st">''</span>).<span class="bu">str</span>.strip()</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace space to match pandas expected format</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quarter'</span>] <span class="op">=</span> df[<span class="st">'Quarter'</span>].<span class="bu">str</span>.replace(<span class="st">' '</span>, <span class="st">''</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to Period and then to timestamp</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Date'</span>] <span class="op">=</span> pd.PeriodIndex(df[<span class="st">'Quarter'</span>], freq<span class="op">=</span><span class="st">'Q'</span>).to_timestamp()</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for Q1 2009 to Q4 2018</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[(df[<span class="st">'Date'</span>] <span class="op">&gt;=</span> <span class="st">'2009-01-01'</span>) <span class="op">&amp;</span> (df[<span class="st">'Date'</span>] <span class="op">&lt;=</span> <span class="st">'2018-12-31'</span>)]</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep relevant columns</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[[<span class="st">'Date'</span>, <span class="st">'Country'</span>, <span class="st">'Price_Index_Interp'</span>]]</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Create treated dummy</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'treated'</span>] <span class="op">=</span> ((df[<span class="st">'Country'</span>] <span class="op">==</span> <span class="st">'AUS'</span>) <span class="op">&amp;</span> (df[<span class="st">'Date'</span>] <span class="op">&gt;</span> <span class="st">'2012-09-30'</span>)).astype(<span class="bu">int</span>)</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort by country and date</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.sort_values(by<span class="op">=</span>[<span class="st">'Country'</span>, <span class="st">'Date'</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co">#df = df[df['Country'] != 'NOR'].copy()</span></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: df.columns[<span class="dv">1</span>],</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]}</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>df_in_sample <span class="op">=</span> df.copy()</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>df_in_sample <span class="op">=</span> df_in_sample[df_in_sample[<span class="st">'Date'</span>] <span class="op">&lt;=</span> <span class="st">'2012-12-01'</span>]  <span class="co"># keep only in-sample</span></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>config_in_sample <span class="op">=</span> {</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df_in_sample,</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df_in_sample.columns[<span class="dv">2</span>],</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df_in_sample.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: df_in_sample.columns[<span class="dv">1</span>],</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df_in_sample.columns[<span class="dv">0</span>],</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>sc_diagplot([config_in_sample])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="2b307eee" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> PDA, TSSC, FDID</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/qdocs/Data/PPI%20Countries%20Normalized%20(2009).csv"</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove quotes if any</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quarter'</span>] <span class="op">=</span> df[<span class="st">'Quarter'</span>].<span class="bu">str</span>.replace(<span class="st">'"'</span>, <span class="st">''</span>).<span class="bu">str</span>.strip()</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace space to match pandas expected format</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quarter'</span>] <span class="op">=</span> df[<span class="st">'Quarter'</span>].<span class="bu">str</span>.replace(<span class="st">' '</span>, <span class="st">''</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to Period and then to timestamp</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Date'</span>] <span class="op">=</span> pd.PeriodIndex(df[<span class="st">'Quarter'</span>], freq<span class="op">=</span><span class="st">'Q'</span>).to_timestamp()</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for Q1 2009 to Q4 2018</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[(df[<span class="st">'Date'</span>] <span class="op">&gt;=</span> <span class="st">'2009-01-01'</span>) <span class="op">&amp;</span> (df[<span class="st">'Date'</span>] <span class="op">&lt;=</span> <span class="st">'2018-12-31'</span>)]</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep relevant columns</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[[<span class="st">'Date'</span>, <span class="st">'Country'</span>, <span class="st">'Price_Index_Interp'</span>]]</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Create treated dummy</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'treated'</span>] <span class="op">=</span> ((df[<span class="st">'Country'</span>] <span class="op">==</span> <span class="st">'AUS'</span>) <span class="op">&amp;</span> (df[<span class="st">'Date'</span>] <span class="op">&gt;</span> <span class="st">'2012-09-30'</span>)).astype(<span class="bu">int</span>)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort by country and date</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.sort_values(by<span class="op">=</span>[<span class="st">'Country'</span>, <span class="st">'Date'</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co">#df = df[df['Country'] != 'NOR'].copy()</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: df.columns[<span class="dv">1</span>],</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]}</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>df_in_sample <span class="op">=</span> df.copy()</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>df_in_sample <span class="op">=</span> df_in_sample[df_in_sample[<span class="st">'Date'</span>] <span class="op">&lt;=</span> <span class="st">'2012-12-01'</span>]  <span class="co"># keep only in-sample</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>config_in_sample <span class="op">=</span> {</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df_in_sample,</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df_in_sample.columns[<span class="dv">2</span>],</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df_in_sample.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: df_in_sample.columns[<span class="dv">1</span>],</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df_in_sample.columns[<span class="dv">0</span>],</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>sc_diagplot([config_in_sample])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="lfe1_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="lfe1_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -744,40 +815,40 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <p>Here is the result we get when we fit the TSSC estimator to the Australia case.</p>
-<div id="f6597b31" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>TSSC_res <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="43f270ab" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>TSSC_res <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="lfe1_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="lfe1_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<div id="854a8fef" class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># SCM / TSSC results</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Method"</span>: [<span class="st">"SCM"</span>, <span class="st">"MSCc"</span>],</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ATT"</span>: [<span class="fl">31.049</span>, <span class="op">-</span><span class="fl">30.713</span>],</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Intercept"</span>: [<span class="fl">0.000</span>, <span class="fl">62.872</span>],</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Key Weights"</span>: [</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Italy: 0.815, Norway: 0.185"</span>,</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Norway: 0.089, South Africa: 0.288"</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to Markdown table</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>md_table <span class="op">=</span> results_df.to_markdown(index<span class="op">=</span><span class="va">False</span>).split(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>)</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Adjust alignment: left for Method/Key Weights, center for numbers</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>md_table[<span class="dv">1</span>] <span class="op">=</span> <span class="st">"|:------------|:------:|:--------:|:---------------------------|"</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Display nicely in notebook</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>.join(md_table)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="ca62bf42" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># SCM / TSSC results</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>results_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Method"</span>: [<span class="st">"SCM"</span>, <span class="st">"MSCc"</span>],</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ATT"</span>: [<span class="fl">31.049</span>, <span class="op">-</span><span class="fl">30.713</span>],</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Intercept"</span>: [<span class="fl">0.000</span>, <span class="fl">62.872</span>],</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Key Weights"</span>: [</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Italy: 0.815, Norway: 0.185"</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Norway: 0.089, South Africa: 0.288"</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to Markdown table</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>md_table <span class="op">=</span> results_df.to_markdown(index<span class="op">=</span><span class="va">False</span>).split(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Adjust alignment: left for Method/Key Weights, center for numbers</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>md_table[<span class="dv">1</span>] <span class="op">=</span> <span class="st">"|:------------|:------:|:--------:|:---------------------------|"</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Display nicely in notebook</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="st">'</span><span class="ch">\n</span><span class="st">'</span>.join(md_table)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -812,27 +883,27 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 </div>
 </div>
 <p>The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we’ve ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept. Note that the sign reversal is not always true. Consider the Basque example:</p>
-<div id="a3fa2a38" class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> TSSC</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: data,</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]}</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="f5922405" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> TSSC</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>]}</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="lfe1_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="lfe1_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -853,7 +924,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757422283112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757425858824" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -877,7 +948,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757422283113" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757425858825" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -901,7 +972,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757422283112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757425858825" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -925,7 +996,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757422283118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757425858830" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -949,7 +1020,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757422283119" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757425858831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -973,7 +1044,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757422283115" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757425858828" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -995,7 +1066,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757422283115" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757425858828" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1019,7 +1090,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757422283118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757425858831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1041,7 +1112,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757422283118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757425858831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1063,7 +1134,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757422283118" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757425858831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1087,7 +1158,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757422283112" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757425858825" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1111,7 +1182,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757422283119" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757425858831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -1133,7 +1204,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757422283112" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757425858824" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -1144,7 +1215,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757422343860" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757425919516" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

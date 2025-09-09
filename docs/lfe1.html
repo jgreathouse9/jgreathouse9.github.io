@@ -208,7 +208,12 @@ window.Quarto = {
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#a-simple-synthetic-control" id="toc-a-simple-synthetic-control" class="nav-link" data-scroll-target="#a-simple-synthetic-control">A Simple Synthetic Control</a>
   <ul class="collapse">
-  <li><a href="#deriving-the-weights" id="toc-deriving-the-weights" class="nav-link" data-scroll-target="#deriving-the-weights">Deriving the Weights</a></li>
+  <li><a href="#calculus" id="toc-calculus" class="nav-link" data-scroll-target="#calculus">Calculus</a></li>
+  <li><a href="#kkt-derivation" id="toc-kkt-derivation" class="nav-link" data-scroll-target="#kkt-derivation">KKT Derivation</a></li>
+  <li><a href="#frankwolfe-geometric-solution-2-donor-example" id="toc-frankwolfe-geometric-solution-2-donor-example" class="nav-link" data-scroll-target="#frankwolfe-geometric-solution-2-donor-example">Frank–Wolfe Geometric Solution (2-Donor Example)</a>
+  <ul class="collapse">
+  <li><a href="#intuition" id="toc-intuition" class="nav-link" data-scroll-target="#intuition">Intuition</a></li>
+  </ul></li>
   <li><a href="#a-visuzalization-in-python" id="toc-a-visuzalization-in-python" class="nav-link" data-scroll-target="#a-visuzalization-in-python">A Visuzalization in Python</a></li>
   </ul></li>
   <li><a href="#australias-carbon-tax" id="toc-australias-carbon-tax" class="nav-link" data-scroll-target="#australias-carbon-tax">Australia’s Carbon Tax</a></li>
@@ -259,15 +264,14 @@ window.Quarto = {
 </section>
 <section id="a-simple-synthetic-control" class="level1">
 <h1>A Simple Synthetic Control</h1>
-<p>We will compute the synthetic control weights by hand, and then show how we get the same solution in <code>cvxpy.</code></p>
-<section id="deriving-the-weights" class="level2">
-<h2 class="anchored" data-anchor-id="deriving-the-weights">Deriving the Weights</h2>
-<p>Suppose we have a treated unit and two donor units in 2D:</p>
+<p>We will compute the synthetic control weights by hand, and then show how we get the same solution in <code>cvxpy.</code> Suppose we have a treated unit and two donor units in 2D:</p>
 <p><span class="math display">\[
 \mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}, \quad
 \mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
 \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}
 \]</span></p>
+<section id="calculus" class="level2">
+<h2 class="anchored" data-anchor-id="calculus">Calculus</h2>
 <p>We aim to find a synthetic control as a convex combination of the donors that matches the target vector as closely as possible:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -290,15 +294,7 @@ window.Quarto = {
 \hat{\mathbf{y}}(w_1) = \mathbf{y}_2 + w_1 (\mathbf{y}_1 - \mathbf{y}_2), \quad
 \mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
 \]</span></p>
-<p>Consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the <a href="https://www.youtube.com/watch?v=eRCkfBmnzqk">Hilbert Projection Theorem</a>.</p>
-<div id="hilbert-projection" class="theorem">
-<p><strong>Hilbert Projection Theorem.</strong> Let <span class="math inline">\(C \subset \mathbb{R}^T\)</span> be a nonempty closed convex set and <span class="math inline">\(\mathbf{y} \in \mathbb{R}^T\)</span>. Then there exists a unique point <span class="math inline">\(\hat{\mathbf{y}} \in C\)</span> such that <span class="math display">\[
-\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
-\]</span> and the residual <span class="math inline">\(\mathbf{y} - \hat{\mathbf{y}}\)</span> satisfies the residual projection condition <span class="math display">\[
-\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
-\]</span></p>
-</div>
-<p>Without getting too far off track, we can use this to frame the synthetic control problem as projecting <span class="math inline">\(\mathbf{y}\)</span> onto the convex hull <span class="math inline">\(C\)</span> of the donors <span class="math inline">\(\{\mathbf{y}_1, \mathbf{y}_2\}\)</span>, which is the line segment between <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>. The projection <span class="math inline">\(\hat{\mathbf{y}}\)</span> minimizes the Euclidean distance to <span class="math inline">\(\mathbf{y}\)</span>, and the residual is orthogonal (or obtuse) to directions within <span class="math inline">\(C\)</span>. The function to minimize is:</p>
+<p>The function to minimize is:</p>
 <p><span class="math display">\[
 f(w_1) = \|\mathbf{y} - \hat{\mathbf{y}}(w_1)\|^2 = (2 + 28 w_1)^2 + (10 + 28 w_1)^2,
 \]</span></p>
@@ -388,65 +384,190 @@ f(1) = 30^2 + 38^2 = 2344.
 <p><span class="math display">\[
 \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
 \]</span></p>
-<p>Geometrically, this corresponds to projecting the treated vector <span class="math inline">\(\mathbf{y}\)</span> onto the line segment defined by the donor units. The residual vector is</p>
+</section>
+<section id="kkt-derivation" class="level2">
+<h2 class="anchored" data-anchor-id="kkt-derivation">KKT Derivation</h2>
+<p>Now to the KKT solution. We want to approximate</p>
 <p><span class="math display">\[
-\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix} 2 \\ 10 \end{bmatrix},
+\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}
 \]</span></p>
-<p>and the direction spanning the convex set from <span class="math inline">\(\hat{\mathbf{y}}\)</span> is</p>
+<p>using a convex combination of two donors:</p>
 <p><span class="math display">\[
-\mathbf{y}_1 - \mathbf{y}_2 = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
+\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
 \]</span></p>
-<p>The Hilbert Projection Theorem guarantees that the residual is obtuse (or orthogonal) to all directions within the convex set. Indeed, the dot product</p>
+<p>The optimization problem is:</p>
 <p><span class="math display">\[
-\langle \mathbf{r}, \mathbf{y}_1 - \mathbf{y}_2 \rangle = 2(-28) + 10(-28) = -336 \le 0
+\begin{aligned}
+\min_{\mathbf{w} \in \mathbb{R}^2} &amp; \quad \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2 \\
+\text{s.t.} &amp; \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1,
+\end{aligned}
 \]</span></p>
-<p>confirms that moving toward <span class="math inline">\(\mathbf{y}_1\)</span> would increase the distance, so <span class="math inline">\(\hat{\mathbf{y}} = \mathbf{y}_2\)</span> is indeed the projection onto the closest face of the convex hull, exactly as predicted by the Hilbert Projection Theorem.</p>
-<p>This result is consistent with the <a href="https://www.youtube.com/watch?v=RquUIXUMLcc">Minkowski-Weyl theorem</a></p>
-<div id="minkowski" class="theorem">
-<p><strong>Minkowski-Weyl Theorem.</strong> Let <span class="math inline">\(C \subset \mathbb{R}^T\)</span> be a compact convex set. Then every point in <span class="math inline">\(C\)</span> can be expressed as a convex combination of extreme points of <span class="math inline">\(C\)</span>.</p>
+<p>where</p>
+<p><span class="math display">\[
+\mathbf{Y} = \begin{bmatrix} \mathbf{y}_1 &amp; \mathbf{y}_2 \end{bmatrix}
+= \begin{bmatrix} 20 &amp; 48 \\ 22 &amp; 50 \end{bmatrix}.
+\]</span></p>
+<p>Introduce Lagrange multipliers <span class="math inline">\(\lambda\)</span> for the equality constraint and <span class="math inline">\(\mu_1, \mu_2 \ge 0\)</span> for the nonnegativity constraints:</p>
+<p><span class="math display">\[
+\mathcal{L}(\mathbf{w}, \lambda, \mu) = \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2 + \lambda (w_1 + w_2 - 1) - \mu_1 w_1 - \mu_2 w_2.
+\]</span></p>
+<p>The gradient of the Lagrangian w.r.t. <span class="math inline">\(\mathbf{w}\)</span> is:</p>
+<p><span class="math display">\[
+\nabla_{\mathbf{w}} \mathcal{L} = 2 \mathbf{Y}^\top (\mathbf{Y}\mathbf{w} - \mathbf{y}) + \lambda \mathbf{1} - \mu
+= 0
+\]</span></p>
+<p>with <span class="math inline">\(\mathbf{1} = \begin{bmatrix}1 \\ 1\end{bmatrix}\)</span> and <span class="math inline">\(\mu = \begin{bmatrix}\mu_1 \\ \mu_2\end{bmatrix}\)</span>.</p>
+<p>From geometric or derivative reasoning, we suspect the solution is at the boundary:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \begin{bmatrix} 0 \\ 1 \end{bmatrix}.
+\]</span></p>
+<p>Compute:</p>
+<p><span class="math display">\[
+\mathbf{Y} \mathbf{w}^\ast = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}, \quad
+\mathbf{Y}\mathbf{w}^\ast - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
+\]</span></p>
+<p><span class="math display">\[
+2 \mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^\ast - \mathbf{y})
+= 2 \begin{bmatrix} 20 &amp; 22 \\ 48 &amp; 50 \end{bmatrix} \begin{bmatrix} -2 \\ -10 \end{bmatrix}
+= 2 \begin{bmatrix} -260 \\ -596 \end{bmatrix}
+= \begin{bmatrix} -520 \\ -1192 \end{bmatrix}.
+\]</span></p>
+<p>Stationarity requires:</p>
+<p><span class="math display">\[
+\begin{bmatrix} -520 \\ -1192 \end{bmatrix} + \lambda \begin{bmatrix}1 \\ 1\end{bmatrix} - \begin{bmatrix}\mu_1 \\ \mu_2\end{bmatrix} = \begin{bmatrix}0 \\ 0\end{bmatrix}.
+\]</span></p>
+<ul>
+<li>Complementary slackness: <span class="math inline">\(\mu_1 w_1^\ast = 0 \implies \mu_1 \ge 0\)</span>, <span class="math inline">\(\mu_2 w_2^\ast = 0 \implies \mu_2 = 0\)</span>.<br>
+</li>
+<li>Solve for <span class="math inline">\(\lambda\)</span>: <span class="math inline">\(-1192 + \lambda - 0 = 0 \implies \lambda = 1192\)</span>.<br>
+</li>
+<li>Solve for <span class="math inline">\(\mu_1\)</span>: <span class="math inline">\(-520 + 1192 - \mu_1 = 0 \implies \mu_1 = 672 \ge 0\)</span>.</li>
+</ul>
+<ol type="1">
+<li><strong>Stationarity:</strong> satisfied<br>
+</li>
+<li><strong>Primal feasibility:</strong> <span class="math inline">\(w_1^\ast = 0 \ge 0\)</span>, <span class="math inline">\(w_2^\ast = 1 \ge 0\)</span>, <span class="math inline">\(w_1 + w_2 = 1\)</span><br>
+</li>
+<li><strong>Dual feasibility:</strong> <span class="math inline">\(\mu_1, \mu_2 \ge 0\)</span><br>
+</li>
+<li><strong>Complementary slackness:</strong> <span class="math inline">\(\mu_1 w_1 = 672*0 = 0\)</span>, <span class="math inline">\(\mu_2 w_2 = 0*1 = 0\)</span></li>
+</ol>
+<p>All conditions hold.</p>
+<p>The optimal synthetic control weights are:</p>
+<p><span class="math display">\[
+\mathbf{w}^\ast = \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \quad
+\hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
+\]</span></p>
+<ul>
+<li>Weight <span class="math inline">\(w_1 = 0\)</span> is active (boundary), <span class="math inline">\(\mu_1 &gt; 0\)</span><br>
+</li>
+<li>Weight <span class="math inline">\(w_2 = 1\)</span> is strictly positive, <span class="math inline">\(\mu_2 = 0\)</span><br>
+</li>
+<li>Residual <span class="math inline">\(\mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2 \\ 10\end{bmatrix}\)</span> is consistent with projection onto the convex hull of donors.</li>
+</ul>
+</section>
+<section id="frankwolfe-geometric-solution-2-donor-example" class="level2">
+<h2 class="anchored" data-anchor-id="frankwolfe-geometric-solution-2-donor-example">Frank–Wolfe Geometric Solution (2-Donor Example)</h2>
+<p>Now for the pure geometry. We want to approximate:</p>
+<p><span class="math display">\[
+\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}
+\]</span></p>
+<p>using convex combinations of donors:</p>
+<p><span class="math display">\[
+\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
+\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
+\]</span></p>
+<p>The feasible set is the convex hull <span class="math inline">\(\operatorname{conv}\{\mathbf{y}_1, \mathbf{y}_2\}\)</span>, i.e., all line segments between <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>.</p>
+<p>Frank–Wolfe starts with the donor closest to <span class="math inline">\(\mathbf{y}\)</span>:</p>
+<p><span class="math display">\[
+\|\mathbf{y} - \mathbf{y}_1\|^2 = (50-20)^2 + (60-22)^2 = 30^2 + 38^2 = 2344,
+\]</span></p>
+<p><span class="math display">\[
+\|\mathbf{y} - \mathbf{y}_2\|^2 = (50-48)^2 + (60-50)^2 = 2^2 + 10^2 = 104.
+\]</span></p>
+<p>So we initialize:</p>
+<p><span class="math display">\[
+x^{(0)} = \mathbf{y}_2, \quad w^{(0)} = (0,1).
+\]</span></p>
+<p>Gradient of <span class="math inline">\(f(x) = \frac{1}{2} \|\mathbf{y} - x\|^2\)</span> at <span class="math inline">\(x^{(0)}\)</span>:</p>
+<p><span class="math display">\[
+\nabla f(x^{(0)}) = x^{(0)} - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
+\]</span></p>
+<p>Frank–Wolfe chooses the donor minimizing the inner product with the negative gradient:</p>
+<p><span class="math display">\[
+s = \arg\min_{\mathbf{y}_i} \langle \nabla f(x^{(0)}), \mathbf{y}_i \rangle.
+\]</span></p>
+<p>Compute inner products:</p>
+<p><span class="math display">\[
+\langle \nabla f(x^{(0)}), \mathbf{y}_1 \rangle = (-2)(20) + (-10)(22) = -260,
+\]</span></p>
+<p><span class="math display">\[
+\langle \nabla f(x^{(0)}), \mathbf{y}_2 \rangle = (-2)(48) + (-10)(50) = -596.
+\]</span></p>
+<ul>
+<li>Minimum occurs at <span class="math inline">\(\mathbf{y}_2\)</span> again.<br>
+</li>
+<li>Frank–Wolfe direction points <strong>toward <span class="math inline">\(\mathbf{y}_2\)</span></strong>, meaning we stay put.</li>
+</ul>
+<p>If we attempt to move toward <span class="math inline">\(\mathbf{y}_1\)</span>:</p>
+<p><span class="math display">\[
+d = \mathbf{y}_1 - x^{(0)} = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+\]</span></p>
+<p>Line search coefficient:</p>
+<p><span class="math display">\[
+\gamma^\ast = \frac{\langle \mathbf{y} - x^{(0)}, d \rangle}{\|d\|^2}
+= \frac{(2)(-28) + (10)(-28)}{(-28)^2 + (-28)^2} = \frac{-336}{1568} \approx -0.214.
+\]</span></p>
+<p>Clamp to <span class="math inline">\([0,1]\)</span>:</p>
+<p><span class="math display">\[
+\gamma = 0.
+\]</span></p>
+<p>Update:</p>
+<p><span class="math display">\[
+x^{(1)} = x^{(0)} + \gamma d = x^{(0)} = \mathbf{y}_2, \quad w^{(1)} = (0,1).
+\]</span></p>
+<ul>
+<li>Algorithm terminates immediately.<br>
+</li>
+<li>Closest point in the convex hull is <span class="math inline">\(\mathbf{y}_2\)</span>, the endpoint.<br>
+</li>
+<li>Optimal weights:</li>
+</ul>
+<p><span class="math display">\[
+w^\ast = (0,1), \quad \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix}48 \\ 50\end{bmatrix}.
+\]</span></p>
+<ul>
+<li>The convex hull of the donors is the line segment connecting <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>.<br>
+</li>
+<li>Treated point <span class="math inline">\(\mathbf{y}\)</span> lies outside the segment, closer to <span class="math inline">\(\mathbf{y}_2\)</span>.<br>
+</li>
+<li>Frank–Wolfe iteratively projects <span class="math inline">\(\mathbf{y}\)</span> toward the hull; in this simple case, it immediately lands on the closest boundary point.<br>
+</li>
+<li>Residual vector:</li>
+</ul>
+<p><span class="math display">\[
+\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2 \\ 10\end{bmatrix}
+\]</span></p>
+<p>is oblique to the hull, confirming moving along the segment toward <span class="math inline">\(\mathbf{y}_1\)</span> would increase the distance.</p>
+<p>Consider the fact that the SCM is a form of inner products between a vector and a matrix. So, as a result, we may rely on the <a href="https://www.youtube.com/watch?v=eRCkfBmnzqk">Hilbert Projection Theorem</a>.</p>
+<div id="hilbert-projection" class="theorem">
+<p><strong>Hilbert Projection Theorem.</strong> Let <span class="math inline">\(C \subset \mathbb{R}^T\)</span> be a nonempty closed convex set and <span class="math inline">\(\mathbf{y} \in \mathbb{R}^T\)</span>. Then there exists a unique point <span class="math inline">\(\hat{\mathbf{y}} \in C\)</span> such that <span class="math display">\[
+\|\mathbf{y} - \hat{\mathbf{y}}\| = \min_{\mathbf{z} \in C} \|\mathbf{y} - \mathbf{z}\|
+\]</span> and the residual <span class="math inline">\(\mathbf{y} - \hat{\mathbf{y}}\)</span> satisfies the residual projection condition <span class="math display">\[
+\langle \mathbf{y} - \hat{\mathbf{y}}, \mathbf{z} - \hat{\mathbf{y}} \rangle \le 0, \quad \forall \mathbf{z} \in C.
+\]</span></p>
 </div>
-<p>The convex set <span class="math inline">\(C\)</span> is the compact line segment between <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>, with extreme points <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>. The projection <span class="math inline">\(\hat{\mathbf{y}} = \mathbf{y}_2\)</span> is itself an extreme point, expressed as the convex combination with weights <span class="math inline">\(w_1 = 0\)</span>, <span class="math inline">\(w_2 = 1\)</span>.</p>
-<p>Or, every point in a compact convex set can be expressed as a convex combination of its extreme points.</p>
-<p>If we wish for an algebraic interpretation of this, we can always use the <a href="https://mdav.ece.gatech.edu/ece-3803-fall2021/notes/17-notes-3803-f21.pdf">Karush-Kuhn-Tucker</a> conditions.</p>
-<div id="kkt" class="theorem">
-<p><strong>KKT Optimality Conditions.</strong> At the optimum <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, there exist Lagrange multipliers <span class="math inline">\(\lambda \in \mathbb{R}\)</span> (for equality) and <span class="math inline">\(\mu \ge 0\)</span> (for inequality) such that:</p>
-<p><span class="math display">\[
-2 \mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y}) + \lambda \mathbf{1} - \mu = 0, \quad
-\mu_i w_i^{\ast} = 0, \quad i=1,\dots,N.
-\]</span></p>
-</div>
-<p>Here is our general optimization problem:</p>
-<p><span class="math display">\[
-\min_{\mathbf{w} \in \mathbb{R}^2} \|\mathbf{y} - \mathbf{Y} \mathbf{w}\|^2, \quad \text{s.t.} \quad w_1, w_2 \ge 0, \quad w_1 + w_2 = 1.
-\]</span></p>
-<p>For the candidate <span class="math inline">\(\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}\)</span>, compute <span class="math inline">\(\mathbf{Y} \mathbf{w}^{\ast} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}\)</span>, so:</p>
-<p><span class="math display">\[
-\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
-\]</span></p>
-<p>Then:</p>
-<p><span class="math display">\[
-\mathbf{Y}^\top (\mathbf{Y} \mathbf{w}^{\ast} - \mathbf{y}) = \begin{bmatrix} 20 &amp; 22 \\ 48 &amp; 50 \end{bmatrix} \begin{bmatrix} -2 \\ -10 \end{bmatrix} = \begin{bmatrix} 20 \cdot (-2) + 22 \cdot (-10) \\ 48 \cdot (-2) + 50 \cdot (-10) \end{bmatrix} = \begin{bmatrix} -40 - 220 \\ -96 - 500 \end{bmatrix} = \begin{bmatrix} -260 \\ -596 \end{bmatrix}.
-\]</span></p>
-<p>The stationarity condition is:</p>
-<p><span class="math display">\[
-2 \begin{bmatrix} -260 \\ -596 \end{bmatrix} + \lambda \begin{bmatrix} 1 \\ 1 \end{bmatrix} - \begin{bmatrix} \mu_1 \\ \mu_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix} \implies \begin{bmatrix} -520 + \lambda - \mu_1 \\ -1192 + \lambda - \mu_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 0 \end{bmatrix}.
-\]</span></p>
-<p>Complementary slackness: <span class="math inline">\(\mu_1 w_1 = \mu_1 \cdot 0 = 0\)</span>, <span class="math inline">\(\mu_2 w_2 = \mu_2 \cdot 1 = 0 \implies \mu_2 = 0\)</span>.</p>
-<p>From the second equation: <span class="math inline">\(-1192 + \lambda - 0 = 0 \implies \lambda = 1192\)</span>.</p>
-<p>From the first equation: <span class="math inline">\(-520 + 1192 - \mu_1 = 0 \implies \mu_1 = 672 \ge 0\)</span>.</p>
-<p>All conditions hold: stationarity, primal feasibility (<span class="math inline">\(w_1^{\ast} \ge 0\)</span>, <span class="math inline">\(w_2^{\ast} \ge 0\)</span>, sum to 1), dual feasibility (<span class="math inline">\(\mu \ge 0\)</span>), and complementary slackness. Thus, <span class="math inline">\(\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}\)</span> is optimal.</p>
-<p>We have already verified using the KKT conditions that the optimal weights for this example are</p>
-<p><span class="math display">\[
-\mathbf{w}^{\ast} = \begin{bmatrix} 0 \\ 1 \end{bmatrix},
-\]</span></p>
-<p>with Lagrange multipliers <span class="math inline">\(\mu_1 = 672\)</span>, <span class="math inline">\(\mu_2 = 0\)</span>, and <span class="math inline">\(\lambda = 1192\)</span>. These multipliers quantify how the constraints influence the solution: the nonnegativity of <span class="math inline">\(w_1\)</span> is active, which is why <span class="math inline">\(\mu_1 &gt; 0\)</span>, while <span class="math inline">\(w_2\)</span> is strictly positive and unconstrained, resulting in <span class="math inline">\(\mu_2 = 0\)</span>. The stationarity condition ensures that the gradient of the objective function is exactly balanced by the constraints, while complementary slackness explains why only the active constraint has a nonzero multiplier. Primal and dual feasibility confirm that the candidate solution satisfies both the original weight constraints and the nonnegativity of the multipliers. Taken together, the KKT conditions rigorously establish that this choice of weights is optimal.</p>
-<p>Geometrically, this optimization problem can be viewed as projecting the treated vector <span class="math inline">\(\mathbf{y}\)</span> onto the convex hull of the donor vectors. The Hilbert Projection Theorem guarantees that there is a unique closest point within the convex hull and that the residual vector, defined as the difference between the treated vector and the projection, forms an obtuse angle or is orthogonal with respect to all directions inside the convex set. In our case, the unconstrained least squares solution would have required <span class="math inline">\(w_1 &lt; 0\)</span>, which lies outside the feasible convex hull. The KKT conditions formalize this by showing that the constraint <span class="math inline">\(w_1 \ge 0\)</span> is active, enforcing the feasible solution algebraically. From the geometric perspective, HPT explains that because the unconstrained minimum is infeasible, the closest feasible point lies on the boundary of the convex hull, specifically at the extreme point <span class="math inline">\(\mathbf{y}_2\)</span>.</p>
+<p>Without getting too far off track, we can use this to frame the synthetic control problem as projecting <span class="math inline">\(\mathbf{y}\)</span> onto the convex hull <span class="math inline">\(C\)</span> of the donors <span class="math inline">\(\{\mathbf{y}_1, \mathbf{y}_2\}\)</span>, which is the line segment between <span class="math inline">\(\mathbf{y}_1\)</span> and <span class="math inline">\(\mathbf{y}_2\)</span>. The projection <span class="math inline">\(\hat{\mathbf{y}}\)</span> minimizes the Euclidean distance to <span class="math inline">\(\mathbf{y}\)</span>, and the residual is orthogonal (or obtuse) to directions within <span class="math inline">\(C\)</span>.</p>
+<section id="intuition" class="level3">
+<h3 class="anchored" data-anchor-id="intuition">Intuition</h3>
 <p>In this way, the KKT conditions and the Hilbert Projection Theorem provide complementary perspectives. HPT offers a geometric intuition, showing that the solution is a projection onto the convex set, while KKT confirms algebraically which constraints are active, how the gradient is modified, and that the solution is indeed optimal under the given constraints. Together, they give a complete understanding of why the synthetic control solution lands on the boundary of the convex hull and how the residual aligns with the constraints.</p>
+</section>
 </section>
 <section id="a-visuzalization-in-python" class="level2">
 <h2 class="anchored" data-anchor-id="a-visuzalization-in-python">A Visuzalization in Python</h2>
 <p>Again, none of this is voodoo, just a lot of hairy math.</p>
-<div id="6d191786" class="cell" data-execution_count="1">
+<div id="9317bf4f" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
@@ -542,7 +663,7 @@ f(1) = 30^2 + 38^2 = 2344.
 </div>
 </div>
 <p>We can also show how the error changes, given a change in <span class="math inline">\(w_1\)</span>.</p>
-<div id="01b11956" class="cell" data-execution_count="2">
+<div id="87a2fee1" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -618,7 +739,7 @@ f(1) = 30^2 + 38^2 = 2344.
 <p>However, caution is warranted due to the limited donor pool: the synthetic control consists almost entirely of Italy and Norway (81.5% and 18.49%), with other countries receiving negligible weights (&lt;0.01%). This makes the estimates potentially sensitive to idiosyncratic shocks in those two countries.</p>
 </blockquote>
 <p>I then thought to myself “Hmmmm… 80 20 split out of 10 donors… I wonder what the treated versus control units look like?” Fortunately, they answered this question on Appendix page 32 (I reproduce a version of the plot below, focusing on the in-sample period.)</p>
-<div id="ddf812a4" class="cell" data-execution_count="3">
+<div id="99e578f3" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
@@ -716,7 +837,7 @@ H_0: \; \mathbf{1}^\top \mathbf{w} = 1 \quad \text{and} \quad \beta = 0
 T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat{\theta}^{SC} - \hat{\theta}^{MSCc}),
 \]</span></p>
 <p>where <span class="math inline">\(\hat{\theta}\)</span> stacks the estimated weights and intercept, and <span class="math inline">\(\hat{\Sigma}\)</span> is a covariance estimate obtained by subsampling the pre-treatment period. Intuitively, <span class="math inline">\(T\)</span> measures how far the SCM solution lies from the flexible cone-based solution, scaled by sampling variability. If <span class="math inline">\(T\)</span> is small, the convex-hull assumption holds; if large, the data support a more flexible geometry. Here is the result we get when we fit the TSSC estimator to the Australia case.</p>
-<div id="73b21f38" class="cell" data-execution_count="4">
+<div id="b1d2c8cc" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>TSSC_res <span class="op">=</span> TSSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
@@ -726,7 +847,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 </div>
 </div>
 </div>
-<div id="c75fca98" class="cell" data-execution_count="5">
+<div id="9c4c4e71" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
@@ -785,7 +906,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 </div>
 <p>The authors ATT is 31.049. The ATT of the MSCc is -30.713, almost the opposite of the original finding, with the intercept coefficient being 62.872 and the donors being Norway: 0.089, South Africa: 0.288. We can see here that by adding an intercept which accounts for systemic baseline differences between the target unit and the control group, we can sometimes even flip the sign of the estimated ATT completely. This demonstrates why theoretical understanding is crucial: by simple inspection of donor units versus the treated units, we can sometimes intuit how the baseline model will look before we’ve ran it, potentially anticipating the kind of SCM model we need. In this case just by looking, we already know that the donors will mainly be the nearest neighbors, suggesting that the model needs an intercept.</p>
 <p>Note that the sign reversal is not always true. Consider the Basque example:</p>
-<div id="95250c3a" class="cell" data-execution_count="6">
+<div id="bc957b8e" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> TSSC</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
@@ -825,7 +946,7 @@ T = (\hat{\theta}^{SC} - \hat{\theta}^{MSCc})^\top \, \hat{\Sigma}^{-1} \, (\hat
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757369941786" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1757384826606" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -849,7 +970,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757369941787" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1757384826607" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -873,7 +994,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757369941786" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1757384826607" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -897,7 +1018,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757369941792" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1757384826612" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -921,7 +1042,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757369941792" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1757384826613" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -945,7 +1066,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757369941789" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1757384826609" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -967,7 +1088,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757369941789" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1757384826609" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -991,7 +1112,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757369941792" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1757384826613" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1013,7 +1134,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757369941792" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1757384826612" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1035,7 +1156,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757369941792" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1757384826612" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1059,7 +1180,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757369941786" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1757384826606" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1083,7 +1204,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757369941793" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1757384826613" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -1105,7 +1226,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757369941786" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="12" data-listing-file-modified-sort="1757384826606" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -1116,7 +1237,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757370006983" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1757384893507" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

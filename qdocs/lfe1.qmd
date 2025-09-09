@@ -15,17 +15,15 @@ This matters even more because, as [this Medium post](https://medium.com/@yannan
 
 # A Simple Synthetic Control
 
-We will compute the synthetic control weights by hand, and then show how we get the same solution in `cvxpy.`
-
-## Deriving the Weights
-
-Suppose we have a treated unit and two donor units in 2D:
+We will compute the synthetic control weights by hand, and then show how we get the same solution in `cvxpy.` Suppose we have a treated unit and two donor units in 2D:
 
 $$
 \mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}, \quad 
 \mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
 \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}
 $$
+
+## Calculus
 
 We aim to find a synthetic control as a convex combination of the donors that matches the target vector as closely as possible:
 
@@ -300,8 +298,107 @@ $$
 - Weight $w_2 = 1$ is strictly positive, $\mu_2 = 0$  
 - Residual $\mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2 \\ 10\end{bmatrix}$ is consistent with projection onto the convex hull of donors.
 
+## Frank–Wolfe Geometric Solution (2-Donor Example)
 
+Now for the pure geometry. We want to approximate:
 
+$$
+\mathbf{y} = \begin{bmatrix} 50 \\ 60 \end{bmatrix}
+$$
+
+using convex combinations of donors:
+
+$$
+\mathbf{y}_1 = \begin{bmatrix} 20 \\ 22 \end{bmatrix}, \quad
+\mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
+$$
+
+The feasible set is the convex hull $\operatorname{conv}\{\mathbf{y}_1, \mathbf{y}_2\}$, i.e., all line segments between $\mathbf{y}_1$ and $\mathbf{y}_2$.
+
+Frank–Wolfe starts with the donor closest to $\mathbf{y}$:
+
+$$
+\|\mathbf{y} - \mathbf{y}_1\|^2 = (50-20)^2 + (60-22)^2 = 30^2 + 38^2 = 2344,
+$$
+
+$$
+\|\mathbf{y} - \mathbf{y}_2\|^2 = (50-48)^2 + (60-50)^2 = 2^2 + 10^2 = 104.
+$$
+
+So we initialize:
+
+$$
+x^{(0)} = \mathbf{y}_2, \quad w^{(0)} = (0,1).
+$$
+
+Gradient of $f(x) = \frac{1}{2} \|\mathbf{y} - x\|^2$ at $x^{(0)}$:
+
+$$
+\nabla f(x^{(0)}) = x^{(0)} - \mathbf{y} = \begin{bmatrix} -2 \\ -10 \end{bmatrix}.
+$$
+
+Frank–Wolfe chooses the donor minimizing the inner product with the negative gradient:
+
+$$
+s = \arg\min_{\mathbf{y}_i} \langle \nabla f(x^{(0)}), \mathbf{y}_i \rangle.
+$$
+
+Compute inner products:
+
+$$
+\langle \nabla f(x^{(0)}), \mathbf{y}_1 \rangle = (-2)(20) + (-10)(22) = -260,
+$$
+
+$$
+\langle \nabla f(x^{(0)}), \mathbf{y}_2 \rangle = (-2)(48) + (-10)(50) = -596.
+$$
+
+- Minimum occurs at $\mathbf{y}_2$ again.  
+- Frank–Wolfe direction points **toward $\mathbf{y}_2$**, meaning we stay put.
+
+If we attempt to move toward $\mathbf{y}_1$:
+
+$$
+d = \mathbf{y}_1 - x^{(0)} = \begin{bmatrix} -28 \\ -28 \end{bmatrix}.
+$$
+
+Line search coefficient:
+
+$$
+\gamma^\ast = \frac{\langle \mathbf{y} - x^{(0)}, d \rangle}{\|d\|^2}
+= \frac{(2)(-28) + (10)(-28)}{(-28)^2 + (-28)^2} = \frac{-336}{1568} \approx -0.214.
+$$
+
+Clamp to $[0,1]$:
+
+$$
+\gamma = 0.
+$$
+
+Update:
+
+$$
+x^{(1)} = x^{(0)} + \gamma d = x^{(0)} = \mathbf{y}_2, \quad w^{(1)} = (0,1).
+$$
+
+- Algorithm terminates immediately.  
+- Closest point in the convex hull is $\mathbf{y}_2$, the endpoint.  
+- Optimal weights:
+
+$$
+w^\ast = (0,1), \quad \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix}48 \\ 50\end{bmatrix}.
+$$
+
+- The convex hull of the donors is the line segment connecting $\mathbf{y}_1$ and $\mathbf{y}_2$.  
+- Treated point $\mathbf{y}$ lies outside the segment, closer to $\mathbf{y}_2$.  
+- Frank–Wolfe iteratively projects $\mathbf{y}$ toward the hull; in this simple case, it immediately lands on the closest boundary point.  
+- Residual vector:
+
+$$
+\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}} = \begin{bmatrix}2 \\ 10\end{bmatrix}
+$$
+
+is oblique to the hull, confirming moving along the segment toward $\mathbf{y}_1$ would increase the distance.
 
 In this way, the KKT conditions and the Hilbert Projection Theorem provide complementary perspectives. HPT offers a geometric intuition, showing that the solution is a projection onto the convex set, while KKT confirms algebraically which constraints are active, how the gradient is modified, and that the solution is indeed optimal under the given constraints. Together, they give a complete understanding of why the synthetic control solution lands on the boundary of the convex hull and how the residual aligns with the constraints.
 

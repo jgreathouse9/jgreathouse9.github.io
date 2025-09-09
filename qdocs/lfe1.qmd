@@ -23,6 +23,10 @@ $$
 
 ## Calculus
 
+
+<details>
+<summary>Solved By Calculus</summary>
+
 We aim to find a synthetic control as a convex combination of the donors that matches the target vector as closely as possible:
 
 $$
@@ -179,12 +183,17 @@ $$
 \hat{\mathbf{y}} = \mathbf{y}_2 = \begin{bmatrix} 48 \\ 50 \end{bmatrix}.
 $$
 
+</details>
+
 ## KKT Derivation
 
 [The](https://youtu.be/HIm3Z0L90Co?si=nc_HFlmS9CAbd4EH) [Karush-Kuhn-Tucker](https://youtu.be/uh1Dk68cfWs?si=omWQT9IRw-iSiYNj) method formalizes what the calculus argument already suggested: because the unconstrained minimizer gives a negative weight, the constrained solution must sit on the boundary of the feasible set.
 
 KKT is useful here because it provides a systematic way to check all the optimality conditions at once—stationarity, feasibility, dual feasibility, and complementary slackness. This guarantees that the solution we find is not just locally valid but globally optimal for a convex quadratic problem. In this example, KKT confirms that the active constraint is $w_1 \ge 0$, leading to the boundary solution $w^\ast = (0,1)$.
 
+
+<details>
+<summary>Verified With KKT</summary>
 
 To form the KKT system, introduce a scalar [Lagrange multiplier](https://youtu.be/8mjcnxGMwFo?si=cT8SLJWLsQ0YDl60) $\lambda$ for the equality constraint $w_1 + w_2 = 1$ and nonnegative multipliers $\mu_1, \mu_2 \ge 0$ for the inequality constraints $w_1 \ge 0$, $w_2 \ge 0$. The Lagrangian is
 
@@ -219,15 +228,19 @@ $$
 $$
 
 Complementary slackness applied to the candidate $w_1^{\ast} = 0, w_2^{\ast} = 1$ implies $\mu_2 = 0$ because $w_2^{\ast} > 0$ forces the corresponding multiplier to vanish, while $\mu_1$ is unconstrained by slackness other than being nonnegative. Using $\mu_2 = 0$ in the second scalar equation yields $\lambda = 1192$. Substituting $\lambda = 1192$ into the first equation gives $\mu_1 = 672$, which satisfies dual feasibility since $672 \ge 0$. Thus stationarity, primal feasibility, dual feasibility, and complementary slackness all hold for the candidate, and because the objective is convex (its Hessian is $2 \mathbf{Y}^\top \mathbf{Y}$, which is positive semidefinite) these KKT conditions guarantee global optimality. Therefore $\mathbf{w}^{\ast} = (0,1)^\top$ is the solution, the residual is $\mathbf{y} - \hat{\mathbf{y}} = (2,10)^\top$, the Lagrange multiplier for the equality constraint is $\lambda = 1192$, and the dual variables are $\mu_1 = 672$, $\mu_2 = 0$.
+</details>
+
 
 To summarize in words: we formed the Lagrangian to incorporate constraints into the objective, set its gradient with respect to the primal variables to zero (stationarity), required the primal variables to satisfy the original constraints (primal feasibility), required inequality multipliers to be nonnegative (dual feasibility), and enforced that no multiplier is positive while its corresponding primal variable is strictly positive (complementary slackness). Solving these conditions gave the boundary solution $w_1 = 0, w_2 = 1$, which is the projection of $\mathbf{y}$ onto the convex hull of the donors when the unconstrained projection lies outside that hull. The KKT verification thus formalizes what we already knew.
 
-
-
-
 ## Frank–Wolfe Geometric Solution and Hilbert Projection
 
-For a final expression, we can also arrive at the solution via pure geometry. We seek to approximate
+For a final expression, we can also arrive at the solution via pure geometry. 
+
+<details>
+<summary>Solved Via Frank-Wolfe</summary>
+
+We seek to approximate
 
 $$
 \mathbf{y} = \begin{bmatrix}50\\60\end{bmatrix}
@@ -292,7 +305,9 @@ $$
 
 together with complementary slackness $\mu_i w_i = 0$ and dual feasibility $\mu_i \ge 0$, ensures that the residual $\mathbf{r} = \mathbf{y} - \hat{\mathbf{y}}$ is orthogonal to any feasible direction in the convex hull, encoding precisely the variational inequality from the Hilbert Projection Theorem. Active inequality constraints correspond to nonzero multipliers, signaling that the projection lies on the boundary, while slack constraints have zero multipliers, corresponding to interior directions where the unconstrained minimum is feasible. In this example, the boundary solution $w_1 = 0, w_2 = 1$ with residual $\mathbf{r} = (2,10)^\top$ and Lagrange multipliers $\lambda = 1192, \mu_1 = 672, \mu_2 = 0$ satisfies all KKT conditions and simultaneously fulfills the Hilbert projection criterion.
 
-Thus, the Frank–Wolfe geometric approach, the calculus, and the KKT system are three perspectives on the same underlying fact: the optimal synthetic control is the projection of $\mathbf{y}$ onto the convex hull of donors, and when the unconstrained minimizer lies outside the hull, the solution is constrained to the nearest boundary point, with the residual aligned according to the Hilbert Projection Theorem. 
+</details>
+
+The Frank–Wolfe geometric approach, the calculus, and the KKT system are three perspectives on the same underlying fact: the optimal synthetic control for the standard method is the projection of $\mathbf{y}$ onto the convex hull of donors. When the unconstrained minimizer lies outside the hull, the solution is constrained to the nearest boundary point, with the residual aligned according to the Hilbert Projection Theorem. 
 
 ## A Visuzalization in Python
 

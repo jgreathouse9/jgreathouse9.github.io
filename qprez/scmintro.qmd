@@ -294,7 +294,7 @@ $$
 \mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
 $$
 
-- The OLS coefficients are the weights that minimize the difference between the all of the donor units and the treated unit in the pre-intervention period.
+- In practice, this is just OLS on the pre-1975 period, where $\mathbf{y}_1$ is the Basque GDP column and $\mathbf{Y}_0$ are the columns for the donor pool. The regression coefficients are the weights.
 
 ---
 
@@ -303,7 +303,7 @@ $$
 - Once we have $\mathbf{w}^{\ast}$, we compute the weighted average of controls:
 
 $$
-\hat{y}_1 = \mathbf{Y}_0 \mathbf{w}^{\ast} = w_1 Y_{01} + w_2 Y_{02} + \dots + w_J Y_{0J}
+\hat{y}_1 = \mathbf{Y}_0 \mathbf{w}^{\ast} = w_1 y_{1} + w_2 y_{2} + \dots + w_J y_{J}
 $$
 
 - That is: multiply all the values for each control unit by its regression coefficient and sum across donors.  
@@ -322,7 +322,7 @@ $$
 
 - $T_0$: last pre-intervention period  
 - $y_{1t}$: observed outcome of the treated unit at time $t$  
-- $\hat{y}_{1t}$: synthetic prediction at time $t$  
+- $\hat{y}_{1t}$: OLS prediction at time $t$  
 
 *Intuition:* ATT measures how much Basque GDP deviates from the OLS prediction after terrorism began.
 
@@ -463,11 +463,11 @@ $$
 &= \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; 
 \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} \right\|_2^2, \\
 \mathcal{W}_{\mathrm{conv}} 
-&= \left\{ \mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{N_0} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
+&= \left\{ \mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{J} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
 \end{aligned}
 $$
 
-We seek the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes, subject to the counterfactial predictions being within the span of the donor pool, favoring control units with the highest convex relation to the treated unit.
+We are looking for the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best fits the treated unit’s pre-treatment outcomes with a weighted average of donors. The nonnegativity and summation to one constraints, known as the "simplex", mean the synthetic control must lie inside the support of the donor pool.
 
 ## SCM for Basque
 

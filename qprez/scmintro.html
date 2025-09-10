@@ -307,7 +307,7 @@
 <li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita.</p></li>
 <li><p>Using data on GDPs over the pre- and post-intervention periods, we aim to estimate the counterfactual for the Basque Country as a weighted average of 16 control units. Below we plot the Basque Country’s GDP, and the control/donor regions.</p></li>
 </ul>
-<div id="45dfa157" class="cell" data-execution_count="1">
+<div id="267f1aaf" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -338,7 +338,7 @@
 </div>
 <div id="tabset-3-2">
 <p>Here is the dataset, literally displayed in preparation for regression</p>
-<div id="0bd81e1e" class="cell" data-execution_count="2">
+<div id="5c421d99" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -514,7 +514,7 @@
 \mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
 \]</span></p>
 <ul>
-<li>The OLS coefficients are the weights that minimize the difference between the all of the donor units and the treated unit in the pre-intervention period.</li>
+<li>In practice, this is just OLS on the pre-1975 period, where <span class="math inline">\(\mathbf{y}_1\)</span> is the Basque GDP column and <span class="math inline">\(\mathbf{Y}_0\)</span> are the columns for the donor pool. The regression coefficients are the weights.</li>
 </ul>
 <hr>
 </div>
@@ -523,7 +523,7 @@
 <li>Once we have <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, we compute the weighted average of controls:</li>
 </ul>
 <p><span class="math display">\[
-\hat{y}_1 = \mathbf{Y}_0 \mathbf{w}^{\ast} = w_1 Y_{01} + w_2 Y_{02} + \dots + w_J Y_{0J}
+\hat{y}_1 = \mathbf{Y}_0 \mathbf{w}^{\ast} = w_1 y_{1} + w_2 y_{2} + \dots + w_J y_{J}
 \]</span></p>
 <ul>
 <li><p>That is: multiply all the values for each control unit by its regression coefficient and sum across donors.</p></li>
@@ -543,7 +543,7 @@
 </li>
 <li><span class="math inline">\(y_{1t}\)</span>: observed outcome of the treated unit at time <span class="math inline">\(t\)</span><br>
 </li>
-<li><span class="math inline">\(\hat{y}_{1t}\)</span>: synthetic prediction at time <span class="math inline">\(t\)</span></li>
+<li><span class="math inline">\(\hat{y}_{1t}\)</span>: OLS prediction at time <span class="math inline">\(t\)</span></li>
 </ul>
 <p><em>Intuition:</em> ATT measures how much Basque GDP deviates from the OLS prediction after terrorism began.</p>
 </div>
@@ -557,7 +557,7 @@
 <div class="tab-content">
 <div id="tabset-4-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="2233bc28" class="cell" data-execution_count="3">
+<div id="88344683" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -639,7 +639,7 @@
 </div>
 <div id="tabset-4-2">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton.</p>
-<div id="42d6ba9d" class="cell" data-execution_count="4">
+<div id="59127eea" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -659,7 +659,7 @@
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="90e7cc07" class="cell" data-execution_count="5">
+<div id="cbdf7e4d" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -678,10 +678,10 @@
 &amp;= \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \;
 \left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} \right\|_2^2, \\
 \mathcal{W}_{\mathrm{conv}}
-&amp;= \left\{ \mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{N_0} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
+&amp;= \left\{ \mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{J} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
 \end{aligned}
 \]</span></p>
-<p>We seek the weight vector <span class="math inline">\(\mathbf{w}^{\mathrm{SCM}}\)</span> that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes, subject to the counterfactial predictions being within the span of the donor pool, favoring control units with the highest convex relation to the treated unit.</p>
+<p>We are looking for the weight vector <span class="math inline">\(\mathbf{w}^{\mathrm{SCM}}\)</span> that best fits the treated unit’s pre-treatment outcomes with a weighted average of donors. The nonnegativity and summation to one constraints, known as the “simplex”, mean the synthetic control must lie inside the support of the donor pool.</p>
 </section>
 <section id="scm-for-basque" class="slide level2">
 <h2>SCM for Basque</h2>

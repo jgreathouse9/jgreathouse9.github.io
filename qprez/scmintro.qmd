@@ -381,11 +381,13 @@ plt.show()
 
 :::
 
-
-
 ## How To Change The Weights
 
-What if we could change the weights somehow? What if we could force he predictions of the model to be within the range of the donor pool units? The plot below plots the area between Baleares, with the highest GDP, and Extremadura, the poorest area in Spain. 
+- What if we could adjust the weights so the synthetic Basque stays within the range of the donor units?  
+
+- In other words, we want the model predictions to lie inside the full range of the donors only.  
+
+- The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.
 
 ```{python}
 
@@ -427,6 +429,18 @@ plt.show()
 ```
 
 ---
+
+
+## Synthetic Control Methods
+
+The classic SCM estimator solves
+
+$$
+\mathbf{w}^{\mathrm{SCM}} = \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1} \mathbf{w}^{\mathrm{SCM}} \right\|_2^2,
+$$
+
+where $\mathcal{W}_{\mathrm{conv}} = \{\mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1\}$. This finds the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes, subject to hte predictions being within the span of the donor pool.
+
 
 
 ## Example Plot

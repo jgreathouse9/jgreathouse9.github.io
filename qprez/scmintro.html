@@ -307,7 +307,7 @@
 <li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita.</p></li>
 <li><p>Using data on GDPs over the pre- and post-intervention periods, we aim to estimate the counterfactual for the Basque Country as a weighted average of 16 control units. Below we plot the Basque Country’s GDP, and the control/donor regions.</p></li>
 </ul>
-<div id="636f1afc" class="cell" data-execution_count="1">
+<div id="45dfa157" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -321,7 +321,7 @@
 <h2>Using Least Squares</h2>
 <p>But how do we know how much weight a unit should get? One approach is linear regression. In multiple regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
 <div class="panel-tabset">
-<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Notation</a></li><li><a href="#tabset-3-2">OLS Problem</a></li><li><a href="#tabset-3-3">Interpretation</a></li><li><a href="#tabset-3-4">Treatment Effect</a></li></ul>
+<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Notation</a></li><li><a href="#tabset-3-2">Data</a></li><li><a href="#tabset-3-3">OLS Problem</a></li><li><a href="#tabset-3-4">Interpretation</a></li><li><a href="#tabset-3-5">Treatment Effect</a></li></ul>
 <div class="tab-content">
 <div id="tabset-3-1">
 <ul>
@@ -333,11 +333,180 @@
 </ul>
 <p><em>Reminder: a weighted average can be written as</em></p>
 <p><span class="math display">\[
-\hat{y}_1 = \mathbf{Y}_0 \mathbf{w} = w_1 Y_{01} + w_2 Y_{02} + \dots + w_J Y_{0J}
+\hat{y}_1 = \mathbf{Y}_0 \mathbf{w} = w_1 y_{1} + w_2 y_{2} + \dots + w_J y_{J}
 \]</span></p>
-<hr>
 </div>
 <div id="tabset-3-2">
+<p>Here is the dataset, literally displayed in preparation for regression</p>
+<div id="0bd81e1e" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display cell-output-markdown">
+<table class="caption-top">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 11%">
+<col style="width: 13%">
+<col style="width: 7%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">year</th>
+<th style="text-align: right;">Andalucia</th>
+<th style="text-align: right;">Aragon</th>
+<th style="text-align: right;">Baleares (Islas)</th>
+<th style="text-align: right;">Basque</th>
+<th style="text-align: right;">Canarias</th>
+<th style="text-align: right;">Cantabria</th>
+<th style="text-align: right;">Castilla Y Leon</th>
+<th style="text-align: right;">Castilla-La Mancha</th>
+<th style="text-align: right;">Cataluna</th>
+<th style="text-align: right;">Comunidad Valenciana</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1955</td>
+<td style="text-align: right;">1.68873</td>
+<td style="text-align: right;">2.28877</td>
+<td style="text-align: right;">3.14396</td>
+<td style="text-align: right;">3.85318</td>
+<td style="text-align: right;">1.91438</td>
+<td style="text-align: right;">2.55941</td>
+<td style="text-align: right;">1.72915</td>
+<td style="text-align: right;">1.32776</td>
+<td style="text-align: right;">3.54663</td>
+<td style="text-align: right;">2.57598</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1956</td>
+<td style="text-align: right;">1.7585</td>
+<td style="text-align: right;">2.44516</td>
+<td style="text-align: right;">3.34776</td>
+<td style="text-align: right;">3.94566</td>
+<td style="text-align: right;">2.07184</td>
+<td style="text-align: right;">2.69387</td>
+<td style="text-align: right;">1.83833</td>
+<td style="text-align: right;">1.4151</td>
+<td style="text-align: right;">3.69045</td>
+<td style="text-align: right;">2.7385</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1957</td>
+<td style="text-align: right;">1.82762</td>
+<td style="text-align: right;">2.6034</td>
+<td style="text-align: right;">3.54963</td>
+<td style="text-align: right;">4.03356</td>
+<td style="text-align: right;">2.22608</td>
+<td style="text-align: right;">2.82034</td>
+<td style="text-align: right;">1.94766</td>
+<td style="text-align: right;">1.50357</td>
+<td style="text-align: right;">3.82683</td>
+<td style="text-align: right;">2.89989</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1958</td>
+<td style="text-align: right;">1.85276</td>
+<td style="text-align: right;">2.63903</td>
+<td style="text-align: right;">3.64267</td>
+<td style="text-align: right;">4.02342</td>
+<td style="text-align: right;">2.22087</td>
+<td style="text-align: right;">2.87903</td>
+<td style="text-align: right;">1.97137</td>
+<td style="text-align: right;">1.53142</td>
+<td style="text-align: right;">3.87568</td>
+<td style="text-align: right;">2.96351</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1959</td>
+<td style="text-align: right;">1.87803</td>
+<td style="text-align: right;">2.67709</td>
+<td style="text-align: right;">3.73486</td>
+<td style="text-align: right;">4.01378</td>
+<td style="text-align: right;">2.21344</td>
+<td style="text-align: right;">2.94373</td>
+<td style="text-align: right;">1.99514</td>
+<td style="text-align: right;">1.55934</td>
+<td style="text-align: right;">3.92174</td>
+<td style="text-align: right;">3.02621</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1960</td>
+<td style="text-align: right;">2.01014</td>
+<td style="text-align: right;">2.88146</td>
+<td style="text-align: right;">4.05884</td>
+<td style="text-align: right;">4.28592</td>
+<td style="text-align: right;">2.35768</td>
+<td style="text-align: right;">3.13703</td>
+<td style="text-align: right;">2.13882</td>
+<td style="text-align: right;">1.66752</td>
+<td style="text-align: right;">4.24179</td>
+<td style="text-align: right;">3.21929</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1961</td>
+<td style="text-align: right;">2.12918</td>
+<td style="text-align: right;">3.09954</td>
+<td style="text-align: right;">4.36025</td>
+<td style="text-align: right;">4.57434</td>
+<td style="text-align: right;">2.44573</td>
+<td style="text-align: right;">3.32762</td>
+<td style="text-align: right;">2.2395</td>
+<td style="text-align: right;">1.75243</td>
+<td style="text-align: right;">4.57534</td>
+<td style="text-align: right;">3.36247</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1962</td>
+<td style="text-align: right;">2.28035</td>
+<td style="text-align: right;">3.35918</td>
+<td style="text-align: right;">4.64617</td>
+<td style="text-align: right;">4.89896</td>
+<td style="text-align: right;">2.64824</td>
+<td style="text-align: right;">3.55534</td>
+<td style="text-align: right;">2.45423</td>
+<td style="text-align: right;">1.92045</td>
+<td style="text-align: right;">4.83805</td>
+<td style="text-align: right;">3.56998</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1963</td>
+<td style="text-align: right;">2.43102</td>
+<td style="text-align: right;">3.61418</td>
+<td style="text-align: right;">4.91153</td>
+<td style="text-align: right;">5.19701</td>
+<td style="text-align: right;">2.84476</td>
+<td style="text-align: right;">3.77142</td>
+<td style="text-align: right;">2.67224</td>
+<td style="text-align: right;">2.0919</td>
+<td style="text-align: right;">5.08133</td>
+<td style="text-align: right;">3.76521</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1964</td>
+<td style="text-align: right;">2.50885</td>
+<td style="text-align: right;">3.68009</td>
+<td style="text-align: right;">5.0507</td>
+<td style="text-align: right;">5.3389</td>
+<td style="text-align: right;">2.95116</td>
+<td style="text-align: right;">3.8394</td>
+<td style="text-align: right;">2.77778</td>
+<td style="text-align: right;">2.18259</td>
+<td style="text-align: right;">5.1581</td>
+<td style="text-align: right;">3.82369</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</div>
+<div id="tabset-3-3">
 <ul>
 <li>We can choose weights to minimize the pre-intervention difference between Basque and the weighted donors:</li>
 </ul>
@@ -345,12 +514,11 @@
 \mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
 \]</span></p>
 <ul>
-<li><p>In Stata, this is just: <code>reg y Donor1-DonorJ if year &lt; 1975</code>, where <code>y</code> is Basque GDP and the donors are the untreated units.</p></li>
-<li><p>The OLS coefficients are the weights that minimize the difference between the weighted average and the treated unit in the pre-intervention period.</p></li>
+<li>The OLS coefficients are the weights that minimize the difference between the all of the donor units and the treated unit in the pre-intervention period.</li>
 </ul>
 <hr>
 </div>
-<div id="tabset-3-3">
+<div id="tabset-3-4">
 <ul>
 <li>Once we have <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, we compute the weighted average of controls:</li>
 </ul>
@@ -363,7 +531,7 @@
 </ul>
 <hr>
 </div>
-<div id="tabset-3-4">
+<div id="tabset-3-5">
 <ul>
 <li>The average treatment effect on the treated (ATT) can be expressed as the mean difference between observed outcomes and the weighted average in the post-intervention period:</li>
 </ul>
@@ -389,7 +557,7 @@
 <div class="tab-content">
 <div id="tabset-4-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="9f9319f4" class="cell" data-execution_count="2">
+<div id="2233bc28" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -470,12 +638,12 @@
 <p>Notice that OLS assigns some positive and some negative weights. Negative weights can be hard to interpret substantively, and it’s unclear which donors really matter most.</p>
 </div>
 <div id="tabset-4-2">
-<p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism not happened, in other words, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton.</p>
-<div id="54d00588" class="cell" data-execution_count="3">
+<p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton.</p>
+<div id="42d6ba9d" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="scmintro_files/figure-revealjs/cell-4-output-1.png" width="808" height="523"></p>
+<p><img data-src="scmintro_files/figure-revealjs/cell-5-output-1.png" width="808" height="523"></p>
 </figure>
 </div>
 </div>
@@ -491,11 +659,11 @@
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="48f76b64" class="cell" data-execution_count="4">
+<div id="90e7cc07" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="scmintro_files/figure-revealjs/cell-5-output-1.png" width="808" height="523"></p>
+<p><img data-src="scmintro_files/figure-revealjs/cell-6-output-1.png" width="808" height="523"></p>
 </figure>
 </div>
 </div>
@@ -517,7 +685,11 @@
 </section>
 <section id="scm-for-basque" class="slide level2">
 <h2>SCM for Basque</h2>
-<p>When we run the regression model, we get that Basque Country is best reproduced by 85% Catalonia and 15% Madrid. The plot below shows how the prediction itself, as well as the pre-treatment Root Mean Squared Error changes, given a change in the unit weights that were selected.</p>
+<ul>
+<li><p>Here is the result of the regression model. The Basque Country is best reproduced by 85% Catalonia and 15% Madrid.</p></li>
+<li><p>The plot below shows how the prediction itself and the pre-treatment Root Mean Squared Error changes given a change in the unit weights that were selected.</p></li>
+<li><p>These are just iterations of weighted averages converging to the optimal point where the model’s error in the pre-treatment period is minimized.</p></li>
+</ul>
 
 
 <img data-src="scm_weighted_combo.gif" class="r-stretch quarto-figure-center"><p class="caption">Convex Combination</p></section>

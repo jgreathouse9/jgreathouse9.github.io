@@ -431,26 +431,31 @@ plt.show()
 ---
 
 
-## Synthetic Control Methods
+## Classic Synthetic Control Model
 
-The classic SCM estimator solves
+The classic SCM estimator solves the following ordinary least-squares regression problem:
 
 $$
-\mathbf{w}^{\mathrm{SCM}} = \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; \left\| \mathbf{y}_1^{\mathcal{T}_1} - \mathbf{Y}_0^{\mathcal{T}_1} \mathbf{w}^{\mathrm{SCM}} \right\|_2^2,
+\begin{aligned}
+\mathbf{w}^{\mathrm{SCM}} 
+&= \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; 
+\left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} \right\|_2^2, \\
+\mathcal{W}_{\mathrm{conv}} 
+&= \left\{ \mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{N_0} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
+\end{aligned}
 $$
 
-where $\mathcal{W}_{\mathrm{conv}} = \{\mathbf{w}^{\mathrm{SCM}} \in \mathbb{R}_{\ge 0}^{N_0} \mid \mathbf{1}^\top \mathbf{w} = 1\}$. This finds the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes, subject to the counterfactial predictions being within the span of the donor pool, favoring control units with the highest convex relation to the treated unit.
-
-
+We seek the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best matches the treated unit’s pre-treatment outcomes as a weighted average of donor outcomes, subject to the counterfactial predictions being within the span of the donor pool, favoring control units with the highest convex relation to the treated unit.
 
 ## SCM for Basque
 
-When we run the optimization, we get that Basque Country is best reproduced by 85% Catalonia and 15% Madrid.
+When we run the optimization, we get that Basque Country is best reproduced by 85% Catalonia and 15% Madrid. The plot below shows how the prediction changes given a chagne in the unit weights that were selected.
 
 
 ```{python}
 
 ##| echo: false
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
@@ -465,6 +470,8 @@ Ywide_data = prepped_data["Ywide"]
 
 y = Ywide_data["Basque"].values
 Y0 = Ywide_data[["Cataluna", "Madrid (Comunidad De)"]].values
+
+T0 = prepped_data["pre_periods"]  # last pre-treatment index
 
 # --- Weights ---
 w_final = np.array([0.85, 0.15])
@@ -486,14 +493,20 @@ ax.set_ylim(y.min() - 1, y.max() + 1)
 # --- Animation function ---
 def update(frame):
     w_curr = weights_history[frame]
-    line_hatY.set_ydata(w_curr[0]*Y0[:,0] + w_curr[1]*Y0[:,1])
+    y_hat = w_curr[0]*Y0[:,0] + w_curr[1]*Y0[:,1]
+    line_hatY.set_ydata(y_hat)
+    
+    # Compute pre-treatment MSE
+    mse_pre = np.mean((y[:T0] - y_hat[:T0])**2)
     
     if frame == steps - 1:
         line_cataluna.set_visible(False)
         line_madrid.set_visible(False)
-        ax.set_title(f"Final SCM: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}")
+        ax.set_title(f"Final SCM: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
+                     f"Pre-treatment MSE={mse_pre:.2f}")
     else:
-        ax.set_title(f"Frame {frame+1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}")
+        ax.set_title(f"Frame {frame+1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
+                     f"Pre-treatment MSE={mse_pre:.2f}")
     
     return line_hatY, line_cataluna, line_madrid
 
@@ -502,9 +515,10 @@ extra_frames = 30  # ~3 seconds at 10 fps
 all_frames = list(range(steps)) + [steps-1]*extra_frames
 
 ani = FuncAnimation(fig, update, frames=all_frames, blit=False)
-ani.save("scm_weighted_combo.gif", writer=PillowWriter(fps=10))
+ani.save("scm_weighted_combo_with_mse.gif", writer=PillowWriter(fps=10))
 
 plt.close(fig)
+
 
 
 ```

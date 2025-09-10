@@ -205,6 +205,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from mlsynth.utils.datautils import dataprep
+from IPython.display import display, Markdown
 
 # --- Load and preprocess data ---
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
@@ -257,8 +258,31 @@ But how do we know how much weight a unit should get? One approach is linear reg
 *Reminder: a weighted average can be written as*  
 
 $$
-\hat{y}_1 = \mathbf{Y}_0 \mathbf{w} = w_1 Y_{01} + w_2 Y_{02} + \dots + w_J Y_{0J}
+\hat{y}_1 = \mathbf{Y}_0 \mathbf{w} = w_1 y_{1} + w_2 y_{2} + \dots + w_J y_{J}
 $$
+
+### Data
+
+Here is the dataset, literally displayed in preparation for regression
+
+```{python}
+
+# Extract Ywide
+Ywide = prepped_data["Ywide"]
+
+# First 3 rows, first 10 columns
+subset = Ywide.iloc[:10, :10]
+
+# Convert to markdown
+md_table = subset.to_markdown(index=True)
+
+# Display
+display(Markdown(md_table))
+
+
+```
+
+
 
 ---
 
@@ -270,9 +294,7 @@ $$
 \mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
 $$
 
-- In Stata, this is just: `reg y Donor1-DonorJ if year < 1975`, where `y` is Basque GDP and the donors are the untreated units.  
-
-- The OLS coefficients are the weights that minimize the difference between the weighted average and the treated unit in the pre-intervention period.
+- The OLS coefficients are the weights that minimize the difference between the all of the donor units and the treated unit in the pre-intervention period.
 
 ---
 
@@ -364,7 +386,7 @@ Notice that OLS assigns some positive and some negative weights. Negative weight
 
 ### Plotting
 
-Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism not happened, in other words, terrorism was great for business to the tune of 1500 dollars per person... This does not seem like a sensible finding substantively, or a very reasonable prediciton.
+Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism **not** happened. In other words, if the OLS estmate is to be taken seriously, terrorism was great for business to the tune of 1500 dollars per person... This does not seem like a sensible finding substantively, or a very reasonable prediciton.
 
 ```{python}
 # --- Plot results ---
@@ -449,7 +471,11 @@ We seek the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best matches the trea
 
 ## SCM for Basque
 
-When we run the regression model, we get that Basque Country is best reproduced by 85% Catalonia and 15% Madrid. The plot below shows how the prediction itself, as well as the pre-treatment Root Mean Squared Error changes, given a change in the unit weights that were selected.
+- Here is the result of the regression model. The Basque Country is best reproduced by 85% Catalonia and 15% Madrid.
+
+- The plot below shows how the prediction itself and the pre-treatment Root Mean Squared Error changes given a change in the unit weights that were selected.
+
+- These are just iterations of weighted averages converging to the optimal point where the model's error in the pre-treatment period is minimized.
 
 
 ```{python}
@@ -483,7 +509,7 @@ weights_history = np.array([
 ])
 
 # --- Figure setup ---
-fig, ax = plt.subplots(figsize=(8, 4))
+fig, ax = plt.subplots(figsize=(10,6))
 line_y, = ax.plot(time, y, label="Treated (Basque)", color="red", linewidth=2)
 line_hatY, = ax.plot(time, w_start[0]*Y0[:,0] + w_start[1]*Y0[:,1], 
                      label="Weighted combo", color="purple", linestyle="--")
@@ -532,10 +558,6 @@ ani = FuncAnimation(fig, update, frames=all_frames, blit=False)
 ani.save("scm_weighted_combo.gif", writer=PillowWriter(fps=10))
 
 plt.close(fig)
-
-
-
-
 ```
 
 ![Convex Combination](scm_weighted_combo.gif)

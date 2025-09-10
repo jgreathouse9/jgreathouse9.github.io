@@ -449,12 +449,13 @@ We seek the weight vector $\mathbf{w}^{\mathrm{SCM}}$ that best matches the trea
 
 ## SCM for Basque
 
-When we run the optimization, we get that Basque Country is best reproduced by 85% Catalonia and 15% Madrid. The plot below shows how the prediction changes given a change in the unit weights that were selected.
+When we run the regression model, we get that Basque Country is best reproduced by 85% Catalonia and 15% Madrid. The plot below shows how the prediction itself, as well as the pre-treatment Root Mean Squared Error changes, given a change in the unit weights that were selected.
 
 
 ```{python}
 
-##| echo: false
+#| echo: false
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -470,22 +471,31 @@ Ywide_data = prepped_data["Ywide"]
 
 y = Ywide_data["Basque"].values
 Y0 = Ywide_data[["Cataluna", "Madrid (Comunidad De)"]].values
-
-T0 = prepped_data["pre_periods"]  # last pre-treatment index
+time = prepped_data["time_labels"]   # actual time labels
+T0 = prepped_data["pre_periods"]     # number of pre-treatment periods
 
 # --- Weights ---
 w_final = np.array([0.85, 0.15])
 w_start = np.array([0.1, 0.9])
 steps = 50
-weights_history = np.array([w_start + (w_final - w_start) * t/(steps-1) for t in range(steps)])
+weights_history = np.array([
+    w_start + (w_final - w_start) * t/(steps-1) for t in range(steps)
+])
 
 # --- Figure setup ---
 fig, ax = plt.subplots(figsize=(8, 4))
-line_y, = ax.plot(y, label="Treated (Basque)", color="red", linewidth=2)
-line_hatY, = ax.plot(w_start[0]*Y0[:,0] + w_start[1]*Y0[:,1], 
+line_y, = ax.plot(time, y, label="Treated (Basque)", color="red", linewidth=2)
+line_hatY, = ax.plot(time, w_start[0]*Y0[:,0] + w_start[1]*Y0[:,1], 
                      label="Weighted combo", color="purple", linestyle="--")
-line_cataluna, = ax.plot(Y0[:,0], label="Cataluna", color="green", alpha=0.5)
-line_madrid, = ax.plot(Y0[:,1], label="Madrid", color="blue", alpha=0.5)
+line_cataluna, = ax.plot(time, Y0[:,0], label="Cataluna", color="green", alpha=0.5)
+line_madrid, = ax.plot(time, Y0[:,1], label="Madrid", color="blue", alpha=0.5)
+
+# Axis labels
+ax.set_xlabel("Year")
+ax.set_ylabel("GDP per Capita")
+
+# Vertical reference line at treatment, labeled
+ax.axvline(x=time[T0], color="black", linestyle="--", alpha=0.8, label="Terrorism")
 
 ax.legend()
 ax.set_ylim(y.min() - 1, y.max() + 1)
@@ -496,28 +506,33 @@ def update(frame):
     y_hat = w_curr[0]*Y0[:,0] + w_curr[1]*Y0[:,1]
     line_hatY.set_ydata(y_hat)
     
-    # Compute pre-treatment MSE
-    mse_pre = np.sqrt(np.mean((y[:T0] - y_hat[:T0])**2))
+    # Pre-treatment RMSE
+    rmse_pre = np.sqrt(np.mean((y[:T0] - y_hat[:T0])**2))
     
     if frame == steps - 1:
         line_cataluna.set_visible(False)
         line_madrid.set_visible(False)
-        ax.set_title(f"Final SCM: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
-                     f"Pre-treatment MSE={mse_pre:.2f}")
+        ax.set_title(
+            f"Final SCM: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
+            f"Pre-treatment RMSE={rmse_pre:.3f}"
+        )
     else:
-        ax.set_title(f"Frame {frame+1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
-                     f"Pre-treatment RMSE={mse_pre:.2f}")
+        ax.set_title(
+            f"Frame {frame+1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
+            f"Pre-treatment RMSE={rmse_pre:.3f}"
+        )
     
     return line_hatY, line_cataluna, line_madrid
 
 # --- Animate with repeated final frame ---
-extra_frames = 30  # ~3 seconds at 10 fps
+extra_frames = 50  # ~5 seconds at 10 fps
 all_frames = list(range(steps)) + [steps-1]*extra_frames
 
 ani = FuncAnimation(fig, update, frames=all_frames, blit=False)
 ani.save("scm_weighted_combo.gif", writer=PillowWriter(fps=10))
 
 plt.close(fig)
+
 
 
 

@@ -179,9 +179,9 @@
 \begin{bmatrix} 12 &amp; 18 \end{bmatrix}
 \in \mathbb{R}^{1 \times 2},
 \]</span></p>
-<p>where each entry corresponds to a person’s apples.</p>
+<p>where we have one row, and each column entry corresponds to a person’s apples.</p>
 <ul>
-<li>The weights are one divided by the number of people. Since it’s just you and your friend, you both get the same weight:</li>
+<li>The weights are 1 divided by the number of people. Since it’s just you and your friend, you both get the same weight:</li>
 </ul>
 <p><span class="math display">\[
 \mathbf{w} =
@@ -189,7 +189,7 @@
 \in \mathbb{R}^{2 \times 1}.
 \]</span></p>
 <ul>
-<li>Then the average is:</li>
+<li>Then, we multiply each value in the column by its corresponding weight (1/2). Summing these products gives a single number, the average number of apples:</li>
 </ul>
 <p><span class="math display">\[
 \bar{x} = \mathbf{x}\mathbf{w}
@@ -200,12 +200,12 @@
 \begin{bmatrix} 12 \cdot \tfrac{1}{2} &amp; \; 18 \cdot \tfrac{1}{2} \end{bmatrix}
 = 6 + 9 = 15.
 \]</span></p>
-<p>See? We still have 15 apples, on averge.</p>
+<p>See? We still have 15 apples, on average.</p>
 <hr>
 </div>
 <div id="tabset-1-3">
 <ul>
-<li>Let’s extend this to multiple time periods. Suppose today you have 12 apples and tomorrow 30, and your friend has 18 today and 22 tomorrow. We can organize this into a matrix, where each row is a time period and each column is a person. You are column one, and your friend is column 2:</li>
+<li>Let’s extend this idea to multiple time periods. Suppose today you have 12 apples and tomorrow 30, and your friend has 18 today and 22 tomorrow. We can organize this into a matrix, where each row is a time period and each column is a person:</li>
 </ul>
 <p><span class="math display">\[
 \mathbf{Y} =
@@ -216,7 +216,7 @@
 \in \mathbb{R}^{2 \times 2}.
 \]</span></p>
 <ul>
-<li>Now we want the average over time. Using the same weights as before (becasue again, there are two people/columns, remember?), the average number of apples held per time period is:</li>
+<li>Now we want the average number of apples per time period. Using the same column weights as before (1/2 for each person), we multiply each row by the weights and sum:</li>
 </ul>
 <p><span class="math display">\[
 \bar{\mathbf{x}} = \mathbf{Y} \mathbf{w}
@@ -225,14 +225,17 @@
 12 &amp; 18 \\
 30 &amp; 22
 \end{bmatrix}
-\begin{bmatrix} \frac{1}{2} \\ \frac{1}{2} \end{bmatrix}
+\begin{bmatrix} 1/2 \\ 1/2 \end{bmatrix}
 =
-\begin{bmatrix}
-15 \\
-26
-\end{bmatrix}.
+\begin{bmatrix} 12\cdot 1/2 + 18\cdot 1/2 \\ 30\cdot 1/2 + 22\cdot 1/2 \end{bmatrix}
+=
+\begin{bmatrix} 15 \\ 26 \end{bmatrix}.
 \]</span></p>
-<p>So on average, you and your friend have 15 apples today and 26 apples tomorrow. This idea can be generalized to anything, to GDPs, to incomes, and so on.</p>
+<ul>
+<li>So on average, you and your friend have 15 apples today and 26 apples tomorrow.<br>
+</li>
+<li>This idea generalizes to any data measured over time, like GDPs, incomes, or other outcomes.</li>
+</ul>
 </div>
 </div>
 </div>
@@ -243,7 +246,7 @@
 <ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Simple Averages</a></li><li><a href="#tabset-2-2">Weighted Average</a></li><li><a href="#tabset-2-3">Weighted Average Cont.</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1">
-<p>You are at a bar with your friend. You earn <span class="math inline">\(60k\)</span>/year. Your friend earns <span class="math inline">\(70k\)</span>/year. The simple average of your incomes is:</p>
+<p>You are at a bar with your friend. You earn $60k/year. Your friend earns $70k/year. The simple average of your incomes is:</p>
 <p><span class="math display">\[
 \mathbf{x} = \begin{bmatrix} 60 &amp; 70 \end{bmatrix}, \quad
 \mathbf{w} = \begin{bmatrix} \frac{1}{2} \\[1mm] \frac{1}{2} \end{bmatrix}
@@ -255,40 +258,41 @@
 = \frac{1}{2}\cdot 60 + \frac{1}{2}\cdot 70
 = 65 \text{ (k/year)}
 \]</span></p>
-<p>Now, suddenly Bill Gates walks in, with a net worth of <span class="math inline">\(107\)</span> billion/year. Taking the simple average of all three income levels:</p>
+<p>Now, suddenly Bill Gates walks in, with a net worth of $107B/year. Taking the simple average of all three income levels:</p>
 <p><span class="math display">\[
-\mathbf{x} = \begin{bmatrix} 60 &amp; 70 &amp; 107{,}000{,}000{,}000 \end{bmatrix}, \quad
+\mathbf{x} = \begin{bmatrix} 60 &amp; 70 &amp; 1.07\times 10^{11} \end{bmatrix}, \quad
 \mathbf{w} = \begin{bmatrix} \frac{1}{3} \\[1mm] \frac{1}{3} \\[1mm] \frac{1}{3} \end{bmatrix}
 \]</span></p>
 <p><span class="math display">\[
 \bar{x} = \mathbf{x} \mathbf{w}
-= \frac{1}{3}\cdot 60 + \frac{1}{3}\cdot 70 + \frac{1}{3}\cdot 107{,}000{,}000{,}000
+= \frac{1}{3}\cdot 60 + \frac{1}{3}\cdot 70 + \frac{1}{3}\cdot 1.07\times 10^{11}
 \approx 35.7 \text{ billion/year}
 \]</span></p>
 <p>Clearly, treating Bill Gates the same as the others skews the average.</p>
 <ul>
-<li>If the bartender next day bragged about earning 50k that night, we’d say “It’s not that you earned 50k organically, a wealthy dude happened to be there that night, we can’t use this as evidence that your business is booming.” In other words, we all would likely agree that if we want to calculate an average of incomes for the bar, Bill should likely get much less weight than the other patrons.</li>
+<li><p>If the bartender next day bragged about earning 50k that night, we’d say: “It’s not that you earned 50k organically; a wealthy dude happened to be there that night. We can’t use this as evidence that your business is booming.”</p></li>
+<li><p>In other words, if we want a meaningful “bar average,” Bill should likely get much less weight than the other patrons.</p></li>
 </ul>
 <hr>
 </div>
 <div id="tabset-2-2">
-<p>Instead of treating Bill as equal to you two, we can give each person a “weight” <span class="math inline">\(w_i\)</span> to decide how much they count in the average. This number is simply the fraction part from the summation on the first slide:</p>
+<p>Instead of treating Bill as equal to you two, we can give each person a weight (w_i) to decide how much they count in the average. This is exactly the fraction we used before:</p>
 <p><span class="math display">\[
-\bar{x}_{\text{weighted}} = \sum_{i=1}^{n} w_i x_i, \quad \sum_{i=1}^{n} w_i = 1,
+\bar{x}_{\text{weighted}} = \sum_{i=1}^{n} w_i x_i, \quad \sum_{i=1}^{n} w_i = 1.
 \]</span></p>
-<p>Here, we compute a weighted average that between you, your friend, and Bill, who now can get a tiny weight. You and your friend get larger weights, giving a more reasonable “average bar income.”</p>
+<p>Here, we compute a weighted average where Bill can get a tiny weight, and you and your friend get larger weights, giving a more reasonable “average bar income.”</p>
 <hr>
 </div>
 <div id="tabset-2-3">
 <p>Suppose we only care about you and your friend, and ignore Bill Gates (weight = 0):</p>
 <p><span class="math display">\[
-\mathbf{x} = \begin{bmatrix} 60 &amp; 70 &amp; 107{,}000{,}000{,}000 \end{bmatrix}, \quad
-\mathbf{w} = \begin{bmatrix} 0.5 \\[1mm] 0.5 \\[1mm] 0 \end{bmatrix}
+\mathbf{x} = \begin{bmatrix} 60 &amp; 70 &amp; 1.07\times 10^{11} \end{bmatrix}, \quad
+\mathbf{w} = \begin{bmatrix} \mathbf{0.5} \\[1mm] \mathbf{0.5} \\[1mm] \mathbf{0} \end{bmatrix}
 \]</span></p>
 <p>Then the weighted average is:</p>
 <p><span class="math display">\[
 \bar{x} = \mathbf{x} \mathbf{w}
-= 0.5\cdot 60 + 0.5\cdot 70 + 0 \cdot 107{,}000{,}000{,}000
+= 0.5\cdot 60 + 0.5\cdot 70 + 0 \cdot 1.07\times 10^{11}
 = 65 \text{ (k/year)}
 \]</span></p>
 <p>See how the average is as it was at first when it was just you and your friend? Bill is clearly not representative of a bar or even a country. Giving him as much weight as regular humans does not make sense.</p>
@@ -299,11 +303,11 @@
 <section id="how-to-choose-the-weights" class="slide level2">
 <h2>How to Choose the Weights?</h2>
 <ul>
-<li><p>The issue with the above is that the weights we used are kind of arbitrary. There’s no reason that the weights for us both need to be 0.5. Maybe you could have gotten a value of 0.1 and your friend 0.9. In other words, weights are rarely given to us in real life. To use the idea of a weighted average for estimating policy impacts, we’ll need to formalize this a little more.</p></li>
-<li><p>Suppose we have one unit that is exposed to terrorism in 1975, and another set of 16 units that are not exposed. We wish to know the effect of terrorism on the GDP per capita.</p></li>
-<li><p>Collecting data on their GDPs over the pre and post terrorism periods, we wish to estimate the counterfactual for the Basque Country as a weighted average of control units. Below we have plotted the Basque Country’s GDP, and the GDPs of the 16 other untreated regions.</p></li>
+<li><p>The issue with the previous examples is that the weights we used were arbitrary. There’s no reason you and your friend must each get 0.5; maybe one of you should get 0.1 and the other 0.9. In real life, weights are usually unknown. To use weighted averages for estimating policy impacts, we need a formal method.</p></li>
+<li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita.</p></li>
+<li><p>Using data on GDPs over the pre- and post-intervention periods, we aim to estimate the counterfactual for the Basque Country as a weighted average of 16 control units. Below we plot the Basque Country’s GDP, and the control/donor regions.</p></li>
 </ul>
-<div id="088abb38" class="cell" data-execution_count="1">
+<div id="d19c46ca" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -315,47 +319,65 @@
 </section>
 <section id="using-least-squares" class="slide level2">
 <h2>Using Least Squares</h2>
-<p>But how do we know how much weight a unit should get? One way to do this is to use linear regression. In linear regression with multiple variables, we get a list of coefficients returned to us that we can use as weights for our controlo group.</p>
+<p>But how do we know how much weight a unit should get? One approach is linear regression. In multiple regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
 <div class="panel-tabset">
 <ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Notation</a></li><li><a href="#tabset-3-2">OLS Problem</a></li><li><a href="#tabset-3-3">Interpretation</a></li><li><a href="#tabset-3-4">Treatment Effect</a></li></ul>
 <div class="tab-content">
 <div id="tabset-3-1">
 <ul>
-<li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: a column vector of outcomes (GDP per capita) for the treated unit (Basque Country) over <span class="math inline">\(T\)</span> time periods, where each row is one GDP value</li>
+<li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: column vector of outcomes (GDP per capita) for the treated unit (Basque Country) over <span class="math inline">\(T\)</span> time periods<br>
+</li>
 <li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units)<br>
 </li>
-<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of weights indicating how much each control unit column contributes to the weighted average version of the Basque Country</li>
+<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of weights indicating how much each control unit contributes to the weighted average version of the Basque Country</li>
 </ul>
+<p><em>Reminder: a weighted average can be written as</em></p>
+<p><span class="math display">\[
+\hat{y}_1 = \mathbf{Y}_0 \mathbf{w} = w_1 Y_{01} + w_2 Y_{02} + \dots + w_J Y_{0J}
+\]</span></p>
+<hr>
 </div>
 <div id="tabset-3-2">
-<p>The weights that minimize the pre-intervention difference are found by solving:</p>
+<ul>
+<li>We can choose weights to minimize the pre-intervention difference between Basque and the weighted donors:</li>
+</ul>
 <p><span class="math display">\[
 \mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
 \]</span></p>
-<p>In Stata this would just be <code>reg y Donor1, Donor2-DonorN if year &lt; 1975</code>, where the dependent variable is the GDP for the Basque Country and the independent variables are the GDP values of the untreated units.</p>
-<p>Here, the OLS coefficients are our weights. These coefficients minimize the differnce between the weighted average and the treated unit as much as possible.</p>
+<ul>
+<li><p>In Stata, this is just: <code>reg y Donor1-DonorJ if year &lt; 1975</code>, where <code>y</code> is Basque GDP and the donors are the untreated units.</p></li>
+<li><p>The OLS coefficients are the weights that minimize the difference between the weighted average and the treated unit in the pre-intervention period.</p></li>
+</ul>
+<hr>
 </div>
 <div id="tabset-3-3">
 <ul>
-<li>Once we have <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, we can compute the weighted average of controls:</li>
+<li>Once we have <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, we compute the weighted average of controls:</li>
 </ul>
 <p><span class="math display">\[
-\hat{y}_1 = \mathbf{Y}_0 \mathbf{w}^{\ast}
+\hat{y}_1 = \mathbf{Y}_0 \mathbf{w}^{\ast} = w_1 Y_{01} + w_2 Y_{02} + \dots + w_J Y_{0J}
 \]</span></p>
-<p>So to be clear, we multiply all of the values for a control unit by its regression coefficient, and we add up those values.</p>
+<ul>
+<li><p>That is: multiply all the values for each control unit by its regression coefficient and sum across donors.</p></li>
+<li><p>This gives the predicted Basque trajectory pre- and post-intervention.</p></li>
+</ul>
+<hr>
 </div>
 <div id="tabset-3-4">
-<p>The average treatment effect on the treated can be expressed as the mean difference between the observed outcomes and the weighted average in the post-intervention period:</p>
+<ul>
+<li>The average treatment effect on the treated (ATT) can be expressed as the mean difference between observed outcomes and the weighted average in the post-intervention period:</li>
+</ul>
 <p><span class="math display">\[
 \text{ATT} = \frac{1}{T - T_0} \sum_{t=T_0+1}^{T} \left( y_{1t} - \hat{y}_{1t} \right)
 \]</span></p>
 <ul>
-<li><span class="math inline">\(T_0\)</span> is the last pre-intervention period<br>
+<li><span class="math inline">\(T_0\)</span>: last pre-intervention period<br>
 </li>
-<li><span class="math inline">\(y_{1t}\)</span> is the observed outcome of the treated unit at time <span class="math inline">\(t\)</span><br>
+<li><span class="math inline">\(y_{1t}\)</span>: observed outcome of the treated unit at time <span class="math inline">\(t\)</span><br>
 </li>
-<li><span class="math inline">\(\hat{y}_{1t}\)</span> is the synthetic prediction at time <span class="math inline">\(t\)</span></li>
+<li><span class="math inline">\(\hat{y}_{1t}\)</span>: synthetic prediction at time <span class="math inline">\(t\)</span></li>
 </ul>
+<p><em>Intuition:</em> ATT measures how much Basque GDP deviates from the OLS prediction after terrorism began.</p>
 </div>
 </div>
 </div>
@@ -366,8 +388,8 @@
 <ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Our Weights</a></li><li><a href="#tabset-4-2">Plotting</a></li></ul>
 <div class="tab-content">
 <div id="tabset-4-1">
-<p>Here are the weights OLS returns to us.</p>
-<div id="21b57f4b" class="cell" data-execution_count="2">
+<p>Here are the weights OLS returns to us for the 16 donor units:</p>
+<div id="1f782f79" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -445,11 +467,11 @@
 </table>
 </div>
 </div>
-<p>We can see that everybody gets weight. Some positive, some negative. It is kind of unclear who matters most to the Basque Country’s weighted average.</p>
+<p>Notice that OLS assigns some positive and some negative weights. Negative weights can be hard to interpret substantively, and it’s unclear which donors really matter most.</p>
 </div>
 <div id="tabset-4-2">
-<p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened, in other words, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton. No donor/control unit moves like this in the pre-treatment period, so we should be suspiscious of this prediciton.</p>
-<div id="bc3022c5" class="cell" data-execution_count="3">
+<p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism not happened, in other words, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton.</p>
+<div id="98a4c771" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -464,7 +486,37 @@
 </section>
 <section id="how-to-change-the-weights" class="slide level2">
 <h2>How To Change The Weights</h2>
-<p>What if we could change the weights somehow?</p>
+<p>What if we could change the weights somehow? What if we could force he predictions of the model to be within the range of the donor pool units? The plot below plots the area between Baleares, with the highest GDP, and Extremadura, the poorest area in Spain.</p>
+<div id="85018070" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="scmintro_files/figure-revealjs/cell-5-output-1.png" width="808" height="523"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="extreme-weighted-averages" class="slide level2 scrollable">
+<h2>Extreme Weighted Averages</h2>
+<ul>
+<li><p>Let’s assign all the weight to just one donor over the entire time series:</p>
+<ol type="1">
+<li>Max donor: weight = 1 for the donor with the highest GDP over the full period, 0 for others<br>
+</li>
+<li>Min donor: weight = 1 for the donor with the lowest GDP over the full period, 0 for others</li>
+</ol></li>
+<li><p>This illustrates the full span of possible predictions within the span of the donor pool.</p></li>
+</ul>
+<div id="fd7bdd72" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="scmintro_files/figure-revealjs/cell-6-output-1.png" width="808" height="523"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="example-plot" class="slide level2">
 <h2>Example Plot</h2>

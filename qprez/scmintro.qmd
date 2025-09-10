@@ -426,6 +426,45 @@ plt.show()
 
 ```
 
+## Extreme Weighted Averages
+
+- Let’s assign all the weight to just one donor over the entire time series:
+
+  1. Max donor: weight = 1 for the donor with the highest GDP over the full period, 0 for others  
+  2. Min donor: weight = 1 for the donor with the lowest  GDP over the full period, 0 for others  
+
+- This illustrates the full span of possible predictions within the span of the donor pool.
+
+```{python}
+# Identify donors with max and min GDP over the full period
+max_idx = Y0.mean(axis=0).argmax()
+min_idx = Y0.mean(axis=0).argmin()
+
+# Create extreme weight vectors
+w_max = np.zeros(Y0.shape[1])
+w_max[max_idx] = 1
+
+w_min = np.zeros(Y0.shape[1])
+w_min[min_idx] = 1
+
+# Compute synthetic trajectories
+y_max = Y0 @ w_max
+y_min = Y0 @ w_min
+
+# Plot
+plt.figure(figsize=(10,6))
+plt.fill_between(time, y_min, y_max, color='lightgrey', alpha=0.4, label="Convex Hull Extremes")
+plt.plot(time, y, color='black', linewidth=2, label='Basque')
+plt.plot(time, y_max, color='red', linestyle='--', linewidth=2, label='Baleares')
+plt.plot(time, y_min, color='blue', linestyle='--', linewidth=2, label='Extremadura')
+plt.axvline(x=time[T0], color='red', linestyle='-', linewidth=2, label='Terrorism')
+plt.xlabel("Year")
+plt.ylabel("GDP per capita")
+plt.title("Basque GDP vs Extreme Weighted Donors")
+plt.legend()
+plt.show()
+```
+
 ---
 
 

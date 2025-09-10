@@ -503,11 +503,15 @@ weights_history = np.array([
 ])
 
 # --- Figure setup ---
-fig, ax = plt.subplots(figsize=(10,6))
-line_y, = ax.plot(time, y, label="Treated (Basque)", color="red", linewidth=2)
+fig, ax = plt.subplots(figsize=(12,6))
+
+line_y, = ax.plot(time, y, label="Observed Basque", color="black", linewidth=2)
+
 line_hatY, = ax.plot(time, w_start[0]*Y0[:,0] + w_start[1]*Y0[:,1], 
-                     label="Weighted combo", color="purple", linestyle="--")
-line_cataluna, = ax.plot(time, Y0[:,0], label="Cataluna", color="green", alpha=0.5)
+                     label="Convex Basque", color="#7DF9FF", linestyle="--", linewidth=2)
+
+line_cataluna, = ax.plot(time, Y0[:,0], label="Catalonia", color="red", alpha=0.5)
+
 line_madrid, = ax.plot(time, Y0[:,1], label="Madrid", color="blue", alpha=0.5)
 
 # Axis labels
@@ -515,7 +519,7 @@ ax.set_xlabel("Year")
 ax.set_ylabel("GDP per Capita")
 
 # Vertical reference line at treatment, labeled
-ax.axvline(x=time[T0], color="black", linestyle="--", alpha=0.8, label="Terrorism")
+ax.axvline(x=time[T0], color="black", linestyle="--", label="Terrorism Begins")
 
 ax.legend()
 ax.set_ylim(y.min() - 1, y.max() + 1)
@@ -533,13 +537,13 @@ def update(frame):
         line_cataluna.set_visible(False)
         line_madrid.set_visible(False)
         ax.set_title(
-            f"Final SCM: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
-            f"Pre-treatment RMSE={rmse_pre:.3f}"
+            f"Final SCM: w_Cataluna={w_curr[0]:.3f}, w_Madrid={w_curr[1]:.3f}, "
+            f"Pre-treatment RMSE={rmse_pre:.4f}"
         )
     else:
         ax.set_title(
-            f"Frame {frame+1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
-            f"Pre-treatment RMSE={rmse_pre:.3f}"
+            f"w_Cataluna={w_curr[0]:.3f}, w_Madrid={w_curr[1]:.3f}, "
+            f"Pre-treatment RMSE={rmse_pre:.4f}"
         )
     
     return line_hatY, line_cataluna, line_madrid

@@ -24,6 +24,8 @@ If you'd like to talk with me about my work, [my consulting services](https://jg
 
 ## News
 
+- Here are my [slides[(https://jgreathouse9.github.io/qprez/scmintro.html) (still being developed) that introduces the synthetic control method.
+
 - As of August 29, 2025, [the landing page for mlsynth](https://jgreathouse9.github.io/mlsynth/webdir/mlsynthlanding.html) is up.
 
 - As of October 6th, 2024, [my draft](http://jgreathouse9.github.io/publications/Replication_of_Shi_2023.pdf) of an empirical replication is available, where I compare and contrast the findings of the Forward DID method versus [the fsPDA](https://doi.org/10.1016/j.jeconom.2021.04.009), using the Chinese Anti-Corruption Campaign as an example. [Here](https://github.com/jgreathouse9/RepACCFDID/tree/main) is the replication code.

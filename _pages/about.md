@@ -24,7 +24,7 @@ If you'd like to talk with me about my work, [my consulting services](https://jg
 
 ## News
 
-- Here are my [slides[(https://jgreathouse9.github.io/qprez/scmintro.html) (still being developed) that introduces the synthetic control method.
+- Here are my [slides](https://jgreathouse9.github.io/qprez/scmintro.html) (still being developed) that introduces the synthetic control method.
 
 - As of August 29, 2025, [the landing page for mlsynth](https://jgreathouse9.github.io/mlsynth/webdir/mlsynthlanding.html) is up.
 

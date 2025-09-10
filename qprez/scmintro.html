@@ -9,7 +9,8 @@
 <link href="scmintro_files/libs/quarto-html/quarto-syntax-highlighting-bbf0a7f1146ec3f739f17469cf885ec8.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.8">
 
-  <meta name="dcterms.date" content="2025-09-09">
+  <meta name="author" content="Jared Greathouse">
+  <meta name="dcterms.date" content="2025-09-10">
   <title>The Synthetic Control Method</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -131,45 +132,83 @@
   <h1 class="title">The Synthetic Control Method</h1>
 
 <div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+<a href="https://jgreathouse9.github.io">Jared Greathouse</a> 
+</div>
+</div>
 </div>
 
-  <p class="date">2025-09-09</p>
+  <p class="date">2025-09-10</p>
 </section>
 <section id="what-is-an-average" class="slide level2">
 <h2>What Is An Average?</h2>
+<p>Before we cover SCM, we need to be very clear about what an average is.</p>
 <div class="panel-tabset">
 <ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Scalars</a></li><li><a href="#tabset-1-2">Vectors</a></li><li><a href="#tabset-1-3">Matrices</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1">
-<p>The arithmetic mean of scalars <span class="math inline">\(x_1, x_2, \dots, x_n \in \mathbb{R}\)</span> is:</p>
-<p><span class="math display">\[
-\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i
-\]</span></p>
-<p>For example, with 12 and 18:</p>
-<p><span class="math display">\[
-\frac{12 + 18}{2} = 15, \quad \text{or equivalently} \quad \frac{1}{2}(12 + 18) = (6 + 9) = 15
-\]</span></p>
+<p>The arithmetic mean of scalars <span class="math inline">\(x_1, x_2, \dots, x_n \in \mathbb{R}\)</span> is: <span class="math inline">\(\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i\)</span>. For example, with 12 and 18: <span class="math inline">\(\frac{12 + 18}{2} = 15 \equiv \frac{1}{2}(12 + 18) = (6 + 9) = 15\)</span></p>
 </div>
 <div id="tabset-1-2">
-<p>This idea generalizes to vectors:</p>
+<p>This idea generalizes to vectors too:</p>
 <p><span class="math display">\[
 \bar{x} = \mathbf{w}^\top \mathbf{x},
 \quad \text{where} \quad
-\mathbf{w} = \left(\frac{1}{n}, \dots, \frac{1}{n}\right)^\top,
-\quad \mathbf{x} = \left(x_1, \dots, x_n\right)^\top
+\mathbf{w} = \begin{bmatrix}\tfrac{1}{2} \\[6pt] \tfrac{1}{2}\end{bmatrix},
+\quad \mathbf{x} = \begin{bmatrix}6 \\[6pt] 4\end{bmatrix}
 \]</span></p>
-<p>Here, <span class="math inline">\(\mathbf{w}\)</span> contains the weights and <span class="math inline">\(\mathbf{x}\)</span> the values. The weighted sum <span class="math inline">\(\mathbf{w}^\top \mathbf{x}\)</span> generalizes the arithmetic mean.</p>
+<p>Then,</p>
+<p><span class="math display">\[
+\bar{x} =
+\begin{bmatrix}\tfrac{1}{2} &amp; \tfrac{1}{2}\end{bmatrix}
+\begin{bmatrix}6 \\ 4\end{bmatrix}
+= \tfrac{1}{2}\cdot 6 + \tfrac{1}{2}\cdot 4 = 5
+\]</span></p>
 </div>
 <div id="tabset-1-3">
-<p>The same logic extends to matrices. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N}\)</span> be a matrix of values, and <span class="math inline">\(\mathbf{w} \in \mathbb{R}^N\)</span> a vector of weights:</p>
+<p>The same logic extends to matrices.<br>
+Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N}\)</span> be a matrix of values, and <span class="math inline">\(\mathbf{w} \in \mathbb{R}^N\)</span> a vector of weights:</p>
 <p><span class="math display">\[
-\bar{\mathbf{y}} = \mathbf{Y}_0 \cdot \mathbf{w}
+\bar{y} = \mathbf{Y}_0 \mathbf{w}
 \]</span></p>
-<p>Each element is:</p>
+<hr>
+<p>For example, take a <span class="math inline">\(2 \times 2\)</span> matrix:</p>
 <p><span class="math display">\[
-\bar{y}_t = \sum_{j=1}^N w_j y_{tj}, \quad \forall \, t \in \{1, \dots, T\}
+\mathbf{Y}_0 =
+\begin{bmatrix}
+6 &amp; 4 \\
+2 &amp; 8
+\end{bmatrix},
+\quad
+\mathbf{w} =
+\begin{bmatrix}
+\tfrac{1}{2} \\[6pt]
+\tfrac{1}{2}
+\end{bmatrix}
 \]</span></p>
-<p>This shows the “average across units” for every point in time.</p>
+<p>Then,</p>
+<p><span class="math display">\[
+\bar{y} =
+\begin{bmatrix}
+6 &amp; 4 \\
+2 &amp; 8
+\end{bmatrix}
+\begin{bmatrix}
+\tfrac{1}{2} \\[6pt]
+\tfrac{1}{2}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\tfrac{1}{2}(6+4) \\
+\tfrac{1}{2}(2+8)
+\end{bmatrix}
+=
+\begin{bmatrix}
+5 \\
+5
+\end{bmatrix}
+\]</span></p>
 </div>
 </div>
 </div>
@@ -259,7 +298,7 @@
         progress: true,
 
         // Display the page number of the current slide
-        slideNumber: false,
+        slideNumber: 'c/t',
 
         // 'all', 'print', or 'speaker'
         showSlideNumber: 'all',
@@ -364,7 +403,7 @@
         previewLinks: false,
 
         // Transition style (none/fade/slide/convex/concave/zoom)
-        transition: 'none',
+        transition: 'fade',
 
         // Transition speed (default/fast/slow)
         transitionSpeed: 'default',

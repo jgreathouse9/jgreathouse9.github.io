@@ -497,7 +497,7 @@ def update(frame):
     line_hatY.set_ydata(y_hat)
     
     # Compute pre-treatment MSE
-    mse_pre = np.mean((y[:T0] - y_hat[:T0])**2)
+    mse_pre = np.sqrt(np.mean((y[:T0] - y_hat[:T0])**2))
     
     if frame == steps - 1:
         line_cataluna.set_visible(False)
@@ -506,7 +506,7 @@ def update(frame):
                      f"Pre-treatment MSE={mse_pre:.2f}")
     else:
         ax.set_title(f"Frame {frame+1}: w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
-                     f"Pre-treatment MSE={mse_pre:.2f}")
+                     f"Pre-treatment RMSE={mse_pre:.2f}")
     
     return line_hatY, line_cataluna, line_madrid
 

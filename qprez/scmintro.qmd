@@ -624,6 +624,91 @@ arco = CLUSTERSC(config).fit()
 
 ### In Space
 
+```{python}
+
+import pandas as pd
+from mlsynth import CLUSTERSC
+
+# --- Load and preprocess data ---
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
+data = pd.read_csv(url)
+
+# Identify columns
+unit_col = data.columns[0]   # region
+year_col = data.columns[1]   # year
+treat_col = data.columns[-1] # treatment dummy
+outcome_col = data.columns[2]
+
+# Function to build placebo datasets
+def make_placebo_datasets(data, unit_col, year_col, treat_col, treat_start_year):
+    placebo_dfs = {}
+    for unit in data[unit_col].unique():
+        df_copy = data.copy()
+        df_copy[treat_col] = ((df_copy[unit_col] == unit) &
+                              (df_copy[year_col] >= treat_start_year)).astype(int)
+        placebo_dfs[unit] = df_copy
+    return placebo_dfs
+
+# Generate datasets
+placebo_datasets = make_placebo_datasets(
+    data,
+    unit_col=unit_col,
+    year_col=year_col,
+    treat_col=treat_col,
+    treat_start_year=1975
+)
+
+# Loop through each placebo dataset and fit RESCM
+results = {}
+for unit, df_placebo in placebo_datasets.items():
+    config = {
+        "df": df_placebo,
+        "outcome": outcome_col,
+        "treat": treat_col,
+        "unitid": unit_col,
+        "time": year_col,
+        "display_graphs": False,   # suppress if looping
+        "save": False, "method": "PCR", "cluster": False
+    }
+    model = CLUSTERSC(config).fit()
+    results[unit] = model
+
+all_gaps = []
+
+for unit, model in results.items():
+    # This is a numpy array; take first column
+    gap_vec = model.sub_method_results['PCR'].time_series.estimated_gap[:, 0]
+
+    df_gap = pd.DataFrame({
+        "unit": unit,
+        "time": model.sub_method_results['PCR'].time_series.estimated_gap[:, 1],
+        "gap": gap_vec
+    })
+    all_gaps.append(df_gap)
+
+all_gaps_df = pd.concat(all_gaps, ignore_index=True)
+
+
+import matplotlib.pyplot as plt
+
+# Plot all placebo gaps first (thin grey lines)
+for unit in all_gaps_df['unit'].unique():
+    if unit == "Basque":
+        continue
+    subset = all_gaps_df[all_gaps_df['unit'] == unit]
+    plt.plot(subset['time'], subset['gap'], color='grey', alpha=0.5, linewidth=0.8)
+
+# Plot Basque gap (thick black line)
+basque_subset = all_gaps_df[all_gaps_df['unit'] == "Basque"]
+plt.plot(basque_subset['time'], basque_subset['gap'], color='black', linewidth=3, label='Basque')
+
+plt.xlabel("Year")
+plt.ylabel("Estimated Gap")
+plt.title("In-space Placebo Gaps")
+plt.legend()
+plt.show()
+```
+
 
 
 

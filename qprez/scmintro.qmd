@@ -574,4 +574,59 @@ plt.close(fig)
 
 ![Convex Combination](scm_weighted_combo.gif)
 
+## Assumptions of SCM
+
+- SCM is predicated on quality pre-intervention fit.
+
+- Ideally, only a few donor units will be selected for the synthetic control.
+
+- SCM also makes the standard assumptions about SUTVA (no interference).
+
+## Placebos
+
+::: {.panel.tabstat}
+
+### In Time
+
+```{python}
+
+import pandas as pd
+from mlsynth import CLUSTERSC
+
+# --- Load and preprocess data ---
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
+data = pd.read_csv(url)
+
+# Identify columns
+treat_col = data.columns[-1]   # treatment dummy
+unit_col = data.columns[0]     # region/unit column (assuming first col is "regionname")
+year_col = data.columns[1]     # year column
+
+# Update treatment: 1 if Basque and year >= 1969, else 0
+data[treat_col] = ((data[unit_col] == "Basque") & (data[year_col] >= 1973)).astype(int)
+
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["red"], "method": "PCR"}
+
+arco = CLUSTERSC(config).fit()
+
+```
+
+
+
+### In Space
+
+
+
+
+
+:::
 

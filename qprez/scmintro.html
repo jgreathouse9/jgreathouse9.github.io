@@ -30,7 +30,7 @@
       vertical-align: middle;
     }
   </style>
-  <link rel="stylesheet" href="scmintro_files/libs/revealjs/dist/theme/quarto-a527665ed01beaa5bc5d6c6d96bbc18d.css">
+  <link rel="stylesheet" href="scmintro_files/libs/revealjs/dist/theme/quarto-df339bf3fc0b303c1eb98c039f20d912.css">
   <link href="scmintro_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="scmintro_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="scmintro_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -175,40 +175,33 @@
 </div>
 <div id="tabset-1-2">
 <ul>
-<li>We can write the same example as a row vector:</li>
+<li>We can also write the same example as a row vector:</li>
 </ul>
 <p><span class="math display">\[
-\mathbf{x} =
-\begin{bmatrix} 12 &amp; 18 \end{bmatrix}
-\in \mathbb{R}^{1 \times 2},
+\mathbf{x} = \begin{bmatrix} 12 &amp; 18 \end{bmatrix} \in \mathbb{R}^{1 \times 2}.
 \]</span></p>
-<p>where we have one row, and each column entry corresponds to a person’s apples.</p>
+<p>Here, each column entry represents a person’s apples .</p>
 <ul>
-<li>The weights are 1 divided by the number of people. Since it’s just you and your friend, you both get the same weight:</li>
+<li>To compute the average using linear algebra, we use weights. Since there are two people, each gets weight <span class="math inline">\(1/2\)</span>:</li>
 </ul>
 <p><span class="math display">\[
-\mathbf{w} =
-\begin{bmatrix} \frac{1}{2} \\ \frac{1}{2} \end{bmatrix}
-\in \mathbb{R}^{2 \times 1}.
+\mathbf{w} = \begin{bmatrix} \frac{1}{2} \\[2mm] \frac{1}{2} \end{bmatrix} \in \mathbb{R}^{2 \times 1}.
 \]</span></p>
 <ul>
-<li>Then, we multiply each value in the column by its corresponding weight (1/2). Summing these products gives a single number, the average number of apples:</li>
+<li>Then, the average is just a weighted sum (technically called the <em>dot product</em>), which in vector form is:</li>
 </ul>
 <p><span class="math display">\[
 \bar{x} = \mathbf{x}\mathbf{w}
 =
 \begin{bmatrix} 12 &amp; 18 \end{bmatrix}
-\begin{bmatrix} \tfrac{1}{2} \\[6pt] \tfrac{1}{2} \end{bmatrix}
-=
-\begin{bmatrix} 12 \cdot \tfrac{1}{2} &amp; \; 18 \cdot \tfrac{1}{2} \end{bmatrix}
-= 6 + 9 = 15.
-\]</span></p>
-<p>See? We still have 15 apples, on average.</p>
+\begin{bmatrix} \tfrac{1}{2} \\[1mm] \tfrac{1}{2} \end{bmatrix}
+= 12 \cdot \tfrac{1}{2} + 18 \cdot \tfrac{1}{2} = 15.
+\]</span> See? We still have 15 apples, on average.</p>
 <hr>
 </div>
 <div id="tabset-1-3">
 <ul>
-<li>Let’s extend this idea to multiple time periods. Suppose today you have 12 apples and tomorrow 30, and your friend has 18 today and 22 tomorrow. We can organize this into a matrix, where each row is a time period and each column is a person:</li>
+<li>Let’s extend the idea of averaging to multiple time periods. Suppose today you have 12 apples and tomorrow 30, while your friend has 18 today and 22 tomorrow. We can put this into a matrix, where each row is a time period and each column is a person:</li>
 </ul>
 <p><span class="math display">\[
 \mathbf{Y} =
@@ -219,9 +212,12 @@
 \in \mathbb{R}^{2 \times 2}.
 \]</span></p>
 <ul>
-<li>Now we want the average number of apples per time period. Using the same column weights as before (1/2 for each person), we multiply each row by the weights and sum:</li>
+<li><p>Each row represents a snapshot in time, and each column represents a person.</p></li>
+<li><p>To find the average number of apples per time period, we use the same weights as before (1/2 for each person). Multiplying the matrix by the weight vector gives a row-wise weighted sum:</p></li>
 </ul>
 <p><span class="math display">\[
+\mathbf{w} =
+\begin{bmatrix} 1/2 \\ 1/2 \end{bmatrix}, \quad
 \bar{\mathbf{x}} = \mathbf{Y} \mathbf{w}
 =
 \begin{bmatrix}
@@ -235,9 +231,9 @@
 \begin{bmatrix} 15 \\ 26 \end{bmatrix}.
 \]</span></p>
 <ul>
-<li>So on average, you and your friend have 15 apples today and 26 apples tomorrow.<br>
-</li>
-<li>This idea generalizes to any data measured over time, like GDPs, incomes, or other outcomes.</li>
+<li><p>Interpretation: Today, the average is 15 apples; tomorrow, the average is 26 apples.</p></li>
+<li><p>This shows that row-wise averaging is just taking a weighted sum across the columns for each row. Each row “collapses” into a single number representing the average for that time period.</p></li>
+<li><p>This concept generalizes to any time-series or panel data, like GDPs, incomes, or other outcomes measured across multiple units.</p></li>
 </ul>
 </div>
 </div>
@@ -306,11 +302,12 @@
 <section id="how-to-choose-the-weights" class="slide level2">
 <h2>How to Choose the Weights?</h2>
 <ul>
-<li><p>The issue with the previous examples is that the weights we used were arbitrary. There’s no reason you and your friend must each get 0.5; maybe one of you should get 0.1 and the other 0.9. In real life, weights are usually unknown. To use weighted averages for estimating policy impacts, we need a formal method.</p></li>
-<li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita.</p></li>
-<li><p>Using data on GDPs over the pre- and post-intervention periods, we aim to estimate the counterfactual for the Basque Country as a weighted average of 16 control units. Below we plot the Basque Country’s GDP, and the control/donor regions.</p></li>
+<li><p>In the earlier examples, the weights we used were arbitrary. We split 50/50 between you and your friend, but there was no real reason for that choice. In real life, weights are usually unknown — and assigning them poorly can create nonsense averages.</p></li>
+<li><p>Think back to the bar example: if Bill Gates walks in, and we give him the same weight as everyone else, the “average income” of the bar will be absurdly high. To represent the <em>bar’s patrons</em>, Gates should either receive a much smaller weight or none at all.</p></li>
+<li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita via taking a weighted average of control units, but how to choose the weights?</p></li>
+<li><p>Optimization solves this problem. Instead of us just making up weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units. Units that closely track Basque GDP get higher weights; dissimilar ones get lower or zero weights.</p></li>
 </ul>
-<div id="8895c549" class="cell" data-execution_count="1">
+<div id="ca81f1da" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -322,7 +319,7 @@
 </section>
 <section id="using-least-squares" class="slide level2">
 <h2>Using Least Squares</h2>
-<p>But how do we know how much weight a unit should get? One approach is linear regression. In multiple regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
+<p>One method of optimization we could use to do this is least-squares in the form of a linear regression model, which economists are quite familiar with. In multiple linear regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
 <div class="panel-tabset">
 <ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Notation</a></li><li><a href="#tabset-3-2">Data</a></li><li><a href="#tabset-3-3">OLS Problem</a></li><li><a href="#tabset-3-4">Interpretation</a></li><li><a href="#tabset-3-5">Treatment Effect</a></li></ul>
 <div class="tab-content">
@@ -332,16 +329,17 @@
 </li>
 <li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units)<br>
 </li>
-<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of weights indicating how much each control unit contributes to the weighted average version of the Basque Country</li>
+<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of weights where each entry indicates how much each control unit contributes to the weighted average version of the Basque Country</li>
 </ul>
 <p><em>Reminder: a weighted average can be written as</em></p>
 <p><span class="math display">\[
 \hat{y}_1 = \mathbf{Y}_0 \mathbf{w} = w_1 y_{1} + w_2 y_{2} + \dots + w_J y_{J}
 \]</span></p>
+<p>In this case, we are taking a weighted average of our control units.</p>
 </div>
 <div id="tabset-3-2">
 <p>Here is the dataset, literally displayed in preparation for regression</p>
-<div id="fc0681f6" class="cell" data-execution_count="2">
+<div id="a974b515" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -511,13 +509,13 @@
 </div>
 <div id="tabset-3-3">
 <ul>
-<li>We can choose weights to minimize the pre-intervention difference between Basque and the weighted donors:</li>
+<li>We can choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:</li>
 </ul>
 <p><span class="math display">\[
 \mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
 \]</span></p>
 <ul>
-<li>In practice, this is just OLS on the pre-1975 period, where <span class="math inline">\(\mathbf{y}_1\)</span> is the Basque GDP column and <span class="math inline">\(\mathbf{Y}_0\)</span> are the columns for the donor pool. The regression coefficients are the weights.</li>
+<li>In practice, this is just OLS on the pre-1975 period, where <span class="math inline">\(\mathbf{y}_1\)</span> is the Basque GDP column and <span class="math inline">\(\mathbf{Y}_0\)</span> are the columns for the donor pool. The regression coefficients (what we call the betas (<span class="math inline">\(\beta\)</span>) in our introductory econometrics classes) are the weights.</li>
 </ul>
 <hr>
 </div>
@@ -542,13 +540,13 @@
 \text{ATT} = \frac{1}{T - T_0} \sum_{t=T_0+1}^{T} \left( y_{1t} - \hat{y}_{1t} \right)
 \]</span></p>
 <ul>
-<li><span class="math inline">\(T_0\)</span>: last pre-intervention period<br>
+<li>where <span class="math inline">\(T_0\)</span>: last pre-intervention period (1974)<br>
 </li>
 <li><span class="math inline">\(y_{1t}\)</span>: observed outcome of the treated unit at time <span class="math inline">\(t\)</span><br>
 </li>
-<li><span class="math inline">\(\hat{y}_{1t}\)</span>: OLS prediction at time <span class="math inline">\(t\)</span></li>
+<li><span class="math inline">\(\hat{y}_{1t}\)</span>: OLS prediction at time <span class="math inline">\(t\)</span>, in the post-intervention period</li>
 </ul>
-<p><em>Intuition:</em> ATT measures how much the real, treated Basque GDP deviates from the model (OLS in this case) prediction after terrorism began.</p>
+<p><em>Intuition:</em> ATT measures how much the real, treated Basque GDP deviates from the model’s prediction (estimated via OLS in this case).</p>
 </div>
 </div>
 </div>
@@ -556,11 +554,11 @@
 <section id="least-squares-cont." class="slide level2">
 <h2>Least Squares Cont.</h2>
 <div class="panel-tabset">
-<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Our Weights</a></li><li><a href="#tabset-4-2">Plotting</a></li></ul>
+<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Our Weights</a></li><li><a href="#tabset-4-2">Plotting the Donors</a></li><li><a href="#tabset-4-3">Plotting</a></li></ul>
 <div class="tab-content">
 <div id="tabset-4-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="322796e2" class="cell" data-execution_count="3">
+<div id="e1f5b057" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -638,15 +636,27 @@
 </table>
 </div>
 </div>
-<p>Notice that OLS assigns some positive and some negative weights. Negative weights can be hard to interpret substantively, and it’s unclear which donors really matter most.</p>
+<p>Notice that OLS assigns some positive and some negative weights. These tell us how similar the control units is to the treated unit. Notice how some units have negative weights. These can be hard to interpret substantively: which units are truly most similar to the Basque Country before terrorism happened? Is it Andalucia or Castilla Y Leon?</p>
 </div>
 <div id="tabset-4-2">
-<p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton.</p>
-<div id="2bc42d1b" class="cell" data-execution_count="4">
+<p>Here are some of the predicted donors plotted against the Basque Country</p>
+<div id="1e6e93ee" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="scmintro_files/figure-revealjs/cell-5-output-1.png" width="856" height="567"></p>
+<p><img data-src="scmintro_files/figure-revealjs/cell-5-output-1.png" width="856" height="490"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-4-3">
+<p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, it has a weird zig-zag-y prediction after the treatment happens. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism not happened. In other words, if the OLS estmate is to be taken seriously, terrorism was great for business to the tune of 1500 dollars per person… This does not seem like a sensible finding substantively, or a very reasonable prediciton.</p>
+<div id="e91f0c3d" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img data-src="scmintro_files/figure-revealjs/cell-6-output-1.png" width="856" height="567"></p>
 </figure>
 </div>
 </div>
@@ -662,11 +672,11 @@
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="5e7b52a4" class="cell" data-execution_count="5">
+<div id="aaba724f" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="scmintro_files/figure-revealjs/cell-6-output-1.png" width="856" height="567"></p>
+<p><img data-src="scmintro_files/figure-revealjs/cell-7-output-1.png" width="856" height="567"></p>
 </figure>
 </div>
 </div>
@@ -707,22 +717,22 @@
 <ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">In Time</a></li><li><a href="#tabset-5-2">In Space</a></li></ul>
 <div class="tab-content">
 <div id="tabset-5-1">
-<div id="55b2c96b" class="cell" data-execution_count="7">
+<div id="f7173f14" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="scmintro_files/figure-revealjs/cell-8-output-1.png" width="907" height="532"></p>
+<p><img data-src="scmintro_files/figure-revealjs/cell-9-output-1.png" width="907" height="532"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
 <div id="tabset-5-2">
-<div id="1dd60952" class="cell" data-execution_count="8">
+<div id="60a20801" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
-<p><img data-src="scmintro_files/figure-revealjs/cell-9-output-1.png" width="879" height="490"></p>
+<p><img data-src="scmintro_files/figure-revealjs/cell-10-output-1.png" width="879" height="490"></p>
 </figure>
 </div>
 </div>
@@ -734,7 +744,7 @@
 <section id="limitations-of-scm" class="slide level2">
 <h2>Limitations of SCM</h2>
 <ul>
-<li><p>Uusally a long pre-treatment series forthe bias to shrink asymptotically</p></li>
+<li><p>Usually a long pre-treatment series forthe bias to shrink asymptotically</p></li>
 <li><p>Requires a good donor pool, otherwise is vulnerable to interpolation biases.</p></li>
 <li><p>Requires a relatively smooth time series to match on</p></li>
 </ul>

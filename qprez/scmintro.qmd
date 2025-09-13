@@ -793,7 +793,7 @@ plt.show()
 :::
 
 
-## [Key Takeaways for Practitioners](https://arxiv.org/pdf/2203.06279)
+## [Key Takeaways for Practitioners Using Classic SCM](https://arxiv.org/pdf/2203.06279)
 
 - **Low-volatility series**  
   Synthetic controls work best with aggregate, relatively smooth series.  
@@ -815,16 +815,12 @@ plt.show()
   $$
   J \lesssim c \cdot T_0 \quad\text{for some modest constant } c,
   $$
-  and choose donors that minimize pre-fit distance:
-  $$
-  \min_{\mathcal{D}\subseteq\{1,\dots,J\}} \; \operatorname{dist}\big(y_{1t\le T_0},\, \{y_{jt\le T_0}: j\in\mathcal{D}\}\big).
-  $$
 
 - **Sparsity aids interpretability**  
   Fewer nonzero weights make the synthetic control easier to interpret.  
   *Condition:* prefer weight vectors $\mathbf{w}$ with small support:
   $$
-  \|\mathbf{w}\|_0 \text{ small} \quad\text{or enforce sparsity via the} $\ell_1$ norm: \|\mathbf{w}\|_1
+  \|\mathbf{w}\|_0 << J \quad\text{or use the} \ell_1 norm: \|\mathbf{w}\|_1
   $$
 
 - **Plot your treated unit versus the donors (seriously)**  
@@ -839,9 +835,9 @@ plt.show()
   $$
 
 - **Out-of-sample validation is essential**  
-  Use placebo tests (in-time and in-space) and permutation inference to check robustness.  
+  Use placebo tests (in-time and in-space) to check robustness.  
   *Condition (placebo):* the treated unit's post-treatment gap should be an outlier relative to the placebo distribution. If $\widehat{\text{ATT}}_1$ is the treated ATT and $\{\widehat{\text{ATT}}_j\}_{j\neq 1}$ are placebo ATTs,
   $$
   p\text{-value} \approx \frac{1}{J}\sum_{j\neq 1} \mathbf{1}\big(|\widehat{\text{ATT}}_j|\ge |\widehat{\text{ATT}}_1|\big)
   $$
-  should be small.
+  should be small. Furthermore, the ATT for the real treatment period should not change substantively given *reasonable* in-time placebos.

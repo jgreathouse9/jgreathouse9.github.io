@@ -577,62 +577,59 @@ Ywide_data = prepped_data["Ywide"]
 
 y = Ywide_data["Basque"].values
 Y0 = Ywide_data[["Cataluna", "Madrid (Comunidad De)"]].values
-time = prepped_data["time_labels"]   # actual time labels
-T0 = prepped_data["pre_periods"]     # number of pre-treatment periods
+time = prepped_data["time_labels"]  # actual time labels
+T0 = prepped_data["pre_periods"]  # number of pre-treatment periods
 
-# --- Weights setup ---
+# --- Weights ---
 w_final = np.array([0.85, 0.15])
 w_start = np.array([0.1, 0.9])
 steps = 50
 weights_history = np.array([
-    w_start + (w_final - w_start) * t/(steps-1) for t in range(steps)
+    w_start + (w_final - w_start) * t / (steps - 1) for t in range(steps)
 ])
 
 # --- Figure setup ---
-fig, ax = plt.subplots(figsize=(12,6))
+fig, ax = plt.subplots(figsize=(12, 6))
 
 line_y, = ax.plot(time, y, label="Observed Basque", color="black", linewidth=2)
+line_hatY, = ax.plot(time, w_start[0] * Y0[:, 0] + w_start[1] * Y0[:, 1],
+                     label="Convex Basque", color="blue", linestyle="--", linewidth=2)
+line_cataluna, = ax.plot(time, Y0[:, 0], label="Catalonia", color="red", alpha=0.5)
+line_madrid, = ax.plot(time, Y0[:, 1], label="Madrid", color="blue", alpha=0.5)
 
-line_hatY, = ax.plot(
-    time,
-    w_start[0]*Y0[:,0] + w_start[1]*Y0[:,1], 
-    label="Synthetic Basque", color="blue", linestyle="--", linewidth=2
-)
-
-line_cataluna, = ax.plot(time, Y0[:,0], label="Catalonia", color="red", alpha=0.5)
-line_madrid, = ax.plot(time, Y0[:,1], label="Madrid", color="blue", alpha=0.5)
-
-# Vertical reference line
+# Vertical reference line at treatment
 ax.axvline(x=time[T0], color="black", linestyle="--", label="Terrorism Begins")
-
-# Dynamic shaded ATT gap (initialize empty)
-att_shade = ax.fill_between(time[T0:], y[T0:], y[T0:], color="gray", alpha=0.3, label="ATT Gap")
-
 ax.set_xlabel("Year")
 ax.set_ylabel("GDP per Capita")
 ax.set_ylim(y.min() - 1, y.max() + 1)
 ax.legend()
 
+# Initialize shaded ATT variable
+att_shade = None
+
+
 # --- Animation function ---
 def update(frame):
     global att_shade
-    
+
     # Current weights and synthetic prediction
     w_curr = weights_history[frame]
-    y_hat = w_curr[0]*Y0[:,0] + w_curr[1]*Y0[:,1]
+    y_hat = w_curr[0] * Y0[:, 0] + w_curr[1] * Y0[:, 1]
     line_hatY.set_ydata(y_hat)
-    
-    # Update shaded ATT region
-    for coll in att_shade.get_paths():  # clear old shading
-        coll.vertices[:] = []
-    att_shade.remove()
+
+    # Remove old shading if it exists
+    if att_shade is not None:
+        att_shade.remove()
+
+    # Update shaded ATT region dynamically
     att_shade = ax.fill_between(
         time[T0:], y[T0:], y_hat[T0:], color="gray", alpha=0.3, label="ATT Gap"
     )
-    
+
     # Pre-treatment RMSE
-    rmse_pre = np.sqrt(np.mean((y[:T0] - y_hat[:T0])**2))
-    
+    rmse_pre = np.sqrt(np.mean((y[:T0] - y_hat[:T0]) ** 2))
+
+    # Update title dynamically
     if frame == steps - 1:
         # Compute ATT
         att = np.mean(y[T0:] - y_hat[T0:])
@@ -647,17 +644,22 @@ def update(frame):
             f"w_Cataluna={w_curr[0]:.2f}, w_Madrid={w_curr[1]:.2f}, "
             f"Pre-RMSE={rmse_pre:.3f}"
         )
-    
+
     return line_hatY, line_cataluna, line_madrid, att_shade
 
+
 # --- Animate with repeated final frame ---
-extra_frames = 50  # hold final state ~5s at 10 fps
-all_frames = list(range(steps)) + [steps-1]*extra_frames
+extra_frames = 50  # hold final frame ~5 seconds at 10 fps
+all_frames = list(range(steps)) + [steps - 1] * extra_frames
 
 ani = FuncAnimation(fig, update, frames=all_frames, blit=False)
 ani.save("scm_weighted_combo.gif", writer=PillowWriter(fps=10))
 
 plt.close(fig)
+
+
+
+
 ```
 
 ![Convex Combination](scm_weighted_combo.gif)

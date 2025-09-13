@@ -23,13 +23,12 @@ highlight-style: github
   - A single (or small number of) treated units.  
   - Compare against untreated units to infer causal effects.
 
-- **Connection to Difference-in-Differences (DiD)**    
-  - DiD assumes outcomes follow a simple factor model:
-
+- **Connection to Difference-in-Differences (DiD)**  
+  - DiD assumes outcomes follow:  
     $$
-    y_{jt}(0) = \mathbf{\mu}_j + \mathbf{\lambda}_t + \epsilon_{jt}
+    y_{jt}(0) = \mu_j + \lambda_t + \epsilon_{jt}
     $$
-    where $\mathbf{\mu}_j \in \mathbb{R}$ are unit fixed effects and $\mathbf{\lambda}_t \in \mathbb{R}$ are time fixed effects.  
+    where $\mu_j$ are unobservable unit constant effects and $\lambda_t$ are time constant, unit variant unobserved effects  
 
   - SCM generalizes this with an *interactive fixed effects model*:  
     $$
@@ -793,13 +792,14 @@ plt.show()
 
 :::
 
-## Key Takeaways for Practitioners (with mathematical conditions)
+
+## [Key Takeaways for Practitioners](https://arxiv.org/pdf/2203.06279)
 
 - **Low-volatility series**  
   Synthetic controls work best with aggregate, relatively smooth series.  
   *Condition (informal):* the pre-treatment volatility should be small relative to the signal, e.g.
   $$
-  \frac{\operatorname{sd}(y_{1,t\le T_0})}{\overline{y}_{1,t\le T_0}} \quad\text{is small.}
+  \frac{\operatorname{sd}(y_{1t\le T_0})}{\overline{y}_{1t\le T_0}} \quad\text{is small.}
   $$
 
 - **Extended pre-intervention period**  
@@ -810,36 +810,32 @@ plt.show()
   $$
 
 - **Small, relevant donor pool**  
-  More donors can increase interpolation bias and overfitting. Prefer a focused donor set.  
+  More donors can increase interpolation bias and overfitting. Prefer a smaller donor set.  
   *Condition (selection):* restrict donor count $J$ relative to pre-period information, e.g.
   $$
   J \lesssim c \cdot T_0 \quad\text{for some modest constant } c,
   $$
   and choose donors that minimize pre-fit distance:
   $$
-  \min_{\mathcal{D}\subseteq\{1,\dots,J\}} \; \operatorname{dist}\big(y_{1,t\le T_0},\, \{y_{j,t\le T_0}: j\in\mathcal{D}\}\big).
+  \min_{\mathcal{D}\subseteq\{1,\dots,J\}} \; \operatorname{dist}\big(y_{1t\le T_0},\, \{y_{jt\le T_0}: j\in\mathcal{D}\}\big).
   $$
 
 - **Sparsity aids interpretability**  
   Fewer nonzero weights make the synthetic control easier to interpret.  
   *Condition:* prefer weight vectors $\mathbf{w}$ with small support:
   $$
-  \|\mathbf{w}\|_0 \text{ small} \quad\text{or enforce } \|\mathbf{w}\|_1 \text{ penalties to induce sparsity.}
+  \|\mathbf{w}\|_0 \text{ small} \quad\text{or enforce sparsity via the} $\ell_1$ norm: \|\mathbf{w}\|_1
   $$
 
 - **Plot your treated unit versus the donors (seriously)**  
   Visual diagnostics: check level/trend alignment and extreme donors before fitting.  
-  *Diagnostic:* inspect $\{y_{j,t}\}_{j\in\text{donors}}$ vs.\ $y_{1,t}$ for $t\le T_0$.
+  *Diagnostic:* inspect $\{y_{jt}\}_{j\in \mathcal{J}_{0}}$ vs.\ $y_{1t}$ for $t\le T_0$.
 
 - **Good pre-treatment fit matters**  
   If pre-fit error is large, post-treatment inferences are unreliable.  
-  *Condition (quantitative):* require a low pre-fit RMSE or relative RMSE:
+  *Condition (quantitative):* require a low pre-fit RMSE:
   $$
-  \text{RMSE}_{\text{pre}} = \sqrt{\frac{1}{T_0}\sum_{t=1}^{T_0}\big(y_{1t}-\hat y_{1t}\big)^2} \quad\text{is small,}
-  $$
-  or a small relative fit error
-  $$
-  \frac{\text{RMSE}_{\text{pre}}}{\overline{y}_{1,t\le T_0}} \text{ is small.}
+  \text{RMSE}_{t \in \mathcal{T}_{1}} = \sqrt{\frac{1}{T_0}\sum_{t \in \mathcal{T}_{1}}\big(y_{1t}-\hat y_{1t}\big)^2}
   $$
 
 - **Out-of-sample validation is essential**  
@@ -853,6 +849,3 @@ plt.show()
 ---
 
 *Note:* these conditions are qualitative guides rather than strict thresholds. In practice, combine the quantitative checks above (RMSE, volatility, placebo p-values) with visual inspection to decide whether an SCM analysis is credible.
- 
-
-

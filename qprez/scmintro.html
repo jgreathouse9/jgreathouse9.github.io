@@ -325,7 +325,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita via taking a weighted average of control units, but how to choose the weights?</p></li>
 <li><p>Optimization solves this problem. Instead of us just making up weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="87a7033f" class="cell" data-execution_count="1">
+<div id="51b50374" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -347,7 +347,10 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </li>
 <li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units)<br>
 </li>
-<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of weights where each entry indicates how much each control unit contributes to the weighted average version of the Basque Country</li>
+<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of weights where each entry indicates how much each control unit contributes to the weighted average version of the Basque Country<br>
+</li>
+<li><span class="math inline">\(\mathcal{T}_{1}\)</span> and <span class="math inline">\(\mathcal{T}_{2}\)</span> respectivly are the sets of pre and post-treatment periods</li>
+<li><span class="math inline">\(\mathcal{J}_{0}\)</span> is the set of untreated units</li>
 </ul>
 <p><em>Reminder: a weighted average can be written as</em></p>
 <p><span class="math display">\[
@@ -357,7 +360,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-3-2">
 <p>Here is the dataset, literally displayed in preparation for regression</p>
-<div id="a0fa0a3c" class="cell" data-execution_count="2">
+<div id="37aea481" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -576,7 +579,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <div class="tab-content">
 <div id="tabset-4-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="44cf47ae" class="cell" data-execution_count="3">
+<div id="0cbf236d" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -658,7 +661,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-4-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="9dc512bb" class="cell" data-execution_count="4">
+<div id="093a1dc5" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -671,7 +674,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-4-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot moer variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediciton statistically</p>
-<div id="8790be8f" class="cell" data-execution_count="5">
+<div id="1a0dfe54" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -691,7 +694,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="82344d35" class="cell" data-execution_count="6">
+<div id="2ed175da" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -722,18 +725,6 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </ul>
 
 <img data-src="scm_weighted_combo.gif" class="r-stretch quarto-figure-center"><p class="caption">Convex Combination</p></section>
-<section id="assumptions-of-the-classic-synthetic-control-method" class="slide level2">
-<h2>Assumptions of the Classic Synthetic Control Method</h2>
-<ul>
-<li><p><strong>Good pre-treatment fit is essential</strong>: SCM relies on the treated unit being well approximated by a weighted combination of donors before the intervention. This suggests we need a low root-mean squared error for the fitted pre-treatment predictions.</p></li>
-<li><p><strong>SUTVA (no interference)</strong>: The treated unit’s outcome should not be affected by other units’ treatments. If spillovers are possible, one approach is: first, estimate synthetic controls for all “possibly affected” units using “certainly unaffected” units; then use these synthetic outcomes as donors for the main unit of interest.</p></li>
-<li><p><strong>Convex combination assumption</strong>: The treated unit must be representable as a convex combination of donor units. That is, the weights <span class="math inline">\(\mathbf{w}^{\mathrm{SCM}}\)</span> satisfy</p>
-<p><span class="math display">\[
-\mathbf{w}^{\mathrm{SCM}} \ge 0, \quad \mathbf{1}^\top \mathbf{w}^{\mathrm{SCM}} = 1
-\]</span></p></li>
-<li><p><strong>No anticipation:</strong> The treated unit does not adjust its behavior before the intervention in anticipation of treatment. If a policy is announced in a city, but is not implemented yet until later, consisder using the announcement treatment date as the date of treatment, instead of the day the policy begins.</p></li>
-</ul>
-</section>
 <section id="placebos" class="slide level2">
 <h2>Placebos</h2>
 <p>Validating SCM designs are important as well, Consider a few robustness checks:</p>
@@ -741,7 +732,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">In Time</a></li><li><a href="#tabset-5-2">In Space</a></li></ul>
 <div class="tab-content">
 <div id="tabset-5-1">
-<div id="96451745" class="cell" data-execution_count="8">
+<div id="dc91b26f" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -752,7 +743,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 </div>
 <div id="tabset-5-2">
-<div id="9dbb3107" class="cell" data-execution_count="9">
+<div id="5177fcbe" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -771,7 +762,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p><strong>Low-volatility series</strong><br>
 Synthetic controls work best with aggregate, relatively smooth series.<br>
 <em>Condition (informal):</em> the pre-treatment volatility should be small relative to the signal, e.g. <span class="math display">\[
-\frac{\operatorname{sd}(y_{1t\le T_0})}{\overline{y}_{1t\le T_0}} \quad\text{is small.}
+\frac{\operatorname{sd}(y_{1t \in \mathcal{T}_{1}})}{\overline{y}_{1t \in \mathcal{T}_{1}}} \quad\text{is small.}
 \]</span></p></li>
 <li><p><strong>Extended pre-intervention period</strong><br>
 A long pre-treatment window improves identification.<br>
@@ -786,11 +777,11 @@ J \lesssim c \cdot T_0 \quad\text{for some modest constant } c,
 <li><p><strong>Sparsity aids interpretability</strong><br>
 Fewer nonzero weights make the synthetic control easier to interpret.<br>
 <em>Condition:</em> prefer weight vectors <span class="math inline">\(\mathbf{w}\)</span> with small support: <span class="math display">\[
-\|\mathbf{w}\|_0 &lt;&lt; J \quad\text{or use the} \ell_1 norm: \|\mathbf{w}\|_1
+\|\mathbf{w}\|_0 &lt;&lt; J \quad\text{or use the} \ell_1 \text{ norm: } \|\mathbf{w}\|_1
 \]</span></p></li>
 <li><p><strong>Plot your treated unit versus the donors (seriously)</strong><br>
 Visual diagnostics: check level/trend alignment and extreme donors before fitting.<br>
-<em>Diagnostic:</em> inspect <span class="math inline">\(\{y_{jt}\}_{j\in \mathcal{J}_{0}}\)</span> vs.&nbsp;<span class="math inline">\(y_{1t}\)</span> for <span class="math inline">\(t\le T_0\)</span>.</p></li>
+<em>Diagnostic:</em> inspect <span class="math inline">\(\{y_{jt}\}_{j\in \mathcal{J}_{0}}\)</span> vs.&nbsp;<span class="math inline">\(y_{1t}\)</span> for <span class="math inline">\(t \in \mathcal{T}_{1}\)</span>.</p></li>
 <li><p><strong>Good pre-treatment fit matters</strong><br>
 If pre-fit error is large, post-treatment inferences are unreliable.<br>
 <em>Condition (quantitative):</em> require a low pre-fit RMSE: <span class="math display">\[

@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2025-07-17">
+<meta name="dcterms.date" content="2025-09-20">
 
-<title>The Synthetic Historical Control Method – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Synthetic Controls for Marketing Experiments – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -205,23 +205,26 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#notations" id="toc-notations" class="nav-link active" data-scroll-target="#notations">Notations</a></li>
-  <li><a href="#the-synthetic-historical-control-shc-estimator" id="toc-the-synthetic-historical-control-shc-estimator" class="nav-link" data-scroll-target="#the-synthetic-historical-control-shc-estimator">The Synthetic Historical Control (SHC) Estimator</a>
+  <li><a href="#the-difficulties-of-market-experimentation" id="toc-the-difficulties-of-market-experimentation" class="nav-link active" data-scroll-target="#the-difficulties-of-market-experimentation">The Difficulties of Market Experimentation</a></li>
+  <li><a href="#synthetic-controls-for-marketing-experiments" id="toc-synthetic-controls-for-marketing-experiments" class="nav-link" data-scroll-target="#synthetic-controls-for-marketing-experiments">Synthetic Controls for Marketing Experiments</a>
   <ul class="collapse">
-  <li><a href="#choosing-our-historical-segments" id="toc-choosing-our-historical-segments" class="nav-link" data-scroll-target="#choosing-our-historical-segments">Choosing Our Historical Segments</a></li>
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#optimization-problem" id="toc-optimization-problem" class="nav-link" data-scroll-target="#optimization-problem">Optimization Problem</a></li>
+  <li><a href="#constraints" id="toc-constraints" class="nav-link" data-scroll-target="#constraints">Constraints</a></li>
+  <li><a href="#practical-use-cases" id="toc-practical-use-cases" class="nav-link" data-scroll-target="#practical-use-cases">Practical Use Cases</a></li>
   </ul></li>
-  <li><a href="#estimation-in-python" id="toc-estimation-in-python" class="nav-link" data-scroll-target="#estimation-in-python">Estimation in Python</a></li>
-  <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
+  <li><a href="#a-simple-example" id="toc-a-simple-example" class="nav-link" data-scroll-target="#a-simple-example">A Simple Example</a></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(15)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(8)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(15)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(8)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">The Synthetic Historical Control Method</h1>
+<h1 class="title">Synthetic Controls for Marketing Experiments</h1>
   <div class="quarto-categories">
+    <div class="quarto-category">Experiments</div>
     <div class="quarto-category">Econometrics</div>
   </div>
   </div>
@@ -240,7 +243,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 17, 2025</p>
+      <p class="date">September 20, 2025</p>
     </div>
   </div>
   
@@ -252,167 +255,113 @@ window.Quarto = {
 </header>
 
 
-<p>Oftentimes, we struggle with picking a donor pool for SCMs due to spillovers or the event being so massive that it is hard to argue for clean donors in principle. This blog post shows you one way we can get around that problem via using the <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4995085">synthetic historical control</a> method. It is a flavor of synthetic controls, as the name suggests.</p>
-<section id="notations" class="level2">
-<h2 class="anchored" data-anchor-id="notations">Notations</h2>
-<p>The notation for this method (as it is presented in the paper) makes my head hurt, so I will simply quote directly from my paper that currently uses this method in hopes that I can spell it out clearly.</p>
-<p>Let <span class="math inline">\(\mathbb{R}\)</span> denote the set of real numbers, and let <span class="math inline">\(\|\cdot\|_1\)</span> denote the usual <span class="math inline">\(\ell_1\)</span> vector norm. Throughout, I denote sets using calligraphic letters (e.g., <span class="math inline">\(\mathcal{T}, \mathcal{S}, \mathcal{N}\)</span>) for clarity. Scalars are represented using plain lowercase letters (e.g., <span class="math inline">\(h, t, n, m\)</span>), and matrices are denoted by bold uppercase letters (e.g., <span class="math inline">\(\mathbf{X}, \mathbf{W}, \mathbf{Y}\)</span>). Given a vector <span class="math inline">\(\mathbf{x} = (x_1, x_2, \dots, x_T)^\top \in \mathbb{R}^T\)</span> and an index set <span class="math inline">\(\mathcal{I} \subseteq \{1, \dots, T\}\)</span>, I write <span class="math inline">\(\mathbf{x}_{\mathcal{I}} \coloneqq (x_t)_{t \in \mathcal{I}} \in \mathbb{R}^{|\mathcal{I}|}\)</span> to denote the subvector of <span class="math inline">\(\mathbf{x}\)</span> corresponding to indices in <span class="math inline">\(\mathcal{I}\)</span>, preserving their original order.</p>
-<p>Let <span class="math inline">\(\mathcal{T} = \{1, 2, \dots, T\}\)</span> index time. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 \coloneqq \{t \in \mathcal{T} : t \leq T_0\}\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 \coloneqq \{t \in \mathcal{T} : t &gt; T_0\}\)</span>. The number of post-treatment periods is <span class="math inline">\(n = T - T_0\)</span>. Let <span class="math inline">\(m \in \mathbb{N}\)</span> denote the evaluation window length, i.e., the number of periods used to construct the SHC match. Define the evaluation period as the final <span class="math inline">\(m\)</span> months of the pre-treatment period:</p>
-<p><span class="math display">\[
-\mathcal{T}_{\text{eval}} \coloneqq \{T_0 - m + 1, \dots, T_0\} \subset \mathcal{T}_1.
-\]</span></p>
-<p>Let <span class="math inline">\(\mathbf{y} = (y_1, y_2, \dots, y_T)^\top \in \mathbb{R}^T\)</span> denote the observed outcome vector for the treated unit. Define the pre-treatment outcome vector <span class="math inline">\(\mathbf{y}_{\text{pre}} \coloneqq \mathbf{y}_{\mathcal{T}_1} \in \mathbb{R}^{T_0}\)</span>, the evaluation subvector <span class="math inline">\(\mathbf{y}_{\text{eval}} \coloneqq \mathbf{y}_{\mathcal{T}_{\text{eval}}} \in \mathbb{R}^m\)</span>, and the post-treatment outcome vector <span class="math inline">\(\mathbf{y}_{\text{post}} \coloneqq \mathbf{y}_{\mathcal{T}_2} \in \mathbb{R}^n\)</span>. The evaluation subvector <span class="math inline">\(\mathbf{y}_{\text{eval}}\)</span> is the target pattern to be reconstructed using convex combinations of earlier segments from the pre-treatment period.</p>
-<p>To reconstruct the evaluation window, we compare it against earlier segments of the treated unit’s own pre-treatment trajectory. Define the donor matrix <span class="math inline">\(\widetilde{\mathbf{Y}}_{\text{pre}} \in \mathbb{R}^{m \times N}\)</span> as a collection of <span class="math inline">\(N\)</span> overlapping length-<span class="math inline">\(m\)</span> subvectors extracted from the smoothed pre-treatment series. Each column is a contiguous subvector of the form <span class="math inline">\(\widetilde{\mathbf{y}}_{[i, i+m-1]}\)</span>, with <span class="math inline">\(i\)</span> ranging over eligible start points in <span class="math inline">\(\mathcal{T}_1\)</span> that precede the evaluation window.</p>
+<section id="the-difficulties-of-market-experimentation" class="level1">
+<h1>The Difficulties of Market Experimentation</h1>
+<p><a href="https://www.travelpulse.com/news/destinations/curacao-takes-proactive-steps-toward-sustainability-amid-global-overtourism">Suppose the government of Curaçao</a> wishes to implement a new <a href="https://www.businesstravelnewseurope.com/Accommodation/HRS-Green-Stay-updates-are-set-to-increase-hotel-participation">“Green Stay” initiative</a> that encourages hotels to adopt sustainability measures such as reducing water usage, improving waste management, and shifting toward renewable energy. From a methodological standpoint, the most rigorous way to measure the impact of such a program would be through a randomized controlled trial, where some hotels or neighborhoods are randomly assigned to implement the policy while others serve as controls. Randomization ensures that, in expectation, the treated and control groups are balanced and that differences in outcomes can be attributed to the policy. It also provides a clear framework for statistical inference and lends credibility to the findings.</p>
+<p>However, despite these advantages, there are serious obstacles to conducting a true RCT in this context. Ethically, assigning certain hotels to receive the benefits of the program while denying them to others may be perceived as unfair, particularly if the policy boosts reputation, attracts eco-conscious travelers, or leads to financial advantages. Guests might also unknowingly experience different standards, raising questions about fairness and transparency.</p>
+<p>Politically, implementing randomization across hundreds of hotels or entire market zones would require coordination among the government, hotel associations, and local businesses, all of whom may resist being “experimented on.” Because tourism is central to the island’s economy, public perception would also be sensitive, and randomized assignment could easily be framed as a risk to one of Curaçao’s most important industries.</p>
+<p>The logistical burden is equally daunting: monitoring and enforcing different sustainability requirements on a hotel-by-hotel basis would be complex and costly, with significant overhead required for compliance and enforcement. In practice, coordinating hundreds of independent hotels is unlikely to succeed. In other words, while an RCT is desirable in theory, the ethical, political, and feasibility barriers make it impractical in the context of Curaçao’s hotel sector.</p>
+<p>In light of these challenges, a more practical approach is to first consider the market at a localized level, grouping hotels or neighborhoods into clusters that share similar characteristics, such as geographic location, customer demographics, or historical patterns of tourist activity. By focusing on clusters rather than individual units, we can mitigate the ethical concerns of treating some individual hotels differently than others, since the selection occurs within naturally similar groups rather than arbitrarily across the whole market.</p>
+<p>Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can then select treated units that closely resemble the local market and control units that reflect the cluster’s underlying dynamics. This ensures that the observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors, but rather capture the typical response within a given market segment. But how would we select the treated units and control units in the first place? Even within a single cluster, we still would not be able to treat everybody for a host of reasons. This blog post covers how we can use synthetic control methods for market experimental settings.</p>
 </section>
-<section id="the-synthetic-historical-control-shc-estimator" class="level1">
-<h1>The Synthetic Historical Control (SHC) Estimator</h1>
-<p>The SHC method is a synthetic control-style estimator that constructs a counterfactual using only the treated unit’s own historical data. This makes SHC particularly useful when no clean donor units are available, for instance, when all states or countries are exposed to a shock like COVID-19. SHC begins by smoothing the pre-treatment outcome time series <span class="math inline">\(\{y_t\}_{t=1}^{T_0}\)</span> using local linear regression, which helps reduce noise and better recover the underlying trend. In practice, I use leave one out cross validation to choose the bandwidth for the Gaussain kernel. The result of all this is a smoothed series:</p>
-<p><span class="math display">\[
-\widetilde{\mathbf{y}} = (\widetilde{y}_1, \ldots, \widetilde{y}_{T_0})^\top.
+<section id="synthetic-controls-for-marketing-experiments" class="level1">
+<h1>Synthetic Controls for Marketing Experiments</h1>
+<p>I discuss the <a href="https://arxiv.org/abs/2108.02196">recent formulation</a> a clustered synthetic control method for experimental design, which constructs synthetic treated and control groups within clusters of similar neighborhoods to estimate causal effects without randomization. The method uses a convex optimization framework to select neighborhoods and compute synthetic weights, tailored to the hypothetical Curaçao context.</p>
+<p>By formulating the problem in this way, we provide a principled method for selecting which neighborhoods to treat and which to use as controls, without relying on arbitrary or purely random assignment. This approach preserves the spirit of a randomized controlled trial by ensuring that the treated neighborhoods closely resemble the cluster’s overall profile and that the controls reflect the typical conditions of the cluster. At the same time, it navigates the ethical and logistical challenges discussed earlier: the decision is made within clusters of similar neighborhoods rather than across the entire market, minimizing perceptions of unfairness and simplifying the operational burden.</p>
+<p>In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.</p>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<p>Consider a set of neighborhoods <span class="math inline">\([J] = {1, \dots, J}\)</span> observed over <span class="math inline">\(T_0\)</span> pre-treatment time periods <span class="math inline">\([T_0] = {1, \dots, T_0}\)</span>, nested within <span class="math inline">\(K\)</span> clusters <span class="math inline">\([K] = {1, \dots, K}\)</span>. Let <span class="math inline">\(I_k \subseteq [J]\)</span> denote the set of neighborhoods in cluster <span class="math inline">\(k \in [K]\)</span>, and define the mapping <span class="math inline">\(k: [J] \to [K]\)</span> such that <span class="math inline">\(j \in I_{k(j)}\)</span> identifies the cluster membership of neighborhood <span class="math inline">\(j\)</span>. The observed outcomes are collected in the matrix <span class="math inline">\(\mathbf{Y} \in \mathbb{R}^{J \times T_0}\)</span>, with entries <span class="math inline">\(Y_{j,t}\)</span> representing the outcome (for example, Net Revenue per Available Room) of neighborhood <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. For potential outcomes, let <span class="math inline">\(Y_{j,t}^I\)</span> denote the outcome under treatment (applied starting at <span class="math inline">\(T_0 + 1\)</span>) and <span class="math inline">\(Y_{j,t}^N\)</span> denote the outcome without treatment. The average treatment effect is <span class="math inline">\(\tau_t = \sum_{j=1}^J f_j (Y_{j,t}^I - Y_{j,t}^N)\)</span> for <span class="math inline">\(t &gt; T_0\)</span>, where <span class="math inline">\(f_j \geq 0\)</span> are known weights with <span class="math inline">\(\sum_{j=1}^J f_j = 1\)</span> (e.g., proportional to neighborhood size).</p>
+<p>The optimization variables are the weights <span class="math inline">\(w_j \geq 0\)</span> for <span class="math inline">\(j \in [J]\)</span>, where <span class="math inline">\(\sum_{j \in I_k} w_j = 1\)</span> for each <span class="math inline">\(k\)</span>, and the unit-level control weights <span class="math inline">\(v_{i,j} \geq 0\)</span> for <span class="math inline">\(i,j \in [J]\)</span>. Additional parameters include a cost vector <span class="math inline">\(\mathbf{c} \in \mathbb{R}^J\)</span>, where <span class="math inline">\(c_j\)</span> is the cost of treating neighborhood <span class="math inline">\(j\)</span> (if specified), a budget <span class="math inline">\(B_k \in \mathbb{R}\)</span> for cluster <span class="math inline">\(k\)</span> (required if <span class="math inline">\(\mathbf{c}\)</span> is specified), the distance <span class="math inline">\(D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2\)</span> between neighborhood <span class="math inline">\(j\)</span>’s predictors and the mean of cluster <span class="math inline">\(k\)</span>, and the distance <span class="math inline">\(D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2\)</span> between predictors of neighborhoods <span class="math inline">\(j\)</span> and <span class="math inline">\(j'\)</span> in cluster <span class="math inline">\(k\)</span>.</p>
+<p>The predictor vector for neighborhood <span class="math inline">\(j\)</span> is <span class="math inline">\(\mathbf{x}_j \in \mathbb{R}^r\)</span> (e.g., pre-treatment outcomes or covariates), with cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k = \left( \sum_{j \in I_k} f_j \mathbf{x}_j \right) / \left( \sum_{j \in I_k} f_j \right)\)</span>. Optional cardinality constraints are <span class="math inline">\(m_{\text{eq},k}\)</span>, <span class="math inline">\(m_{\text{min},k}\)</span>, <span class="math inline">\(m_{\text{max},k} \in \mathbb{Z}_{\geq 0}\)</span>, specifying the exact, minimum, or maximum number of treated neighborhoods in cluster <span class="math inline">\(k\)</span>. Penalization parameters are <span class="math inline">\(\beta\)</span>, <span class="math inline">\(\lambda_1\)</span>, <span class="math inline">\(\lambda_2\)</span>, <span class="math inline">\(\xi\)</span>, <span class="math inline">\(\lambda_{1,\text{unit}}\)</span>, <span class="math inline">\(\lambda_{2,\text{unit}} \in \mathbb{R}_{\geq 0}\)</span>, used in specific designs. Let <span class="math inline">\(J_w = \{ j : w_j &gt; 0 \}\)</span> be the set of treated neighborhoods.</p>
+</section>
+<section id="optimization-problem" class="level2">
+<h2 class="anchored" data-anchor-id="optimization-problem">Optimization Problem</h2>
+<p>We may minimize an objective function tailored to (at least!) one of four design choices: base, weak, penalized, or unit, each balancing the fit of synthetic treated and control groups to the cluster mean with penalization terms. Again I wish to clarify the point of this algorithm: the goal here is for us, the experimenters, to choose the treated and control units of interest such that the treated unit looks a lot like the market/ cluster or is situated within, and the control units also look similar to the broader market setup. Once we have our treated units, we can begin to do the treatment in reality, and then go on to evaluate how the treated units outcomes would have looked contrary to fact.</p>
+<p>For the base design, the objective minimizes the sum over all clusters <span class="math inline">\(k \in [K]\)</span> of the squared <span class="math inline">\(\ell_2\)</span> norm of the difference between the cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k\)</span> and the synthetic treated predictors <span class="math inline">\(\sum_{j \in I_k} w_j \mathbf{x}_j\)</span>, weighted by the cluster size <span class="math inline">\(\sum_{j \in I_k} f_j\)</span>, plus the analogous term for the synthetic control <span class="math inline">\(\sum_{j \in I_k} v_j \mathbf{x}_j\)</span>, given by <span class="math display">\[
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 \right).
 \]</span></p>
-<p>From this smoothed series, we construct a donor matrix of historical segments by taking overlapping segments of length <span class="math inline">\(m\)</span>:</p>
-<p><span class="math display">\[
-\widetilde{\mathbf{Y}}_{\text{pre}} = \begin{bmatrix}
-\widetilde{\mathbf{y}}_{[1, m]} &amp;
-\widetilde{\mathbf{y}}_{[2, m+1]} &amp;
-\cdots &amp;
-\widetilde{\mathbf{y}}_{[N, N+m-1]}
-\end{bmatrix} \in \mathbb{R}^{m \times N},
+<p>For the weak design, the objective extends the base design by adding a penalty term weighted by <span class="math inline">\(\beta \geq 0\)</span> to encourage similarity between the synthetic treated and control predictors, expressed as <span class="math display">\[
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2 \right).
 \]</span></p>
-<p>where <span class="math inline">\(N = T_0 - m - n + 1\)</span> is the number of segments, where each column is a historical “donor” segment used to predict post-treatment outcomes. In this case, we have <span class="math inline">\(n\)</span> post-treatment observations. I will give a toy example. Suppose we have <span class="math inline">\(T_0 = 14\)</span> days of pre-treatment data, and we want to: use <span class="math inline">\(m = 2\)</span> days to define the evaluation window (i.e., the last 2 days before treatment) and predict <span class="math inline">\(n = 1\)</span> day into the post-treatment period. Then, to build a valid donor, each segment must be <span class="math inline">\(m + n = 3\)</span> days long: the first <span class="math inline">\(m\)</span> days are used to match the evaluation window, and the last <span class="math inline">\(n\)</span> days are used to forecast the post-treatment period.</p>
-<p>So, how many such segments can we extract from the 14 pre-treatment days? We need to ensure that each 3-day segment fits <strong>entirely within</strong> the pre-treatment window. The last such segment would be <span class="math inline">\((\widetilde{y}_{12}, \widetilde{y}_{13}, \widetilde{y}_{14})^\top\)</span>. Thus, the total number of eligible segments is: <span class="math display">\[
-N = T_0 - m - n + 1 = 14 - 2 - 1 + 1 = 12.
+<p>For the penalized design, the objective includes penalization terms weighted by <span class="math inline">\(\lambda_1 \geq 0\)</span> and <span class="math inline">\(\lambda_2 \geq 0\)</span> to regularize the treated and control weights based on their distance to the cluster mean, formulated as <span class="math display">\[
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k} \right).
 \]</span></p>
-<p>Each donor segment looks like: <span class="math display">\[
-\widetilde{\mathbf{y}}_{[i, i + m + n - 1]} = (\widetilde{y}_i, \widetilde{y}_{i+1}, \widetilde{y}_{i+2})^\top
-\quad \text{for } i = 1, \dots, 12.
+<p>For the unit design, the objective incorporates unit-level penalization with parameters <span class="math inline">\(\xi \geq 0\)</span>, <span class="math inline">\(\lambda_{1,\text{unit}} \geq 0\)</span>, and <span class="math inline">\(\lambda_{2,\text{unit}} \geq 0\)</span>, adding terms to penalize the difference between each treated neighborhood’s predictors and its synthetic control, as well as pairwise distances between treated and control weights, given by <span class="math display">\[
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\|_2^2 + \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j} \right).
 \]</span></p>
-<p>The first <span class="math inline">\(m = 2\)</span> elements are used for fitting the evaluation window. The final <span class="math inline">\(n = 1\)</span> element is used to extrapolate into the post-treatment period. So the donor matrix for evaluation looks like: <span class="math display">\[
-\widetilde{\mathbf{Y}}_{\text{pre}} =
-\begin{bmatrix}
-\widetilde{y}_1 &amp; \widetilde{y}_2 &amp; \cdots &amp; \widetilde{y}_{12} \\
-\widetilde{y}_2 &amp; \widetilde{y}_3 &amp; \cdots &amp; \widetilde{y}_{13}
-\end{bmatrix} \in \mathbb{R}^{2 \times 12},
-\]</span> and the corresponding donor matrix for forecasting (aligned with each segment’s next day) is: <span class="math display">\[
-\widetilde{\mathbf{Y}}_{\text{post}} =
-\begin{bmatrix}
-\widetilde{y}_3 &amp; \widetilde{y}_4 &amp; \cdots &amp; \widetilde{y}_{14}
-\end{bmatrix} \in \mathbb{R}^{1 \times 12}.
-\]</span></p>
-<p>We use the pre period for the historical controls to fit our evaluation period for our treated unit. As in normal SCM style, all of those weights are applied to the full segment matrix to give us the in and out of sample predictions. So the SHC counterfactual for day 15 is estimated as: <span class="math display">\[
-\widehat{y}_{15} = \widetilde{\mathbf{Y}}_{\text{post}} \cdot \mathbf{w}^\ast,
-\]</span> where <span class="math inline">\(\mathbf{w}^\ast\)</span> are weights that optimally match the evaluation window using the <span class="math inline">\(\widetilde{\mathbf{Y}}_{\text{pre}}\)</span> matrix.</p>
-<p>SHC selects weights <span class="math inline">\(\mathbf{w} \in \mathbb{R}^N\)</span> to minimize the squared distance between the evaluation window and a convex combination of donor segments. We also have a penalty term:</p>
-<p><span class="math display">\[
-\mathbf{w}^\ast = \arg\min_{\mathbf{w} \geq 0, \ \mathbf{1}^\top \mathbf{w} = 1}
-\left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}} \mathbf{w} \right\|_2^2
-+ \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2.
-\]</span></p>
-<p>The term on the left is the ususal OLS loss function. Here, <span class="math inline">\(\mathbf{C}_0\)</span> contains the eigenvectors of the donor pool’s Grammian matrix. We use this term to stabilize the optimization, since in practice we will always have more predictors than the segment length allows. The authors go into more detail on this in their paper on page 11.</p>
-<section id="choosing-our-historical-segments" class="level2">
-<h2 class="anchored" data-anchor-id="choosing-our-historical-segments">Choosing Our Historical Segments</h2>
-<p>To avoid using too many donor segments and overfit, SHC implements a forward selection algorithm. The authors in the paper sort of choose an arbitrary number of donors to use. They find that 27 donor segments about does the job, in practice. However, I did not like that they wanted to use a stepwise method with no stopping rule, since this just means that the size of the donor pool we use is kind of arbitrary. So, I write my own forward selection method. Starting with an empty set, it adds one donor at a time, each time choosing the segment that most reduces the in-sample MSE.</p>
-<p><span class="math display">\[
-\mathcal{S}_j = \mathcal{S}_{j-1} \cup \left\{ \underset{i \in \mathcal{N} \setminus \mathcal{S}_{j-1}}{\operatorname*{argmin}} \left\| \widetilde{\mathbf{y}}_{\text{eval}} - \widetilde{\mathbf{Y}}_{\text{pre}}^{(\mathcal{S}_{j-1} \cup \{i\})} \mathbf{w}^{(j)} \right\|_2^2  + \varsigma \left\| \mathbf{C}_0^\top \mathbf{w} \right\|_2^2 \right\}, \quad \mathcal{S}_0 = \emptyset,
-\]</span></p>
-<p>To choose when to stop adding donors, we compute a modified BIC at each step:</p>
-<p><span class="math display">\[
-\text{BIC}(j) = m \cdot \log\left( \text{MSE}_j \right) + \lambda j,
-\]</span></p>
-<p>where <span class="math inline">\(\text{MSE}_j\)</span> is the in-sample mean squared error using <span class="math inline">\(j\)</span> donors, and <span class="math inline">\(\lambda = \log(m)\)</span>. The algorithm stops when BIC increases for two steps in a row. Presumably, we could use a better one, so if you have suggestions let me know. I borrowed this idea from <a href="https://doi.org/10.1016/j.jeconom.2021.04.009">the forward selected PDA approach</a>.</p>
+<p>The optimization problem minimizes the appropriate objective function subject to the constraints below.</p>
+</section>
+<section id="constraints" class="level2">
+<h2 class="anchored" data-anchor-id="constraints">Constraints</h2>
+<p>The optimization is subject to constraints that ensure feasibility and incorporate practical limitations for the synthetic control method. For each cluster <span class="math inline">\(k \in [K]\)</span>, the treated weights are normalized within the cluster, i.e., <span class="math inline">\(\sum_{j \in I_k} w_j = 1\)</span>, and the control weights are normalized within the cluster, i.e., <span class="math inline">\(\sum_{j \in I_k} v_j = 1\)</span>, ensuring a convex combination of units as we would usually expect.</p>
+<p>If an exact cardinality constraint <span class="math inline">\(m_{\text{eq},k}\)</span> is specified for cluster <span class="math inline">\(k\)</span>, the number of treated neighborhoods satisfies <span class="math inline">\(\sum_{j \in I_k} z_j = m_{\text{eq},k}\)</span>, where <span class="math inline">\(z_j \in \{0,1\}\)</span> indicates selection for treatment; if a minimum cardinality <span class="math inline">\(m_{\text{min},k}\)</span> is specified, then <span class="math inline">\(\sum_{j \in I_k} z_j \geq m_{\text{min},k}\)</span>; and if a maximum cardinality <span class="math inline">\(m_{\text{max},k}\)</span> is specified, then <span class="math inline">\(\sum_{j \in I_k} z_j \leq m_{\text{max},k}\)</span>, controlling the number of treated neighborhoods in cluster <span class="math inline">\(k\)</span>.</p>
+<p>For each neighborhood <span class="math inline">\(j \in I_k\)</span> in cluster <span class="math inline">\(k \in [K]\)</span>, the treated weight is bounded by the selection variable, i.e., <span class="math inline">\(w_j \leq z_j\)</span>, and the control weight is bounded by non-selection, i.e., <span class="math inline">\(v_j \leq 1 - z_j\)</span>, ensuring consistency between weights and assignments. If a cost vector <span class="math inline">\(\mathbf{c}\)</span> and budget <span class="math inline">\(B_k\)</span> are provided, the total cost of treated neighborhoods in cluster <span class="math inline">\(k\)</span> is constrained by <span class="math inline">\(\sum_{j \in I_k} c_j w_j \leq B_k\)</span>.</p>
+<p>If exclusivity is enforced, each neighborhood can be selected as treated in at most one cluster, i.e., <span class="math inline">\(\sum_{k=1}^K z_{j,k} \leq 1\)</span> for all <span class="math inline">\(j \in [J]\)</span>. Finally, the weights are non-negative, i.e., <span class="math inline">\(w_j \geq 0\)</span> and <span class="math inline">\(v_j \geq 0\)</span>, and the selection variables are binary, i.e., <span class="math inline">\(z_j \in \{0,1\}\)</span>, for all <span class="math inline">\(j \in [J]\)</span>.</p>
+</section>
+<section id="practical-use-cases" class="level2">
+<h2 class="anchored" data-anchor-id="practical-use-cases">Practical Use Cases</h2>
+<p>Even within this framework, the choice of design matters. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.</p>
+<p>The “weak” design adds a small penalty to encourage similarity between the synthetic treated and synthetic control units. In practice, this design tends to select treated units that are more representative of the actual treated population rather than the entire cluster. That is, it approximates the Average Treatment Effect on the Treated (ATT) rather than the full Average Treatment Effect (ATE). This is useful if you expect that only a subset of the cluster will realistically receive treatment or if the treated units are likely to respond differently from the cluster average.</p>
+<p>The “penalized” design introduces extra penalties based on distances from cluster means. This helps ensure that the chosen treated and control units are as close as possible to the cluster average, which is especially helpful when some neighborhoods are extreme outliers or when you want to enforce stricter fidelity to the cluster profile.</p>
+<p>Finally, the “unit-level” design goes even further: it penalizes differences between individual treated neighborhoods and their synthetic controls, as well as pairwise differences within the cluster. This design is appropriate when you have strong reason to believe that the response of each treated unit is heterogeneous and you want a very tight match between treated and control units at the micro-level. It’s the most targeted approach, but it is also the most computationally intensive and may require more pre-treatment data to be effective.</p>
+<p>In plain terms, the choice of design comes down to the question you are asking and how carefully you want to balance representativeness, fidelity to the cluster, and attention to individual unit behavior. Base is simple and robust; weak is useful if you are focused on treated units; penalized enforces similarity to the cluster; and unit-level maximizes local fidelity when individual behavior matters.</p>
 </section>
 </section>
-<section id="estimation-in-python" class="level1">
-<h1>Estimation in Python</h1>
-<p>In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>This example uses the Malaysian Ringgit as an example. Its currency was affected by <a href="https://www.investopedia.com/terms/a/asian-financial-crisis.asp">the Asian Financial Crisis</a>. I use the SHC method to estimate the impact the crisis had on the growth rate of the spot exchange rate, taken from FRED’s database. We can see my code below, where I use 36 months (3 years) of a pretreatment period.</p>
-<div id="981afba1" class="cell" data-execution_count="1">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SHC</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=</span><span class="sc">%23e</span><span class="st">bf3fb&amp;chart_type=line&amp;drp=0&amp;fo=open</span><span class="sc">%20s</span><span class="st">ans&amp;graph_bgcolor=</span><span class="sc">%23f</span><span class="st">fffff&amp;height=450&amp;mode=fred&amp;recession_bars=on&amp;txtcolor=%23444444&amp;ts=12&amp;tts=12&amp;width=1320&amp;nt=0&amp;thu=0&amp;trc=0&amp;show_legend=yes&amp;show_axis_titles=yes&amp;show_tooltip=yes&amp;id=EXMAUS&amp;scale=left&amp;cosd=1971-01-01&amp;coed=2025-06-01&amp;line_color=</span><span class="sc">%230073e</span><span class="st">6&amp;link_values=false&amp;line_style=solid&amp;mark_type=none&amp;mw=3&amp;lw=3&amp;ost=-99999&amp;oet=99999&amp;mma=0&amp;fml=a&amp;fq=Monthly&amp;fam=avg&amp;fgst=lin&amp;fgsnd=2020-02-01&amp;line_index=1&amp;transformation=lin&amp;vintage_date=2025-07-17&amp;revision_date=2025-07-17&amp;nd=1971-01-01"</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>df.rename(columns<span class="op">=</span>{df.columns[<span class="dv">0</span>]: <span class="st">"Date"</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>])</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>value_col <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"YoY Growth Rate"</span>] <span class="op">=</span> df[value_col].pct_change(periods<span class="op">=</span><span class="dv">12</span>)</span>
+<section id="a-simple-example" class="level1">
+<h1>A Simple Example</h1>
+<p>To illustrate, suppose we have 120 pre-treatment periods of Net Revenue per Available Room across two clusters of neighborhoods in Curaçao. The non-Willemstad cluster includes Barber, Lagún, Oostpunt, Santa Rosa, Sint Willibrordus, Soto, Spaanse Water, Tera Corá, and Westpunt. In this cluster, the treated units that received weight were Oostpunt with 0.39, Soto with 0.28, and Tera Corá with 0.33. The controls receiving weight were Barber 0.17, Lagún 0.10, Santa Rosa 0.18, Sint Willibrordus 0.17, Spaanse Water 0.15, and Westpunt 0.23. The RMSE between the synthetic treated unit and the synthetic control was 0.30, indicating a reasonably close match.</p>
+<p>The Willemstad cluster consists of Brievengat, Groot Kwartier, Groot Piscadera, Hato, Koraal Partir, Otrobanda, Pietermaai, Piscadera Bay, Saliña, Scharloo, Sint Michiel, and Steenrijk. Among the treated units, Groot Kwartier received 0.24, Koraal Partir 0.02, Saliña 0.33, and Scharloo 0.41. The control units with weight were Groot Piscadera 0.13, Otrobanda 0.47, Piscadera Bay 0.34, and Steenrijk 0.06. The RMSE between the synthetic treated and synthetic control units in this cluster was 0.53, reflecting a slightly less precise fit compared to the non-Willemstad cluster.</p>
+<p>The plot below gives our results from the penalized syntehtic experiment. We can see that the penalized estimator gives good pretreatment fit</p>
+<div id="74dd2c45" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:68: UserWarning:
+
+DataFrame was not sorted by [town, time] — auto-sorting applied.
+</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="scexp_files/figure-html/cell-2-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now I solve with a quadratic relaxation of the above objective, where we get</p>
+<div id="2a71b6b4" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {<span class="st">"df"</span>: df,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>          <span class="st">"unitid"</span>: <span class="st">"town"</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>          <span class="st">"time"</span>: <span class="st">"time"</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"outcome"</span>: <span class="st">"Y_obs"</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"design"</span>: <span class="st">"eq11"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"T0"</span>: <span class="dv">120</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>          <span class="st">"exclusive"</span>: <span class="va">True</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>          <span class="st">"m_min"</span>: <span class="dv">2</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>          <span class="st">"m_max"</span>: <span class="dv">4</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>          <span class="st">"lambda1"</span>: <span class="fl">0.5</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>          <span class="st">"lambda2"</span>: <span class="fl">0.5</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>          <span class="st">"cluster"</span>: <span class="st">"Region"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>          <span class="st">"program_type"</span>: <span class="st">"QP"</span>}</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"YoY Growth Rate"</span>])</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>design <span class="op">=</span> MAREX(config).fit()</span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.drop(columns<span class="op">=</span>df.columns[<span class="dv">1</span>])</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df[<span class="st">"Date"</span>].dt.year <span class="op">&lt;</span> <span class="dv">1999</span>]</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Unit"</span>] <span class="op">=</span> <span class="st">"Ringgit"</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Asian Financial Crisis"</span>] <span class="op">=</span> (df[<span class="st">"Date"</span>] <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"1997-07-01"</span>)).astype(<span class="bu">int</span>)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">1</span>],</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"Unit"</span>,</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"m"</span>: <span class="dv">12</span><span class="op">*</span><span class="dv">3</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SHC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>plot_cluster_full(df,design)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:68: UserWarning:
+
+DataFrame was not sorted by [town, time] — auto-sorting applied.
+</code></pre>
+</div>
 <div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
+<div>
 <figure class="figure">
-<p><img src="shc_files/figure-html/cell-2-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="scexp_files/figure-html/cell-3-output-2.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Now I do the effect of the 2008 Financial Crisis, because why not? I look at the effect for the U.K., but of course we may choose any nation we like. I use the precomputed annual growth rate of GDP.</p>
-<div id="4dca073c" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span><span class="st">"https://fred.stlouisfed.org/graph/fredgraph.csv?bgcolor=</span><span class="sc">%23e</span><span class="st">bf3fb&amp;chart_type=line&amp;drp=0&amp;fo=open</span><span class="sc">%20s</span><span class="st">ans&amp;graph_bgcolor=</span><span class="sc">%23f</span><span class="st">fffff&amp;height=450&amp;mode=fred&amp;recession_bars=off&amp;txtcolor=%23444444&amp;ts=12&amp;tts=12&amp;width=1320&amp;nt=0&amp;thu=0&amp;trc=0&amp;show_legend=yes&amp;show_axis_titles=yes&amp;show_tooltip=yes&amp;id=GBRGDPRQPSMEI&amp;scale=left&amp;cosd=1956-01-01&amp;coed=2025-01-01&amp;line_color=</span><span class="sc">%230073e</span><span class="st">6&amp;link_values=false&amp;line_style=solid&amp;mark_type=none&amp;mw=3&amp;lw=3&amp;ost=-99999&amp;oet=99999&amp;mma=0&amp;fml=a&amp;fq=Quarterly&amp;fam=avg&amp;fgst=lin&amp;fgsnd=2020-02-01&amp;line_index=1&amp;transformation=lin&amp;vintage_date=2025-07-17&amp;revision_date=2025-07-17&amp;nd=1956-01-01"</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>df.rename(columns<span class="op">=</span>{df.columns[<span class="dv">0</span>]: <span class="st">"Date"</span>, df.columns[<span class="dv">1</span>]: <span class="st">"Growth Rate of GDP"</span>}, inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>])</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>value_col <span class="op">=</span> df.columns[<span class="dv">1</span>]</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df[df[<span class="st">"Date"</span>].dt.year <span class="op">&lt;</span> <span class="dv">2011</span>]</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Unit"</span>] <span class="op">=</span> <span class="st">"United Kingdom"</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"2008 Financial Crisis"</span>] <span class="op">=</span> (df[<span class="st">"Date"</span>] <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"2008-01-01"</span>)).astype(<span class="bu">int</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>configFC <span class="op">=</span> {</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">1</span>],</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"Unit"</span>,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: df.columns[<span class="dv">0</span>],</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>], <span class="st">"m"</span>: <span class="dv">36</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>resultFC <span class="op">=</span> SHC(configFC).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="shc_files/figure-html/cell-3-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>The ATT for the growth rate is -3.755, meaning the growth of the economy slowed down by 3 percentage points over the next three years following the 2008 Financial Crisis/Crash.</p>
-<p>Of course, these examples are both financial crises, but you can literally do this with anything that we have a big enough time series to do it with. No reason this method cannot work with promotions for sales of goods, ad campaigns, tourism (my current application!) or other questions we may care about.</p>
-</section>
-<section id="caveats" class="level1">
-<h1>Caveats</h1>
-<p>The authors note that this approach will not work with trendy data (which makes sense due to the convex combination of donor periods). In other words, you need to detrend it first if a trend exists. This is why I use the growth rate to (ideally) avoid this issue.</p>
-<p>In principle, I like this method. I wonder what would happen if we just did this same method of donor pool construction, but just slapped on the <a href="https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf">Robust SCM</a> method for the weight solution, where we take the low rank structure of the pre-treatment period and learn the weights via OLS. Unclear as to whether/why we could not do this, or add in other penalty type terms or intercepts to adjust for this, either. If the idea is just that “we think the future will look like some combination of the untreated past”, then who’s to say that using the low-dimensional subspace of pre-treatment periods wouldn’t be a good idea? The authors do not propose inference methods either, so I use the agnostic conformal prediction intervals from the <a href="https://doi.org/10.18637/jss.v113.i01">scpi package</a>. Presumably though there’s a better way than this.</p>
-<p>Anyways, all of that is really for another paper. The SHC method itself is not even published just yet, so unclear how popular it will become or if others will want to extend it for other things. But now of course, you too may use it, should you wish.</p>
 
 
 
@@ -608,7 +557,29 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758396247382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758396247382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./shc.html" class="no-external">
+<div class="listing-date">
+Jul 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758396247382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -632,7 +603,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758396247374" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758396247374" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -656,7 +627,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758396247383" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758396247383" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -678,7 +649,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758396247378" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758396247378" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -688,30 +659,6 @@ Jared Greathouse
 <a href="./lfe1.html" class="no-external">
 <div class="listing-date">
 Sep 9, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1758396247382" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="17" data-listing-word-count-sort="3361">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RXhwZXJpbWVudHM='); return false;">Experiments</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./scexp.html" class="no-external">
-<div class="listing-date">
-Sep 20, 2025
 </div>
 <div class="listing-author">
 Jared Greathouse

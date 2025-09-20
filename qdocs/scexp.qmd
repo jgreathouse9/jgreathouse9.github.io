@@ -26,18 +26,17 @@ By formulating the problem in this way, we provide a principled method for selec
 
 In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.
 
+## Notation and Synthetic Control Designs
 
-## Notation
-
-Let $\[J] = {1, \dots, J}\$ denote neighborhoods observed over \$T\_0\$ pre-treatment periods $\[T\_0] = {1, \dots, T\_0}\$, nested within \$K\$ clusters $\[K] = {1, \dots, K}\$. Let \$I\_k \subseteq \[J]\$ denote the neighborhoods in cluster \$k\$, with \$j \in I\_{k(j)}\$ indicating cluster membership. Observed outcomes are collected in \$\mathbf{Y} \in \mathbb{R}^{J \times T\_0}\$, where \$Y\_{j,t}\$ represents the outcome for neighborhood \$j\$ at time \$t\$. Potential outcomes are \$Y\_{j,t}^I\$ under treatment and \$Y\_{j,t}^N\$ without treatment, with cluster-weighted average treatment effect
+Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$. Let $I_k \subseteq \mathcal{J}$ denote the neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. Observed outcomes are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, where $Y_{j,t}$ represents the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ under treatment and $Y_{j,t}^N$ without treatment, with cluster-weighted average treatment effect
 
 $$
 \tau_t = \sum_{j=1}^J f_j \, (Y_{j,t}^I - Y_{j,t}^N), \quad t > T_0,
 $$
 
-where \$f\_j \ge 0\$ and \$\sum\_{j=1}^J f\_j = 1\$.
+where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$.
 
-Predictor vectors \$\mathbf{x}\_j \in \mathbb{R}^r\$ (e.g., pre-treatment outcomes or covariates) have cluster mean
+Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ (e.g., pre-treatment outcomes or covariates) have cluster mean
 
 $$
 \mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
@@ -50,7 +49,7 @@ D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
 D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2.
 $$
 
-Optional cardinality constraints \$m\_{\text{eq},k}, m\_{\text{min},k}, m\_{\text{max},k}\$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters
+Optional cardinality constraints $m_{\text{eq},k}, m_{\text{min},k}, m_{\text{max},k}$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters
 
 $$
 \beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0
@@ -58,14 +57,14 @@ $$
 
 control specific design choices.
 
-Weights \$w\_j \ge 0\$ represent synthetic treated contributions, and \$v\_{i,j} \ge 0\$ represent unit-level control contributions. If provided, a cost vector \$\mathbf{c} \in \mathbb{R}^J\$ and cluster budgets \$B\_k\$ constrain feasible treatments.
+Weights $w_j \ge 0$ represent synthetic treated contributions, and $v_{i,j} \ge 0$ represent unit-level control contributions. If provided, a cost vector $\mathbf{c} \in \mathbb{R}^J$ and cluster budgets $B_k$ constrain feasible treatments.
 
-All constraints can be collected in the feasibility set \$\mathcal{F}\$:
+All constraints can be collected in the feasibility set $\mathcal{F}$:
 
 $$
 \begin{aligned}
-\mathcal{F} = \big\{ (w,v) \,\big|\; & 
-w_j, v_j \ge 0, \\
+\mathcal{F} = \Big\{ (w,v) \,\Big| \;
+& w_j, v_j \ge 0, \\
 & \sum_{j \in I_k} w_j = 1, \\
 & \sum_{j \in I_k} v_j = 1, \\
 & z_j \in \{0,1\}, \\
@@ -74,13 +73,13 @@ w_j, v_j \ge 0, \\
 & \sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}], \\
 & \sum_{j \in I_k} c_j w_j \le B_k, \\
 & \sum_{k=1}^K z_{j,k} \le 1
-\big\}.
+\Big\}.
 \end{aligned}
 $$
 
-Here, \$z\_j\$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.
+Here, $z_j$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.
 
-For weights \$(w,v) \in \mathcal{F}\$, define the cluster-level loss:
+For weights $(w,v) \in \mathcal{F}$, define the cluster-level loss:
 
 $$
 \begin{aligned}
@@ -101,6 +100,8 @@ The synthetic control optimization is
 $$
 \min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
 $$
+
+We have a few variants we can pick from in this framework.
 
 1. **Base:**
 

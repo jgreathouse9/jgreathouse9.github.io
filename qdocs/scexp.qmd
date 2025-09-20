@@ -18,14 +18,6 @@ In light of these challenges, a more practical approach is to first consider the
 
 Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can then select treated units that closely resemble the local market and control units that reflect the cluster’s underlying dynamics. This ensures that the observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors, but rather capture the typical response within a given market segment. But how would we select the treated units and control units in the first place? Even within a single cluster, we still would not be able to treat everybody for a host of reasons. This blog post covers how we can use synthetic control methods for market experimental settings.
 
-# Synthetic Controls for Marketing Experiments
-
-I discuss the [recent formulation](https://arxiv.org/abs/2108.02196) a clustered synthetic control method for experimental design, which constructs synthetic treated and control groups within clusters of similar neighborhoods to estimate causal effects without randomization. The method uses a convex optimization framework to select neighborhoods and compute synthetic weights, tailored to the hypothetical Curaçao context.
-
-By formulating the problem in this way, we provide a principled method for selecting which neighborhoods to treat and which to use as controls, without relying on arbitrary or purely random assignment. This approach preserves the spirit of a randomized controlled trial by ensuring that the treated neighborhoods closely resemble the cluster’s overall profile and that the controls reflect the typical conditions of the cluster. At the same time, it navigates the ethical and logistical challenges discussed earlier: the decision is made within clusters of similar neighborhoods rather than across the entire market, minimizing perceptions of unfairness and simplifying the operational burden.
-
-In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.
-
 ## Notation and Synthetic Control Designs
 
 Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$. Let $I_k \subseteq \mathcal{J}$ denote the neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. Observed outcomes are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, where $Y_{j,t}$ represents the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ under treatment and $Y_{j,t}^N$ without treatment, with cluster-weighted average treatment effect
@@ -34,9 +26,7 @@ $$
 \tau_t = \sum_{j=1}^J f_j \, (Y_{j,t}^I - Y_{j,t}^N), \quad t > T_0,
 $$
 
-where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$.
-
-Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ (e.g., pre-treatment outcomes or covariates) have cluster mean
+where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$. Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ have cluster mean
 
 $$
 \mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
@@ -49,155 +39,48 @@ D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
 D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2.
 $$
 
-Optional cardinality constraints $m_{\text{eq},k}, m_{\text{min},k}, m_{\text{max},k}$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters
-
-$$
-\beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0
-$$
-
-control specific design choices.
-
-Weights $w_j \ge 0$ represent synthetic treated contributions, and $v_{i,j} \ge 0$ represent unit-level control contributions. If provided, a cost vector $\mathbf{c} \in \mathbb{R}^J$ and cluster budgets $B_k$ constrain feasible treatments.
-
-All constraints can be collected in the feasibility set $\mathcal{F}$:
+Weights $w_j \ge 0$ represent synthetic treated contributions, $v_{i,j} \ge 0$ represent unit-level control contributions, and $z_j \in \{0,1\}$ encodes treatment assignment. Cluster budgets $B_k$ and cost vector $\mathbf{c}$ may constrain feasible treatments. All constraints are collected in $\mathcal{F}$:
 
 $$
 \begin{aligned}
 \mathcal{F} = \Big\{ (w,v) \,\Big| \;
-& w_j, v_j \ge 0, \\
-& \sum_{j \in I_k} w_j = 1, \\
-& \sum_{j \in I_k} v_j = 1, \\
-& z_j \in \{0,1\}, \\
-& w_j \le z_j, \\
-& v_j \le 1 - z_j, \\
-& \sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}], \\
-& \sum_{j \in I_k} c_j w_j \le B_k, \\
+& w_j, v_j \ge 0, \quad \sum_{j \in I_k} w_j = \sum_{j \in I_k} v_j = 1, \\
+& w_j \le z_j, \; v_j \le 1 - z_j, \quad \sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}], \\
+& \sum_{j \in I_k} c_j w_j \le B_k, \quad \sum_{k=1}^K \sum_{j \in I_k} c_j w_j \le B_{\text{total}}, \\
 & \sum_{k=1}^K z_{j,k} \le 1
 \Big\}.
 \end{aligned}
 $$
 
-Here, $z_j$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.
-
-For weights $(w,v) \in \mathcal{F}$, define the cluster-level loss:
+For weights $(w,v) \in \mathcal{F}$, the cluster-level loss can be written with underbraces labeling each term:
 
 $$
 \begin{aligned}
-\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[ \;
-& \|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2 \\
-& + \|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2 \\
-& + \beta \| X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k} \|_2^2 \\
-& + \lambda_1 w_{I_k}^\top D_{1,k} w_{I_k} \\
-& + \lambda_2 v_{I_k}^\top D_{1,k} v_{I_k} \\
-& + \xi \sum_{j \in I_k} w_j \| \mathbf{x}_j - X_{I_k}^\top V_{k,j} \|_2^2 \\
-& + \lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k) \;
+\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[ &
+\underbrace{\|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2}_{\text{match synthetic treated to cluster mean}}
++ \underbrace{\|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2}_{\text{match synthetic control to cluster mean}} \\
+& + \underbrace{\beta \| X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k} \|_2^2}_{\text{encourage treated/control similarity}}
++ \underbrace{\lambda_1 w_{I_k}^\top D_{1,k} w_{I_k}}_{\text{penalize treated distance from cluster mean}} 
++ \underbrace{\lambda_2 v_{I_k}^\top D_{1,k} v_{I_k}}_{\text{penalize control distance from cluster mean}} \\
+& + \underbrace{\xi \sum_{j \in I_k} w_j \| \mathbf{x}_j - X_{I_k}^\top V_{k,j} \|_2^2}_{\text{unit-level treated vs. synthetic control}}
++ \underbrace{\lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k)}_{\text{pairwise unit-level penalty}}
 \Big].
 \end{aligned}
 $$
 
-The synthetic control optimization is
+The synthetic control optimization is then
 
 $$
 \min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
 $$
 
-We have a few variants we can pick from in this framework.
+Variants of the design correspond to selecting which terms are active:
 
-1. **Base:**
+- **Base:** only match synthetic treated and control to cluster mean.  
+- **Weak:** adds $\beta$ penalty for treated/control similarity (ATT-focused).  
+- **Penalized:** adds $\lambda_1, \lambda_2$ for cluster fidelity.  
+- **Unit-level:** adds $\xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}}$ for fine-grained matching at the individual unit level.
 
-$$
-\sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big(
-\|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2
-+ \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2
-\Big)
-$$
-
-The "base" design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.
-
-2. **Weak:**
-
-$$
-+ \beta \Big\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \Big\|_2^2
-$$
-
-The "weak" design adds a penalty to encourage similarity between the synthetic treated and synthetic control units. In practice, this design tends to select treated units that are more representative of the actual treated population rather than the entire cluster. That is, it approximates the Average Treatment Effect on the Treated (ATT) rather than the full Average Treatment Effect (ATE). This is useful if you are targeting a single or very small set of units of interest at first.
-
-3. **Penalized:**
-
-$$
-+ \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k}
-$$
-
-The "penalized" design introduces extra penalties based on distances from cluster means. Overfitting is a concern in SCM settings where we have very many donors to choose from, and the solution may be non-unique. Adding the penalties helps ensure that the chosen treated and control units are as close as possible to the cluster average, which is especially helpful when some neighborhoods are extreme outliers or when you want to enforce stricter fidelity to the cluster profile.
-
-4. **Unit-level:**
-
-$$
-+ \xi \sum_{j \in I_k} w_j \Big\| \mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i \Big\|_2^2
-+ \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k}
-+ \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j}
-$$
-
-Finally, the "unit-level" design goes even further: it penalizes differences between individual treated neighborhoods and their synthetic controls, as well as pairwise differences within the cluster. This design is appropriate when you have strong reason to believe that the response of each treated unit is heterogeneous and you want a very tight match between treated and control units at the micro-level. It’s the most targeted approach, but it is also the most computationally intensive and may require more pre-treatment data to be effective.
-
-In plain terms, the choice of design comes down to the question you are asking and how carefully you want to balance representativeness, fidelity to the cluster, and attention to individual unit behavior. Base is simple and robust; weak is useful if you are focused on treated units; penalized enforces similarity to the cluster; and unit-level maximizes local fidelity when individual behavior matters.
-
-## Programming Constraints
-
-The constraints, which define the feasible set $\mathcal{F}$, ensure the resulting design is practical, interpretable, and aligned with real-world limitations like budgets or experimental needs. Below, each constraint is explained.
-
-The optimization is subject to the following constraints:
-
-$w_j \ge 0, \quad v_j \ge 0, \quad \forall j \in [J],$  
-$\sum_{j \in I_k} w_j = 1, \quad \sum_{j \in I_k} v_j = 1, \quad \forall k \in [K],$  
-$z_j \in \{0,1\}, \quad w_j \le z_j, \quad v_j \le 1 - z_j,$  
-$\sum_{j \in I_k} z_j = m_{\text{eq},k} \quad,$  
-$\sum_{j \in I_k} z_j \ge m_{\text{min},k},$  
-$\sum_{j \in I_k} z_j \le m_{\text{max},k}$  
-$\sum_{j \in I_k} c_j w_j \le B_k, \quad \forall k \in [K] \quad,$  
-$\sum_{k=1}^K \sum_{j \in I_k} c_j w_j \le B_{\text{total}}$  
-$\sum_{k=1}^K z_{j,k} \le 1, \quad \forall j \in [J]$.
-
-Non-Negativity is the one we're all familiar with, 
-
-$$
-w_j \ge 0, \quad v_j \ge 0, \quad \forall j \in [J].
-$$
-
-This constraint ensures that weights $w_j$ (for the synthetic treated unit) and $v_j$ (for the synthetic control unit) for each unit $j$ are never negative. In synthetic control methods, synthetic units are built as weighted averages of real units, like neighborhoods or stores, to mimic the treated unit’s behavior (e.g., sales or visitor trends). Allowing negative weights would mean subtracting a unit’s characteristics, which doesn’t make sense—like saying a neighborhood contributes “negative customers” to a synthetic market. By enforcing $w_j \ge 0$ and $v_j \ge 0$, the synthetic units stay within the convex hull of observed data. Hand in hand with this is the summation constraint, or 
-
-$$
-\sum_{j \in I_k} w_j = 1, \quad \sum_{j \in I_k} v_j = 1, \quad \forall k \in [K].
-$$
-
-Within each cluster $k$, the weights $w_j$ for the synthetic treated unit and $v_j$ for the synthetic control unit must sum to 1 across all units $j \in I_k$. This ensures that each synthetic unit is a proper weighted average, acting like a proportion of the real units’ characteristics, such as pre-treatment sales or foot traffic. For example, in a cluster with three neighborhoods, the synthetic treated unit might combine 50% of one neighborhood’s data, 30% of another’s, and 20% of the third’s, with $w_1 + w_2 + w_3 = 1$. The same applies to the control unit’s weights $v_j$. This normalization keeps the synthetic units directly comparable to the real treated unit, avoiding arbitrary scaling that could distort the causal effect estimate. It’s a standard feature of synthetic controls, ensuring the synthetic unit reflects a balanced combination of real data.
-
-The first major constraint that differs from the standard setup is the treatment selection constraint, or mutual exclusivity: $$
-z_j \in \{0,1\}, \quad w_j \le z_j, \quad v_j \le 1 - z_j.
-$$
-
-These constraints tie the binary treatment indicator $z_j$ (1 if unit $j$ is treated, 0 otherwise) to the weights, ensuring a clear separation between treated and control groups. The condition $z_j \in \{0,1\}$ means each unit is either treated or not—no partial treatment assignments. The constraints $w_j \le z_j$ and $v_j \le 1 - z_j$ ensure that a treated unit ($z_j = 1$) can contribute to the synthetic treated unit ($w_j \le 1$) but not the control unit ($v_j = 0$), while a non-treated unit ($z_j = 0$) can contribute to the control unit ($v_j \le 1$) but not the treated unit ($w_j = 0$). This prevents a unit, like a store running a marketing campaign, from being used in both the treated and control groups, which would muddy the counterfactual and bias the treatment effect estimate. It’s critical for maintaining a clean experimental design.
-
-Analysts may place cardinality  constraints, expressed as
-
-$$\sum_{j \in I_k} z_j = m_{\text{eq},k}$, $\sum_{j \in I_k} z_j \ge m_{\text{min},k}$, $\sum_{j \in I_k} z_j \le m_{\text{max},k}.
-$$ 
-
-These constraints control how many units in each cluster $k$ are treated, based on the binary indicator $z_j$. The sum $\sum_{j \in I_k} z_j$ counts treated units in the cluster. If an exact number is needed, $m_{\text{eq},k}$ specifies it (e.g., exactly two units treated). Alternatively, $m_{\text{min},k}$ sets a minimum (e.g., at least one unit) and $m_{\text{max},k}$ sets a maximum (e.g., no more than three units). This flexibility lets experimenters balance statistical power—needing enough treated units for reliable estimates—with practical limits, like avoiding treating too many units due to cost or ethical concerns. For instance, a business might limit the number of stores running a campaign in a cluster to manage expenses while ensuring enough data for analysis. These constraints make the design adaptable to real-world needs.
-
-We also have budget constraints, or
-
-$$
-\sum_{j \in I_k} c_j w_j \le B_k, \quad \forall k \in [K]$, $\sum_{k=1}^K \sum_{j \in I_k} c_j w_j \le B_{\text{total}}.
-$$
-
-These linear constraints cap the cost of treating units. Each unit $j$ has a cost $c_j \ge 0$ (e.g., the expense of running a campaign in a neighborhood). The cluster-level constraint $\sum_{j \in I_k} c_j w_j \le B_k$ ensures that the weighted cost of treated units in cluster $k$ stays within the cluster’s budget $B_k$. The global constraint $\sum_{k=1}^K \sum_{j \in I_k} c_j w_j \le B_{\text{total}}$ limits the total cost across all clusters. Since $w_j$ can be fractional, this allows partial treatment (e.g., a scaled-down campaign in a unit), giving flexibility to optimize within budget. For example, a company might allocate $10,000 per cluster and $50,000 overall for a marketing test, ensuring the experiment is financially viable while still constructing a synthetic treated unit. This directly addresses operational constraints, like minimizing resource use.
-
-The exclusivity constraint, or 
-$$
-\sum_{k=1}^K z_{j,k} \le 1, \quad \forall j \in [J]
-$$
-ensures that each unit $j$ is treated in at most one cluster, as $\sum_{k=1}^K z_{j,k} \le 1$limits the treatment indicator across all clusters. If a unit, like a store, is treated in one cluster (e.g., with a specific campaign), it can’t be treated in another cluster with a different setup. This prevents overlap that could confuse the treatment effect, as a unit exposed to multiple treatments would have mixed outcomes, undermining causal clarity. For example, a neighborhood can’t run two different marketing campaigns in separate clusters, as this would make it hard to isolate which campaign drove results. This constraint keeps the experimental design clean and interpretable, ensuring each unit’s role (treated or control) is unambiguous.
 
 # A Simple Example
 

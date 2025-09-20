@@ -174,7 +174,7 @@ window.Quarto = {
   <li><a href="#the-difficulties-of-market-experimentation" id="toc-the-difficulties-of-market-experimentation" class="nav-link active" data-scroll-target="#the-difficulties-of-market-experimentation">The Difficulties of Market Experimentation</a></li>
   <li><a href="#synthetic-controls-for-marketing-experiments" id="toc-synthetic-controls-for-marketing-experiments" class="nav-link" data-scroll-target="#synthetic-controls-for-marketing-experiments">Synthetic Controls for Marketing Experiments</a>
   <ul class="collapse">
-  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#notation-and-synthetic-control-designs" id="toc-notation-and-synthetic-control-designs" class="nav-link" data-scroll-target="#notation-and-synthetic-control-designs">Notation and Synthetic Control Designs</a></li>
   </ul></li>
   <li><a href="#a-simple-example" id="toc-a-simple-example" class="nav-link" data-scroll-target="#a-simple-example">A Simple Example</a></li>
   </ul>
@@ -232,14 +232,14 @@ window.Quarto = {
 <p>I discuss the <a href="https://arxiv.org/abs/2108.02196">recent formulation</a> a clustered synthetic control method for experimental design, which constructs synthetic treated and control groups within clusters of similar neighborhoods to estimate causal effects without randomization. The method uses a convex optimization framework to select neighborhoods and compute synthetic weights, tailored to the hypothetical Curaçao context.</p>
 <p>By formulating the problem in this way, we provide a principled method for selecting which neighborhoods to treat and which to use as controls, without relying on arbitrary or purely random assignment. This approach preserves the spirit of a randomized controlled trial by ensuring that the treated neighborhoods closely resemble the cluster’s overall profile and that the controls reflect the typical conditions of the cluster. At the same time, it navigates the ethical and logistical challenges discussed earlier: the decision is made within clusters of similar neighborhoods rather than across the entire market, minimizing perceptions of unfairness and simplifying the operational burden.</p>
 <p>In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.</p>
-<section id="notation" class="level2">
-<h2 class="anchored" data-anchor-id="notation">Notation</h2>
-<p>Let $[J] = {1, , J}$ denote neighborhoods observed over $T_0$ pre-treatment periods $[T_0] = {1, , T_0}$, nested within $K$ clusters $[K] = {1, , K}$. Let $I_k [J]$ denote the neighborhoods in cluster $k$, with $j I_{k(j)}$ indicating cluster membership. Observed outcomes are collected in $ ^{J T_0}$, where $Y_{j,t}$ represents the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ under treatment and $Y_{j,t}^N$ without treatment, with cluster-weighted average treatment effect</p>
+<section id="notation-and-synthetic-control-designs" class="level2">
+<h2 class="anchored" data-anchor-id="notation-and-synthetic-control-designs">Notation and Synthetic Control Designs</h2>
+<p>Let <span class="math inline">\(\mathcal{J} = \{1, \dots, J\}\)</span> denote neighborhoods observed over <span class="math inline">\(T_0\)</span> pre-treatment periods <span class="math inline">\(\mathcal{T}_0 = \{1, \dots, T_0\}\)</span>, nested within <span class="math inline">\(K\)</span> clusters <span class="math inline">\(\mathcal{K} = \{1, \dots, K\}\)</span>. Let <span class="math inline">\(I_k \subseteq \mathcal{J}\)</span> denote the neighborhoods in cluster <span class="math inline">\(k\)</span>, with <span class="math inline">\(j \in I_{k(j)}\)</span> indicating cluster membership. Observed outcomes are collected in <span class="math inline">\(\mathbf{Y} \in \mathbb{R}^{J \times T_0}\)</span>, where <span class="math inline">\(Y_{j,t}\)</span> represents the outcome for neighborhood <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. Potential outcomes are <span class="math inline">\(Y_{j,t}^I\)</span> under treatment and <span class="math inline">\(Y_{j,t}^N\)</span> without treatment, with cluster-weighted average treatment effect</p>
 <p><span class="math display">\[
 \tau_t = \sum_{j=1}^J f_j \, (Y_{j,t}^I - Y_{j,t}^N), \quad t &gt; T_0,
 \]</span></p>
-<p>where $f_j $ and $_{j=1}^J f_j = 1$.</p>
-<p>Predictor vectors $_j ^r$ (e.g., pre-treatment outcomes or covariates) have cluster mean</p>
+<p>where <span class="math inline">\(f_j \ge 0\)</span> and <span class="math inline">\(\sum_{j=1}^J f_j = 1\)</span>.</p>
+<p>Predictor vectors <span class="math inline">\(\mathbf{x}_j \in \mathbb{R}^r\)</span> (e.g., pre-treatment outcomes or covariates) have cluster mean</p>
 <p><span class="math display">\[
 \mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
 \]</span></p>
@@ -248,17 +248,17 @@ window.Quarto = {
 D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
 D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2.
 \]</span></p>
-<p>Optional cardinality constraints $m_{,k}, m_{,k}, m_{,k}$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters</p>
+<p>Optional cardinality constraints <span class="math inline">\(m_{\text{eq},k}, m_{\text{min},k}, m_{\text{max},k}\)</span> specify exact, minimum, or maximum treated units per cluster. Penalization parameters</p>
 <p><span class="math display">\[
 \beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0
 \]</span></p>
 <p>control specific design choices.</p>
-<p>Weights $w_j $ represent synthetic treated contributions, and $v_{i,j} $ represent unit-level control contributions. If provided, a cost vector $ ^J$ and cluster budgets $B_k$ constrain feasible treatments.</p>
-<p>All constraints can be collected in the feasibility set $$:</p>
+<p>Weights <span class="math inline">\(w_j \ge 0\)</span> represent synthetic treated contributions, and <span class="math inline">\(v_{i,j} \ge 0\)</span> represent unit-level control contributions. If provided, a cost vector <span class="math inline">\(\mathbf{c} \in \mathbb{R}^J\)</span> and cluster budgets <span class="math inline">\(B_k\)</span> constrain feasible treatments.</p>
+<p>All constraints can be collected in the feasibility set <span class="math inline">\(\mathcal{F}\)</span>:</p>
 <p><span class="math display">\[
 \begin{aligned}
-\mathcal{F} = \big\{ (w,v) \,\big|\; &amp;&nbsp;
-w_j, v_j \ge 0, \\
+\mathcal{F} = \Big\{ (w,v) \,\Big| \;
+&amp; w_j, v_j \ge 0, \\
 &amp; \sum_{j \in I_k} w_j = 1, \\
 &amp; \sum_{j \in I_k} v_j = 1, \\
 &amp; z_j \in \{0,1\}, \\
@@ -267,11 +267,11 @@ w_j, v_j \ge 0, \\
 &amp; \sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}], \\
 &amp; \sum_{j \in I_k} c_j w_j \le B_k, \\
 &amp; \sum_{k=1}^K z_{j,k} \le 1
-\big\}.
+\Big\}.
 \end{aligned}
 \]</span></p>
-<p>Here, $z_j$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.</p>
-<p>For weights $(w,v) $, define the cluster-level loss:</p>
+<p>Here, <span class="math inline">\(z_j\)</span> indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.</p>
+<p>For weights <span class="math inline">\((w,v) \in \mathcal{F}\)</span>, define the cluster-level loss:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[ \;
@@ -289,6 +289,7 @@ w_j, v_j \ge 0, \\
 <p><span class="math display">\[
 \min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
 \]</span></p>
+<p>We have a few variants we can pick from in this framework.</p>
 <ol type="1">
 <li><strong>Base:</strong></li>
 </ol>
@@ -330,7 +331,7 @@ w_j, v_j \ge 0, \\
 <p>To illustrate, suppose we have 120 pre-treatment periods of Net Revenue per Available Room across two clusters of neighborhoods in Curaçao. The non-Willemstad cluster includes Barber, Lagún, Oostpunt, Santa Rosa, Sint Willibrordus, Soto, Spaanse Water, Tera Corá, and Westpunt. In this cluster, the treated units that received weight were Oostpunt with 0.39, Soto with 0.28, and Tera Corá with 0.33. The controls receiving weight were Barber 0.17, Lagún 0.10, Santa Rosa 0.18, Sint Willibrordus 0.17, Spaanse Water 0.15, and Westpunt 0.23. The RMSE between the synthetic treated unit and the synthetic control was 0.30, indicating a reasonably close match.</p>
 <p>The Willemstad cluster consists of Brievengat, Groot Kwartier, Groot Piscadera, Hato, Koraal Partir, Otrobanda, Pietermaai, Piscadera Bay, Saliña, Scharloo, Sint Michiel, and Steenrijk. Among the treated units, Groot Kwartier received 0.24, Koraal Partir 0.02, Saliña 0.33, and Scharloo 0.41. The control units with weight were Groot Piscadera 0.13, Otrobanda 0.47, Piscadera Bay 0.34, and Steenrijk 0.06. The RMSE between the synthetic treated and synthetic control units in this cluster was 0.53, reflecting a slightly less precise fit compared to the non-Willemstad cluster.</p>
 <p>The plot below gives our results from the penalized syntehtic experiment. We can see that the penalized estimator gives good pretreatment fit</p>
-<div id="02288d83" class="cell" data-execution_count="1">
+<div id="0e678eee" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:68: UserWarning:
 
@@ -346,7 +347,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 </div>
 </div>
 <p>Now I solve with a quadratic relaxation of the above objective, where we get</p>
-<div id="1c3a2a5f" class="cell" data-execution_count="2">
+<div id="c148e516" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:68: UserWarning:
 
@@ -368,7 +369,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758401616047" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758402697674" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -392,7 +393,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758401616048" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758402697675" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -416,7 +417,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758401616048" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758402697675" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -440,7 +441,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758401616053" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758402697680" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -464,7 +465,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758401616054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758402697681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -488,7 +489,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758401616051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758402697677" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -510,7 +511,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758401616051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758402697677" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -534,7 +535,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758401616054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758402697681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -556,7 +557,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758401616054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758402697680" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -578,7 +579,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758401616054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758402697681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -602,7 +603,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758401616048" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758402697674" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -626,7 +627,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758401616054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758402697681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -648,7 +649,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758401616050" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758402697677" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -665,7 +666,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1758401616048" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1758402697674" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -676,7 +677,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758401688341" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758402769955" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

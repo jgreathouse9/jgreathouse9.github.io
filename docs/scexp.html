@@ -175,8 +175,7 @@ window.Quarto = {
   <li><a href="#synthetic-controls-for-marketing-experiments" id="toc-synthetic-controls-for-marketing-experiments" class="nav-link" data-scroll-target="#synthetic-controls-for-marketing-experiments">Synthetic Controls for Marketing Experiments</a>
   <ul class="collapse">
   <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation">Notation</a></li>
-  <li><a href="#optimization-problem" id="toc-optimization-problem" class="nav-link" data-scroll-target="#optimization-problem">Optimization Problem</a></li>
-  <li><a href="#constraints" id="toc-constraints" class="nav-link" data-scroll-target="#constraints">Constraints</a></li>
+  <li><a href="#objective-function" id="toc-objective-function" class="nav-link" data-scroll-target="#objective-function">Objective Function</a></li>
   <li><a href="#practical-use-cases" id="toc-practical-use-cases" class="nav-link" data-scroll-target="#practical-use-cases">Practical Use Cases</a></li>
   </ul></li>
   <li><a href="#a-simple-example" id="toc-a-simple-example" class="nav-link" data-scroll-target="#a-simple-example">A Simple Example</a></li>
@@ -237,37 +236,82 @@ window.Quarto = {
 <p>In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.</p>
 <section id="notation" class="level2">
 <h2 class="anchored" data-anchor-id="notation">Notation</h2>
-<p>Consider a set of neighborhoods <span class="math inline">\([J] = {1, \dots, J}\)</span> observed over <span class="math inline">\(T_0\)</span> pre-treatment time periods <span class="math inline">\([T_0] = {1, \dots, T_0}\)</span>, nested within <span class="math inline">\(K\)</span> clusters <span class="math inline">\([K] = {1, \dots, K}\)</span>. Let <span class="math inline">\(I_k \subseteq [J]\)</span> denote the set of neighborhoods in cluster <span class="math inline">\(k \in [K]\)</span>, and define the mapping <span class="math inline">\(k: [J] \to [K]\)</span> such that <span class="math inline">\(j \in I_{k(j)}\)</span> identifies the cluster membership of neighborhood <span class="math inline">\(j\)</span>. The observed outcomes are collected in the matrix <span class="math inline">\(\mathbf{Y} \in \mathbb{R}^{J \times T_0}\)</span>, with entries <span class="math inline">\(Y_{j,t}\)</span> representing the outcome (for example, Net Revenue per Available Room) of neighborhood <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. For potential outcomes, let <span class="math inline">\(Y_{j,t}^I\)</span> denote the outcome under treatment (applied starting at <span class="math inline">\(T_0 + 1\)</span>) and <span class="math inline">\(Y_{j,t}^N\)</span> denote the outcome without treatment. The average treatment effect is <span class="math inline">\(\tau_t = \sum_{j=1}^J f_j (Y_{j,t}^I - Y_{j,t}^N)\)</span> for <span class="math inline">\(t &gt; T_0\)</span>, where <span class="math inline">\(f_j \geq 0\)</span> are known weights with <span class="math inline">\(\sum_{j=1}^J f_j = 1\)</span> (e.g., proportional to neighborhood size).</p>
-<p>The optimization variables are the weights <span class="math inline">\(w_j \geq 0\)</span> for <span class="math inline">\(j \in [J]\)</span>, where <span class="math inline">\(\sum_{j \in I_k} w_j = 1\)</span> for each <span class="math inline">\(k\)</span>, and the unit-level control weights <span class="math inline">\(v_{i,j} \geq 0\)</span> for <span class="math inline">\(i,j \in [J]\)</span>. Additional parameters include a cost vector <span class="math inline">\(\mathbf{c} \in \mathbb{R}^J\)</span>, where <span class="math inline">\(c_j\)</span> is the cost of treating neighborhood <span class="math inline">\(j\)</span> (if specified), a budget <span class="math inline">\(B_k \in \mathbb{R}\)</span> for cluster <span class="math inline">\(k\)</span> (required if <span class="math inline">\(\mathbf{c}\)</span> is specified), the distance <span class="math inline">\(D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2\)</span> between neighborhood <span class="math inline">\(j\)</span>’s predictors and the mean of cluster <span class="math inline">\(k\)</span>, and the distance <span class="math inline">\(D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2\)</span> between predictors of neighborhoods <span class="math inline">\(j\)</span> and <span class="math inline">\(j'\)</span> in cluster <span class="math inline">\(k\)</span>.</p>
-<p>The predictor vector for neighborhood <span class="math inline">\(j\)</span> is <span class="math inline">\(\mathbf{x}_j \in \mathbb{R}^r\)</span> (e.g., pre-treatment outcomes or covariates), with cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k = \left( \sum_{j \in I_k} f_j \mathbf{x}_j \right) / \left( \sum_{j \in I_k} f_j \right)\)</span>. Optional cardinality constraints are <span class="math inline">\(m_{\text{eq},k}\)</span>, <span class="math inline">\(m_{\text{min},k}\)</span>, <span class="math inline">\(m_{\text{max},k} \in \mathbb{Z}_{\geq 0}\)</span>, specifying the exact, minimum, or maximum number of treated neighborhoods in cluster <span class="math inline">\(k\)</span>. Penalization parameters are <span class="math inline">\(\beta\)</span>, <span class="math inline">\(\lambda_1\)</span>, <span class="math inline">\(\lambda_2\)</span>, <span class="math inline">\(\xi\)</span>, <span class="math inline">\(\lambda_{1,\text{unit}}\)</span>, <span class="math inline">\(\lambda_{2,\text{unit}} \in \mathbb{R}_{\geq 0}\)</span>, used in specific designs. Let <span class="math inline">\(J_w = \{ j : w_j &gt; 0 \}\)</span> be the set of treated neighborhoods.</p>
+<p>Let <span class="math inline">\([J] = \{1, \dots, J\}\)</span> denote neighborhoods observed over <span class="math inline">\(T_0\)</span> pre-treatment periods <span class="math inline">\([T_0] = \{1, \dots, T_0\}\)</span>, nested within <span class="math inline">\(K\)</span> clusters <span class="math inline">\([K] = \{1, \dots, K\}\)</span>. Let <span class="math inline">\(I_k \subseteq [J]\)</span> denote the neighborhoods in cluster <span class="math inline">\(k\)</span>, with <span class="math inline">\(j \in I_{k(j)}\)</span> indicating cluster membership. Observed outcomes are collected in <span class="math inline">\(\mathbf{Y} \in \mathbb{R}^{J \times T_0}\)</span>, where <span class="math inline">\(Y_{j,t}\)</span> represents the outcome for neighborhood <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. Potential outcomes are <span class="math inline">\(Y_{j,t}^I\)</span> under treatment and <span class="math inline">\(Y_{j,t}^N\)</span> without treatment, with cluster-weighted average treatment effect</p>
+<p><span class="math display">\[
+\tau_t = \sum_{j=1}^J f_j \big(Y_{j,t}^I - Y_{j,t}^N\big), \quad t &gt; T_0,
+\]</span></p>
+<p>where <span class="math inline">\(f_j \ge 0\)</span> and <span class="math inline">\(\sum_{j=1}^J f_j = 1\)</span>.</p>
+<p>Predictor vectors <span class="math inline">\(\mathbf{x}_j \in \mathbb{R}^r\)</span> (e.g., pre-treatment outcomes or covariates) have cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k = \sum_{j \in I_k} f_j \mathbf{x}_j / \sum_{j \in I_k} f_j\)</span>. Distances are defined as <span class="math inline">\(D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2\)</span> and <span class="math inline">\(D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2\)</span>. Optional cardinality constraints <span class="math inline">\(m_{\text{eq},k}, m_{\text{min},k}, m_{\text{max},k}\)</span> specify exact, minimum, or maximum treated units per cluster. Penalization parameters <span class="math inline">\(\beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0\)</span> control specific design choices.</p>
+<p>Weights <span class="math inline">\(w_j \ge 0\)</span> represent synthetic treated contributions and <span class="math inline">\(v_{i,j} \ge 0\)</span> represent unit-level control contributions. If provided, a cost vector <span class="math inline">\(\mathbf{c} \in \mathbb{R}^J\)</span> and cluster budgets <span class="math inline">\(B_k\)</span> constrain feasible treatments.</p>
+<p>We collect all constraints into a feasibility set <span class="math inline">\(\mathcal{F}\)</span>:</p>
+<p><span class="math display">\[
+\mathcal{F} = \Big\{ (w, v) \,\Big|\,
+w_j, v_j \ge 0,\;\;
+\sum_{j \in I_k} w_j = 1,\;\;
+\sum_{j \in I_k} v_j = 1,\;\;
+z_j \in \{0,1\},\;\;
+w_j \le z_j,\;\;
+v_j \le 1 - z_j,\;\;
+\sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}],\;\;
+\sum_{j \in I_k} c_j w_j \le B_k,\;\;
+\sum_{k=1}^K z_{j,k} \le 1
+\Big\}.
+\]</span></p>
+<p>Here, <span class="math inline">\(z_j\)</span> indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.</p>
 </section>
-<section id="optimization-problem" class="level2">
-<h2 class="anchored" data-anchor-id="optimization-problem">Optimization Problem</h2>
-<p>We may minimize an objective function tailored to (at least!) one of four design choices: base, weak, penalized, or unit, each balancing the fit of synthetic treated and control groups to the cluster mean with penalization terms. Again I wish to clarify the point of this algorithm: the goal here is for us, the experimenters, to choose the treated and control units of interest such that the treated unit looks a lot like the market/ cluster or is situated within, and the control units also look similar to the broader market setup. Once we have our treated units, we can begin to do the treatment in reality, and then go on to evaluate how the treated units outcomes would have looked contrary to fact.</p>
-<p>For the base design, the objective minimizes the sum over all clusters <span class="math inline">\(k \in [K]\)</span> of the squared <span class="math inline">\(\ell_2\)</span> norm of the difference between the cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k\)</span> and the synthetic treated predictors <span class="math inline">\(\sum_{j \in I_k} w_j \mathbf{x}_j\)</span>, weighted by the cluster size <span class="math inline">\(\sum_{j \in I_k} f_j\)</span>, plus the analogous term for the synthetic control <span class="math inline">\(\sum_{j \in I_k} v_j \mathbf{x}_j\)</span>, given by <span class="math display">\[
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 \right).
+<section id="objective-function" class="level2">
+<h2 class="anchored" data-anchor-id="objective-function">Objective Function</h2>
+<p>For weights <span class="math inline">\((w,v) \in \mathcal{F}\)</span>, define the cluster-level loss</p>
+<p><span class="math display">\[
+\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[
+\|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2
++ \|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2
++ \beta \|X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k}\|_2^2
++ \lambda_1 w_{I_k}^\top D_{1,k} w_{I_k}
++ \lambda_2 v_{I_k}^\top D_{1,k} v_{I_k}
++ \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - X_{I_k}^\top V_{k,j}\|_2^2
++ \lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k)
+\Big].
 \]</span></p>
-<p>For the weak design, the objective extends the base design by adding a penalty term weighted by <span class="math inline">\(\beta \geq 0\)</span> to encourage similarity between the synthetic treated and control predictors, expressed as <span class="math display">\[
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2 \right).
+<p>The synthetic control optimization problem is then</p>
+<p><span class="math display">\[
+\min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
 \]</span></p>
-<p>For the penalized design, the objective includes penalization terms weighted by <span class="math inline">\(\lambda_1 \geq 0\)</span> and <span class="math inline">\(\lambda_2 \geq 0\)</span> to regularize the treated and control weights based on their distance to the cluster mean, formulated as <span class="math display">\[
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k} \right).
+<p>The framework accommodates four main designs:</p>
+<ol type="1">
+<li><strong>Base:</strong> Minimizes cluster-level fit between the synthetic treated/control and the cluster mean:</li>
+</ol>
+<p><span class="math display">\[
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \Big(
+\|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2
++ \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2
+\Big).
 \]</span></p>
-<p>For the unit design, the objective incorporates unit-level penalization with parameters <span class="math inline">\(\xi \geq 0\)</span>, <span class="math inline">\(\lambda_{1,\text{unit}} \geq 0\)</span>, and <span class="math inline">\(\lambda_{2,\text{unit}} \geq 0\)</span>, adding terms to penalize the difference between each treated neighborhood’s predictors and its synthetic control, as well as pairwise distances between treated and control weights, given by <span class="math display">\[
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\|_2^2 + \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j} \right).
+<ol start="2" type="1">
+<li><strong>Weak:</strong> Adds similarity between synthetic treated and control predictors:</li>
+</ol>
+<p><span class="math display">\[
++ \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2.
 \]</span></p>
-<p>The optimization problem minimizes the appropriate objective function subject to the constraints below.</p>
-</section>
-<section id="constraints" class="level2">
-<h2 class="anchored" data-anchor-id="constraints">Constraints</h2>
-<p>The optimization is subject to constraints that ensure feasibility and incorporate practical limitations for the synthetic control method. For each cluster <span class="math inline">\(k \in [K]\)</span>, the treated weights are normalized within the cluster, i.e., <span class="math inline">\(\sum_{j \in I_k} w_j = 1\)</span>, and the control weights are normalized within the cluster, i.e., <span class="math inline">\(\sum_{j \in I_k} v_j = 1\)</span>, ensuring a convex combination of units as we would usually expect.</p>
-<p>If an exact cardinality constraint <span class="math inline">\(m_{\text{eq},k}\)</span> is specified for cluster <span class="math inline">\(k\)</span>, the number of treated neighborhoods satisfies <span class="math inline">\(\sum_{j \in I_k} z_j = m_{\text{eq},k}\)</span>, where <span class="math inline">\(z_j \in \{0,1\}\)</span> indicates selection for treatment; if a minimum cardinality <span class="math inline">\(m_{\text{min},k}\)</span> is specified, then <span class="math inline">\(\sum_{j \in I_k} z_j \geq m_{\text{min},k}\)</span>; and if a maximum cardinality <span class="math inline">\(m_{\text{max},k}\)</span> is specified, then <span class="math inline">\(\sum_{j \in I_k} z_j \leq m_{\text{max},k}\)</span>, controlling the number of treated neighborhoods in cluster <span class="math inline">\(k\)</span>.</p>
-<p>For each neighborhood <span class="math inline">\(j \in I_k\)</span> in cluster <span class="math inline">\(k \in [K]\)</span>, the treated weight is bounded by the selection variable, i.e., <span class="math inline">\(w_j \leq z_j\)</span>, and the control weight is bounded by non-selection, i.e., <span class="math inline">\(v_j \leq 1 - z_j\)</span>, ensuring consistency between weights and assignments. If a cost vector <span class="math inline">\(\mathbf{c}\)</span> and budget <span class="math inline">\(B_k\)</span> are provided, the total cost of treated neighborhoods in cluster <span class="math inline">\(k\)</span> is constrained by <span class="math inline">\(\sum_{j \in I_k} c_j w_j \leq B_k\)</span>.</p>
-<p>If exclusivity is enforced, each neighborhood can be selected as treated in at most one cluster, i.e., <span class="math inline">\(\sum_{k=1}^K z_{j,k} \leq 1\)</span> for all <span class="math inline">\(j \in [J]\)</span>. Finally, the weights are non-negative, i.e., <span class="math inline">\(w_j \geq 0\)</span> and <span class="math inline">\(v_j \geq 0\)</span>, and the selection variables are binary, i.e., <span class="math inline">\(z_j \in \{0,1\}\)</span>, for all <span class="math inline">\(j \in [J]\)</span>.</p>
+<ol start="3" type="1">
+<li><strong>Penalized:</strong> Adds distance-based regularization on weights:</li>
+</ol>
+<p><span class="math display">\[
++ \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k}.
+\]</span></p>
+<ol start="4" type="1">
+<li><strong>Unit-level:</strong> Adds unit-level penalization:</li>
+</ol>
+<p><span class="math display">\[
++ \xi \sum_{j \in I_k} w_j \Big\|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\Big\|_2^2
++ \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k}
++ \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j}.
+\]</span></p>
+<p>Each design balances fit to the cluster mean and regularization, guiding the selection of treated and control neighborhoods to closely mimic the cluster’s typical profile.</p>
 </section>
 <section id="practical-use-cases" class="level2">
 <h2 class="anchored" data-anchor-id="practical-use-cases">Practical Use Cases</h2>
-<p>Even within this framework, the choice of design matters. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.</p>
+<p>The choice of design matters of course. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.</p>
 <p>The “weak” design adds a small penalty to encourage similarity between the synthetic treated and synthetic control units. In practice, this design tends to select treated units that are more representative of the actual treated population rather than the entire cluster. That is, it approximates the Average Treatment Effect on the Treated (ATT) rather than the full Average Treatment Effect (ATE). This is useful if you expect that only a subset of the cluster will realistically receive treatment or if the treated units are likely to respond differently from the cluster average.</p>
 <p>The “penalized” design introduces extra penalties based on distances from cluster means. This helps ensure that the chosen treated and control units are as close as possible to the cluster average, which is especially helpful when some neighborhoods are extreme outliers or when you want to enforce stricter fidelity to the cluster profile.</p>
 <p>Finally, the “unit-level” design goes even further: it penalizes differences between individual treated neighborhoods and their synthetic controls, as well as pairwise differences within the cluster. This design is appropriate when you have strong reason to believe that the response of each treated unit is heterogeneous and you want a very tight match between treated and control units at the micro-level. It’s the most targeted approach, but it is also the most computationally intensive and may require more pre-treatment data to be effective.</p>
@@ -279,7 +323,7 @@ window.Quarto = {
 <p>To illustrate, suppose we have 120 pre-treatment periods of Net Revenue per Available Room across two clusters of neighborhoods in Curaçao. The non-Willemstad cluster includes Barber, Lagún, Oostpunt, Santa Rosa, Sint Willibrordus, Soto, Spaanse Water, Tera Corá, and Westpunt. In this cluster, the treated units that received weight were Oostpunt with 0.39, Soto with 0.28, and Tera Corá with 0.33. The controls receiving weight were Barber 0.17, Lagún 0.10, Santa Rosa 0.18, Sint Willibrordus 0.17, Spaanse Water 0.15, and Westpunt 0.23. The RMSE between the synthetic treated unit and the synthetic control was 0.30, indicating a reasonably close match.</p>
 <p>The Willemstad cluster consists of Brievengat, Groot Kwartier, Groot Piscadera, Hato, Koraal Partir, Otrobanda, Pietermaai, Piscadera Bay, Saliña, Scharloo, Sint Michiel, and Steenrijk. Among the treated units, Groot Kwartier received 0.24, Koraal Partir 0.02, Saliña 0.33, and Scharloo 0.41. The control units with weight were Groot Piscadera 0.13, Otrobanda 0.47, Piscadera Bay 0.34, and Steenrijk 0.06. The RMSE between the synthetic treated and synthetic control units in this cluster was 0.53, reflecting a slightly less precise fit compared to the non-Willemstad cluster.</p>
 <p>The plot below gives our results from the penalized syntehtic experiment. We can see that the penalized estimator gives good pretreatment fit</p>
-<div id="09ee291f" class="cell" data-execution_count="1">
+<div id="7893c30e" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:68: UserWarning:
 
@@ -295,7 +339,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 </div>
 </div>
 <p>Now I solve with a quadratic relaxation of the above objective, where we get</p>
-<div id="bd9a4cbb" class="cell" data-execution_count="2">
+<div id="5d0fd0c3" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:68: UserWarning:
 
@@ -317,7 +361,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758397906107" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758400041498" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -341,7 +385,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758397906108" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758400041498" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -365,7 +409,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758397906108" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758400041498" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -389,7 +433,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758397906114" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758400041504" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -413,7 +457,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758397906114" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758400041505" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -437,7 +481,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758397906111" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758400041501" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -459,7 +503,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758397906111" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758400041501" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -483,7 +527,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758397906114" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758400041504" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -505,7 +549,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758397906114" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758400041504" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -527,7 +571,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758397906114" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758400041504" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -551,7 +595,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758397906108" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758400041498" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -575,7 +619,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758397906115" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758400041505" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -597,7 +641,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758397906111" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758400041501" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -614,7 +658,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1758397906108" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="13" data-listing-file-modified-sort="1758400041498" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -625,7 +669,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758397977609" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758400111834" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

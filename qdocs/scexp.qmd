@@ -26,54 +26,98 @@ By formulating the problem in this way, we provide a principled method for selec
 
 In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.
 
+
 ## Notation
 
-Consider a set of neighborhoods $[J] = {1, \dots, J}$ observed over $T_0$ pre-treatment time periods $[T_0] = {1, \dots, T_0}$, nested within $K$ clusters $[K] = {1, \dots, K}$. Let $I_k \subseteq [J]$ denote the set of neighborhoods in cluster $k \in [K]$, and define the mapping $k: [J] \to [K]$ such that $j \in I_{k(j)}$ identifies the cluster membership of neighborhood $j$. The observed outcomes are collected in the matrix $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with entries $Y_{j,t}$ representing the outcome (for example, Net Revenue per Available Room) of neighborhood $j$ at time $t$. For potential outcomes, let $Y_{j,t}^I$ denote the outcome under treatment (applied starting at $T_0 + 1$) and $Y_{j,t}^N$ denote the outcome without treatment. The average treatment effect is $\tau_t = \sum_{j=1}^J f_j (Y_{j,t}^I - Y_{j,t}^N)$ for $t > T_0$, where $f_j \geq 0$ are known weights with $\sum_{j=1}^J f_j = 1$ (e.g., proportional to neighborhood size).
+Let $[J] = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $[T_0] = \{1, \dots, T_0\}$, nested within $K$ clusters $[K] = \{1, \dots, K\}$. Let $I_k \subseteq [J]$ denote the neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. Observed outcomes are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, where $Y_{j,t}$ represents the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ under treatment and $Y_{j,t}^N$ without treatment, with cluster-weighted average treatment effect
 
-The optimization variables are the weights $w_j \geq 0$ for $j \in [J]$, where $\sum_{j \in I_k} w_j = 1$ for each $k$, and the unit-level control weights $v_{i,j} \geq 0$ for $i,j \in [J]$. Additional parameters include a cost vector $\mathbf{c} \in \mathbb{R}^J$, where $c_j$ is the cost of treating neighborhood $j$ (if specified), a budget $B_k \in \mathbb{R}$ for cluster $k$ (required if $\mathbf{c}$ is specified), the distance $D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2$ between neighborhood $j$’s predictors and the mean of cluster $k$, and the distance $D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2$ between predictors of neighborhoods $j$ and $j'$ in cluster $k$.
-
-The predictor vector for neighborhood $j$ is $\mathbf{x}_j \in \mathbb{R}^r$ (e.g., pre-treatment outcomes or covariates), with cluster mean $\mathbf{\bar{x}}_k = \left( \sum_{j \in I_k} f_j \mathbf{x}_j \right) / \left( \sum_{j \in I_k} f_j \right)$. Optional cardinality constraints are $m_{\text{eq},k}$, $m_{\text{min},k}$, $m_{\text{max},k} \in \mathbb{Z}_{\geq 0}$, specifying the exact, minimum, or maximum number of treated neighborhoods in cluster $k$. Penalization parameters are $\beta$, $\lambda_1$, $\lambda_2$, $\xi$, $\lambda_{1,\text{unit}}$, $\lambda_{2,\text{unit}} \in \mathbb{R}_{\geq 0}$, used in specific designs. Let $J_w = \{ j : w_j > 0 \}$ be the set of treated neighborhoods.
-
-## Optimization Problem
-
-We may minimize an objective function tailored to (at least!) one of four design choices: base, weak, penalized, or unit, each balancing the fit of synthetic treated and control groups to the cluster mean with penalization terms. Again I wish to clarify the point of this algorithm: the goal here is for us, the experimenters, to choose the treated and control units of interest such that the treated unit looks a lot like the market/ cluster or is situated within, and the control units also look similar to the broader market setup. Once we have our treated units, we can begin to do the treatment in reality, and then go on to evaluate how the treated units outcomes would have looked contrary to fact.
-
-For the base design, the objective minimizes the sum over all clusters $k \in [K]$ of the squared $\ell_2$ norm of the difference between the cluster mean $\mathbf{\bar{x}}_k$ and the synthetic treated predictors $\sum_{j \in I_k} w_j \mathbf{x}_j$, weighted by the cluster size $\sum_{j \in I_k} f_j$, plus the analogous term for the synthetic control $\sum_{j \in I_k} v_j \mathbf{x}_j$, given by
 $$
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 \right).
+\tau_t = \sum_{j=1}^J f_j \big(Y_{j,t}^I - Y_{j,t}^N\big), \quad t > T_0,
 $$
 
-For the weak design, the objective extends the base design by adding a penalty term weighted by $\beta \geq 0$ to encourage similarity between the synthetic treated and control predictors, expressed as
+where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$.
+
+Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ (e.g., pre-treatment outcomes or covariates) have cluster mean $\mathbf{\bar{x}}_k = \sum_{j \in I_k} f_j \mathbf{x}_j / \sum_{j \in I_k} f_j$. Distances are defined as $D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2$ and $D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2$. Optional cardinality constraints $m_{\text{eq},k}, m_{\text{min},k}, m_{\text{max},k}$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters $\beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0$ control specific design choices.
+
+Weights $w_j \ge 0$ represent synthetic treated contributions and $v_{i,j} \ge 0$ represent unit-level control contributions. If provided, a cost vector $\mathbf{c} \in \mathbb{R}^J$ and cluster budgets $B_k$ constrain feasible treatments.
+
+We collect all constraints into a feasibility set $\mathcal{F}$:
+
 $$
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2 \right).
+\mathcal{F} = \Big\{ (w, v) \,\Big|\,
+w_j, v_j \ge 0,\;\;
+\sum_{j \in I_k} w_j = 1,\;\;
+\sum_{j \in I_k} v_j = 1,\;\;
+z_j \in \{0,1\},\;\;
+w_j \le z_j,\;\;
+v_j \le 1 - z_j,\;\;
+\sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}],\;\;
+\sum_{j \in I_k} c_j w_j \le B_k,\;\;
+\sum_{k=1}^K z_{j,k} \le 1
+\Big\}.
 $$
 
-For the penalized design, the objective includes penalization terms weighted by $\lambda_1 \geq 0$ and $\lambda_2 \geq 0$ to regularize the treated and control weights based on their distance to the cluster mean, formulated as
+Here, $z_j$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.
+
+## Objective Function
+
+For weights $(w,v) \in \mathcal{F}$, define the cluster-level loss
+
 $$
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k} \right).
+\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[
+\|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2
++ \|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2
++ \beta \|X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k}\|_2^2
++ \lambda_1 w_{I_k}^\top D_{1,k} w_{I_k}
++ \lambda_2 v_{I_k}^\top D_{1,k} v_{I_k}
++ \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - X_{I_k}^\top V_{k,j}\|_2^2
++ \lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k)
+\Big].
 $$
 
-For the unit design, the objective incorporates unit-level penalization with parameters $\xi \geq 0$, $\lambda_{1,\text{unit}} \geq 0$, and $\lambda_{2,\text{unit}} \geq 0$, adding terms to penalize the difference between each treated neighborhood’s predictors and its synthetic control, as well as pairwise distances between treated and control weights, given by
+The synthetic control optimization problem is then
+
 $$
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\|_2^2 + \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j} \right).
+\min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
 $$
 
-The optimization problem minimizes the appropriate objective function subject to the constraints below.
+The framework accommodates four main designs:
 
-## Constraints
+1. **Base:** Minimizes cluster-level fit between the synthetic treated/control and the cluster mean:
 
-The optimization is subject to constraints that ensure feasibility and incorporate practical limitations for the synthetic control method. For each cluster $k \in [K]$, the treated weights are normalized within the cluster, i.e., $\sum_{j \in I_k} w_j = 1$, and the control weights are normalized within the cluster, i.e., $\sum_{j \in I_k} v_j = 1$, ensuring a convex combination of units as we would usually expect.
+$$
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \Big(
+\|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2
++ \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2
+\Big).
+$$
 
-If an exact cardinality constraint $m_{\text{eq},k}$ is specified for cluster $k$, the number of treated neighborhoods satisfies $\sum_{j \in I_k} z_j = m_{\text{eq},k}$, where $z_j \in \{0,1\}$ indicates selection for treatment; if a minimum cardinality $m_{\text{min},k}$ is specified, then $\sum_{j \in I_k} z_j \geq m_{\text{min},k}$; and if a maximum cardinality $m_{\text{max},k}$ is specified, then $\sum_{j \in I_k} z_j \leq m_{\text{max},k}$, controlling the number of treated neighborhoods in cluster $k$. 
+2. **Weak:** Adds similarity between synthetic treated and control predictors:
 
-For each neighborhood $j \in I_k$ in cluster $k \in [K]$, the treated weight is bounded by the selection variable, i.e., $w_j \leq z_j$, and the control weight is bounded by non-selection, i.e., $v_j \leq 1 - z_j$, ensuring consistency between weights and assignments. If a cost vector $\mathbf{c}$ and budget $B_k$ are provided, the total cost of treated neighborhoods in cluster $k$ is constrained by $\sum_{j \in I_k} c_j w_j \leq B_k$. 
+$$
++ \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2.
+$$
 
-If exclusivity is enforced, each neighborhood can be selected as treated in at most one cluster, i.e., $\sum_{k=1}^K z_{j,k} \leq 1$ for all $j \in [J]$. Finally, the weights are non-negative, i.e., $w_j \geq 0$ and $v_j \geq 0$, and the selection variables are binary, i.e., $z_j \in \{0,1\}$, for all $j \in [J]$.
+3. **Penalized:** Adds distance-based regularization on weights:
+
+$$
++ \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k}.
+$$
+
+4. **Unit-level:** Adds unit-level penalization:
+
+$$
++ \xi \sum_{j \in I_k} w_j \Big\|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\Big\|_2^2
++ \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k}
++ \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j}.
+$$
+
+Each design balances fit to the cluster mean and regularization, guiding the selection of treated and control neighborhoods to closely mimic the cluster’s typical profile.
 
 ## Practical Use Cases
 
 
-Even within this framework, the choice of design matters. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.
+The choice of design matters of course. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.
 
 The "weak" design adds a small penalty to encourage similarity between the synthetic treated and synthetic control units. In practice, this design tends to select treated units that are more representative of the actual treated population rather than the entire cluster. That is, it approximates the Average Treatment Effect on the Treated (ATT) rather than the full Average Treatment Effect (ATE). This is useful if you expect that only a subset of the cluster will realistically receive treatment or if the treated units are likely to respond differently from the cluster average.
 

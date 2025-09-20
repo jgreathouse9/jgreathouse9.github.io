@@ -29,93 +29,107 @@ In practice, once the optimization is solved, the experimenters receive a set of
 
 ## Notation
 
-Let $[J] = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $[T_0] = \{1, \dots, T_0\}$, nested within $K$ clusters $[K] = \{1, \dots, K\}$. Let $I_k \subseteq [J]$ denote the neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. Observed outcomes are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, where $Y_{j,t}$ represents the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ under treatment and $Y_{j,t}^N$ without treatment, with cluster-weighted average treatment effect
+Let $\[J] = {1, \dots, J}\$ denote neighborhoods observed over \$T\_0\$ pre-treatment periods $\[T\_0] = {1, \dots, T\_0}\$, nested within \$K\$ clusters $\[K] = {1, \dots, K}\$. Let \$I\_k \subseteq \[J]\$ denote the neighborhoods in cluster \$k\$, with \$j \in I\_{k(j)}\$ indicating cluster membership. Observed outcomes are collected in \$\mathbf{Y} \in \mathbb{R}^{J \times T\_0}\$, where \$Y\_{j,t}\$ represents the outcome for neighborhood \$j\$ at time \$t\$. Potential outcomes are \$Y\_{j,t}^I\$ under treatment and \$Y\_{j,t}^N\$ without treatment, with cluster-weighted average treatment effect
 
 $$
-\tau_t = \sum_{j=1}^J f_j \big(Y_{j,t}^I - Y_{j,t}^N\big), \quad t > T_0,
+\tau_t = \sum_{j=1}^J f_j \, (Y_{j,t}^I - Y_{j,t}^N), \quad t > T_0,
 $$
 
-where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$.
+where \$f\_j \ge 0\$ and \$\sum\_{j=1}^J f\_j = 1\$.
 
-Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ (e.g., pre-treatment outcomes or covariates) have cluster mean $\mathbf{\bar{x}}_k = \sum_{j \in I_k} f_j \mathbf{x}_j / \sum_{j \in I_k} f_j$. Distances are defined as $D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2$ and $D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2$. Optional cardinality constraints $m_{\text{eq},k}, m_{\text{min},k}, m_{\text{max},k}$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters $\beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0$ control specific design choices.
-
-Weights $w_j \ge 0$ represent synthetic treated contributions and $v_{i,j} \ge 0$ represent unit-level control contributions. If provided, a cost vector $\mathbf{c} \in \mathbb{R}^J$ and cluster budgets $B_k$ constrain feasible treatments.
-
-We collect all constraints into a feasibility set $\mathcal{F}$:
+Predictor vectors \$\mathbf{x}\_j \in \mathbb{R}^r\$ (e.g., pre-treatment outcomes or covariates) have cluster mean
 
 $$
-\mathcal{F} = \Big\{ (w, v) \,\Big|\,
-w_j, v_j \ge 0,\;\;
-\sum_{j \in I_k} w_j = 1,\;\;
-\sum_{j \in I_k} v_j = 1,\;\;
-z_j \in \{0,1\},\;\;
-w_j \le z_j,\;\;
-v_j \le 1 - z_j,\;\;
-\sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}],\;\;
-\sum_{j \in I_k} c_j w_j \le B_k,\;\;
-\sum_{k=1}^K z_{j,k} \le 1
-\Big\}.
+\mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
 $$
 
-Here, $z_j$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.
-
-## Objective Function
-
-For weights $(w,v) \in \mathcal{F}$, define the cluster-level loss
+Distances are defined as
 
 $$
-\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[
-\|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2
-+ \|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2
-+ \beta \|X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k}\|_2^2
-+ \lambda_1 w_{I_k}^\top D_{1,k} w_{I_k}
-+ \lambda_2 v_{I_k}^\top D_{1,k} v_{I_k}
-+ \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - X_{I_k}^\top V_{k,j}\|_2^2
-+ \lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k)
+D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
+D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2.
+$$
+
+Optional cardinality constraints \$m\_{\text{eq},k}, m\_{\text{min},k}, m\_{\text{max},k}\$ specify exact, minimum, or maximum treated units per cluster. Penalization parameters
+
+$$
+\beta, \lambda_1, \lambda_2, \xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}} \ge 0
+$$
+
+control specific design choices.
+
+Weights \$w\_j \ge 0\$ represent synthetic treated contributions, and \$v\_{i,j} \ge 0\$ represent unit-level control contributions. If provided, a cost vector \$\mathbf{c} \in \mathbb{R}^J\$ and cluster budgets \$B\_k\$ constrain feasible treatments.
+
+All constraints can be collected in the feasibility set \$\mathcal{F}\$:
+
+$$
+\begin{aligned}
+\mathcal{F} = \big\{ (w,v) \,\big|\; & 
+w_j, v_j \ge 0, \\
+& \sum_{j \in I_k} w_j = 1, \\
+& \sum_{j \in I_k} v_j = 1, \\
+& z_j \in \{0,1\}, \\
+& w_j \le z_j, \\
+& v_j \le 1 - z_j, \\
+& \sum_{j \in I_k} z_j \in [m_{\text{min},k}, m_{\text{max},k}], \\
+& \sum_{j \in I_k} c_j w_j \le B_k, \\
+& \sum_{k=1}^K z_{j,k} \le 1
+\big\}.
+\end{aligned}
+$$
+
+Here, \$z\_j\$ indicates treatment selection and encodes cardinality, budget, and exclusivity constraints.
+
+For weights \$(w,v) \in \mathcal{F}\$, define the cluster-level loss:
+
+$$
+\begin{aligned}
+\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[ \;
+& \|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2 \\
+& + \|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2 \\
+& + \beta \| X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k} \|_2^2 \\
+& + \lambda_1 w_{I_k}^\top D_{1,k} w_{I_k} \\
+& + \lambda_2 v_{I_k}^\top D_{1,k} v_{I_k} \\
+& + \xi \sum_{j \in I_k} w_j \| \mathbf{x}_j - X_{I_k}^\top V_{k,j} \|_2^2 \\
+& + \lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k) \;
 \Big].
+\end{aligned}
 $$
 
-The synthetic control optimization problem is then
+The synthetic control optimization is
 
 $$
 \min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
 $$
 
-The framework accommodates four main designs:
-
-1. **Base:** Minimizes cluster-level fit between the synthetic treated/control and the cluster mean:
+1. **Base:**
 
 $$
-\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \Big(
+\sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big(
 \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2
 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2
-\Big).
+\Big)
 $$
 
-2. **Weak:** Adds similarity between synthetic treated and control predictors:
+2. **Weak:**
 
 $$
-+ \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2.
++ \beta \Big\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \Big\|_2^2
 $$
 
-3. **Penalized:** Adds distance-based regularization on weights:
+3. **Penalized:**
 
 $$
-+ \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k}.
++ \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k}
 $$
 
-4. **Unit-level:** Adds unit-level penalization:
+4. **Unit-level:**
 
 $$
-+ \xi \sum_{j \in I_k} w_j \Big\|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\Big\|_2^2
++ \xi \sum_{j \in I_k} w_j \Big\| \mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i \Big\|_2^2
 + \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k}
-+ \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j}.
++ \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j}
 $$
-
-Each design balances fit to the cluster mean and regularization, guiding the selection of treated and control neighborhoods to closely mimic the cluster’s typical profile.
-
-## Practical Use Cases
-
 
 The choice of design matters of course. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.
 

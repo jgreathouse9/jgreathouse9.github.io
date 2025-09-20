@@ -1,0 +1,224 @@
+---
+title: 'Synthetic Controls for Marketing Experiments'
+date: 2025-09-20
+categories: [Experiments, Econometrics]
+---
+
+# The Difficulties of Market Experimentation
+
+[Suppose the government of Curaçao](https://www.travelpulse.com/news/destinations/curacao-takes-proactive-steps-toward-sustainability-amid-global-overtourism) wishes to implement a new ["Green Stay" initiative](https://www.businesstravelnewseurope.com/Accommodation/HRS-Green-Stay-updates-are-set-to-increase-hotel-participation) that encourages hotels to adopt sustainability measures such as reducing water usage, improving waste management, and shifting toward renewable energy. From a methodological standpoint, the most rigorous way to measure the impact of such a program would be through a randomized controlled trial, where some hotels or neighborhoods are randomly assigned to implement the policy while others serve as controls. Randomization ensures that, in expectation, the treated and control groups are balanced and that differences in outcomes can be attributed to the policy. It also provides a clear framework for statistical inference and lends credibility to the findings.
+
+However, despite these advantages, there are serious obstacles to conducting a true RCT in this context. Ethically, assigning certain hotels to receive the benefits of the program while denying them to others may be perceived as unfair, particularly if the policy boosts reputation, attracts eco-conscious travelers, or leads to financial advantages. Guests might also unknowingly experience different standards, raising questions about fairness and transparency.
+
+Politically, implementing randomization across hundreds of hotels or entire market zones would require coordination among the government, hotel associations, and local businesses, all of whom may resist being “experimented on.” Because tourism is central to the island’s economy, public perception would also be sensitive, and randomized assignment could easily be framed as a risk to one of Curaçao’s most important industries.
+
+The logistical burden is equally daunting: monitoring and enforcing different sustainability requirements on a hotel-by-hotel basis would be complex and costly, with significant overhead required for compliance and enforcement. In practice, coordinating hundreds of independent hotels is unlikely to succeed. In other words, while an RCT is desirable in theory, the ethical, political, and feasibility barriers make it impractical in the context of Curaçao’s hotel sector.
+
+In light of these challenges, a more practical approach is to first consider the market at a localized level, grouping hotels or neighborhoods into clusters that share similar characteristics, such as geographic location, customer demographics, or historical patterns of tourist activity. By focusing on clusters rather than individual units, we can mitigate the ethical concerns of treating some individual hotels differently than others, since the selection occurs within naturally similar groups rather than arbitrarily across the whole market.
+
+Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can then select treated units that closely resemble the local market and control units that reflect the cluster’s underlying dynamics. This ensures that the observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors, but rather capture the typical response within a given market segment. But how would we select the treated units and control units in the first place? Even within a single cluster, we still would not be able to treat everybody for a host of reasons. This blog post covers how we can use synthetic control methods for market experimental settings.
+
+# Synthetic Controls for Marketing Experiments
+
+I discuss the [recent formulation](https://arxiv.org/abs/2108.02196) a clustered synthetic control method for experimental design, which constructs synthetic treated and control groups within clusters of similar neighborhoods to estimate causal effects without randomization. The method uses a convex optimization framework to select neighborhoods and compute synthetic weights, tailored to the hypothetical Curaçao context.
+
+By formulating the problem in this way, we provide a principled method for selecting which neighborhoods to treat and which to use as controls, without relying on arbitrary or purely random assignment. This approach preserves the spirit of a randomized controlled trial by ensuring that the treated neighborhoods closely resemble the cluster’s overall profile and that the controls reflect the typical conditions of the cluster. At the same time, it navigates the ethical and logistical challenges discussed earlier: the decision is made within clusters of similar neighborhoods rather than across the entire market, minimizing perceptions of unfairness and simplifying the operational burden.
+
+In practice, once the optimization is solved, the experimenters receive a set of treated and control neighborhoods along with the associated weights. These weights can then be used to construct counterfactual estimates for the treated units when the treatment in fact happens, allowing us to estimate the effect of the Green Stay initiative. By working at the cluster level, we are able to leverage pre-existing similarities among neighborhoods to design a more efficient and representative experiment, all while maintaining transparency, feasibility, and credibility.
+
+## Notation
+
+Consider a set of neighborhoods $[J] = {1, \dots, J}$ observed over $T_0$ pre-treatment time periods $[T_0] = {1, \dots, T_0}$, nested within $K$ clusters $[K] = {1, \dots, K}$. Let $I_k \subseteq [J]$ denote the set of neighborhoods in cluster $k \in [K]$, and define the mapping $k: [J] \to [K]$ such that $j \in I_{k(j)}$ identifies the cluster membership of neighborhood $j$. The observed outcomes are collected in the matrix $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with entries $Y_{j,t}$ representing the outcome (for example, Net Revenue per Available Room) of neighborhood $j$ at time $t$. For potential outcomes, let $Y_{j,t}^I$ denote the outcome under treatment (applied starting at $T_0 + 1$) and $Y_{j,t}^N$ denote the outcome without treatment. The average treatment effect is $\tau_t = \sum_{j=1}^J f_j (Y_{j,t}^I - Y_{j,t}^N)$ for $t > T_0$, where $f_j \geq 0$ are known weights with $\sum_{j=1}^J f_j = 1$ (e.g., proportional to neighborhood size).
+
+The optimization variables are the weights $w_j \geq 0$ for $j \in [J]$, where $\sum_{j \in I_k} w_j = 1$ for each $k$, and the unit-level control weights $v_{i,j} \geq 0$ for $i,j \in [J]$. Additional parameters include a cost vector $\mathbf{c} \in \mathbb{R}^J$, where $c_j$ is the cost of treating neighborhood $j$ (if specified), a budget $B_k \in \mathbb{R}$ for cluster $k$ (required if $\mathbf{c}$ is specified), the distance $D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2$ between neighborhood $j$’s predictors and the mean of cluster $k$, and the distance $D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2$ between predictors of neighborhoods $j$ and $j'$ in cluster $k$.
+
+The predictor vector for neighborhood $j$ is $\mathbf{x}_j \in \mathbb{R}^r$ (e.g., pre-treatment outcomes or covariates), with cluster mean $\mathbf{\bar{x}}_k = \left( \sum_{j \in I_k} f_j \mathbf{x}_j \right) / \left( \sum_{j \in I_k} f_j \right)$. Optional cardinality constraints are $m_{\text{eq},k}$, $m_{\text{min},k}$, $m_{\text{max},k} \in \mathbb{Z}_{\geq 0}$, specifying the exact, minimum, or maximum number of treated neighborhoods in cluster $k$. Penalization parameters are $\beta$, $\lambda_1$, $\lambda_2$, $\xi$, $\lambda_{1,\text{unit}}$, $\lambda_{2,\text{unit}} \in \mathbb{R}_{\geq 0}$, used in specific designs. Let $J_w = \{ j : w_j > 0 \}$ be the set of treated neighborhoods.
+
+## Optimization Problem
+
+We may minimize an objective function tailored to (at least!) one of four design choices: base, weak, penalized, or unit, each balancing the fit of synthetic treated and control groups to the cluster mean with penalization terms. Again I wish to clarify the point of this algorithm: the goal here is for us, the experimenters, to choose the treated and control units of interest such that the treated unit looks a lot like the market/ cluster or is situated within, and the control units also look similar to the broader market setup. Once we have our treated units, we can begin to do the treatment in reality, and then go on to evaluate how the treated units outcomes would have looked contrary to fact.
+
+For the base design, the objective minimizes the sum over all clusters $k \in [K]$ of the squared $\ell_2$ norm of the difference between the cluster mean $\mathbf{\bar{x}}_k$ and the synthetic treated predictors $\sum_{j \in I_k} w_j \mathbf{x}_j$, weighted by the cluster size $\sum_{j \in I_k} f_j$, plus the analogous term for the synthetic control $\sum_{j \in I_k} v_j \mathbf{x}_j$, given by
+$$
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 \right).
+$$
+
+For the weak design, the objective extends the base design by adding a penalty term weighted by $\beta \geq 0$ to encourage similarity between the synthetic treated and control predictors, expressed as
+$$
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \beta \left\| \sum_{j \in I_k} w_j \mathbf{x}_j - \sum_{j \in I_k} v_j \mathbf{x}_j \right\|_2^2 \right).
+$$
+
+For the penalized design, the objective includes penalization terms weighted by $\lambda_1 \geq 0$ and $\lambda_2 \geq 0$ to regularize the treated and control weights based on their distance to the cluster mean, formulated as
+$$
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \lambda_1 \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_2 \sum_{j \in I_k} v_j D_{1,j,k} \right).
+$$
+
+For the unit design, the objective incorporates unit-level penalization with parameters $\xi \geq 0$, $\lambda_{1,\text{unit}} \geq 0$, and $\lambda_{2,\text{unit}} \geq 0$, adding terms to penalize the difference between each treated neighborhood’s predictors and its synthetic control, as well as pairwise distances between treated and control weights, given by
+$$
+\sum_{k=1}^K \left( \sum_{j \in I_k} f_j \right) \left( \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} w_j \mathbf{x}_j\|_2^2 + \|\mathbf{\bar{x}}_k - \sum_{j \in I_k} v_j \mathbf{x}_j\|_2^2 + \xi \sum_{j \in I_k} w_j \|\mathbf{x}_j - \sum_{i \in I_k} v_{i,j} \mathbf{x}_i\|_2^2 + \lambda_{1,\text{unit}} \sum_{j \in I_k} w_j D_{1,j,k} + \lambda_{2,\text{unit}} \sum_{j,j' \in I_k} w_j D_{2,j,j',k} v_{j',j} \right).
+$$
+
+The optimization problem minimizes the appropriate objective function subject to the constraints below.
+
+## Constraints
+
+The optimization is subject to constraints that ensure feasibility and incorporate practical limitations for the synthetic control method. For each cluster $k \in [K]$, the treated weights are normalized within the cluster, i.e., $\sum_{j \in I_k} w_j = 1$, and the control weights are normalized within the cluster, i.e., $\sum_{j \in I_k} v_j = 1$, ensuring a convex combination of units as we would usually expect.
+
+If an exact cardinality constraint $m_{\text{eq},k}$ is specified for cluster $k$, the number of treated neighborhoods satisfies $\sum_{j \in I_k} z_j = m_{\text{eq},k}$, where $z_j \in \{0,1\}$ indicates selection for treatment; if a minimum cardinality $m_{\text{min},k}$ is specified, then $\sum_{j \in I_k} z_j \geq m_{\text{min},k}$; and if a maximum cardinality $m_{\text{max},k}$ is specified, then $\sum_{j \in I_k} z_j \leq m_{\text{max},k}$, controlling the number of treated neighborhoods in cluster $k$. 
+
+For each neighborhood $j \in I_k$ in cluster $k \in [K]$, the treated weight is bounded by the selection variable, i.e., $w_j \leq z_j$, and the control weight is bounded by non-selection, i.e., $v_j \leq 1 - z_j$, ensuring consistency between weights and assignments. If a cost vector $\mathbf{c}$ and budget $B_k$ are provided, the total cost of treated neighborhoods in cluster $k$ is constrained by $\sum_{j \in I_k} c_j w_j \leq B_k$. 
+
+If exclusivity is enforced, each neighborhood can be selected as treated in at most one cluster, i.e., $\sum_{k=1}^K z_{j,k} \leq 1$ for all $j \in [J]$. Finally, the weights are non-negative, i.e., $w_j \geq 0$ and $v_j \geq 0$, and the selection variables are binary, i.e., $z_j \in \{0,1\}$, for all $j \in [J]$.
+
+## Practical Use Cases
+
+
+Even within this framework, the choice of design matters. The “base” design is the simplest: it tries to match the synthetic treated and control groups to the cluster mean, without any additional penalties. This is appropriate when you primarily care about a straightforward, balanced comparison within each cluster and when there is little concern about additional sources of variation.
+
+The "weak" design adds a small penalty to encourage similarity between the synthetic treated and synthetic control units. In practice, this design tends to select treated units that are more representative of the actual treated population rather than the entire cluster. That is, it approximates the Average Treatment Effect on the Treated (ATT) rather than the full Average Treatment Effect (ATE). This is useful if you expect that only a subset of the cluster will realistically receive treatment or if the treated units are likely to respond differently from the cluster average.
+
+The "penalized" design introduces extra penalties based on distances from cluster means. This helps ensure that the chosen treated and control units are as close as possible to the cluster average, which is especially helpful when some neighborhoods are extreme outliers or when you want to enforce stricter fidelity to the cluster profile.
+
+Finally, the "unit-level" design goes even further: it penalizes differences between individual treated neighborhoods and their synthetic controls, as well as pairwise differences within the cluster. This design is appropriate when you have strong reason to believe that the response of each treated unit is heterogeneous and you want a very tight match between treated and control units at the micro-level. It’s the most targeted approach, but it is also the most computationally intensive and may require more pre-treatment data to be effective.
+
+In plain terms, the choice of design comes down to the question you are asking and how carefully you want to balance representativeness, fidelity to the cluster, and attention to individual unit behavior. Base is simple and robust; weak is useful if you are focused on treated units; penalized enforces similarity to the cluster; and unit-level maximizes local fidelity when individual behavior matters.
+
+# A Simple Example
+
+To illustrate, suppose we have 120 pre-treatment periods of Net Revenue per Available Room across two clusters of neighborhoods in Curaçao. The non-Willemstad cluster includes Barber, Lagún, Oostpunt, Santa Rosa, Sint Willibrordus, Soto, Spaanse Water, Tera Corá, and Westpunt. In this cluster, the treated units that received weight were Oostpunt with 0.39, Soto with 0.28, and Tera Corá with 0.33. The controls receiving weight were Barber 0.17, Lagún 0.10, Santa Rosa 0.18, Sint Willibrordus 0.17, Spaanse Water 0.15, and Westpunt 0.23. The RMSE between the synthetic treated unit and the synthetic control was 0.30, indicating a reasonably close match.
+
+The Willemstad cluster consists of Brievengat, Groot Kwartier, Groot Piscadera, Hato, Koraal Partir, Otrobanda, Pietermaai, Piscadera Bay, Saliña, Scharloo, Sint Michiel, and Steenrijk. Among the treated units, Groot Kwartier received 0.24, Koraal Partir 0.02, Saliña 0.33, and Scharloo 0.41. The control units with weight were Groot Piscadera 0.13, Otrobanda 0.47, Piscadera Bay 0.34, and Steenrijk 0.06. The RMSE between the synthetic treated and synthetic control units in this cluster was 0.53, reflecting a slightly less precise fit compared to the non-Willemstad cluster.
+
+The plot below gives our results from the penalized syntehtic experiment. We can see that the penalized estimator gives good pretreatment fit
+
+```{python}
+
+#| echo: false
+
+from mlsynth import MAREX
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def plot_cluster_full(df, marex_results, show=True, save_path=None):
+    """
+    Plots all units in each cluster (thin gray), synthetic treated (black),
+    and synthetic control (blue).
+    """
+    style_params = {
+        "figure.figsize": (10, 6),
+        "figure.dpi": 100,
+        "savefig.dpi": 300,
+        "savefig.bbox": "tight",
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "font.size": 14,
+        "font.family": "sans-serif",
+        "axes.titlesize": 18,
+        "axes.titleweight": "bold",
+        "axes.labelsize": "large",
+        "xtick.labelsize": "medium",
+        "ytick.labelsize": "medium",
+        "legend.fontsize": 10,
+        "axes.grid": True,
+        "axes.axisbelow": True,
+        "grid.color": "#d3d3d3",
+        "grid.linestyle": ":",
+        "grid.linewidth": 1.0,
+        "lines.linewidth": 1.0,
+        "lines.marker": "",
+        "lines.markersize": 0,
+    }
+
+    clusters = marex_results.clusters
+    n_clusters = len(clusters)
+    n_cols = min(3, n_clusters)
+    n_rows = (n_clusters + n_cols - 1) // n_cols
+
+    with plt.rc_context(style_params):
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(style_params["figure.figsize"][0],
+                                                          style_params["figure.figsize"][1] * n_rows))
+        axes = axes.flatten() if n_clusters > 1 else [axes]
+
+        for i, (cluster_id, cluster_res) in enumerate(clusters.items()):
+            ax = axes[i]
+
+            # Plot all units as thin gray lines
+            for member in cluster_res.members:
+                member_data = df[df['town'] == member].sort_values('time')
+                ax.plot(member_data['time'], member_data['Y_obs'], color='lightgray', linewidth=0.8)
+
+            # Plot synthetic treated and control
+            x = range(1, len(cluster_res.synthetic_treated) + 1)
+            ax.plot(x, cluster_res.synthetic_treated, color='black', linewidth=2, label='Synthetic Treated')
+            ax.plot(x, cluster_res.synthetic_control, color='blue', linewidth=2, label='Synthetic Control')
+
+            ax.set_title(f'Cluster {cluster_id}')
+            ax.set_xlabel('Time Period')
+            ax.set_ylabel('Outcome')
+            ax.grid(True)
+            ax.legend(fontsize=8)
+
+        # Turn off unused axes
+        for j in range(i + 1, len(axes)):
+            axes[j].axis('off')
+
+        plt.tight_layout()
+        if save_path:
+            plt.savefig(save_path)
+        if show:
+            plt.show()
+        else:
+            plt.close(fig)
+
+
+
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP.csv")
+
+#df["Region"]=0
+
+config = {"df": df,
+          "unitid": "town",
+          "time": "time",
+          "outcome": "Y_obs",
+          "design": "eq11",
+          "T0": 120,
+          "exclusive": True,
+          "m_min": 2,
+          "m_max": 4,
+          "lambda1": 0.01,
+          "lambda2": 0.01,
+          "cluster": "Region",
+          "program_type": "MIQP"}
+
+design = MAREX(config).fit()
+
+
+plot_cluster_full(df,design)
+```
+
+Now I solve with a quadratic relaxation of the above objective, where we get
+
+```{python}
+
+config = {"df": df,
+          "unitid": "town",
+          "time": "time",
+          "outcome": "Y_obs",
+          "design": "eq11",
+          "T0": 120,
+          "exclusive": True,
+          "m_min": 2,
+          "m_max": 4,
+          "lambda1": 0.5,
+          "lambda2": 0.5,
+          "cluster": "Region",
+          "program_type": "QP"}
+
+design = MAREX(config).fit()
+
+
+plot_cluster_full(df,design)
+
+```

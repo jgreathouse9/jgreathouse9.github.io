@@ -181,12 +181,13 @@ Wesee that the above gives good pretreatment fit. Now I solve with a quadratic r
 
 from mlsynth import MAREX
 import pandas as pd
-
+import matplotlib.pyplot as plt
 from mlsynth.utils.exputils import plot_cluster_full
 
-df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP.csv")
 
-#df["Region"]=0
+df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP.csv")
+df_pre = df[df["time"] <= 120].copy()
+#df_pre["Region"]=0
 
 config = {"df": df,
           "unitid": "town",
@@ -197,12 +198,57 @@ config = {"df": df,
           "m_min": 2,
           "m_max": 4,
           "cluster": "Region",
-          "program_type": "QP",
-"blank_periods": 8}
+          "program_type": "QP", "blank_periods": 8}
 
 design = MAREX(config).fit()
 
+plot_cluster_full(df,design)
+```
+
+We see that even wehn I solve the QP instead of the MIQP version from above, we still obtain good pre-treatment fit with respect to the synthetic control. This suggests that the controls and treated units are representative of their broader markets.
+
+Notice here how I have not at all discussed the ATT/ATE yet. Or, the uncertainty underlying the estimated treatment effect. This is because again, the framework laid out above is for the designing of experiments. We can do other things too.
+
+```{python}
+
+#| echo: false
+
+from mlsynth import MAREX
+import pandas as pd
+import matplotlib.pyplot as plt
+from mlsynth.utils.exputils import plot_cluster_full
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP.csv")
+df_pre = df[df["time"] <= 120].copy()
+df["Region"]=0
+
+config = {"df": df,
+          "unitid": "town",
+          "time": "time",
+          "outcome": "Y_obs",
+          "design": "eq11",
+          "T0": 120,
+          "exclusive": True,
+          "m_min": 2,
+          "m_max": 5,
+          "cluster": "Region",
+          'lambda1':  0.02,
+          'lambda2' : 0.02,
+          "program_type": "QP", "blank_periods": 8}
+
+design = MAREX(config).fit()
 
 plot_cluster_full(df,design)
-
 ```
+
+Finally, I experimented with relaxing the two-cluster assumption altogether by treating the island as one aggregate market. Using the penalized design, I allowed anywhere from 2 to 5 neighborhoods to be treated, and even extended the upper bound of treated units to 12. In every case, the estimator identified coherent sets of treated and control units that aligned well with the historical data. The specific neighborhoods chosen shifted depending on the cardinality constraint, but the resulting synthetic controls continued to provide strong pre-treatment alignment. What this shows is that the synthetic design is not overly fragile: whether we divide Curaçao into clusters or treat it as one unit, whether we enforce integer treatment assignments or relax them, the method produces stable synthetic matches. That stability is exactly what makes the framework useful as a design tool. Before we ever estimate treatment effects or report uncertainty, we can be confident that the experimental design itself—who is treated, who is not, and why.
+
+Another point of contrast is worth making in comparison to the randomized controlled trial setup. In a traditional RCT, the randomization happens once in the field. After we randomize and assign treatment, there is no undo button. Once units are assigned to treatment or control, the study must run its course, with all the costs, risks, and constraints that entails. By contrast, the exprimental synthetic control design can be run as many times as we like on a laptop in a few minutes. We can explore different clustering assumptions, penalties, cost constraints, and/or solver formulations, and see how stable the resulting design looks before ever committing any resources. Crucially, synthetic controls can, in the setting where only a few markets may be treated, achieve RCT-like balance even when only a few units are treated. If treating additional units is costly—as it almost always is—being able to restrict treatment to just two or three units while still maintaining valid comparisons can represent a massive savings in resources. Instead of rolling out an intervention to half the sample (say, ten out of twenty-one units), we can strategically treat only a handful while preserving the benefits of a balanced control group.
+
+That flexibility makes the method powerful as a *planning tool*. It gives researchers and practitioners a way to prototype experiments cheaply and safely, identifying whether the data support a credible design before taking any real-world action. Large-scale RCTs will always have their place as the gold standard, but they are expensive and logistically demanding. Synthetic design exercises like the one above open the door to a more iterative, exploratory phase of experimental planning—something we can do in advance, at low cost, to ensure that when we do invest in a full study, it is targeted, efficient, and built on a solid foundation.
+
+## Inference
+
+
+

@@ -148,105 +148,29 @@ The plot below gives our results from the penalized syntehtic experiment. We can
 
 from mlsynth import MAREX
 import pandas as pd
-import matplotlib.pyplot as plt
-
-def plot_cluster_full(df, marex_results, show=True, save_path=None):
-    """
-    Plots all units in each cluster (thin gray), synthetic treated (black),
-    and synthetic control (blue).
-    """
-    style_params = {
-        "figure.figsize": (10, 6),
-        "figure.dpi": 100,
-        "savefig.dpi": 300,
-        "savefig.bbox": "tight",
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "font.size": 14,
-        "font.family": "sans-serif",
-        "axes.titlesize": 18,
-        "axes.titleweight": "bold",
-        "axes.labelsize": "large",
-        "xtick.labelsize": "medium",
-        "ytick.labelsize": "medium",
-        "legend.fontsize": 10,
-        "axes.grid": True,
-        "axes.axisbelow": True,
-        "grid.color": "#d3d3d3",
-        "grid.linestyle": ":",
-        "grid.linewidth": 1.0,
-        "lines.linewidth": 1.0,
-        "lines.marker": "",
-        "lines.markersize": 0,
-    }
-
-    clusters = marex_results.clusters
-    n_clusters = len(clusters)
-    n_cols = min(3, n_clusters)
-    n_rows = (n_clusters + n_cols - 1) // n_cols
-
-    with plt.rc_context(style_params):
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(style_params["figure.figsize"][0],
-                                                          style_params["figure.figsize"][1] * n_rows))
-        axes = axes.flatten() if n_clusters > 1 else [axes]
-
-        for i, (cluster_id, cluster_res) in enumerate(clusters.items()):
-            ax = axes[i]
-
-            # Plot all units as thin gray lines
-            for member in cluster_res.members:
-                member_data = df[df['town'] == member].sort_values('time')
-                ax.plot(member_data['time'], member_data['Y_obs'], color='lightgray', linewidth=0.8)
-
-            # Plot synthetic treated and control
-            x = range(1, len(cluster_res.synthetic_treated) + 1)
-            ax.plot(x, cluster_res.synthetic_treated, color='black', linewidth=2, label='Synthetic Treated')
-            ax.plot(x, cluster_res.synthetic_control, color='blue', linewidth=2, label='Synthetic Control')
-
-            ax.set_title(f'Cluster {cluster_id}')
-            ax.set_xlabel('Time Period')
-            ax.set_ylabel('Outcome')
-            ax.grid(True)
-            ax.legend(fontsize=8)
-
-        # Turn off unused axes
-        for j in range(i + 1, len(axes)):
-            axes[j].axis('off')
-
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path)
-        if show:
-            plt.show()
-        else:
-            plt.close(fig)
-
-
-
+from mlsynth.utils.exputils import plot_cluster_full
 
 
 df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP.csv")
-
-#df["Region"]=0
+df_pre = df[df["time"] <= 120].copy()
+#df_pre["Region"]=0
 
 config = {"df": df,
           "unitid": "town",
           "time": "time",
           "outcome": "Y_obs",
-          "design": "eq11",
           "T0": 120,
           "exclusive": True,
           "m_min": 2,
           "m_max": 4,
-          "lambda1": 0.01,
-          "lambda2": 0.01,
           "cluster": "Region",
-          "program_type": "MIQP"}
+          "program_type": "MIQP", "blank_periods": 8}
 
 design = MAREX(config).fit()
 
 
 plot_cluster_full(df,design)
+
 ```
 
 Now I solve with a quadratic relaxation of the above objective, where we get

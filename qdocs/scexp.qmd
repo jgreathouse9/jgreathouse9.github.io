@@ -104,7 +104,7 @@ In practice, this prevents the optimization from drifting toward two very differ
 The penalized estimator takes things further by adding distance-based penalties. These ensure that the selected neighborhoods are not only good statistical matches but also geographically or demographically close to the cluster mean:
 
 $$
-\mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v})
+\mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \lambda_1 \mathbf{w}_{I_k}^\top D_{1,k} \mathbf{w}_{I_k}
 + \lambda_2 \mathbf{v}_{I_k}^\top D_{1,k} \mathbf{v}_{I_k}.
 $$
@@ -114,7 +114,7 @@ Here, the matrices $D_{1,k}$ encode distances, so neighborhoods that are far fro
 Finally, the unit-level estimator introduces the most granular controls. It not only enforces closeness to cluster means but also requires that each treated neighborhood has a tight match with its synthetic control, and that pairs of neighborhoods within the cluster do not diverge too much:
 
 $$
-\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v})
+\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \xi \, \big(\mathbf{w}_{I_k}^\top \, \mathrm{diag}(\|\mathbf{X}_{I_k} - \mathbf{X}_{I_k} \mathbf{V}_k\|_F^2)\big)
 + \lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k}).
 $$

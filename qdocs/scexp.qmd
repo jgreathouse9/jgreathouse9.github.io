@@ -54,24 +54,26 @@ $$
 \end{aligned}
 $$
 
-Let’s explain these constraints intuitively for neighborhoods:
+Intuitively, in the Curaçao context:
 
 1. **Non-negativity and normalization ($w_j, v_j \ge 0$, $\sum w_j = \sum v_j = 1$):**  
-   Synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply “subtracting” a neighborhood’s influence, which is nonsensical. Summing to one ensures each synthetic neighborhood represents a proper mixture of real neighborhoods.
+   Synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply “subtracting” a neighborhood’s influence. Summing to one ensures each synthetic neighborhood is a proper mixture of real neighborhoods.
 
 2. **Treatment assignment ($z_j \in \{0,1\}, w_j \le z_j, v_j \le 1 - z_j$):**  
-   Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, ensuring no neighborhood is "double-counted."
+   Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, avoiding “double-counting.”
 
 3. **Cardinality constraints ($\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]$):**  
-   We may want at least one treated neighborhood per cluster to observe effects, but not every neighborhood due to ethical, financial, or logistical concerns.
+   Ensures at least one neighborhood is treated per cluster to observe effects, but not every neighborhood, respecting ethical, financial, or logistical limits.
 
 4. **Budget constraints ($\sum c_j w_j \le B_k$, $\sum c_j w_j \le B_{\text{total}}$):**  
-   Neighborhoods may differ in implementation cost. Cluster- and global-level budgets ensure the program stays financially feasible.
+   Neighborhoods may have different costs. Cluster- and global-level budgets ensure the program remains financially feasible.
 
 5. **Cluster exclusivity ($\sum_k z_{j,k} \le 1$):**  
-   Each neighborhood can only be treated in one cluster to avoid overlapping treatments that would confound the effect.
+   Each neighborhood can only be treated in one cluster to avoid overlapping treatments that could confound the effect.
 
-The objective function can be written with **underbraces** labeling each component:
+
+
+The objective function can be written with underbraces labeling each component:
 
 $$
 \begin{aligned}
@@ -94,6 +96,14 @@ $$
 $$
 
 with design variants (Base, Weak, Penalized, Unit-level) corresponding to which penalty terms are active, depending on whether the focus is cluster-level fidelity, treated/control similarity, or unit-level fidelity for individual neighborhoods.
+
+## Intuition
+
+What’s particularly interesting about this setup is that we’re not necessarily estimating treatment effects yet. Instead, the synthetic control framework is acting as a decision-making tool: it tells us which neighborhoods to treat and why, based on the trade-offs encoded in the objective function. Analysts can tweak the penalties, change clustering schemes, or adjust budget and cardinality constraints to see how the proposed treatment assignments change.
+
+For example, increasing $\beta$ encourages the treated neighborhoods to be closer to the synthetic controls, effectively prioritizing representativeness of the treated units. Adjusting $\lambda_1$ and $\lambda_2$ emphasizes fidelity to cluster averages, penalizing outlier neighborhoods from being selected. Unit-level penalties $\xi$ and $\lambda_{2,j}$ allow analysts to ensure micro-level balance, focusing on individual neighborhoods with unique characteristics.
+
+Because the framework is fully flexible, it becomes a sandbox for experimental design: you can simulate different cost and budget allocations, understand which neighborhoods are likely to be chosen under various priorities, and make informed decisions before the business/government does any treatment. In other words, this lets analysts answer: "Given our objectives and constraints, which neighborhoods should be treated, and why?" before any policy is implemented, making the framework extremely valuable for planning ethical, practical, and representative market experiments.
 
 # A Simple Example
 

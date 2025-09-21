@@ -77,46 +77,51 @@ $$
 \min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
 $$
 
-where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. The loss function $\mathcal{L}$ takes different forms depending on the design.
+where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. 
 
-**Base design.** The synthetic treated and synthetic control neighborhoods are required to match the cluster mean outcomes:
+The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method ensures that within each cluster of neighborhoods, we construct weighted averages that resemble both the cluster as a whole and each other.
+
+The base estimator is the most straightforward. For each cluster $k$, it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:
 
 $$
-\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) =
-\sum_{k=1}^K \Big[
-\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2
-+ \|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2
+\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) = \sum_{k=1}^K \Big( \mathbf{f}_{I_k}^\top \mathbf{1} \Big) \Big[
+\|\bar{\mathbf{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2
++ \|\bar{\mathbf{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2
 \Big].
 $$
 
-**Weak design.** In addition to cluster mean matching, a penalty encourages similarity between the synthetic treated and control outcomes:
+This guarantees that both sides of the experiment are anchored to the same benchmark—the average of their cluster.
+
+The weakly penalized version extends this idea by also encouraging the treated and control groups to resemble each other directly:
 
 $$
-\mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) =
-\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
+\mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \beta \|\mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2.
 $$
 
-**Penalized design.** Distance-based penalties discourage treated and control weights from concentrating on units far from the cluster mean. With $D_{1,k}$ the squared distance matrix to $\mathbf{\bar{x}}_k$:
+In practice, this prevents the optimization from drifting toward two very different synthetic groups that both happen to match the cluster mean.
+
+The penalized estimator takes things further by adding distance-based penalties. These ensure that the selected neighborhoods are not only good statistical matches but also geographically or demographically close to the cluster mean:
 
 $$
-\mathcal{L}_{\text{Pen}}(\mathbf{w},\mathbf{v}) =
-\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
-+ \lambda_1 \, \mathbf{w}_{I_k}^\top D_{1,k} \, \mathbf{w}_{I_k}
-+ \lambda_2 \, \mathbf{v}_{I_k}^\top D_{1,k} \, \mathbf{v}_{I_k}.
+\mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v})
++ \lambda_1 \mathbf{w}_{I_k}^\top D_{1,k} \mathbf{w}_{I_k}
++ \lambda_2 \mathbf{v}_{I_k}^\top D_{1,k} \mathbf{v}_{I_k}.
 $$
 
-**Unit-level design.** At the most granular level, the loss also penalizes mismatches between individual treated units and their synthetic controls, as well as heterogeneity within the cluster. With $D_{2,k}$ the matrix of pairwise squared distances among units in cluster $k$:
+Here, the matrices $D_{1,k}$ encode distances, so neighborhoods that are far from the cluster center are penalized more heavily.
+
+Finally, the unit-level estimator introduces the most granular controls. It not only enforces closeness to cluster means but also requires that each treated neighborhood has a tight match with its synthetic control, and that pairs of neighborhoods within the cluster do not diverge too much:
 
 $$
-\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) =
-\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
-+ \xi \sum_{j \in I_k} w_{j,k} \, \|\mathbf{x}_j - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2
-+ \lambda_{1,\text{unit}} \, \mathbf{w}_{I_k}^\top D_{1,k} \, \mathbf{w}_{I_k}
-+ \lambda_{2,\text{unit}} \, \mathbf{w}_{I_k}^\top D_{2,k} \, \mathbf{v}_{I_k}.
+\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v})
++ \xi \, \big(\mathbf{w}_{I_k}^\top \, \mathrm{diag}(\|\mathbf{X}_{I_k} - \mathbf{X}_{I_k} \mathbf{V}_k\|_F^2)\big)
++ \lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k}).
 $$
 
-These designs correspond to different modeling choices: the base formulation emphasizes cluster–mean fidelity; the weak design adds direct treated–control alignment; the penalized design enforces proximity to cluster means through distance–based penalties; and the unit-level design further enforces balance at the level of individual neighborhoods.
+This is the most restrictive design. It is best suited for cases where heterogeneity across neighborhoods matters, and analysts want each treated area to have a carefully matched control counterpart.
+
+Together, these estimators form a hierarchy. The base version establishes a simple anchor; the weak estimator prevents divergence; the penalized estimator incorporates geographic or demographic realism; and the unit-level estimator enforces fine-grained one-to-one balance. Analysts can experiment across this ladder, choosing the design that best matches the goals and constraints of their study.
 
 
 ## Intuition

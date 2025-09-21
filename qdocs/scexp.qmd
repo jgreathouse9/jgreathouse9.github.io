@@ -20,13 +20,15 @@ Cluster analysis also reduces logistical complexity, because interventions can b
 
 ## Notation and Synthetic Control Designs
 
-Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$. Let $I_k \subseteq \mathcal{J}$ denote the neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. Observed outcomes are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, where $Y_{j,t}$ represents the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ under treatment and $Y_{j,t}^N$ without treatment, with cluster-weighted average treatment effect
+In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership.
+
+Observed outcomes, like occupancy rates or energy use, are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $Y_{j,t}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ if the neighborhood participates in Green Stay and $Y_{j,t}^N$ if not. The cluster-weighted average treatment effect is
 
 $$
 \tau_t = \sum_{j=1}^J f_j \, (Y_{j,t}^I - Y_{j,t}^N), \quad t > T_0,
 $$
 
-where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$. Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ have cluster mean
+where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$. Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ capture pre-treatment characteristics of neighborhoods, such as the average energy use, hotel occupancy, or typical guest demographics, with cluster mean
 
 $$
 \mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
@@ -39,7 +41,7 @@ D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
 D_{2,j,j',k} = \|\mathbf{x}_j - \mathbf{x}_{j'}\|_2^2.
 $$
 
-Weights $w_j \ge 0$ represent synthetic treated contributions, $v_{i,j} \ge 0$ represent unit-level control contributions, and $z_j \in \{0,1\}$ encodes treatment assignment. Cluster budgets $B_k$ and cost vector $\mathbf{c}$ may constrain feasible treatments. All constraints are collected in $\mathcal{F}$:
+We define synthetic treated and control neighborhoods via weights $w_j \ge 0$ and $v_{i,j} \ge 0$, and neighborhoods are either treated or not via $z_j \in \{0,1\}$. Optional costs $\mathbf{c}$ and cluster budgets $B_k$ constrain feasible assignments. The feasible set is
 
 $$
 \begin{aligned}
@@ -52,7 +54,24 @@ $$
 \end{aligned}
 $$
 
-For weights $(w,v) \in \mathcal{F}$, the cluster-level loss can be written with underbraces labeling each term:
+Let’s explain these constraints intuitively for neighborhoods:
+
+1. **Non-negativity and normalization ($w_j, v_j \ge 0$, $\sum w_j = \sum v_j = 1$):**  
+   Synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply “subtracting” a neighborhood’s influence, which is nonsensical. Summing to one ensures each synthetic neighborhood represents a proper mixture of real neighborhoods.
+
+2. **Treatment assignment ($z_j \in \{0,1\}, w_j \le z_j, v_j \le 1 - z_j$):**  
+   Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, ensuring no neighborhood is "double-counted."
+
+3. **Cardinality constraints ($\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]$):**  
+   We may want at least one treated neighborhood per cluster to observe effects, but not every neighborhood due to ethical, financial, or logistical concerns.
+
+4. **Budget constraints ($\sum c_j w_j \le B_k$, $\sum c_j w_j \le B_{\text{total}}$):**  
+   Neighborhoods may differ in implementation cost. Cluster- and global-level budgets ensure the program stays financially feasible.
+
+5. **Cluster exclusivity ($\sum_k z_{j,k} \le 1$):**  
+   Each neighborhood can only be treated in one cluster to avoid overlapping treatments that would confound the effect.
+
+The objective function can be written with **underbraces** labeling each component:
 
 $$
 \begin{aligned}
@@ -68,19 +87,13 @@ $$
 \end{aligned}
 $$
 
-The synthetic control optimization is then
+The optimization is
 
 $$
-\min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
+\min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v),
 $$
 
-Variants of the design correspond to selecting which terms are active:
-
-- **Base:** only match synthetic treated and control to cluster mean.  
-- **Weak:** adds $\beta$ penalty for treated/control similarity (ATT-focused).  
-- **Penalized:** adds $\lambda_1, \lambda_2$ for cluster fidelity.  
-- **Unit-level:** adds $\xi, \lambda_{1,\text{unit}}, \lambda_{2,\text{unit}}$ for fine-grained matching at the individual unit level.
-
+with design variants (Base, Weak, Penalized, Unit-level) corresponding to which penalty terms are active, depending on whether the focus is cluster-level fidelity, treated/control similarity, or unit-level fidelity for individual neighborhoods.
 
 # A Simple Example
 

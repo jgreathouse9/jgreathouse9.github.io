@@ -71,31 +71,60 @@ Intuitively, in the Curaçao context:
 5. **Cluster exclusivity ($\sum_k z_{j,k} \le 1$):**  
    Each neighborhood can only be treated in one cluster to avoid overlapping treatments that could confound the effect.
 
-
-
-The objective function can be written with underbraces labeling each component:
-
-$$
-\begin{aligned}
-\mathcal{L}(w,v) = \sum_{k=1}^K \Big( \sum_{j \in I_k} f_j \Big) \Big[ &
-\underbrace{\|\mathbf{\bar{x}}_k - X_{I_k}^\top w_{I_k}\|_2^2}_{\text{match synthetic treated to cluster mean}}
-+ \underbrace{\|\mathbf{\bar{x}}_k - X_{I_k}^\top v_{I_k}\|_2^2}_{\text{match synthetic control to cluster mean}} \\
-& + \underbrace{\beta \| X_{I_k}^\top w_{I_k} - X_{I_k}^\top v_{I_k} \|_2^2}_{\text{encourage treated/control similarity}}
-+ \underbrace{\lambda_1 w_{I_k}^\top D_{1,k} w_{I_k}}_{\text{penalize treated distance from cluster mean}} 
-+ \underbrace{\lambda_2 v_{I_k}^\top D_{1,k} v_{I_k}}_{\text{penalize control distance from cluster mean}} \\
-& + \underbrace{\xi \sum_{j \in I_k} w_j \| \mathbf{x}_j - X_{I_k}^\top V_{k,j} \|_2^2}_{\text{unit-level treated vs. synthetic control}}
-+ \underbrace{\lambda_{2,\text{unit}} \mathrm{tr}(W_{I_k}^\top D_{2,k} V_k)}_{\text{pairwise unit-level penalty}}
-\Big].
-\end{aligned}
-$$
-
 The optimization is
 
 $$
 \min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v),
 $$
 
-with design variants (Base, Weak, Penalized, Unit-level) corresponding to which penalty terms are active, depending on whether the focus is cluster-level fidelity, treated/control similarity, or unit-level fidelity for individual neighborhoods.
+or in expanded form as:
+
+
+$$
+\begin{aligned}
+\mathcal{L}(\mathbf{w},\mathbf{v}) = \sum_{k=1}^K \Big( \mathbf{f}_{I_k}^\top \mathbf{1} \Big) \Big[ &
+\underbrace{\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2}_{\text{match synthetic treated to cluster mean}}
++ \underbrace{\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2}_{\text{match synthetic control to cluster mean}} \\
+& + \underbrace{\beta \| \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k} \|_2^2}_{\text{encourage treated/control similarity}}
++ \underbrace{\lambda_1 \mathbf{w}_{I_k}^\top D_{1,k} \mathbf{w}_{I_k}}_{\text{penalize treated distance from cluster mean}} 
++ \underbrace{\lambda_2 \mathbf{v}_{I_k}^\top D_{1,k} \mathbf{v}_{I_k}}_{\text{penalize control distance from cluster mean}} \\
+& + \underbrace{\xi \, (\mathbf{w}_{I_k}^\top \, \text{diag}(\|\mathbf{X}_{I_k} - \mathbf{X}_{I_k} \mathbf{V}_k\|_F^2))}_{\text{unit-level treated vs. synthetic control}}
++ \underbrace{\lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k})}_{\text{pairwise unit-level penalty}}
+\Big].
+\end{aligned}
+$$
+
+We have a few estimators to consider. The base case matches synthetic treated and control neighborhoods to cluster means:
+
+$$
+\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) = \sum_{k=1}^K \Big( \mathbf{f}_{I_k}^\top \mathbf{1} \Big) \Big[
+\underbrace{\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2}_{\text{match synthetic treated to cluster mean}}
++ \underbrace{\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2}_{\text{match synthetic control to cluster mean}}
+\Big].
+$$
+
+Adds a penalty to encourage treated/control similarity:
+
+$$
+\mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
++ \underbrace{\beta \|\mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2}_{\text{encourage treated/control similarity}}.
+$$
+
+Adds distance-based penalties to enforce closeness to cluster means:
+
+$$
+\mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v})
++ \underbrace{\lambda_1 \mathbf{w}_{I_k}^\top D_{1,k} \mathbf{w}_{I_k}}_{\text{penalize treated distance from cluster mean}}
++ \underbrace{\lambda_2 \mathbf{v}_{I_k}^\top D_{1,k} \mathbf{v}_{I_k}}_{\text{penalize control distance from cluster mean}}.
+$$
+
+Adds unit-level penalties to match individual neighborhoods tightly to their synthetic controls:
+
+$$
+\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v})
++ \underbrace{\xi \, (\mathbf{w}_{I_k}^\top \, \text{diag}(\|\mathbf{X}_{I_k} - \mathbf{X}_{I_k} \mathbf{V}_k\|_F^2))}_{\text{unit-level treated vs. synthetic control}}
++ \underbrace{\lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k})}_{\text{pairwise unit-level penalty}}.
+$$
 
 ## Intuition
 

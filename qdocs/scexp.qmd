@@ -71,43 +71,53 @@ Intuitively, in the Curaçao context:
 5. **Cluster exclusivity ($\sum_k z_{j,k} \le 1$):**  
    Each neighborhood can only be treated in one cluster to avoid overlapping treatments that could confound the effect.
 
-The optimization is
+The clustered synthetic control estimator is obtained by solving
 
 $$
-\min_{(w,v) \in \mathcal{F}} \mathcal{L}(w,v).
+\min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
 $$
 
-We have a few estimators to consider. The base case matches synthetic treated and control neighborhoods to cluster means:
+where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. The loss function $\mathcal{L}$ takes different forms depending on the design.
+
+**Base design.** The synthetic treated and synthetic control neighborhoods are required to match the cluster mean outcomes:
 
 $$
-\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) = \sum_{k=1}^K \Big( \mathbf{f}_{I_k}^\top \mathbf{1} \Big) \Big[
-\underbrace{\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2}_{\text{match synthetic treated to cluster mean}}
-+ \underbrace{\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2}_{\text{match synthetic control to cluster mean}}
+\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) =
+\sum_{k=1}^K \Big[
+\|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2
++ \|\mathbf{\bar{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2
 \Big].
 $$
 
-Adds a penalty to encourage treated/control similarity:
+**Weak design.** In addition to cluster mean matching, a penalty encourages similarity between the synthetic treated and control outcomes:
 
 $$
-\mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
-+ \underbrace{\beta \|\mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2}_{\text{encourage treated/control similarity}}.
+\mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) =
+\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
++ \beta \|\mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2.
 $$
 
-Adds distance-based penalties to enforce closeness to cluster means:
+**Penalized design.** Distance-based penalties discourage treated and control weights from concentrating on units far from the cluster mean. With $D_{1,k}$ the squared distance matrix to $\mathbf{\bar{x}}_k$:
 
 $$
-\mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v})
-+ \underbrace{\lambda_1 \mathbf{w}_{I_k}^\top D_{1,k} \mathbf{w}_{I_k}}_{\text{penalize treated distance from cluster mean}}
-+ \underbrace{\lambda_2 \mathbf{v}_{I_k}^\top D_{1,k} \mathbf{v}_{I_k}}_{\text{penalize control distance from cluster mean}}.
+\mathcal{L}_{\text{Pen}}(\mathbf{w},\mathbf{v}) =
+\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
++ \lambda_1 \, \mathbf{w}_{I_k}^\top D_{1,k} \, \mathbf{w}_{I_k}
++ \lambda_2 \, \mathbf{v}_{I_k}^\top D_{1,k} \, \mathbf{v}_{I_k}.
 $$
 
-Adds unit-level penalties to match individual neighborhoods tightly to their synthetic controls:
+**Unit-level design.** At the most granular level, the loss also penalizes mismatches between individual treated units and their synthetic controls, as well as heterogeneity within the cluster. With $D_{2,k}$ the matrix of pairwise squared distances among units in cluster $k$:
 
 $$
-\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v})
-+ \underbrace{\xi \, (\mathbf{w}_{I_k}^\top \, \text{diag}(\|\mathbf{X}_{I_k} - \mathbf{X}_{I_k} \mathbf{V}_k\|_F^2))}_{\text{unit-level treated vs. synthetic control}}
-+ \underbrace{\lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k})}_{\text{pairwise unit-level penalty}}.
+\mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) =
+\mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
++ \xi \sum_{j \in I_k} w_{j,k} \, \|\mathbf{x}_j - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2
++ \lambda_{1,\text{unit}} \, \mathbf{w}_{I_k}^\top D_{1,k} \, \mathbf{w}_{I_k}
++ \lambda_{2,\text{unit}} \, \mathbf{w}_{I_k}^\top D_{2,k} \, \mathbf{v}_{I_k}.
 $$
+
+These designs correspond to different modeling choices: the base formulation emphasizes cluster–mean fidelity; the weak design adds direct treated–control alignment; the penalized design enforces proximity to cluster means through distance–based penalties; and the unit-level design further enforces balance at the level of individual neighborhoods.
+
 
 ## Intuition
 

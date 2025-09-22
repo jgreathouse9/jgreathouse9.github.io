@@ -24,10 +24,10 @@ But how would we select which neighborhoods to treat and which to use as control
 
 In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership.
 
-Observed outcomes, like occupancy rates or energy use, are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $Y_{j,t}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $Y_{j,t}^I$ if the neighborhood participates in Green Stay and $Y_{j,t}^N$ if not. The cluster-weighted average treatment effect is
+Observed outcomes, like occupancy rates or energy use, are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $y_{jt}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $y_{jt}^I$ if the neighborhood participates in Green Stay and $y_{jt}^N$ if not. The cluster-weighted average treatment effect is
 
 $$
-\tau_t = \sum_{j=1}^J f_j \, (Y_{j,t}^I - Y_{j,t}^N), \quad t > T_0,
+\tau_t = \sum_{j=1}^J f_j \, (y_{jt}^I - y_{jt}^N), \quad t > T_0,
 $$
 
 where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$. Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ capture pre-treatment characteristics of neighborhoods, such as the average energy use, hotel occupancy, or typical guest demographics, with cluster mean
@@ -248,48 +248,81 @@ Another point of contrast is worth making in comparison to the randomized contro
 
 That flexibility makes the method powerful as a *planning tool*. It gives researchers and practitioners a way to prototype experiments cheaply and safely, identifying whether the data support a credible design before taking any real-world action. Large-scale RCTs will always have their place as the gold standard, but they are expensive and logistically demanding. Synthetic design exercises like the one above open the door to a more iterative, exploratory phase of experimental planning—something we can do in advance, at low cost, to ensure that when we do invest in a full study, it is targeted, efficient, and built on a solid foundation.
 
+
 ## Inference
 
-To evaluate uncertainty in synthetic control estimates, we use a placebo-based inference procedure. The key idea is that we can treat the blank pre-treatment periods (periods that were not used for fitting) as if they were "pseudo post-treatment" periods. This lets us simulate the kind of variation we might expect under the null of no effect.
-
-Formally, let
+Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods and $\mathcal{K} = \{1, \dots, K\}$ denote clusters. Each cluster $k$ contains neighborhoods $I_k \subseteq \mathcal{J}$. Let $T_0$ be the number of pre-treatment periods and $T_{\text{post}}$ the number of post-treatment periods. Observed outcomes are $y_{jt}$, with synthetic treated and control outcomes $y_{jt}^{\text{treated}}$ and $y_{jt}^{\text{control}}$, respectively. The pointwise treatment effect is  
 
 $$
-\tau_t = Y^{\text{treat}}_t - Y^{\text{control}}_t
+\hat{\tau}_{j,t} = y_{jt}^{\text{treated}} - y_{jt}^{\text{control}}.
 $$
 
-denote the estimated treatment effect in post-treatment period $t$, obtained from the difference between the synthetic treated group and the synthetic control group.
+Define “blank” pre-treatment periods $\mathcal{T}_\text{blank} = \{T_c, T_c+1, \dots, T_c + T_b - 1\}$ that are not used in fitting, and post-treatment periods $\mathcal{T}_\text{post} = \{T_0, \dots, T_0 + T_{\text{post}} - 1\}$.
 
-During the blank periods, we compute analogous differences
+### Placebo Effects
 
-$$
-u_s = Y^{\text{treat}}_s - Y^{\text{control}}_s, \quad s \in \{T_0 - B + 1, \dots, T_0\},
-$$
-
-where $B$ is the number of blank periods and $T_0$ is the intervention start. Since the intervention has not occurred yet, these placebo gaps $u_s$ provide an empirical distribution of “false effects.”
-
-To construct confidence intervals, we compare each estimated effect $\tau_t$ against the distribution of placebo gaps. Specifically, let
+The placebo effects are calculated over the blank periods:  
 
 $$
-q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|u_s|),
+\hat{\tau}_{\text{blank}, t} = y_t^{\text{treated}} - y_t^{\text{control}}, \quad t \in \mathcal{T}_\text{blank}.
 $$
 
-then the $(1-\alpha)$-confidence interval is given by
+The observed post-treatment effects are  
 
 $$
-\Big[\, \tau_t - q_{1-\alpha} \cdot \sigma, \; \tau_t + q_{1-\alpha} \cdot \sigma \,\Big],
+\hat{\tau}_{\text{post}, t} = y_t^{\text{treated}} - y_t^{\text{control}}, \quad t \in \mathcal{T}_\text{post}.
 $$
 
-where $\sigma$ rescales the placebo distribution by the ratio of the post-treatment RMSPE to the pre-treatment RMSPE.
+### Confidence Interval Construction
 
-P-values are computed as the fraction of placebo gaps at least as large in absolute value as the observed effect:
+For each post-treatment period $t \in \mathcal{T}_\text{post}$, the $(1-\alpha)$ confidence interval is constructed via the split-conformal approach. Let  
 
 $$
-p_t = \frac{1}{B} \sum_{s=1}^B \mathbf{1}\{ |u_s| \geq |\tau_t|\}.
+q_{1-\alpha} = \text{Quantile}_{1-\alpha}\big(|\hat{\tau}_{\text{blank}, t}|\big), \quad t \in \mathcal{T}_\text{blank}.
 $$
 
-This procedure applies both at the global level (aggregating across clusters) and cluster-by-cluster, with cluster-specific scaling by pre-fit RMSE.
+Then the confidence interval for the post-treatment effect at period $t$ is  
 
-The resulting inference is non-parametric, relying on observed pre-treatment variation rather than asymptotic approximations. It provides a principled way to quantify uncertainty around synthetic control estimates while respecting the data structure.
+$$
+\text{CI}_t = \big[\hat{\tau}_{\text{post}, t} - q_{1-\alpha}, \hat{\tau}_{\text{post}, t} + q_{1-\alpha}\big].
+$$
 
+### Global Inference
 
+Let $\hat{\tau}_{\text{post}} = (\hat{\tau}_{\text{post}, t})_{t \in \mathcal{T}_\text{post}}$ be the vector of post-treatment effects. Compute the observed test statistic  
+
+$$
+S_\text{obs} = \frac{1}{T_{\text{post}}} \sum_{t \in \mathcal{T}_\text{post}} |\hat{\tau}_{\text{post}, t}|.
+$$
+
+To generate a permutation distribution, concatenate placebo and post-treatment effects:  
+
+$$
+\{\hat{\tau}_t : t \in \mathcal{T}_\text{blank} \cup \mathcal{T}_\text{post}\},
+$$
+
+and randomly sample $T_{\text{post}}$-sized subsets repeatedly. Denote the permuted test statistics as $S_\text{perm}^{(b)}$, $b = 1, \dots, B$. The global p-value is  
+
+$$
+p_\text{global} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_\text{perm}^{(b)} \ge S_\text{obs}\}.
+$$
+
+### Cluster-Level Inference
+
+For cluster $k$, define the cluster-average effect  
+
+$$
+\hat{\tau}_{kt} = \frac{1}{|I_k|} \sum_{j \in I_k} \hat{\tau}_{j,t}.
+$$
+
+Placebo effects are computed over blank periods for the cluster, $\hat{\tau}_{k, \text{blank}, t}$, and confidence intervals follow the same split-conformal procedure:
+
+$$
+q_{k,1-\alpha} = \text{Quantile}_{1-\alpha}\big(|\hat{\tau}_{k, \text{blank}, t}|\big), \quad t \in \mathcal{T}_\text{blank},
+$$
+
+$$
+\text{CI}_{kt} = \big[\hat{\tau}_{kt} - q_{k,1-\alpha}, \hat{\tau}_{kt} + q_{k,1-\alpha}\big].
+$$
+
+Cluster-specific permutation tests are performed analogously to the global test, generating $p_{k, \text{global}}$ for each cluster. This allows evaluation of heterogeneity in treatment effects while preserving rigorous control for pre-treatment variability.

@@ -22,9 +22,7 @@ But how would we select which neighborhoods to treat and which to use as control
 
 ## Notation and Synthetic Control Designs
 
-In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership.
-
-Observed outcomes, like occupancy rates or energy use, are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $y_{jt}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $y_{jt}^I$ if the neighborhood participates in Green Stay and $y_{jt}^N$ if not. The cluster-weighted average treatment effect is
+In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. In our case, we have 21 units of interest, where some will be treated and others will not. We have 128 pre-treatment periods, and 28 post periods. Observed outcomes, like occupancy rates or energy use, are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $y_{jt}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $y_{jt}^I$ if the neighborhood participates in Green Stay and $y_{jt}^N$ if not. The cluster-weighted average treatment effect is
 
 $$
 \tau_t = \sum_{j=1}^J f_j \, (y_{jt}^I - y_{jt}^N), \quad t > T_0,
@@ -81,7 +79,7 @@ $$
 
 where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. 
 
-The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method ensures that within each cluster of neighborhoods, we construct weighted averages that resemble both the cluster as a whole and each other.
+The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method constructs weighted averages of units to be treated and untreated, such that both averages resemble the cluster as a whole and each other.
 
 The base estimator is the most straightforward. For each cluster $k$, it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:
 

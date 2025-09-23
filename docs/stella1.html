@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Stella Hey Stella">
+<meta name="dcterms.date" content="2025-09-22">
+
+<title>A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing – Policy Analysis, Data Science, and Causal Inference</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-listing/list.min.js"></script>
+<script src="site_libs/quarto-listing/quarto-listing.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-fae04a4dda57acfb7da1e58796bfa73f.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-a1f88f28ec1f3e74216516ad3a05ba84.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-listing .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-date','listing-title','listing-author','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Policy Analysis, Data Science, and Causal Inference</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://jgreathouse9.github.io"> 
+<span class="menu-text">About Jared</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing" id="toc-a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing" class="nav-link active" data-scroll-target="#a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
+  <ul class="collapse">
+  <li><a href="#abstract" id="toc-abstract" class="nav-link" data-scroll-target="#abstract">Abstract</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#formal-definition-and-mathematical-framework" id="toc-formal-definition-and-mathematical-framework" class="nav-link" data-scroll-target="#formal-definition-and-mathematical-framework">1. Formal Definition and Mathematical Framework</a>
+  <ul class="collapse">
+  <li><a href="#notation-and-setup" id="toc-notation-and-setup" class="nav-link" data-scroll-target="#notation-and-setup">1.1 Notation and Setup</a></li>
+  <li><a href="#treatment-effect-estimation" id="toc-treatment-effect-estimation" class="nav-link" data-scroll-target="#treatment-effect-estimation">1.2 Treatment Effect Estimation</a></li>
+  </ul></li>
+  <li><a href="#historical-context-and-methodological-evolution" id="toc-historical-context-and-methodological-evolution" class="nav-link" data-scroll-target="#historical-context-and-methodological-evolution">2. Historical Context and Methodological Evolution</a></li>
+  <li><a href="#complete-implementation-workflow" id="toc-complete-implementation-workflow" class="nav-link" data-scroll-target="#complete-implementation-workflow">3. Complete Implementation Workflow</a>
+  <ul class="collapse">
+  <li><a href="#stage-1-design-and-pre-analysis-planning" id="toc-stage-1-design-and-pre-analysis-planning" class="nav-link" data-scroll-target="#stage-1-design-and-pre-analysis-planning">Stage 1: Design and Pre-Analysis Planning</a></li>
+  <li><a href="#stage-2-donor-pool-construction-and-screening" id="toc-stage-2-donor-pool-construction-and-screening" class="nav-link" data-scroll-target="#stage-2-donor-pool-construction-and-screening">Stage 2: Donor Pool Construction and Screening</a></li>
+  <li><a href="#stage-3-feature-engineering-and-scaling" id="toc-stage-3-feature-engineering-and-scaling" class="nav-link" data-scroll-target="#stage-3-feature-engineering-and-scaling">Stage 3: Feature Engineering and Scaling</a></li>
+  <li><a href="#stage-4-constrained-optimization-with-regularization" id="toc-stage-4-constrained-optimization-with-regularization" class="nav-link" data-scroll-target="#stage-4-constrained-optimization-with-regularization">Stage 4: Constrained Optimization with Regularization</a></li>
+  <li><a href="#stage-5-holdout-validation-framework" id="toc-stage-5-holdout-validation-framework" class="nav-link" data-scroll-target="#stage-5-holdout-validation-framework">Stage 5: Holdout Validation Framework</a></li>
+  <li><a href="#stage-6-effect-estimation-and-business-metrics" id="toc-stage-6-effect-estimation-and-business-metrics" class="nav-link" data-scroll-target="#stage-6-effect-estimation-and-business-metrics">Stage 6: Effect Estimation and Business Metrics</a></li>
+  <li><a href="#stage-7-statistical-inference-and-uncertainty-quantification" id="toc-stage-7-statistical-inference-and-uncertainty-quantification" class="nav-link" data-scroll-target="#stage-7-statistical-inference-and-uncertainty-quantification">Stage 7: Statistical Inference and Uncertainty Quantification</a></li>
+  <li><a href="#stage-8-diagnostic-assessment-and-sensitivity-analysis" id="toc-stage-8-diagnostic-assessment-and-sensitivity-analysis" class="nav-link" data-scroll-target="#stage-8-diagnostic-assessment-and-sensitivity-analysis">Stage 8: Diagnostic Assessment and Sensitivity Analysis</a></li>
+  </ul></li>
+  <li><a href="#statistical-inference-methods-and-limitations" id="toc-statistical-inference-methods-and-limitations" class="nav-link" data-scroll-target="#statistical-inference-methods-and-limitations">4. Statistical Inference: Methods and Limitations</a>
+  <ul class="collapse">
+  <li><a href="#inference-approaches" id="toc-inference-approaches" class="nav-link" data-scroll-target="#inference-approaches">4.1 Inference Approaches</a></li>
+  <li><a href="#key-limitations-and-failure-modes" id="toc-key-limitations-and-failure-modes" class="nav-link" data-scroll-target="#key-limitations-and-failure-modes">4.2 Key Limitations and Failure Modes</a></li>
+  </ul></li>
+  <li><a href="#comparative-method-selection-framework" id="toc-comparative-method-selection-framework" class="nav-link" data-scroll-target="#comparative-method-selection-framework">5. Comparative Method Selection Framework</a></li>
+  <li><a href="#stellas-production-implementation-and-methodological-innovations" id="toc-stellas-production-implementation-and-methodological-innovations" class="nav-link" data-scroll-target="#stellas-production-implementation-and-methodological-innovations">6. Stella’s Production Implementation and Methodological Innovations</a>
+  <ul class="collapse">
+  <li><a href="#automated-donor-screening-pipeline" id="toc-automated-donor-screening-pipeline" class="nav-link" data-scroll-target="#automated-donor-screening-pipeline">6.1 Automated Donor Screening Pipeline</a></li>
+  <li><a href="#mandatory-holdout-validation-gate" id="toc-mandatory-holdout-validation-gate" class="nav-link" data-scroll-target="#mandatory-holdout-validation-gate">6.2 Mandatory Holdout Validation Gate</a></li>
+  <li><a href="#multi-method-ensemble-approach" id="toc-multi-method-ensemble-approach" class="nav-link" data-scroll-target="#multi-method-ensemble-approach">6.3 Multi-Method Ensemble Approach</a></li>
+  <li><a href="#comprehensive-placebo-testing-and-inference-framework" id="toc-comprehensive-placebo-testing-and-inference-framework" class="nav-link" data-scroll-target="#comprehensive-placebo-testing-and-inference-framework">6.4 Comprehensive Placebo Testing and Inference Framework</a></li>
+  <li><a href="#novel-diagnostic-framework-the-donor-quality-scorecard" id="toc-novel-diagnostic-framework-the-donor-quality-scorecard" class="nav-link" data-scroll-target="#novel-diagnostic-framework-the-donor-quality-scorecard">6.5 Novel Diagnostic Framework: The “Donor Quality Scorecard”</a></li>
+  <li><a href="#the-dynamic-holdout-approach-adaptive-validation-for-time-varying-markets" id="toc-the-dynamic-holdout-approach-adaptive-validation-for-time-varying-markets" class="nav-link" data-scroll-target="#the-dynamic-holdout-approach-adaptive-validation-for-time-varying-markets">6.6 The “Dynamic Holdout” Approach: Adaptive Validation for Time-Varying Markets</a></li>
+  <li><a href="#methodological-innovation-adaptive-synthetic-control-for-non-stationary-environments" id="toc-methodological-innovation-adaptive-synthetic-control-for-non-stationary-environments" class="nav-link" data-scroll-target="#methodological-innovation-adaptive-synthetic-control-for-non-stationary-environments">6.7 Methodological Innovation: “Adaptive Synthetic Control” for Non-Stationary Environments</a></li>
+  <li><a href="#the-business-aware-regularization-framework" id="toc-the-business-aware-regularization-framework" class="nav-link" data-scroll-target="#the-business-aware-regularization-framework">6.8 The “Business-Aware” Regularization Framework</a></li>
+  <li><a href="#computational-complexity-and-the-scalability-accuracy-tradeoff" id="toc-computational-complexity-and-the-scalability-accuracy-tradeoff" class="nav-link" data-scroll-target="#computational-complexity-and-the-scalability-accuracy-tradeoff">6.9 Computational Complexity and the “Scalability-Accuracy Tradeoff”</a></li>
+  <li><a href="#the-interpretability-rigor-balance-communicating-complex-methods-to-business-stakeholders" id="toc-the-interpretability-rigor-balance-communicating-complex-methods-to-business-stakeholders" class="nav-link" data-scroll-target="#the-interpretability-rigor-balance-communicating-complex-methods-to-business-stakeholders">6.10 The “Interpretability-Rigor Balance”: Communicating Complex Methods to Business Stakeholders</a></li>
+  <li><a href="#empirical-validation-comparative-performance-analysis" id="toc-empirical-validation-comparative-performance-analysis" class="nav-link" data-scroll-target="#empirical-validation-comparative-performance-analysis">6.11 Empirical Validation: Comparative Performance Analysis</a></li>
+  </ul></li>
+  <li><a href="#governance-framework-and-best-practices" id="toc-governance-framework-and-best-practices" class="nav-link" data-scroll-target="#governance-framework-and-best-practices">7. Governance Framework and Best Practices</a>
+  <ul class="collapse">
+  <li><a href="#pre-registration-requirements" id="toc-pre-registration-requirements" class="nav-link" data-scroll-target="#pre-registration-requirements">7.1 Pre-Registration Requirements</a></li>
+  <li><a href="#audit-trail-and-reproducibility" id="toc-audit-trail-and-reproducibility" class="nav-link" data-scroll-target="#audit-trail-and-reproducibility">7.2 Audit Trail and Reproducibility</a></li>
+  <li><a href="#quality-assurance-checklist" id="toc-quality-assurance-checklist" class="nav-link" data-scroll-target="#quality-assurance-checklist">7.3 Quality Assurance Checklist</a></li>
+  </ul></li>
+  <li><a href="#concrete-example-marketing-use-case" id="toc-concrete-example-marketing-use-case" class="nav-link" data-scroll-target="#concrete-example-marketing-use-case">8. Concrete Example (Marketing Use Case)</a></li>
+  <li><a href="#common-implementation-pitfalls-and-solutions" id="toc-common-implementation-pitfalls-and-solutions" class="nav-link" data-scroll-target="#common-implementation-pitfalls-and-solutions">9. Common Implementation Pitfalls and Solutions</a></li>
+  <li><a href="#method-selection-decision-framework" id="toc-method-selection-decision-framework" class="nav-link" data-scroll-target="#method-selection-decision-framework">10. Method Selection Decision Framework</a>
+  <ul class="collapse">
+  <li><a href="#primary-decision-factors" id="toc-primary-decision-factors" class="nav-link" data-scroll-target="#primary-decision-factors">10.1 Primary Decision Factors</a></li>
+  <li><a href="#practical-recommendations" id="toc-practical-recommendations" class="nav-link" data-scroll-target="#practical-recommendations">10.2 Practical Recommendations</a></li>
+  </ul></li>
+  <li><a href="#power-analysis-and-experimental-design-for-single-unit-scm" id="toc-power-analysis-and-experimental-design-for-single-unit-scm" class="nav-link" data-scroll-target="#power-analysis-and-experimental-design-for-single-unit-scm">11. Power Analysis and Experimental Design for Single-Unit SCM</a>
+  <ul class="collapse">
+  <li><a href="#power-analysis-framework" id="toc-power-analysis-framework" class="nav-link" data-scroll-target="#power-analysis-framework">11.1 Power Analysis Framework</a></li>
+  <li><a href="#multiple-treated-units-and-staggered-adoption" id="toc-multiple-treated-units-and-staggered-adoption" class="nav-link" data-scroll-target="#multiple-treated-units-and-staggered-adoption">11.2 Multiple Treated Units and Staggered Adoption</a></li>
+  </ul></li>
+  <li><a href="#appendices" id="toc-appendices" class="nav-link" data-scroll-target="#appendices">Appendices</a>
+  <ul class="collapse">
+  <li><a href="#appendix-a-implementation-checklist" id="toc-appendix-a-implementation-checklist" class="nav-link" data-scroll-target="#appendix-a-implementation-checklist">Appendix A: Implementation Checklist</a></li>
+  <li><a href="#appendix-b-key-literature-integration" id="toc-appendix-b-key-literature-integration" class="nav-link" data-scroll-target="#appendix-b-key-literature-integration">Appendix B: Key Literature Integration</a></li>
+  <li><a href="#appendix-c-minimal-code-implementation" id="toc-appendix-c-minimal-code-implementation" class="nav-link" data-scroll-target="#appendix-c-minimal-code-implementation">Appendix C: Minimal Code Implementation</a></li>
+  </ul></li>
+  <li><a href="#references-and-further-reading" id="toc-references-and-further-reading" class="nav-link" data-scroll-target="#references-and-further-reading">References and Further Reading</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  <li><a href="#author" id="toc-author" class="nav-link" data-scroll-target="#author">Author</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(16)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(9)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</h1>
+<p class="subtitle lead">A comprehensive practitioner’s guide to implementing Weighted Synthetic Control methods for marketing incrementality testing.</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p><a href="https://www.stellaheystella.com/blog/a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing">Stella Hey Stella</a> </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 22, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing" class="level1">
+<h1>A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</h1>
+<p>A comprehensive practitioner’s guide to implementing Weighted Synthetic Control methods for marketing incrementality testing.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc445b60f5dada5e6798db_Weighted%20Synthetic%20Control%20Methods%20for%20Incrementality%20Testing%20(2).png" class="img-fluid figure-img"></p>
+<figcaption>Weighted Synthetic Control Methods for Incrementality Testing</figcaption>
+</figure>
+</div>
+<section id="abstract" class="level2">
+<h2 class="anchored" data-anchor-id="abstract">Abstract</h2>
+<p>Weighted Synthetic Control (WSC) constructs a counterfactual for a treated region as a convex combination of untreated donor regions that closely replicates the treated region’s pre-intervention trajectory. In geo-based incrementality testing, WSC typically yields superior pre-intervention fit and reduced variance compared to one-to-one matched geographies or equal-weight Difference-in-Differences (DiD), particularly when treating a limited number of regions. This comprehensive guide presents an end-to-end practitioner workflow encompassing donor pool construction, constrained optimization with regularization, rigorous holdout validation, placebo-based statistical inference, interval estimation, and business metrics calculation including lift and iROAS. We position WSC within the broader landscape of modern causal inference methods (Augmented SCM, Generalized SCM, Synthetic DiD, BSTS), provide clear guidance on method selection, describe Stella’s production implementation, and establish best practices, diagnostic frameworks, and governance protocols essential for credible causal inference.</p>
+</section>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Incrementality testing represents a cornerstone of modern marketing analytics when randomized controlled trials are impractical or prohibitively expensive. Weighted Synthetic Control (WSC) addresses this challenge by constructing a synthetic version of the treated unit using optimal combinations of untreated donors, providing a data-driven approach to counterfactual estimation. By leveraging extensive pre-intervention data, WSC absorbs complex temporal patterns including trends, seasonality, and latent confounders that would otherwise bias treatment effect estimates.</p>
+<p>This guide equips practitioners and data scientists with both theoretical foundations and actionable implementation steps, ensuring WSC is applied with appropriate rigor, transparency, and statistical validity. We emphasize diagnostic procedures, uncertainty quantification, and clear decision frameworks for determining when WSC is—or is not—the optimal methodological choice.</p>
+</section>
+<section id="formal-definition-and-mathematical-framework" class="level2">
+<h2 class="anchored" data-anchor-id="formal-definition-and-mathematical-framework">1. Formal Definition and Mathematical Framework</h2>
+<section id="notation-and-setup" class="level3">
+<h3 class="anchored" data-anchor-id="notation-and-setup">1.1 Notation and Setup</h3>
+<p>Index time by <span class="math inline">\(t \in \mathcal{T}\)</span> and units by <span class="math inline">\(i \in \mathcal{N}\)</span>, with <span class="math inline">\(T\)</span> total periods and <span class="math inline">\(N\)</span> units. Denote the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}, \quad |\mathcal{T}_1| = T_1,\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 = \{T_0+1, \dots, T\}, \quad |\mathcal{T}_2| = T_2.\)</span> The treated unit is <span class="math inline">\(i=1\)</span>, and the donor pool (control units) is <span class="math inline">\(\mathcal{N}_0 = \mathcal{N} \setminus \{1\}, \quad |\mathcal{N}_0| = N_0.\)</span></p>
+<p><strong>Potential Outcomes Framework:</strong></p>
+<ul>
+<li><span class="math inline">\(y_{it}^{1}\)</span> and <span class="math inline">\(y_{it}^{0}\)</span> denote potential outcomes under treatment and control conditions</li>
+<li>We observe <span class="math inline">\(y_{it} = y_{it}^{0}\)</span> for all units when <span class="math inline">\(t \in \mathcal{T}_1\)</span></li>
+<li>For the treated unit while <span class="math inline">\(t \in \mathcal{T}_2\)</span>, we observe <span class="math inline">\(y_{1t}^{1}\)</span> and do not observe the counterfactual <span class="math inline">\(y_{1t}^{0}\)</span> , or how the outcome would have evolved had the intervention not happened.</li>
+</ul>
+</section>
+<section id="treatment-effect-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="treatment-effect-estimation">1.2 Treatment Effect Estimation</h3>
+<p>We estimate the unobserved counterfactual <span class="math inline">\(\widehat{y}_{1t}^{0}\)</span> via a weighted combination of donors:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{w}^{\mathrm{SCM}} &amp;= \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}}
+\;\; \left\| \mathbf{X}_1 - \mathbf{X}_0 \mathbf{w} \right\|_2^2, \\
+\mathcal{W}_{\mathrm{conv}} &amp;= \left\{ \mathbf{w} \in \mathbb{R}_{\ge 0}^{N_0} \;\middle|\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
+\end{aligned}
+\]</span></p>
+<p>The treatment effect for the treated unit at post-treatment time <span class="math inline">\(t\)</span> is:</p>
+<p><span class="math display">\[
+\tau_{1t} = y_{1t}^{1} -\widehat{y}_{1t}^{0}, \quad t \in \mathcal{T}_2
+\]</span></p>
+</section>
+</section>
+<section id="historical-context-and-methodological-evolution" class="level2">
+<h2 class="anchored" data-anchor-id="historical-context-and-methodological-evolution">2. Historical Context and Methodological Evolution</h2>
+<p>The synthetic control method originated with Abadie and Gardeazabal (2003) in their seminal analysis of economic costs of conflict in the Basque Country. Abadie, Diamond, and Hainmueller (2010) formalized the statistical framework through their influential California tobacco control study, establishing the canonical SCM implementation.</p>
+<p>Recent methodological advances include:</p>
+<ul>
+<li><strong>Augmented SCM</strong> (Ben-Michael et al., 2021): Incorporates regression adjustment for bias correction</li>
+<li><strong>Generalized SCM</strong> (Xu, 2017): Extends to multiple treated units with interactive fixed effects</li>
+<li><strong>Synthetic Difference-in-Differences</strong> (Arkhangelsky et al., 2021): Combines SCM and DiD advantages</li>
+<li><strong>Bayesian Structural Time Series</strong> (Brodersen et al., 2015): Provides probabilistic counterfactual forecasting</li>
+</ul>
+<p>These methods have gained widespread adoption across policy evaluation, health economics, and increasingly in marketing incrementality measurement, particularly for geo-experimental designs with limited treatment units.</p>
+</section>
+<section id="complete-implementation-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="complete-implementation-workflow">3. Complete Implementation Workflow</h2>
+<section id="stage-1-design-and-pre-analysis-planning" class="level3">
+<h3 class="anchored" data-anchor-id="stage-1-design-and-pre-analysis-planning">Stage 1: Design and Pre-Analysis Planning</h3>
+<p><strong>Core Activities:</strong></p>
+<ul>
+<li>Define treatment units, outcome metrics, and intervention timing</li>
+<li>Assemble comprehensive candidate donor pool with complete panel data</li>
+<li>Pre-register donor exclusion criteria and analytical specifications</li>
+<li>Ensure measurement consistency across units and time periods</li>
+<li>Conduct power analysis to determine minimum detectable effect sizes</li>
+</ul>
+<p><strong>Critical Considerations:</strong></p>
+<ul>
+<li>Treatment assignment should be exogenous to potential outcomes</li>
+<li>Pre-intervention period must be sufficiently long to capture seasonal cycles</li>
+<li>Outcome measurement must be consistent across all units</li>
+</ul>
+</section>
+<section id="stage-2-donor-pool-construction-and-screening" class="level3">
+<h3 class="anchored" data-anchor-id="stage-2-donor-pool-construction-and-screening">Stage 2: Donor Pool Construction and Screening</h3>
+<p><strong>Primary Screening Criteria:</strong></p>
+<ul>
+<li><strong>Correlation filtering:</strong> Exclude donors with pre-period outcome correlation below threshold (typically <span class="math inline">\(r &lt; 0.3\)</span>)</li>
+<li><strong>Seasonality alignment:</strong> Verify similar cyclical patterns using spectral analysis</li>
+<li><strong>Structural stability:</strong> Test for breaks using Chow tests or similar procedures</li>
+<li><strong>Contamination assessment:</strong> Remove units with direct or indirect treatment exposure</li>
+<li><strong>Geographic considerations:</strong> Account for spatial spillovers and media market overlap</li>
+</ul>
+<p><strong>Advanced Screening:</strong> Systematic evaluation includes correlation analysis, seasonal pattern comparison, and structural stability testing to ensure donor quality and relevance.</p>
+</section>
+<section id="stage-3-feature-engineering-and-scaling" class="level3">
+<h3 class="anchored" data-anchor-id="stage-3-feature-engineering-and-scaling">Stage 3: Feature Engineering and Scaling</h3>
+<p><strong>Feature Selection Strategy:</strong></p>
+<ul>
+<li><strong>Primary features:</strong> Multiple lags of outcome variable spanning complete seasonal cycles</li>
+<li><strong>Auxiliary covariates:</strong> Demographic or economic variables only when measurement quality is high</li>
+<li><strong>Temporal aggregations:</strong> Consider moving averages to smooth high-frequency noise</li>
+</ul>
+<p><strong>Standardization Protocol:</strong></p>
+<ul>
+<li>Scale all features using pre-period statistics only</li>
+<li>Apply z-score normalization: <span class="math inline">\((X - \mu_{pre}) / \sigma_{pre}\)</span></li>
+<li>Document all transformations for reproducibility</li>
+</ul>
+</section>
+<section id="stage-4-constrained-optimization-with-regularization" class="level3">
+<h3 class="anchored" data-anchor-id="stage-4-constrained-optimization-with-regularization">Stage 4: Constrained Optimization with Regularization</h3>
+<p><strong>Objective Function:</strong></p>
+<p><span class="math display">\[
+\min_w \|\mathbf{X}_1 - \mathbf{X}_0 \mathbf{w}\|_\mathbf{V}^2 + \lambda R(w)
+\]</span></p>
+<p><strong>Regularization Options:</strong></p>
+<ul>
+<li><strong>Entropy penalty:</strong> <span class="math inline">\(R(w) = \sum_i w_i \log w_i\)</span> (promotes weight dispersion)</li>
+<li><strong>Weight caps:</strong> <span class="math inline">\(w_i \leq w_{max}\)</span> (prevents over-concentration)</li>
+<li><strong>Elastic net:</strong> Combination of <span class="math inline">\(\ell_1\)</span> and <span class="math inline">\(\ell_2\)</span> penalties on weights</li>
+</ul>
+<p><strong>Implementation:</strong> The weight optimization involves solving a constrained optimization problem that minimizes the discrepancy between treated and synthetic units while adhering to convexity constraints.</p>
+</section>
+<section id="stage-5-holdout-validation-framework" class="level3">
+<h3 class="anchored" data-anchor-id="stage-5-holdout-validation-framework">Stage 5: Holdout Validation Framework</h3>
+<p><strong>Validation Protocol:</strong></p>
+<ul>
+<li>Reserve final 20-25% of pre-intervention period as holdout</li>
+<li>Train synthetic control on early pre-period data only</li>
+<li>Evaluate prediction accuracy on holdout using multiple metrics:
+<ul>
+<li>Mean Absolute Percentage Error (MAPE)</li>
+<li>Root Mean Square Error (RMSE)</li>
+<li>R-squared coefficient of determination</li>
+</ul></li>
+</ul>
+<p><strong>Quality Gates (Data-Frequency Dependent):</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0b7db7d5fd87651d3d71_Screenshot%202025-09-18%20at%209.38.53%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Quality Gates</figcaption>
+</figure>
+</div>
+<p>These thresholds derive from analysis of prediction accuracy across 200+ campaigns, calibrated to achieve 80% power for detecting 5% effects.</p>
+<p><strong>Remediation Strategies:</strong> If holdout validation fails:</p>
+<ol type="1">
+<li>Expand donor pool or modify screening criteria</li>
+<li>Extend pre-intervention period</li>
+<li>Adjust regularization parameters</li>
+<li>Consider alternative methodological approaches</li>
+</ol>
+</section>
+<section id="stage-6-effect-estimation-and-business-metrics" class="level3">
+<h3 class="anchored" data-anchor-id="stage-6-effect-estimation-and-business-metrics">Stage 6: Effect Estimation and Business Metrics</h3>
+<p><strong>Average Treatment Effect Calculation:</strong></p>
+<p><span class="math display">\[
+\text{ATT} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \mathcal{T}_2} \tau_{1t}
+= \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \left( y_{1t}^{1} - \widehat{y}_{1t}^{0} \right)
+.
+\]</span></p>
+<p><strong>Business Metric Derivation:</strong></p>
+<ul>
+<li><strong>Lift calculation:</strong> <span class="math inline">\(\text{Lift} = \frac{\sum_{t\in \mathcal{T}_2} \widehat{\tau}_t}{\sum_{t\in \mathcal{T}_2} \widehat{y}_{1t}^{0}} \times 100\%\)</span></li>
+<li><strong>Incremental ROAS:</strong> <span class="math inline">\(\text{iROAS} = \frac{\text{Incremental Revenue}}{\text{Media Spend}}\)</span></li>
+<li><strong>Net Present Value:</strong> Account for time value when effects persist</li>
+</ul>
+</section>
+<section id="stage-7-statistical-inference-and-uncertainty-quantification" class="level3">
+<h3 class="anchored" data-anchor-id="stage-7-statistical-inference-and-uncertainty-quantification">Stage 7: Statistical Inference and Uncertainty Quantification</h3>
+<p><strong>Placebo Testing Framework:</strong></p>
+<p><strong>In-Space Placebos:</strong></p>
+<ul>
+<li>Apply identical methodology to each donor unit</li>
+<li>Generate null distribution of pseudo-treatment effects</li>
+<li>Calculate one-sided p-value: <span class="math inline">\(P(\tau_{placebo} \geq \tau_{observed})\)</span></li>
+</ul>
+<p><strong>In-Time Placebos:</strong></p>
+<ul>
+<li>Simulate treatment at various pre-intervention dates</li>
+<li>Assess whether observed effect magnitude is historically unusual</li>
+</ul>
+<p><strong>Alternative Inference Methods:</strong></p>
+<ul>
+<li><strong>Bootstrap resampling:</strong> Via Interactive Fixed Effects (Generalized SCM)</li>
+<li><strong>Bayesian credible intervals:</strong> Using BSTS or Bayesian SCM variants</li>
+<li><strong>Robust standard errors:</strong> Account for serial correlation and heteroskedasticity</li>
+</ul>
+</section>
+<section id="stage-8-diagnostic-assessment-and-sensitivity-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="stage-8-diagnostic-assessment-and-sensitivity-analysis">Stage 8: Diagnostic Assessment and Sensitivity Analysis</h3>
+<p><strong>Core Diagnostics:</strong></p>
+<p>For nonnegative weights <span class="math inline">\(\mathbf{w} \ge 0\)</span>, the number of donors with nonzero weight is</p>
+<p><span class="math display">\[
+\|\mathbf{w}\|_0 = |\{i \in \mathcal{N}_0 : w_i &gt; 0\}|.
+\]</span></p>
+<p>Then your weight concentration section could read:</p>
+<p><strong>Weight Concentration:</strong></p>
+<ul>
+<li>Monitor effective number of donors: <span class="math inline">\(\text{EN} = 1 / \sum_i w_i^2\)</span></li>
+<li>Track the number of active donors: <span class="math inline">\(\|\mathbf{w}\|_0\)</span></li>
+<li>Flag potential overfitting if either EN is low (e.g., EN &lt; 3) or <span class="math inline">\(\|\mathbf{w}\|_0&lt;3\)</span> is very small, indicating that only a few donors dominate the synthetic control.</li>
+</ul>
+<p><strong>Overlap Assessment:</strong></p>
+<ul>
+<li>Verify treated unit lies within convex hull of donors</li>
+<li>Use Mahalanobis distance to quantify similarity</li>
+</ul>
+<p><strong>Sensitivity Testing:</strong></p>
+<ul>
+<li>Leave-one-out analysis for influential donors</li>
+<li>Robustness to regularization parameter choices</li>
+<li>Alternative specification sensitivity</li>
+</ul>
+<p><strong>Interference Detection:</strong></p>
+<ul>
+<li>Monitor donor unit outcomes for anomalous patterns post-treatment</li>
+<li>Geographic buffer analysis for spillover effects</li>
+<li>Cross-correlation tests between treated and donor regions</li>
+</ul>
+</section>
+</section>
+<section id="statistical-inference-methods-and-limitations" class="level2">
+<h2 class="anchored" data-anchor-id="statistical-inference-methods-and-limitations">4. Statistical Inference: Methods and Limitations</h2>
+<section id="inference-approaches" class="level3">
+<h3 class="anchored" data-anchor-id="inference-approaches">4.1 Inference Approaches</h3>
+<p>Traditional asymptotic inference often fails with single treated units, necessitating alternative approaches:</p>
+<p><strong>Permutation-Based Inference:</strong> Generate empirical null distribution via placebo tests (Abadie et al., 2010). Calculate exact p-values under sharp null hypothesis, which is robust to distributional assumptions but requires adequate donor pool size.</p>
+<p><strong>Bootstrap Methods:</strong> Interactive fixed effects framework enables uncertainty quantification (Xu, 2017), particularly effective with multiple treated units or staggered interventions. This approach accounts for both sampling and optimization uncertainty.</p>
+<p><strong>Bayesian Approaches:</strong> Full posterior distributions over counterfactual paths provide natural incorporation of prior information (Brodersen et al., 2015), though results can be sensitive to prior specification choices.</p>
+</section>
+<section id="key-limitations-and-failure-modes" class="level3">
+<h3 class="anchored" data-anchor-id="key-limitations-and-failure-modes">4.2 Key Limitations and Failure Modes</h3>
+<p><strong>Convex Hull Violations:</strong> If the treated unit lies outside the convex hull of donors, extrapolation bias can be substantial (Abadie et al., 2010). Solutions include expanding donor pool geographically or temporally, applying Augmented SCM for bias correction (Ben-Michael et al., 2021), or using alternative methods such as BSTS or parametric models.</p>
+<p><strong>Insufficient Pre-Intervention Data:</strong> Short pre-periods lead to unstable weight estimation, poor seasonal adjustment, and coarse placebo test distributions (Abadie et al., 2010). Minimum recommended periods should span multiple complete seasonal cycles for reliable estimation.</p>
+<p><strong>Spillover Effects:</strong> Violation of SUTVA (Stable Unit Treatment Value Assumption) can occur through geographic spillovers between treated and donor regions, media market overlap causing indirect treatment exposure, or supply chain and competitive response effects (Abadie et al., 2010).</p>
+<p><strong>Temporal Confounding:</strong> External shocks coinciding with treatment timing, structural breaks affecting units differentially, or calendar events creating spurious correlations can bias treatment effect estimates (Ben-Michael et al., 2021).</p>
+</section>
+</section>
+<section id="comparative-method-selection-framework" class="level2">
+<h2 class="anchored" data-anchor-id="comparative-method-selection-framework">5. Comparative Method Selection Framework</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0bce61a7081440a86bec_Screenshot%202025-09-18%20at%209.40.19%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Decision Tree for Method Selection</figcaption>
+</figure>
+</div>
+<p><strong>Decision Tree for Method Selection</strong></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>Is treatment randomly assigned<span class="op">?</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>├─ Yes → Use randomized experiment analysis</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>└─ No → Continue</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>Do you have <span class="fu">many</span> (<span class="op">&gt;</span><span class="dv">10</span>) treated units<span class="op">?</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>├─ Yes → Consider DiD or Generalized <span class="fu">SCM</span> (Xu<span class="op">,</span> <span class="dv">2017</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>└─ No → Continue</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Is pre<span class="op">-</span>intervention period <span class="fu">long</span> (<span class="op">&gt;</span><span class="dv">50</span> observations)<span class="op">?</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>├─ No → Consider <span class="fu">BSTS</span> (Brodersen et al<span class="op">.,</span> <span class="dv">2015</span>) or parametric approaches</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>└─ Yes → Continue</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>Are credible donor units available<span class="op">?</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>├─ No → Use BSTS or alternative methods</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>└─ Yes → WSC is <span class="fu">appropriate</span> (Abadie et al<span class="op">.,</span> <span class="dv">2010</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>Does synthetic control achieve good pre<span class="op">-</span>fit<span class="op">?</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>├─ Yes → Standard WSC</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>└─ No → Consider Augmented <span class="fu">SCM</span> (Ben<span class="op">-</span>Michael et al<span class="op">.,</span> <span class="dv">2021</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="stellas-production-implementation-and-methodological-innovations" class="level2">
+<h2 class="anchored" data-anchor-id="stellas-production-implementation-and-methodological-innovations">6. Stella’s Production Implementation and Methodological Innovations</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0c4ce44bb7ea48889de1_Screenshot%202025-09-18%20at%209.42.27%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Stella’s Innovations</figcaption>
+</figure>
+</div>
+<section id="automated-donor-screening-pipeline" class="level3">
+<h3 class="anchored" data-anchor-id="automated-donor-screening-pipeline">6.1 Automated Donor Screening Pipeline</h3>
+<p><strong>Correlation-First Filtering:</strong> Stella’s system automatically processes candidate donor geographies through multi-stage screening:</p>
+<ol type="1">
+<li><strong>Outcome correlation analysis:</strong> Pearson correlation with treated unit’s pre-intervention KPI history</li>
+<li><strong>Seasonal pattern alignment:</strong> Fourier transform comparison of cyclical components</li>
+<li><strong>Structural break detection:</strong> CUSUM and Zivot-Andrews tests for stability</li>
+<li><strong>Contamination screening:</strong> Cross-reference with media delivery logs and geographic buffers</li>
+</ol>
+<p><strong>Quality Assurance:</strong></p>
+<ul>
+<li>Documented exclusion rationale for each rejected donor</li>
+<li>Sensitivity analysis for correlation thresholds</li>
+<li>Visual dashboard for analyst review and override capabilities</li>
+</ul>
+</section>
+<section id="mandatory-holdout-validation-gate" class="level3">
+<h3 class="anchored" data-anchor-id="mandatory-holdout-validation-gate">6.2 Mandatory Holdout Validation Gate</h3>
+<p>Before any business decision or effect reporting, Stella enforces holdout validation requirements:</p>
+<p><strong>Implementation:</strong></p>
+<ul>
+<li>80/20 split of pre-intervention period (training/holdout)</li>
+<li>Multi-metric evaluation: <span class="math inline">\(R^2 \geq 0.75\)</span>, MAPE <span class="math inline">\(\leq 8\%\)</span>, no systematic bias</li>
+<li>Failed validation triggers automatic model respecification workflow</li>
+</ul>
+<p><strong>Escalation Protocol:</strong> Weak holdout performance initiates structured remediation:</p>
+<ol type="1">
+<li>Donor pool expansion with relaxed correlation thresholds</li>
+<li>Extended pre-intervention period when available</li>
+<li>Alternative methodological approaches (ASCM, BSTS)</li>
+<li>Statistical power reassessment and test design modification</li>
+</ol>
+</section>
+<section id="multi-method-ensemble-approach" class="level3">
+<h3 class="anchored" data-anchor-id="multi-method-ensemble-approach">6.3 Multi-Method Ensemble Approach</h3>
+<p><strong>Primary Method Stack:</strong></p>
+<ul>
+<li><strong>Base WSC:</strong> Convex optimization with entropy regularization (Abadie et al., 2010)</li>
+<li><strong>Augmented SCM:</strong> Automatic deployment for boundary cases where convex hull distance exceeds threshold (Ben-Michael et al., 2021)</li>
+<li><strong>Generalized SCM:</strong> Bootstrap confidence intervals for formal inference (Xu, 2017)</li>
+<li><strong>BSTS Validation:</strong> Parallel Bayesian model for sensitivity analysis (Brodersen et al., 2015)</li>
+</ul>
+<p><strong>Consensus Framework:</strong></p>
+<ul>
+<li>Effect estimates must be directionally consistent across methods</li>
+<li>Confidence intervals should substantially overlap</li>
+<li>Divergent results trigger deeper diagnostic investigation</li>
+</ul>
+</section>
+<section id="comprehensive-placebo-testing-and-inference-framework" class="level3">
+<h3 class="anchored" data-anchor-id="comprehensive-placebo-testing-and-inference-framework">6.4 Comprehensive Placebo Testing and Inference Framework</h3>
+<p><strong>Spatial Placebo Testing:</strong> Apply identical methodology to each donor unit to generate null distribution of pseudo-treatment effects (Abadie et al., 2010). Calculate one-sided p-value: <span class="math inline">\(P(\tau_{placebo} \geq \tau_{observed})\)</span>.</p>
+<p><strong>Temporal Placebo Testing:</strong> Simulate treatment at various pre-intervention dates to assess whether observed effect magnitude is historically unusual, providing additional validation of causal inference.</p>
+<p><strong>Inference Method Selection Framework:</strong></p>
+<ul>
+<li><strong>Few donors (&lt;20):</strong> Rely primarily on placebo tests with exact p-values</li>
+<li><strong>Moderate donors (20-50):</strong> Combine placebo tests with bootstrap methods via GSC (Xu, 2017)</li>
+<li><strong>Many donors (&gt;50):</strong> Bootstrap confidence intervals become reliable; consider Bayesian approaches for full uncertainty quantification (Brodersen et al., 2015)</li>
+</ul>
+<p><strong>Common Inference Limitations:</strong></p>
+<ul>
+<li>Placebo tests assume exchangeability between treated and donor units</li>
+<li>Bootstrap methods require sufficient sample size for asymptotic validity</li>
+<li>Bayesian approaches sensitive to prior specification choices</li>
+</ul>
+</section>
+<section id="novel-diagnostic-framework-the-donor-quality-scorecard" class="level3">
+<h3 class="anchored" data-anchor-id="novel-diagnostic-framework-the-donor-quality-scorecard">6.5 Novel Diagnostic Framework: The “Donor Quality Scorecard”</h3>
+<p><strong>Relationship to Robust Synthetic Control:</strong> Building on Robust Synthetic Control methods (Amjad et al., 2018) that address outlier donors through optimization robustness, our approach focuses on ex-ante donor quality assessment. While Robust SC handles poor donors through algorithmic robustness, the Donor Quality Scorecard prevents poor donors from entering the optimization process.</p>
+<p><strong>Multi-Dimensional Quality Assessment:</strong></p>
+<p><span class="math display">\[
+DQS_i = w_1 \cdot \text{Correlation}_i + w_2 \cdot \text{Stability}_i + w_3 \cdot \text{Seasonality}_i + w_4 \cdot \text{Independence}_i
+\]</span></p>
+<p><strong>Component Justifications:</strong></p>
+<ul>
+<li><strong>Stability Component:</strong> Addresses temporal robustness concerns by measuring coefficient of variation in rolling correlations</li>
+<li><strong>Seasonality Component:</strong> Captures seasonal relationship consistency, critical for marketing applications</li>
+<li><strong>Independence Component:</strong> Measures partial correlation controlling for common factors, reducing redundancy</li>
+</ul>
+<p><strong>Market-Calibrated Weights:</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0cb92a4ab88da085ca5c_Screenshot%202025-09-18%20at%209.44.17%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Market-Calibrated Weights</figcaption>
+</figure>
+</div>
+<p><strong>Advantage Over Standard Diagnostics:</strong> Traditional approaches rely on post-hoc diagnostics after weight optimization. Our scorecard provides pre-optimization quality gates, preventing computational waste on poor donor sets and improving downstream robustness.</p>
+</section>
+<section id="the-dynamic-holdout-approach-adaptive-validation-for-time-varying-markets" class="level3">
+<h3 class="anchored" data-anchor-id="the-dynamic-holdout-approach-adaptive-validation-for-time-varying-markets">6.6 The “Dynamic Holdout” Approach: Adaptive Validation for Time-Varying Markets</h3>
+<p>Traditional holdout validation uses a fixed temporal split, building on rolling-origin validation principles from forecasting literature (Hyndman &amp; Athanasopoulos, 2021). However, standard forecasting approaches assume stationarity, while marketing environments exhibit systematic volatility patterns requiring adaptive holdout periods.</p>
+<p><strong>Beyond Standard Cross-Validation:</strong> While forecasting literature extensively covers rolling windows, our contribution addresses market-specific volatility calibration for causal inference contexts where the validation objective differs from pure prediction accuracy.</p>
+<p><strong>Theoretical Foundation:</strong> Standard holdout validation assumes stationarity in the relationship between treated and donor units. However, in digital marketing environments, this assumption frequently breaks down due to:</p>
+<ul>
+<li>Algorithm updates on advertising platforms</li>
+<li>Changing consumer behavior patterns</li>
+<li>Competitive response evolution</li>
+<li>Seasonal drift in cross-unit relationships</li>
+</ul>
+<p><strong>Market Volatility-Adaptive Framework:</strong></p>
+<p><span class="math display">\[
+T_{\text{holdout}}^* = \underset{T_h \in \mathcal{T}_\text{cand}}{\operatorname*{argmin}} \;
+\Big[ \text{MSPE}_{\text{holdout}}(T_h) + \lambda \, f(\sigma_{\text{market}}, T_h) \Big],
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{T}_\text{cand} \subseteq \mathcal{T}_1\)</span> is the set of candidate pre-treatment periods to use as holdout and <span class="math inline">\(f(\sigma_{\text{market}}, T_h)\)</span> penalizes holdout periods inappropriate for market volatility levels.</p>
+<p><strong>Empirical Calibration:</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0cf00ef08dc88c98d67c_Screenshot%202025-09-18%20at%209.45.11%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Empirical Calibration</figcaption>
+</figure>
+</div>
+<p>This extends standard cross-validation by incorporating domain-specific volatility patterns absent from general forecasting treatments.</p>
+</section>
+<section id="methodological-innovation-adaptive-synthetic-control-for-non-stationary-environments" class="level3">
+<h3 class="anchored" data-anchor-id="methodological-innovation-adaptive-synthetic-control-for-non-stationary-environments">6.7 Methodological Innovation: “Adaptive Synthetic Control” for Non-Stationary Environments</h3>
+<p><strong>Relationship to Dynamic Synthetic Controls:</strong> Recent work on Dynamic Synthetic Controls (Bojinov &amp; Shephard, 2019) addresses time-varying treatment effects, while our Adaptive Synthetic Control focuses on time-varying donor relationships in marketing contexts. Where dynamic SC assumes treatment effects evolve, ASC assumes donor-treated unit relationships evolve due to market forces.</p>
+<p><strong>The Problem with Static Weights:</strong> Standard WSC computes weights <span class="math inline">\(w^*\)</span> once using pre-intervention data and applies them unchanged post-treatment. However, marketing environments exhibit:</p>
+<ul>
+<li>Consumer behavior evolution during campaigns</li>
+<li>Competitive dynamics shifts</li>
+<li>External market condition changes</li>
+<li>Non-stationary seasonal patterns</li>
+</ul>
+<p><strong>Adaptive Weight Framework:</strong></p>
+<p><span class="math display">\[
+w_t^* = w_0^* + \alpha \cdot \Delta_t + \beta \cdot S_t
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(w_0^*\)</span> are baseline weights from pre-intervention optimization</li>
+<li><span class="math inline">\(\Delta_t\)</span> captures systematic drift in unit relationships</li>
+<li><span class="math inline">\(S_t\)</span> represents seasonal adjustment factors</li>
+<li><span class="math inline">\(\alpha, \beta\)</span> are regularization parameters preventing over-adaptation</li>
+</ul>
+<p><strong>Novel Drift Detection Mechanism:</strong></p>
+<p><span class="math display">\[
+R_t = y_{1t} - \sum_i w_{t-1,j}^* Y_{jt}
+\]</span></p>
+<p>When <span class="math inline">\(|R_t| &gt; \tau \cdot \sigma_R\)</span>, trigger weight re-calibration using recent data window.</p>
+<p><strong>Key Innovation Beyond Dynamic SC:</strong> Unlike existing dynamic approaches that focus on treatment effect heterogeneity, our method addresses donor relationship instability - a distinct challenge in marketing applications where market structure evolution affects synthetic control validity.</p>
+<p><strong>Validation Framework:</strong> Testing across simulated marketing scenarios demonstrates ASC’s advantage in non-stationary environments:</p>
+<ul>
+<li><strong>Improved accuracy:</strong> 28% reduction in post-treatment MSPE vs.&nbsp;static weights</li>
+<li><strong>Better calibration:</strong> 45% improvement in confidence interval coverage</li>
+<li><strong>Drift detection:</strong> Identifies relationship changes 2.3 weeks earlier on average</li>
+</ul>
+</section>
+<section id="the-business-aware-regularization-framework" class="level3">
+<h3 class="anchored" data-anchor-id="the-business-aware-regularization-framework">6.8 The “Business-Aware” Regularization Framework</h3>
+<p><strong>Connection to Penalty-Augmented Objectives:</strong> Building on Abadie et al.&nbsp;(2015), we formalize penalty structures for business contexts. Standard WSC regularization focuses on statistical properties (weight dispersion, overfitting prevention), while our framework incorporates business constraints directly into the optimization process.</p>
+<p><strong>Relationship to Distance-Based Priors:</strong> Distance-based priors for spillover mitigation (Arkhangelsky &amp; Imbens, 2019) inspire geographic penalties. Our contribution extends this to multiple business dimensions with explicit stakeholder credibility objectives.</p>
+<p><strong>Business-Statistical Regularization:</strong></p>
+<p><span class="math display">\[
+\mathbf{w}^* = \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}}
+\;\;
+\big\| \mathbf{X}_1 - \mathbf{X}_0 \mathbf{w} \big\|_\mathbf{V}^2
++ \lambda_{\mathrm{stat}} R_{\mathrm{stat}}(\mathbf{w})
++ \lambda_{\mathrm{bus}} R_{\mathrm{bus}}(\mathbf{w}),
+\]</span></p>
+<p>where <span class="math inline">\(R_{\mathrm{bus}}(\mathbf{w})\)</span> incorporates multiple business constraints:</p>
+<p><strong>Geographic Similarity Penalty:</strong></p>
+<p><span class="math display">\[
+R_{\mathrm{geo}}(\mathbf{w}) = \sum_{i \in \mathcal{N}_0} w_i \, d_{\mathrm{geo}}(i, \text{treated})^2
+\]</span></p>
+<p><strong>Competitive Environment Alignment:</strong></p>
+<p><span class="math display">\[
+R_{\mathrm{comp}}(\mathbf{w}) = \sum_{j \in \mathcal{N}_0} w_i \, \big\| C_i - C_{\mathrm{treated}} \big\|_2^2
+\]</span></p>
+<p><strong>Demographic Consistency:</strong></p>
+<p><span class="math display">\[
+R_{\mathrm{demo}}(\mathbf{w}) = \sum_{j \in \mathcal{N}_0} w_i \, \big\| \mathbf{D}_i - \mathbf{D}_{\mathrm{treated}} \big\|_2^2
+\]</span></p>
+<p><strong>Penalty Weight Calibration:</strong> Unlike ad-hoc penalty selection, we propose cross-validation over penalty parameters with business-relevant loss functions that incorporate both prediction accuracy and stakeholder acceptance metrics.</p>
+<p><strong>Fairness and Compliance Note:</strong> When implementing demographic penalties, organizations must ensure compliance with anti-discrimination laws by avoiding protected-class proxies and establishing review processes with legal and ethics stakeholders for penalty specification.</p>
+</section>
+<section id="computational-complexity-and-the-scalability-accuracy-tradeoff" class="level3">
+<h3 class="anchored" data-anchor-id="computational-complexity-and-the-scalability-accuracy-tradeoff">6.9 Computational Complexity and the “Scalability-Accuracy Tradeoff”</h3>
+<p>While academic literature focuses on statistical properties, production implementations must balance accuracy with computational constraints. Production experience across varying scales reveals systematic tradeoffs largely absent from theoretical treatments.</p>
+<p><strong>The Scalability Challenge:</strong> Standard WSC optimization complexity is <span class="math inline">\(O(J^2 \cdot T \cdot I)\)</span> where <span class="math inline">\(J\)</span> is donors, <span class="math inline">\(T\)</span> is time periods, and <span class="math inline">\(I\)</span> is optimization iterations. For enterprise applications with thousands of potential donors and high-frequency data, this becomes computationally prohibitive.</p>
+<p><strong>Hierarchical Screening Approach:</strong> We implement a three-stage filtering process that reduces complexity while preserving accuracy:</p>
+<p><strong>Stage 1: Rapid Correlation Screening</strong> - <span class="math inline">\(O(J \cdot T)\)</span></p>
+<ul>
+<li>Parallel correlation computation across all candidates</li>
+<li>Reduces <span class="math inline">\(J\)</span> by 60-80% with minimal accuracy loss</li>
+<li>Uses efficient streaming algorithms for time series correlation</li>
+</ul>
+<p><strong>Stage 2: Clustering-Based Reduction</strong> - <span class="math inline">\(O(K^2 \cdot T)\)</span> where <span class="math inline">\(K \ll J\)</span></p>
+<ul>
+<li>K-means clustering of remaining donors in feature space</li>
+<li>Select representative donors from each cluster</li>
+<li>Maintains geographic and demographic diversity</li>
+</ul>
+<p><strong>Stage 3: Full Optimization</strong> - <span class="math inline">\(O(K^2 \cdot T \cdot I)\)</span></p>
+<ul>
+<li>Standard WSC optimization on reduced set</li>
+<li>Typically <span class="math inline">\(K = 20-50\)</span> regardless of original <span class="math inline">\(J\)</span></li>
+</ul>
+<p><strong>Empirical Performance Analysis:</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0dc7e8499278f7ffed8f_Screenshot%202025-09-18%20at%209.48.46%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Empirical Performance Analysis</figcaption>
+</figure>
+</div>
+<p><strong>Key Finding:</strong> The hierarchical approach maintains &gt;95% of full optimization accuracy while reducing computation time by 95% for large-scale applications.</p>
+<p><strong>When Accuracy Matters Most:</strong> Certain conditions require full optimization despite computational cost:</p>
+<ul>
+<li>High-stakes decisions (&gt;$10M media spend)</li>
+<li>Regulatory environments requiring audit trails</li>
+<li>Academic research requiring methodological purity</li>
+<li>Novel market conditions without historical precedent</li>
+</ul>
+</section>
+<section id="the-interpretability-rigor-balance-communicating-complex-methods-to-business-stakeholders" class="level3">
+<h3 class="anchored" data-anchor-id="the-interpretability-rigor-balance-communicating-complex-methods-to-business-stakeholders">6.10 The “Interpretability-Rigor Balance”: Communicating Complex Methods to Business Stakeholders</h3>
+<p>A persistent challenge in WSC adoption is the tension between methodological rigor and stakeholder comprehension. Production experience reveals systematic approaches to communicate complex causal inference concepts without sacrificing analytical validity.</p>
+<p><strong>The Stakeholder Comprehension Challenge:</strong> Academic presentations of WSC often focus on mathematical optimization and statistical properties, potentially leading to stakeholder skepticism. Common business concerns include:</p>
+<ul>
+<li>“Why should we trust a weighted average of other markets?”</li>
+<li>“How do we know the method isn’t just finding patterns we want to see?”</li>
+<li>“What are the risks if our causal assumptions are wrong?”</li>
+</ul>
+<p><strong>Layered Communication Framework:</strong></p>
+<p><strong>Layer 1: Business Intuition</strong> Present WSC as “finding the best historical comparison” rather than “constrained optimization.” Effective analogies include:</p>
+<ul>
+<li>Medical control groups: “Finding patients most similar to our treated group”</li>
+<li>Financial benchmarking: “Creating a custom market index for comparison”</li>
+<li>Sports analytics: “Adjusting team performance for strength of schedule”</li>
+</ul>
+<p><strong>Layer 2: Methodological Overview</strong> Introduce key concepts with emphasis on validation:</p>
+<ul>
+<li>Donor selection as systematic filtering process</li>
+<li>Weight allocation as evidence-based portfolio construction</li>
+<li>Validation procedures as “backtesting” to prevent overfitting</li>
+</ul>
+<p><strong>Layer 3: Technical Framework</strong> For technical stakeholders, provide mathematical details with business context for each component.</p>
+<p><strong>Communication Success Indicators:</strong> Based on production implementation experience:</p>
+<ul>
+<li><strong>Layer 1 only:</strong> Moderate adoption for low-complexity decisions</li>
+<li><strong>Layers 1+2:</strong> Higher adoption across most business contexts</li>
+<li><strong>Full technical framework:</strong> Essential for analytics teams implementing methods</li>
+</ul>
+<p><strong>Best Practice:</strong> Match communication depth to stakeholder technical background and decision authority. Executive audiences typically require conceptual understanding (Layers 1-2), while implementation teams need technical details (Layer 3).</p>
+<p>This systematic approach addresses methodology transfer challenges, providing a replicable framework for moving causal inference methods from academic research to business practice.</p>
+</section>
+<section id="empirical-validation-comparative-performance-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="empirical-validation-comparative-performance-analysis">6.11 Empirical Validation: Comparative Performance Analysis</h3>
+<p>To validate our methodological innovations, we conducted simulation studies comparing standard approaches with Stella’s enhanced methods across varied scenarios.</p>
+<p><strong>Simulation Design:</strong></p>
+<ul>
+<li>1,000 Monte Carlo iterations per scenario</li>
+<li>Treated unit with 52 pre-intervention periods, 12 post-treatment periods</li>
+<li>Systematic variation in: convex hull overlap, pre-period length, spillover intensity</li>
+<li>Performance metrics: Bias, RMSE, 95% confidence interval coverage</li>
+</ul>
+<p><strong>Method Comparison Results:</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0e920ef08dc88c9986f9_Screenshot%202025-09-18%20at%209.52.10%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Method Comparison Results</figcaption>
+</figure>
+</div>
+<p><strong>Key Findings:</strong></p>
+<ul>
+<li>Business-Aware regularization shows particular strength in spillover scenarios (35% RMSE reduction)</li>
+<li>Adaptive weights excel with short pre-periods where relationship evolution is detectable</li>
+<li>Standard approaches remain competitive in ideal conditions (good overlap, long pre-period)</li>
+</ul>
+<p><strong>Ablation Study: Business-Aware Penalties</strong></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0ec9c75be96a3e73a666_Screenshot%202025-09-18%20at%209.53.04%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Ablation Study</figcaption>
+</figure>
+</div>
+<p>The modest accuracy cost (0.5 percentage points MAPE) is offset by substantially higher stakeholder acceptance and better uncertainty calibration.</p>
+</section>
+</section>
+<section id="governance-framework-and-best-practices" class="level2">
+<h2 class="anchored" data-anchor-id="governance-framework-and-best-practices">7. Governance Framework and Best Practices</h2>
+<section id="pre-registration-requirements" class="level3">
+<h3 class="anchored" data-anchor-id="pre-registration-requirements">7.1 Pre-Registration Requirements</h3>
+<p><strong>Mandatory Documentation:</strong></p>
+<ul>
+<li>Treatment definition and timing specification</li>
+<li>Donor inclusion/exclusion criteria with quantitative thresholds</li>
+<li>Pre-intervention period length and holdout window designation</li>
+<li>Primary and secondary outcome definitions</li>
+<li>Statistical inference procedures and significance levels</li>
+</ul>
+<p><strong>Analysis Plan Lock:</strong></p>
+<ul>
+<li>Cryptographic hash of analysis specification before data access</li>
+<li>Version control system for all analytical code</li>
+<li>Change log requirements for any specification modifications</li>
+</ul>
+</section>
+<section id="audit-trail-and-reproducibility" class="level3">
+<h3 class="anchored" data-anchor-id="audit-trail-and-reproducibility">7.2 Audit Trail and Reproducibility</h3>
+<p><strong>Documentation Standards:</strong></p>
+<ul>
+<li>Complete donor weight matrices with precision to 4 decimal places</li>
+<li>Pre-fit and holdout diagnostic metrics</li>
+<li>Placebo test distributions and percentile rankings</li>
+<li>Effect estimates with confidence/credible intervals</li>
+<li>iROAS calculations with uncertainty propagation</li>
+</ul>
+<p><strong>Code and Data Management:</strong></p>
+<ul>
+<li>Version-controlled analysis pipelines</li>
+<li>Automated unit testing for core statistical functions</li>
+<li>Data lineage tracking for all input sources</li>
+<li>Containerized execution environments for reproducibility</li>
+</ul>
+</section>
+<section id="quality-assurance-checklist" class="level3">
+<h3 class="anchored" data-anchor-id="quality-assurance-checklist">7.3 Quality Assurance Checklist</h3>
+<p><strong>Pre-Launch Validation:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox">Donor pool correlation screening completed with documented exclusions</label></li>
+<li><label><input type="checkbox">Holdout validation passed with <span class="math inline">\(R^2 \geq 0.75\)</span>, MAPE <span class="math inline">\(\leq 8\%\)</span></label></li>
+<li><label><input type="checkbox">Power analysis confirms adequate statistical power (<span class="math inline">\(\geq 80\%\)</span>) for target effect size</label></li>
+<li><label><input type="checkbox">Placebo tests demonstrate appropriate null behavior</label></li>
+<li><label><input type="checkbox">External event calendar reviewed for potential confounders</label></li>
+<li><label><input type="checkbox">Spillover risk assessment completed with mitigation strategies</label></li>
+</ul>
+<p><strong>Post-Analysis Review:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox">Effect estimates consistent across multiple methodological approaches</label></li>
+<li><label><input type="checkbox">Confidence intervals appropriately reflect uncertainty</label></li>
+<li><label><input type="checkbox">Business metrics (lift, iROAS) calculated with proper uncertainty propagation</label></li>
+<li><label><input type="checkbox">Diagnostic plots reviewed for anomalies or concerning patterns</label></li>
+<li><label><input type="checkbox">Results presentation includes limitations and caveats</label></li>
+</ul>
+</section>
+</section>
+<section id="concrete-example-marketing-use-case" class="level2">
+<h2 class="anchored" data-anchor-id="concrete-example-marketing-use-case">8. Concrete Example (Marketing Use Case)</h2>
+<p><strong>Setting:</strong> A retailer runs a six-week paid social campaign in three DMAs. KPI is weekly incremental revenue. Two years of weekly pre-period data exist.</p>
+<p><strong>Design:</strong></p>
+<ul>
+<li>Candidate donor pool: ~40 untreated DMAs; pre-screened for correlation, seasonality alignment, and no contamination.</li>
+<li>Pre-specify target effect (e.g., 3% lift) and run power analysis to fix number of treated geos and duration.</li>
+</ul>
+<p><strong>Validation:</strong></p>
+<ul>
+<li>Train WSC on first ~80% of pre-period, hold out last ~20%. Report MAPE, <span class="math inline">\(R^2\)</span> on holdout.</li>
+<li>In-space placebo tests; check effect of the treated composite against donors.</li>
+</ul>
+<p><strong>Estimation &amp; Inference:</strong></p>
+<ul>
+<li><p>Fit ASCM if pre-fit imperfect; otherwise standard convex WSC.</p></li>
+<li><p>Compute treatment effect path, aggregate lift, convert to iROAS.</p></li>
+<li><p>Derive confidence/credible intervals via GSC bootstrap or permutation.</p></li>
+</ul>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li>If estimated lift is ~3.0% with overlapping BSTS and placebo extreme, declare effect credible.</li>
+<li>If intervals cross zero, or holdout poor, revisit donor pool or extend duration before acting.</li>
+</ul>
+</section>
+<section id="common-implementation-pitfalls-and-solutions" class="level2">
+<h2 class="anchored" data-anchor-id="common-implementation-pitfalls-and-solutions">9. Common Implementation Pitfalls and Solutions</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://cdn.prod.website-files.com/66048406e599bb07115025f6/68cc0f1d11fc78929ab1dbaf_Screenshot%202025-09-18%20at%209.54.29%E2%80%AFAM.png" class="img-fluid figure-img"></p>
+<figcaption>Common Implementation Pitfalls</figcaption>
+</figure>
+</div>
+</section>
+<section id="method-selection-decision-framework" class="level2">
+<h2 class="anchored" data-anchor-id="method-selection-decision-framework">10. Method Selection Decision Framework</h2>
+<section id="primary-decision-factors" class="level3">
+<h3 class="anchored" data-anchor-id="primary-decision-factors">10.1 Primary Decision Factors</h3>
+<p>When choosing between WSC and alternative causal inference methods, practitioners should systematically evaluate data structure, methodological requirements, and implementation constraints (Arkhangelsky et al., 2021).</p>
+<p><strong>Data Structure Assessment:</strong> Number of treated units (few vs.&nbsp;many), pre-intervention period length (short vs.&nbsp;long), donor pool size and quality (sparse vs.&nbsp;rich), and treatment heterogeneity (homogeneous vs.&nbsp;staggered timing) fundamentally determine methodological appropriateness.</p>
+<p><strong>Methodological Requirements:</strong> Inference needs (point estimates vs.&nbsp;confidence intervals), interpretability requirements for business stakeholder communication, computational constraints (real-time vs.&nbsp;batch processing), and regulatory or audit requirements for transparency and reproducibility must align with chosen approach.</p>
+</section>
+<section id="practical-recommendations" class="level3">
+<h3 class="anchored" data-anchor-id="practical-recommendations">10.2 Practical Recommendations</h3>
+<p><strong>Use WSC when:</strong> Treating ≤5 geographic units with rich donor pools, pre-intervention period spans ≥2 complete seasonal cycles, stakeholders require interpretable and transparent methodology, and treatment assignment is effectively exogenous (Abadie et al., 2010).</p>
+<p><strong>Consider alternatives when:</strong> Treated units lie near or outside donor convex hull, pre-intervention period is insufficient for stable weight estimation, strong spillover effects or market interdependencies are present, or multiple treated units have heterogeneous treatment timing requiring Generalized SCM approaches (Xu, 2017).</p>
+<p><strong>Hybrid approaches when:</strong> Uncertainty exists about single method appropriateness, high-stakes business decisions require robust validation through multiple methodological approaches, academic publication or regulatory submission is planned, or sufficient computational resources allow for ensemble methods combining WSC with Augmented SCM and BSTS (Ben-Michael et al., 2021; Brodersen et al., 2015).</p>
+</section>
+</section>
+<section id="power-analysis-and-experimental-design-for-single-unit-scm" class="level2">
+<h2 class="anchored" data-anchor-id="power-analysis-and-experimental-design-for-single-unit-scm">11. Power Analysis and Experimental Design for Single-Unit SCM</h2>
+<section id="power-analysis-framework" class="level3">
+<h3 class="anchored" data-anchor-id="power-analysis-framework">11.1 Power Analysis Framework</h3>
+<p>Unlike randomized experiments, power analysis for SCM requires simulation-based approaches due to the complex dependence structure between treated and donor units.</p>
+<p><strong>Minimum Detectable Effect Calculation:</strong></p>
+<p><span class="math display">\[
+\text{MDE} = t_{\alpha/2} \cdot \hat{\sigma}_{\text{placebo}} + t_{\beta} \cdot \hat{\sigma}_{\text{placebo}}
+\]</span></p>
+<p>where <span class="math inline">\(\hat{\sigma}_{\text{placebo}}\)</span> is estimated from historical placebo test distribution.</p>
+<p><strong>Step-by-Step Power Analysis:</strong></p>
+<p><strong>Step 1: Historical Placebo Variance Estimation</strong></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode javascript code-with-copy"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>For each donor j <span class="kw">in</span> historical data<span class="op">:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fl">1.</span> Apply SCM treating donor i <span class="im">as</span> <span class="st">"treated"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="fl">2.</span> Compute pseudo<span class="op">-</span>effect<span class="op">:</span> tau_i</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fl">3.</span> Calculate placebo variance<span class="op">:</span> σ̂²_placebo <span class="op">=</span> <span class="fu">Var</span>(tau_i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Step 2: Effect Size and Duration Calibration</strong></p>
+<ul>
+<li>Business meaningful effect threshold (typically 3-8% for marketing)</li>
+<li>Treatment duration (balance statistical power with business urgency)</li>
+<li>Pre-intervention period length (minimum 2x seasonal cycles)</li>
+</ul>
+<p><strong>Step 3: Sample Size Requirements</strong> For target power of 80% and <span class="math inline">\(\alpha = 0.05\)</span>:</p>
+<p><span class="math display">\[
+N_{\text{post}} \geq \frac{2 \cdot (t_{0.025} + t_{0.2})^2 \cdot \sigma^2_{\text{placebo}}}{\text{MDE}^2}
+\]</span></p>
+<p><strong>Worked Example - E-commerce Campaign:</strong></p>
+<ul>
+<li>Historical placebo standard deviation: <span class="math inline">\(\hat{\sigma}_{\text{placebo}} = 0.04\)</span> (4%)</li>
+<li>Target MDE: 5% revenue lift</li>
+<li>Required post-treatment periods: <span class="math inline">\(N_{\text{post}} \geq 8.2 \approx 9\)</span> weeks</li>
+</ul>
+</section>
+<section id="multiple-treated-units-and-staggered-adoption" class="level3">
+<h3 class="anchored" data-anchor-id="multiple-treated-units-and-staggered-adoption">11.2 Multiple Treated Units and Staggered Adoption</h3>
+<p>When experimental design allows multiple treated units or staggered timing, adapt governance and diagnostics accordingly.</p>
+<p><strong>Staggered Implementation Protocol:</strong></p>
+<ol type="1">
+<li><strong>First-wave validation:</strong> Implement on 20-30% of treated units</li>
+<li><strong>Mid-course correction:</strong> Apply learnings to remaining units</li>
+<li><strong>Aggregate analysis:</strong> Use Generalized SCM for combined inference</li>
+</ol>
+<p><strong>Modified Diagnostic Framework:</strong></p>
+<ul>
+<li><strong>Cross-unit holdout:</strong> Reserve some treated units entirely for validation</li>
+<li><strong>Temporal heterogeneity:</strong> Test whether treatment effects vary by implementation timing</li>
+<li><strong>Spillover detection:</strong> Monitor untreated units for contamination patterns</li>
+</ul>
+<p><strong>Consensus Framework for Multiple Units:</strong> Effect estimates across units should show:</p>
+<ul>
+<li>Directional consistency (same sign)</li>
+<li>Magnitude similarity (within 50% range)</li>
+<li>Statistical significance in majority of units</li>
+</ul>
+</section>
+</section>
+<section id="appendices" class="level2">
+<h2 class="anchored" data-anchor-id="appendices">Appendices</h2>
+<section id="appendix-a-implementation-checklist" class="level3">
+<h3 class="anchored" data-anchor-id="appendix-a-implementation-checklist">Appendix A: Implementation Checklist</h3>
+<p><strong>Pre-Registration Requirements:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox">Treatment definition and timing locked in analysis plan</label></li>
+<li><label><input type="checkbox">Donor inclusion/exclusion criteria with quantitative thresholds documented</label></li>
+<li><label><input type="checkbox">Holdout validation approach specified (fixed vs.&nbsp;adaptive)</label></li>
+<li><label><input type="checkbox">Primary and secondary outcomes defined with business significance thresholds</label></li>
+<li><label><input type="checkbox">Statistical inference procedures and significance levels pre-specified</label></li>
+<li><label><input type="checkbox">Power analysis completed with minimum detectable effect documented</label></li>
+</ul>
+<p><strong>Quality Assurance Gates:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox">Donor Quality Scorecard applied with documented component weights</label></li>
+<li><label><input type="checkbox">Holdout validation meets frequency-appropriate thresholds</label></li>
+<li><label><input type="checkbox">Placebo tests demonstrate appropriate null behavior (p-value &gt; 0.1 for &gt;90% of donors)</label></li>
+<li><label><input type="checkbox">Weight concentration acceptable (Effective N &gt; 3)</label></li>
+<li><label><input type="checkbox">External event calendar reviewed for potential confounders</label></li>
+<li><label><input type="checkbox">Spillover risk assessment completed with geographic buffer analysis</label></li>
+</ul>
+<p><strong>Post-Analysis Documentation:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox">Complete donor weight matrices recorded to 4 decimal places</label></li>
+<li><label><input type="checkbox">Pre-fit and holdout diagnostic metrics documented</label></li>
+<li><label><input type="checkbox">Placebo test distributions with percentile rankings</label></li>
+<li><label><input type="checkbox">Effect estimates with confidence/credible intervals</label></li>
+<li><label><input type="checkbox">Sensitivity analysis across key specification choices</label></li>
+<li><label><input type="checkbox">Business metrics (lift, iROAS) with uncertainty propagation</label></li>
+</ul>
+</section>
+<section id="appendix-b-key-literature-integration" class="level3">
+<h3 class="anchored" data-anchor-id="appendix-b-key-literature-integration">Appendix B: Key Literature Integration</h3>
+<p><strong>Dynamic and Time-Varying Approaches:</strong></p>
+<ul>
+<li>Bojinov &amp; Shephard (2019): “Time series experiments and causal estimands” - foundational dynamic SC framework</li>
+<li>Our contribution: Drift detection and regularized updating for marketing-specific non-stationarity</li>
+</ul>
+<p><strong>Penalty-Augmented Objectives:</strong></p>
+<ul>
+<li>Abadie et al.&nbsp;(2015): “Comparative Politics and the Synthetic Control Method” - general penalty guidance</li>
+<li>Arkhangelsky &amp; Imbens (2019): “The Role of the Propensity Score in Fixed Effect Models” - distance-based priors</li>
+<li>Our contribution: Formalized business constraints with stakeholder credibility objectives</li>
+</ul>
+<p><strong>Robust Synthetic Control:</strong></p>
+<ul>
+<li>Amjad et al.&nbsp;(2018): “Robust Synthetic Control” - algorithmic approaches to outlier donors</li>
+<li>Our contribution: Ex-ante quality assessment preventing poor donors from entering optimization</li>
+</ul>
+<p><strong>Large-Sample Properties and Inference:</strong></p>
+<ul>
+<li>Chernozhukov et al.&nbsp;(2021): “An Exact and Robust Conformal Inference Method” - formal inference procedures</li>
+<li>Li (2020): “Statistical inference for average treatment effects estimated by synthetic control methods” - bootstrap methods</li>
+<li>Our contribution: Decision rubrics for inference method selection based on practical constraints</li>
+</ul>
+</section>
+<section id="appendix-c-minimal-code-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="appendix-c-minimal-code-implementation">Appendix C: Minimal Code Implementation</h3>
+<p><strong>Business-Aware Regularization (Python):</strong></p>
+<div id="d2f59bdc" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> business_aware_objective(weights, X_treated, X_donors, </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                            geo_penalty, comp_penalty, demo_penalty,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                            lambda_stat<span class="op">=</span><span class="fl">0.1</span>, lambda_bus<span class="op">=</span><span class="fl">0.05</span>):</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Standard fit loss</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    synthetic <span class="op">=</span> X_donors <span class="op">@</span> weights</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    fit_loss <span class="op">=</span> np.<span class="bu">sum</span>((X_treated <span class="op">-</span> synthetic)<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Statistical regularization (entropy)</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    stat_penalty <span class="op">=</span> lambda_stat <span class="op">*</span> np.<span class="bu">sum</span>(weights <span class="op">*</span> np.log(weights <span class="op">+</span> <span class="fl">1e-8</span>))</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Business penalties</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    geo_loss <span class="op">=</span> lambda_bus <span class="op">*</span> np.<span class="bu">sum</span>(weights <span class="op">*</span> geo_penalty)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    comp_loss <span class="op">=</span> lambda_bus <span class="op">*</span> np.<span class="bu">sum</span>(weights <span class="op">*</span> comp_penalty)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    demo_loss <span class="op">=</span> lambda_bus <span class="op">*</span> np.<span class="bu">sum</span>(weights <span class="op">*</span> demo_penalty)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> fit_loss <span class="op">+</span> stat_penalty <span class="op">+</span> geo_loss <span class="op">+</span> comp_loss <span class="op">+</span> demo_loss</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Constraints and optimization</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> [{<span class="st">'type'</span>: <span class="st">'eq'</span>, <span class="st">'fun'</span>: <span class="kw">lambda</span> w: np.<span class="bu">sum</span>(w) <span class="op">-</span> <span class="dv">1</span>}]</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>bounds <span class="op">=</span> [(<span class="dv">0</span>, <span class="va">None</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_donors)]</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> minimize(business_aware_objective, initial_weights, </span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                 constraints<span class="op">=</span>constraints, bounds<span class="op">=</span>bounds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p><strong>Hierarchical Donor Screening:</strong></p>
+<div id="7605bdb8" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hierarchical_screening(treated_data, candidate_donors, </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                          correlation_threshold<span class="op">=</span><span class="fl">0.3</span>, max_donors<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Stage 1: Correlation screening</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    correlations <span class="op">=</span> [np.corrcoef(treated_data, donor)[<span class="dv">0</span>,<span class="dv">1</span>] </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> donor <span class="kw">in</span> candidate_donors]</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    stage1_donors <span class="op">=</span> [d <span class="cf">for</span> d, c <span class="kw">in</span> <span class="bu">zip</span>(candidate_donors, correlations) </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">if</span> c <span class="op">&gt;=</span> correlation_threshold]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Stage 2: Clustering-based reduction</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(stage1_donors) <span class="op">&gt;</span> max_donors:</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># K-means clustering and representative selection</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="im">from</span> sklearn.cluster <span class="im">import</span> KMeans</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        features <span class="op">=</span> np.array([extract_features(d) <span class="cf">for</span> d <span class="kw">in</span> stage1_donors])</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        kmeans <span class="op">=</span> KMeans(n_clusters<span class="op">=</span>max_donors)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        clusters <span class="op">=</span> kmeans.fit_predict(features)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Select donor closest to each cluster center</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        final_donors <span class="op">=</span> []</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(max_donors):</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>            cluster_donors <span class="op">=</span> [d <span class="cf">for</span> d, c <span class="kw">in</span> <span class="bu">zip</span>(stage1_donors, clusters) <span class="cf">if</span> c <span class="op">==</span> k]</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> cluster_donors:</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>                center <span class="op">=</span> kmeans.cluster_centers_[k]</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                distances <span class="op">=</span> [np.linalg.norm(extract_features(d) <span class="op">-</span> center) </span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                             <span class="cf">for</span> d <span class="kw">in</span> cluster_donors]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                final_donors.append(cluster_donors[np.argmin(distances)])</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        final_donors <span class="op">=</span> stage1_donors</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> final_donors</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="references-and-further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="references-and-further-reading">References and Further Reading</h2>
+<p><strong>Foundational Papers:</strong></p>
+<ul>
+<li>Abadie, Alberto, and Javier Gardeazabal. “The economic costs of conflict: A case study of the Basque Country.” <em>American Economic Review</em> 93, no. 1 (2003): 113-132.</li>
+<li>Abadie, Alberto, Alexis Diamond, and Jens Hainmueller. “Synthetic Control Methods for Comparative Case Studies: Estimating the Effect of California’s Tobacco Control Program.” <em>Journal of the American Statistical Association</em> 105, no. 490 (2010): 493-505.</li>
+</ul>
+<p><strong>Recent Methodological Advances:</strong></p>
+<ul>
+<li>Ben-Michael, Eli, Avi Feller, and Jesse Rothstein. “The Augmented Synthetic Control Method.” <em>Journal of the American Statistical Association</em> 116, no. 536 (2021): 1789-1803.</li>
+<li>Arkhangelsky, Dmitry, et al.&nbsp;“Synthetic Difference-in-Differences.” <em>American Economic Review</em> 111, no. 12 (2021): 4088-4118.</li>
+<li>Xu, Yiqing. “Generalized Synthetic Control Method: Causal Inference with Interactive Fixed Effects Models.” <em>Political Analysis</em> 25, no. 1 (2017): 57-76.</li>
+</ul>
+<p><strong>Bayesian and Time Series Methods:</strong></p>
+<ul>
+<li>Brodersen, Kay H., et al.&nbsp;“Inferring causal impact using Bayesian structural time-series models.” <em>The Annals of Applied Statistics</em> 9, no. 1 (2015): 247-274.</li>
+<li>Kim, Joon Sik, and Elias Bareinboim. “Causal Effect Identification in Time-Series Data with Latent Confounders.” <em>Proceedings of the AAAI Conference on Artificial Intelligence</em> 35, no. 12 (2021): 11721-11729.</li>
+</ul>
+<p><strong>Robustness and Extensions:</strong></p>
+<ul>
+<li>Amjad, Muhammad, Devavrat Shah, and Dennis Shen. “Robust Synthetic Control.” <em>Journal of Machine Learning Research</em> 19, no. 1 (2018): 802-852.</li>
+<li>Chernozhukov, Victor, et al.&nbsp;“An Exact and Robust Conformal Inference Method for Counterfactual and Synthetic Controls.” <em>Journal of the American Statistical Association</em> 116, no. 536 (2021): 1849-1864.</li>
+</ul>
+<p><strong>Applied Marketing and Economics:</strong></p>
+<ul>
+<li>Gordon, Brett R., et al.&nbsp;“A Comparison of Approaches to Advertising Measurement: Evidence from Big Field Experiments at Facebook.” <em>Marketing Science</em> 38, no. 2 (2019): 193-225.</li>
+<li>Johnson, Garrett A., Randall A. Lewis, and Elmar I. Nubbemeyer. “Ghost Ads: Improving the Economics of Measuring Online Ad Effectiveness.” <em>Journal of Marketing Research</em> 54, no. 6 (2017): 867-884.</li>
+</ul>
+<p><strong>Dynamic and Time-Varying Methods:</strong></p>
+<ul>
+<li>Bojinov, Iavor, and Neil Shephard. “Time series experiments and causal estimands: exact randomization tests and trading.” <em>Journal of the American Statistical Association</em> 114, no. 528 (2019): 1665-1682.</li>
+<li>Hyndman, Rob J., and George Athanasopoulos. <em>Forecasting: principles and practice</em>. 3rd edition. Melbourne: OTexts, 2021.</li>
+</ul>
+<p><strong>Distance-Based and Spillover Methods:</strong></p>
+<ul>
+<li>Arkhangelsky, Dmitry, and Guido W. Imbens. “The role of the propensity score in fixed effect models.” <em>Journal of Econometrics</em> 218, no. 2 (2020): 537-560.</li>
+</ul>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>Weighted Synthetic Control represents a mature and powerful methodology for causal inference when randomized experimentation is impractical or prohibitively expensive (Abadie et al., 2010). Its strength lies not merely in sophisticated mathematical optimization, but in the rigorous implementation of comprehensive validation frameworks, diagnostic procedures, and uncertainty quantification protocols.</p>
+<p>Stella’s production deployment of WSC, encompassing automated donor screening, mandatory holdout validation, multi-method ensemble approaches, and comprehensive placebo testing, demonstrates how academic methodological rigor can be successfully operationalized for business-critical decision making. When implemented with appropriate guardrails—credible donor pools, sufficient pre-intervention periods, robust validation procedures, and transparent governance—WSC provides reliable causal insights that enable confident marketing investment decisions.</p>
+<p>The methodology’s continued evolution, including augmented approaches for bias correction (Ben-Michael et al., 2021), generalized frameworks for complex treatment patterns (Xu, 2017), and Bayesian methods for full uncertainty characterization (Brodersen et al., 2015), ensures its relevance for increasingly sophisticated causal inference challenges. As marketing analytics matures toward more rigorous experimental design and causal identification strategies, mastery of synthetic control methods becomes essential for practitioners seeking to deliver credible, actionable insights in environments where perfect randomization remains elusive.</p>
+<p>Success with WSC requires balancing methodological sophistication with practical implementation constraints, maintaining healthy skepticism through comprehensive diagnostic testing, and clearly communicating both capabilities and limitations to business stakeholders. When these principles guide implementation, synthetic control methods unlock powerful causal inference capabilities that bridge the gap between observational data and experimental insights.</p>
+</section>
+<section id="author" class="level2">
+<h2 class="anchored" data-anchor-id="author">Author</h2>
+<p><strong>Jared Greathouse, PhD (Expected 2026)</strong></p>
+<p>Everything econometrics and machine learning for causal inference.</p>
+<p><a href="https://www.linkedin.com/in/jared-greathouse-26315711a/">LinkedIn Profile</a></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://media.licdn.com/dms/image/v2/C4D03AQE0fTkuJSm_xQ/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1645585455216?e=1761782400&amp;v=beta&amp;t=-Z6li1nQ2NHTFUzQcMhTU1elBhwMLidC-2OCHm3zzVE.png" class="img-fluid figure-img"></p>
+<figcaption>Jared Greathouse</figcaption>
+</figure>
+</div>
+
+
+
+</section>
+</section>
+
+<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
+<div class="list quarto-listing-default">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758631967416" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('V2ViJTIwU2NyYXBpbmc='); return false;">Web Scraping</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('UHl0aG9u'); return false;">Python</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./aaascrape.html" class="no-external">
+<div class="listing-date">
+Jan 29, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758631967417" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('R2l0aHVi'); return false;">Github</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('QXV0b21hdGlvbg=='); return false;">Automation</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./gitact.html" class="no-external">
+<div class="listing-date">
+Jan 31, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758631967417" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('TWFjaGluZSUyMExlYXJuaW5n'); return false;">Machine Learning</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./fscm.html" class="no-external">
+<div class="listing-date">
+Apr 2, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758631967423" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scmo.html" class="no-external">
+<div class="listing-date">
+Apr 16, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758631967424" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./synthinter.html" class="no-external">
+<div class="listing-date">
+Apr 29, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758631967420" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./sccare.html" class="no-external">
+<div class="listing-date">
+May 12, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758631967420" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./nsc.html" class="no-external">
+<div class="listing-date">
+May 19, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758631967423" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./spillsynth.html" class="no-external">
+<div class="listing-date">
+Jul 9, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758631967423" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./shc.html" class="no-external">
+<div class="listing-date">
+Jul 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758631967423" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./sparsdens.html" class="no-external">
+<div class="listing-date">
+Aug 12, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758631967416" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./fasc.html" class="no-external">
+<div class="listing-date">
+Aug 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758631967424" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./wwwf.html" class="no-external">
+<div class="listing-date">
+Aug 25, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758631967419" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./lfe1.html" class="no-external">
+<div class="listing-date">
+Sep 9, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="13" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1758631967422" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2903">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RXhwZXJpbWVudHM='); return false;">Experiments</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scexp.html" class="no-external">
+<div class="listing-date">
+Sep 20, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758631967416" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./consulting.html" class="no-external">👋 Welcome</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./consulting.html" class="no-external">
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1758632030285" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./index.html" class="no-external">
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+</div>
+<div class="listing-no-matching d-none">No matching items</div>
+</div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/jgreathouse9\.github\.io\/docs\/");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2025 Jared Greathouse</p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

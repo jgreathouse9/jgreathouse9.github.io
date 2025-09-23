@@ -6,29 +6,35 @@ categories: [Experiments, Econometrics]
 
 # The Difficulties of Market Experimentation
 
-[Suppose the government of Curaçao](https://www.travelpulse.com/news/destinations/curacao-takes-proactive-steps-toward-sustainability-amid-global-overtourism) wishes to implement a new ["Green Stay" initiative](https://www.businesstravelnewseurope.com/Accommodation/HRS-Green-Stay-updates-are-set-to-increase-hotel-participation) that encourages hotels to adopt sustainability measures such as reducing water usage, improving waste management, and shifting toward renewable energy. From a methodological standpoint, the most rigorous way to measure the impact of such a program would be through a randomized controlled trial, where some neighborhoods are randomly assigned to implement the policy while others serve as controls. Randomization ensures that, in expectation, treated and control groups are balanced, and that differences in outcomes can be attributed to the policy. It also provides a clear framework for statistical inference and lends credibility to the findings.
+[Suppose the government of Curaçao](https://www.travelpulse.com/news/destinations/curacao-takes-proactive-steps-toward-sustainability-amid-global-overtourism) wishes to implement a new ["Green Stay" initiative](https://www.businesstravelnewseurope.com/Accommodation/HRS-Green-Stay-updates-are-set-to-increase-hotel-participation) that encourages hotels to adopt sustainability measures such as reducing water usage, improving waste management, and shifting toward renewable energy. Such initiatives are becoming [increasingly](https://www.travelandtourworld.com/news/article/aruba-manchebo-beach-resort-and-spa-reinforces-sustainable-practices-now-with-green-globe-platinum-recertification/) [popular](https://www.travelagewest.com/Travel/Caribbean/eco-hotels-caribbean) in recent years.
 
-Despite these advantages, there are serious obstacles to conducting a true RCT in this context. Ethically, assigning certain neighborhoods to receive the benefits while denying them to others may be perceived as unfair, particularly if the policy boosts reputation, attracts eco-conscious travelers, or leads to financial advantages. Guests might also experience different standards unknowingly, raising questions about fairness and transparency.
 
-Politically, implementing randomization across hundreds of neighborhoods would require coordination among the government, hotel associations, and local businesses, all of whom may resist being “experimented on.” Because tourism is central to the island’s economy, public perception would be sensitive, and randomized assignment could easily be framed as a risk to one of Curaçao’s most important industries.
 
-The logistical burden is equally daunting: monitoring and enforcing different sustainability requirements neighborhood by neighborhood would be complex and costly, with significant overhead required for compliance and enforcement. In practice, coordinating hundreds of independent hotels is unlikely to succeed. In other words, while an RCT is desirable in theory, ethical, political, and feasibility barriers make it impractical in the context of Curaçao’s hotel sector.
+From a methodological standpoint, the most rigorous way to measure the impact of such a program would be through a randomized controlled trial (RCT), where some hotels are randomly assigned to implement a policy while others serve as controls. Randomization ensures that, *in expectation*, treated and control groups are balanced, and that as a result of that balance whatever differences in outcomes after randomization can be attributed to the policy. RCTs provide a clear framework for statistical inference and is considered the ideal setup in must areas of impact analysis.
 
-Given these challenges, a more practical approach is to consider the market at a localized level, grouping neighborhoods into clusters that share similar characteristics, such as geographic location, customer demographics, or historical patterns of tourist activity. By focusing on clusters rather than individual units, we mitigate ethical concerns of treating some neighborhoods differently than others, since selection occurs within naturally similar groups rather than arbitrarily across the whole market.
+Despite these advantages, there are serious obstacles to conducting a true RCT in this context. Ethically, assigning certain hotels to receive the benefits while denying them to others may be perceived as unfair, particularly if the policy boosts reputation, attracts eco-conscious travelers, or leads to financial advantages of some hotels over others. Guests might also experience different standards of service unknowingly, raising questions about fairness and transparency.
 
-Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can select treated neighborhoods that closely resemble the local market and control neighborhoods that reflect the cluster’s underlying dynamics. This ensures that observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors, but rather capture the typical response within a given market segment.
+Politically, implementing randomization across hundreds/thousands of hotels would require coordination among the government, hotel associations, and local businesses, some of whom may resist being "experimented on" for policy research. Because tourism is central to the island’s economy, public perception would be sensitive, putting it politely, and randomized assignment could easily be framed as a risk to one of Curaçao’s most important industries.
 
-But how would we select which neighborhoods to treat and which to use as controls? Even within a single cluster, we cannot treat everybody for practical reasons. To address this, we can use synthetic control methods, which construct “synthetic neighborhoods” that mimic the characteristics of treated clusters, allowing analysts to experiment with different treatment assignments and evaluate their likely impact rigorously.
+The logistical burden is equally daunting: monitoring and enforcing different sustainability requirements hotel by hotel would be complex and costly, with significant overhead required for compliance and enforcement. In practice, coordinating hundreds of independent hotels is unlikely to succeed. In other words, while an RCT is desirable in theory, ethical, political, and feasibility barriers make it impractical in the context of Curaçao’s hotel sector. This of course generalizes to many practical scenarios where experimentation cannot happen due to simple feasibility reasons.
+
+Given these challenges, a more practical approach is to consider the market at a localized level, grouping neighborhoods into clusters that share similar characteristics, such as geographic location, customer demographics, or historical patterns of tourist activity. By focusing on clusters rather than individual units, we mitigate ethical concerns of treating some hotels differently than others, since selection occurs within naturally similar groups rather than arbitrarily across the whole market.
+
+Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can select neighborhoods to be treated that closely resemble the local market and control neighborhoods that reflect the cluster’s underlying dynamics. This ensures that observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors of certain units, but rather capture the typical response within a given market segment.
+
+But how would we select which neighborhoods to treat and which to use as controls? Surely we could throw darts at a board, but this likely may may be the best strategy. To address this, [we can use synthetic control methods](https://arxiv.org/abs/2108.02196), which construct "synthetic treated units" and "synthetic control units" that mimic the characteristics of clusters more broadly, enabling us to do treatment effect estimation as a result.
 
 ## Notation and Synthetic Control Designs
 
-In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership. In our case, we have 21 units of interest, where some will be treated and others will not. We have 128 pre-treatment periods, and 28 post periods. Observed outcomes, like occupancy rates or energy use, are collected in $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $y_{jt}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $y_{jt}^I$ if the neighborhood participates in Green Stay and $y_{jt}^N$ if not. The cluster-weighted average treatment effect is
+In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership.
+
+In our case, we have 21 units of interest, where some will be treated and others will not. We have 128 pre-treatment periods, and 28 post periods. Observed outcomes, like occupancy rates or energy use, are collected in the matrix $\mathbf{Y} \in \mathbb{R}^{J \times T_0}$, with $y_{jt}$ representing the outcome for neighborhood $j$ at time $t$. Potential outcomes are $y_{jt}^I$ if the neighborhood participates in Green Stay and $y_{jt}^N$ if not. The cluster-weighted average treatment effect is
 
 $$
 \tau_t = \sum_{j=1}^J f_j \, (y_{jt}^I - y_{jt}^N), \quad t > T_0,
 $$
 
-where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$. Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ capture pre-treatment characteristics of neighborhoods, such as the average energy use, hotel occupancy, or typical guest demographics, with cluster mean
+where $f_j \ge 0$ and $\sum_{j=1}^J f_j = 1$, denoting the mean treatment effect of observed compared to controls. Predictor vectors $\mathbf{x}_j \in \mathbb{R}^r$ capture pre-treatment characteristics of neighborhoods, such as the average energy use, hotel occupancy, or typical guest demographics, with cluster means being
 
 $$
 \mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
@@ -41,7 +47,17 @@ D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
 D_{2,j,j,k} = \|\mathbf{x}_j - \mathbf{x}_{j}\|_2^2.
 $$
 
-We define synthetic treated and control neighborhoods via weights $w_j \ge 0$ and $v_{i,j} \ge 0$, and neighborhoods are either treated or not via $z_j \in \{0,1\}$. Optional costs $\mathbf{c}$ and cluster budgets $B_k$ constrain feasible assignments. The feasible set is
+We define synthetic treated and control neighborhoods via weights $w_j \ge 0$ and $v_{j} \ge 0$ respectively, and neighborhoods are either treated or not as the decision variable $z_j \in \{0,1\}$. The clustered synthetic control estimator is obtained by solving
+
+$$
+\min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
+$$
+
+where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. 
+
+The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method constructs weighted averages of units to be treated and untreated, such that both averages resemble the cluster as a whole and each other.
+
+In addition to the above, we also may face operational costs $\mathbf{c}$ and cluster budgets $B_k$ which constrain feasible assignments. Thus, the feasible set is
 
 $$
 \begin{aligned}
@@ -54,34 +70,11 @@ $$
 \end{aligned}
 $$
 
-Intuitively, in the Curaçao context:
+Non-negativity and normalization ($w_j, v_j \ge 0$, $\sum w_j = \sum v_j = 1$) mean that synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply "subtracting" a neighborhood’s influence. Summing to one ensures each synthetic neighborhood is in the same scale/mixture of real neighborhoods. Ourv decision variable $z_j \in \{0,1\}, w_j \le z_j, v_j \le 1 - z_j$ asks whether a unit should be treated. Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, avoiding "double-counting."
 
-1. **Non-negativity and normalization ($w_j, v_j \ge 0$, $\sum w_j = \sum v_j = 1$):**  
-   Synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply “subtracting” a neighborhood’s influence. Summing to one ensures each synthetic neighborhood is a proper mixture of real neighborhoods.
+Practically, analysts may place cardinality constraints $\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]$ upon the size of the treated group such that at least one neighborhood is treated per cluster to observe effects, but not every neighborhood, respecting ethical, financial, or logistical limits. In a similar vein, budget constraints ($\sum c_j w_j \le B_k$, $\sum c_j w_j \le B_{\text{total}}, especially given that some neighborhoods may have different costs to treat.
 
-2. **Treatment assignment ($z_j \in \{0,1\}, w_j \le z_j, v_j \le 1 - z_j$):**  
-   Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, avoiding “double-counting.”
-
-3. **Cardinality constraints ($\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]$):**  
-   Ensures at least one neighborhood is treated per cluster to observe effects, but not every neighborhood, respecting ethical, financial, or logistical limits.
-
-4. **Budget constraints ($\sum c_j w_j \le B_k$, $\sum c_j w_j \le B_{\text{total}}$):**  
-   Neighborhoods may have different costs. Cluster- and global-level budgets ensure the program remains financially feasible.
-
-5. **Cluster exclusivity ($\sum_k z_{j,k} \le 1$):**  
-   Each neighborhood can only be treated in one cluster to avoid overlapping treatments that could confound the effect.
-
-The clustered synthetic control estimator is obtained by solving
-
-$$
-\min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
-$$
-
-where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. 
-
-The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method constructs weighted averages of units to be treated and untreated, such that both averages resemble the cluster as a whole and each other.
-
-The base estimator is the most straightforward. For each cluster $k$, it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:
+Abadie and Zhou propose numerous ways of implementing this. The base experimental SC estimator is the most straightforward. For each cluster $k$, it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:
 
 $$
 \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) = \sum_{k=1}^K \Big( \mathbf{f}_{I_k}^\top \mathbf{1} \Big) \Big[
@@ -90,18 +83,14 @@ $$
 \Big].
 $$
 
-This guarantees that both sides of the experiment are anchored to the same benchmark—the average of their cluster.
-
-The weakly penalized version extends this idea by also encouraging the treated and control groups to resemble each other directly:
+This guarantees that both sides of the experiment are anchored to the same benchmark—the average of their cluster. The weakly targeted version extends this idea by also encouraging the treated and control groups to resemble each other directly:
 
 $$
 \mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \beta \|\mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2.
 $$
 
-In practice, this prevents the optimization from drifting toward two very different synthetic groups that both happen to match the cluster mean.
-
-The penalized estimator takes things further by adding distance-based penalties. These ensure that the selected neighborhoods are not only good statistical matches but also geographically or demographically close to the cluster mean:
+In practice, this prevents the optimization from drifting toward two very different synthetic groups that both happen to match the cluster mean. The penalized estimator takes things further by adding distance-based penalties to match the cluster well. While we can use outcomes here (as my current code does), there is no reason why we could not use a different  distance metric to favor units that are literally closer in terms of geography/other factors:
 
 $$
 \mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
@@ -111,7 +100,7 @@ $$
 
 Here, the matrices $D_{1,k}$ encode distances, so neighborhoods that are far from the cluster center are penalized more heavily.
 
-Finally, the unit-level estimator introduces the most granular controls. It not only enforces closeness to cluster means but also requires that each treated neighborhood has a tight match with its synthetic control, and that pairs of neighborhoods within the cluster do not diverge too much:
+Finally, the unit-level estimator introduces the most granular setup. It not only enforces closeness to cluster means but also requires that each treated neighborhood has a tight match with its synthetic control:
 
 $$
 \mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
@@ -119,10 +108,7 @@ $$
 + \lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k}).
 $$
 
-This is the most restrictive design. It is best suited for cases where heterogeneity across neighborhoods matters, and analysts want each treated area to have a carefully matched control counterpart.
-
 Together, these estimators form a hierarchy. The base version establishes a simple anchor; the weak estimator prevents divergence; the penalized estimator incorporates geographic or demographic realism; and the unit-level estimator enforces fine-grained one-to-one balance. Analysts can experiment across this ladder, choosing the design that best matches the goals and constraints of their study.
-
 
 ## Intuition
 

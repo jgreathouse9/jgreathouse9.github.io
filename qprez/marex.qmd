@@ -5,7 +5,7 @@ format: revealjs
 
 # Introduction
 
-**Jared Amani Greathouse**  
+Jared Amani Greathouse  
 - PhD Candidate, Public Policy, Georgia State University  
 - Advisor: Jason Coupet  
 - Specialization: Econometrics and Causal Inference  
@@ -15,7 +15,7 @@ format: revealjs
 
 ## My Work
 
-- Developed **mlsynth**, the largest Python SCM package to date  
+- Developed mlsynth, the largest Python SCM package to date  
 - Suite of tools for policy evaluation using panel data  
 - Supports dozens of estimators: vanilla SCM, cluster SCM, factor models, PDA, proximal SCM, and more  
 - Handles complex, high-dimensional causal inference settings  
@@ -24,20 +24,20 @@ format: revealjs
 
 ## What Makes MLSYNTH Special
 
-- Consolidates decades of non-experimental SCM and panel methods from multiple software ecosystems into Python with **one singular syntax**  
+- Consolidates decades of non-experimental SCM and panel methods from multiple software ecosystems into Python with one singular syntax  
 - Easy installation, automation, and scaling  
 - Supports a broad set of estimators for diverse research questions  
-- **MAREX:** Market Experiment Design feature for selecting treated and control units under constraints  
+- MAREX: Market Experiment Design feature for selecting treated and control units under constraints  
 - Decision-making tool: explore multiple scenarios with penalties, clusters, costs, budgets—overnight simulations possible  
 
 ---
 
 ## Challenges of Standard Experiments
 
-- Randomized trials are often **impractical** at scale  
+- Randomized trials are often impractical at scale  
   - High coordination and cost  
   - Ethical or logistical constraints  
-- Simple randomization ignores **pre-existing heterogeneity**  
+- Simple randomization ignores pre-existing heterogeneity  
 - Cannot easily accommodate budgets, costs, or cluster structures  
 - Slow to iterate: each new design requires manual planning  
 
@@ -45,11 +45,11 @@ format: revealjs
 
 ## Why Prefer MAREX
 
-- Optimizes **both treated and control selection simultaneously**  
-- Enforces **cluster structure, budgets, and cardinality constraints**  
+- Optimizes both treated and control selection simultaneously  
+- Enforces cluster structure, budgets, and cardinality constraints  
 - Penalizes units far from cluster means to ensure representativeness  
-- Allows **overnight simulation of multiple experimental scenarios**  
-- Treats synthetic control as a **planning tool**, not just an estimator  
+- Allows overnight simulation of multiple experimental scenarios  
+- Treats synthetic control as a planning tool, not just an estimator  
 
 ---
 
@@ -65,9 +65,40 @@ format: revealjs
 | Representativeness of treated/control       | Needs careful design, can fail            | Ensured via cluster-weighted synthetic controls       |
 ---
 
+## An Example
+
+```{python}
+
+#| echo: false
+
+from mlsynth import MAREX
+import pandas as pd
+import matplotlib.pyplot as plt
+from mlsynth.utils.exputils import plot_cluster_full
+
+
+df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
+df_pre = df[df["time"] <= 120].copy()
+df["Region"]=0
+
+config = {"df": df,
+          "unitid": "town",
+          "time": "time",
+          "outcome": "Y_obs",
+          "T0": 128,
+          "m_min": 1,
+          "m_max": 5,
+          "cluster": "Region",
+          "program_type": "MIQP", "blank_periods": 28}
+
+design = MAREX(config).fit()
+
+plot_cluster_full(df,design)
+```
+
 ## Takeaway
 
-- **MAREX is a planning tool** for experiments where randomization is expensive, infeasible, or restricted  
-- Makes **representative, feasible, and comparable treatment assignments**  
-- Analysts can **simulate, optimize, and justify experimental decisions** before implementation  
-- Bridges **econometrics theory** and **practical business experiment design**
+- MAREX is a planning tool for experiments where randomization is expensive, infeasible, or restricted  
+- Makes representative, feasible, and comparable treatment assignments  
+- Analysts can simulate, optimize, and justify experimental decisions before implementation  
+- Bridges econometrics theory and practical business experiment design

@@ -132,6 +132,111 @@ For example, increasing $\beta$ encourages the treated neighborhoods to be close
 
 Because the framework is fully flexible, it becomes a sandbox for experimental design: you can simulate different cost and budget allocations, understand which neighborhoods are likely to be chosen under various priorities, and make informed decisions before the business/government does any treatment. In other words, this lets analysts answer: "Given our objectives and constraints, which neighborhoods should be treated, and why?" before any policy is implemented, making the framework extremely valuable for planning ethical, practical, and representative market experiments.
 
+
+## Inference
+
+### Unit- and Cluster-Level Effects
+
+Let $\hat{\tau}_{jt}$ denote the unit-level treatment effect for neighborhood $j$ at time $t$:  
+
+$$
+\hat{\tau}_{jt} = y_{jt}^{\mathcal{N}_1} - y_{jt}^{\mathcal{N}_0}, \quad j \in \mathcal{J}, \; t \in \mathcal{T}_2.
+$$
+
+The cluster-weighted effect for cluster $k$ is  
+
+$$
+\hat{\tau}_{kt} = \sum_{j \in I_k} f_j \, \hat{\tau}_{jt}, \quad k \in \mathcal{K}, \; t \in \mathcal{T}_2,
+$$
+
+and the overall weighted effect is  
+
+$$
+\hat{\tau}_t = \sum_{k=1}^K \hat{\tau}_{kt} = \sum_{k=1}^K \sum_{j \in I_k} f_j \, \hat{\tau}_{jt}, \quad t \in \mathcal{T}_2.
+$$
+
+### Placebo Effects
+
+Placebo effects are computed over pre-treatment "blank" periods $\mathcal{B} \subseteq \mathcal{T}_1$:  
+
+Unit-level:  
+
+$$
+\hat{\tau}_{j,t}^{\mathcal{B}} = y_{jt}^{\mathcal{N}_1} - y_{jt}^{\mathcal{N}_0}, \quad j \in \mathcal{J}, \; t \in \mathcal{B}.
+$$
+
+Cluster-level: 
+
+$$
+\hat{\tau}_{k,t}^{\mathcal{B}} = \sum_{j \in I_k} f_j \, \hat{\tau}_{j,t}^{\mathcal{B}}, \quad k \in \mathcal{K}, \; t \in \mathcal{B}.
+$$
+
+Overall we have:  
+
+$$
+\hat{\tau}_t^{\mathcal{B}} = \sum_{k=1}^K \hat{\tau}_{k,t}^{\mathcal{B}} = \sum_{j \in \mathcal{J}} f_j \, \hat{\tau}_{j,t}^{\mathcal{B}}, \quad t \in \mathcal{B}.
+$$
+
+### Post-Treatment Effects
+
+Weighted effects in the post-treatment period $\mathcal{T}_2$:  
+
+Unit-level: 
+
+$$
+\hat{\tau}_{jt} = y_{jt}^{\mathcal{N}_1} - y_{jt}^{\mathcal{N}_0}, \quad j \in \mathcal{J}, \; t \in \mathcal{T}_2.
+$$
+
+Cluster-level:
+
+$$
+\hat{\tau}_{k,t} = \sum_{j \in I_k} f_j \, \hat{\tau}_{jt}, \quad k \in \mathcal{K}, \; t \in \mathcal{T}_2.
+$$
+
+Overall we have:  
+
+$$
+\hat{\tau}_t = \sum_{k=1}^K \hat{\tau}_{k,t} = \sum_{j \in \mathcal{J}} f_j \, \hat{\tau}_{jt}, \quad t \in \mathcal{T}_2.
+$$
+
+### Confidence Intervals (Split-Conformal)
+
+For post-treatment period $t \in \mathcal{T}_2$, the $(1-\alpha)$ confidence interval is  
+
+$$
+q_{1-\alpha} = \text{Quantile}_{1-\alpha}\big(|\hat{\tau}_t^{\mathcal{B}}|\big), \quad t \in \mathcal{B},
+$$
+
+$$
+\text{CI}_t = \big[\hat{\tau}_t - q_{1-\alpha}, \hat{\tau}_t + q_{1-\alpha}\big].
+$$
+
+Cluster-level confidence intervals:  
+
+$$
+q_{k,1-\alpha} = \text{Quantile}_{1-\alpha}\big(|\hat{\tau}_{k,t}^{\mathcal{B}}|\big), \quad t \in \mathcal{B},
+$$
+
+$$
+\text{CI}_{k,t} = \big[\hat{\tau}_{k,t} - q_{k,1-\alpha}, \hat{\tau}_{k,t} + q_{k,1-\alpha}\big].
+$$
+
+### Global Permutation Test
+
+Observed test statistic:  
+
+$$
+S_\text{obs} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_t|.
+$$
+
+Permutation distribution: randomly sample $|\mathcal{T}_2|$-sized subsets from $\{\hat{\tau}_t^{\mathcal{B}} \cup \hat{\tau}_t : t \in \mathcal{T}_2\}$. Denote permuted statistics $S_\text{perm}^{(b)}, b = 1,\dots,B$. Global p-value:  
+
+$$
+p_\text{global} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_\text{perm}^{(b)} \ge S_\text{obs}\}.
+$$
+
+Cluster-level permutation tests are analogous, yielding $p_{k, \text{global}}$ for each cluster.
+
 # A Simple Example
 
 To illustrate, suppose we have 128 pre-treatment periods across two clusters of neighborhoods in Curaçao. The non-Willemstad cluster includes Barber, Lagún, Oostpunt, Santa Rosa, Sint Willibrordus, Soto, Spaanse Water, Tera Corá, and Westpunt. The plot below gives our results from the sythethic experiment.
@@ -154,7 +259,6 @@ config = {"df": df,
           "time": "time",
           "outcome": "Y_obs",
           "T0": 128,
-          "exclusive": True,
           "m_min": 2,
           "m_max": 3,
           "cluster": "Region",
@@ -167,41 +271,7 @@ plot_cluster_full(df,design)
 
 ```
 
-We see that the above gives good pretreatment fit. Now I solve with a quadratic relaxation of the above objective, where we get
-
-```{python}
-
-#| echo: false
-
-from mlsynth import MAREX
-import pandas as pd
-import matplotlib.pyplot as plt
-from mlsynth.utils.exputils import plot_cluster_full
-
-
-df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
-df_pre = df[df["time"] <= 120].copy()
-#df_pre["Region"]=0
-
-config = {"df": df,
-          "unitid": "town",
-          "time": "time",
-          "outcome": "Y_obs",
-          "T0": 128,
-          "exclusive": True,
-          "m_min": 2,
-          "m_max": 4,
-          "cluster": "Region",
-          "program_type": "QP", "blank_periods": 28}
-
-design = MAREX(config).fit()
-
-plot_cluster_full(df,design)
-```
-
-We see that even when I solve the QP instead of the MIQP version from above, we still obtain good pre-treatment fit with respect to the synthetic control. This suggests that the controls and treated units are representative of their broader markets.
-
-Notice here how I have not at all discussed the ATT/ATE yet. Or, the uncertainty underlying the estimated treatment effect. This is because again, the framework laid out above is for the designing of experiments. We can do other things too.
+We see that the above gives good pretreatment fit. We can do other things too. In the below I treat Curacao as a single region instead of two.
 
 ```{python}
 
@@ -222,8 +292,8 @@ config = {"df": df,
           "time": "time",
           "outcome": "Y_obs",
           "T0": 128,
-          "m_min": 2,
-          "m_max": 9,
+          "m_min": 1,
+          "m_max": 5,
           "cluster": "Region",
           "program_type": "MIQP", "blank_periods": 28}
 
@@ -232,87 +302,10 @@ design = MAREX(config).fit()
 plot_cluster_full(df,design)
 ```
 
-Finally, I experimented with relaxing the two-cluster assumption altogether by treating the island as one aggregate market. Using the penalized design, I allowed anywhere from 2 to 5 neighborhoods to be treated, and even extended the upper bound of treated units to 12. In every case, the estimator identified coherent sets of treated and control units that aligned well with the historical data. The specific neighborhoods chosen shifted depending on the cardinality constraint, but the resulting synthetic controls continued to provide strong pre-treatment alignment. What this shows is that the synthetic design is not overly fragile: whether we divide Curaçao into clusters or treat it as one unit, whether we enforce integer treatment assignments or relax them, the method produces stable synthetic matches. That stability is exactly what makes the framework useful as a design tool. Before we ever estimate treatment effects or report uncertainty, we can be confident that the experimental design itself—who is treated, who is not, and why.
+What this shows is that the synthetic design is robust: whether we divide Curaçao into clusters or treat it as a single unit, whether we enforce integer treatment assignments or relax them, the method generally produces stable synthetic matches. Notice that we have not yet discussed the ATT/ATE or the uncertainty of estimated treatment effects. This is because the framework above is focused on experimental design. The main goal is to decide *who should be treated* and *why* before any real-world intervention. In other words, we can be confident in the design itself—who is treated, who is not, and why—before estimating treatment effects or reporting uncertainty.
 
-Another point of contrast is worth making in comparison to the randomized controlled trial setup. In a traditional RCT, the randomization happens once in the field. After we randomize and assign treatment, there is no undo button. Once units are assigned to treatment or control, the study must run its course, with all the costs, risks, and constraints that entails. By contrast, the exprimental synthetic control design can be run as many times as we like on a laptop in a few minutes. We can explore different clustering assumptions, penalties, cost constraints, and/or solver formulations, and see how stable the resulting design looks before ever committing any resources. Crucially, synthetic controls can, in the setting where only a few markets may be treated, achieve RCT-like balance even when only a few units are treated. If treating additional units is costly—as it almost always is—being able to restrict treatment to just two or three units while still maintaining valid comparisons can represent a massive savings in resources. Instead of rolling out an intervention to half the sample (say, ten out of twenty-one units), we can strategically treat only a handful while preserving the benefits of a balanced control group.
+Contrast this with a traditional RCT. In an RCT, randomization occurs once in the field. Designing an RCT is costly and requires coordination across multiple actors. We cannot experiment with different randomization schemes beforehand, since the quality of the randomization can only be assessed *after* it occurs. Once units are assigned, the study must proceed, with all associated costs, risks, and constraints.
 
-That flexibility makes the method powerful as a *planning tool*. It gives researchers and practitioners a way to prototype experiments cheaply and safely, identifying whether the data support a credible design before taking any real-world action. Large-scale RCTs will always have their place as the gold standard, but they are expensive and logistically demanding. Synthetic design exercises like the one above open the door to a more iterative, exploratory phase of experimental planning—something we can do in advance, at low cost, to ensure that when we do invest in a full study, it is targeted, efficient, and built on a solid foundation.
+By contrast, the synthetic control design can be iterated rapidly on a laptop. We can explore different cluster groupings, penalties, cost constraints, or solver formulations and observe how stable the resulting design is before committing any resources. Crucially, in settings with few treatable units, synthetic control designs can achieve balance analogous to an RCT, even when only a handful of units are treated. This allows interventions to be targeted strategically, saving resources while maintaining credible comparisons.
 
-
-## Inference
-
-Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods and $\mathcal{K} = \{1, \dots, K\}$ denote clusters. Each cluster $k$ contains neighborhoods $I_k \subseteq \mathcal{J}$. Let $T_0$ be the number of pre-treatment periods and $T_{\text{post}}$ the number of post-treatment periods. Observed outcomes are $y_{jt}$, with synthetic treated and control outcomes $y_{jt}^{\text{treated}}$ and $y_{jt}^{\text{control}}$, respectively. The pointwise treatment effect is  
-
-$$
-\hat{\tau}_{j,t} = y_{jt}^{\text{treated}} - y_{jt}^{\text{control}}.
-$$
-
-Define “blank” pre-treatment periods $\mathcal{T}_\text{blank} = \{T_c, T_c+1, \dots, T_c + T_b - 1\}$ that are not used in fitting, and post-treatment periods $\mathcal{T}_\text{post} = \{T_0, \dots, T_0 + T_{\text{post}} - 1\}$.
-
-### Placebo Effects
-
-The placebo effects are calculated over the blank periods:  
-
-$$
-\hat{\tau}_{\text{blank}, t} = y_t^{\text{treated}} - y_t^{\text{control}}, \quad t \in \mathcal{T}_\text{blank}.
-$$
-
-The observed post-treatment effects are  
-
-$$
-\hat{\tau}_{\text{post}, t} = y_t^{\text{treated}} - y_t^{\text{control}}, \quad t \in \mathcal{T}_\text{post}.
-$$
-
-### Confidence Interval Construction
-
-For each post-treatment period $t \in \mathcal{T}_\text{post}$, the $(1-\alpha)$ confidence interval is constructed via the split-conformal approach. Let  
-
-$$
-q_{1-\alpha} = \text{Quantile}_{1-\alpha}\big(|\hat{\tau}_{\text{blank}, t}|\big), \quad t \in \mathcal{T}_\text{blank}.
-$$
-
-Then the confidence interval for the post-treatment effect at period $t$ is  
-
-$$
-\text{CI}_t = \big[\hat{\tau}_{\text{post}, t} - q_{1-\alpha}, \hat{\tau}_{\text{post}, t} + q_{1-\alpha}\big].
-$$
-
-### Global Inference
-
-Let $\hat{\tau}_{\text{post}} = (\hat{\tau}_{\text{post}, t})_{t \in \mathcal{T}_\text{post}}$ be the vector of post-treatment effects. Compute the observed test statistic  
-
-$$
-S_\text{obs} = \frac{1}{T_{\text{post}}} \sum_{t \in \mathcal{T}_\text{post}} |\hat{\tau}_{\text{post}, t}|.
-$$
-
-To generate a permutation distribution, concatenate placebo and post-treatment effects:  
-
-$$
-\{\hat{\tau}_t : t \in \mathcal{T}_\text{blank} \cup \mathcal{T}_\text{post}\},
-$$
-
-and randomly sample $T_{\text{post}}$-sized subsets repeatedly. Denote the permuted test statistics as $S_\text{perm}^{(b)}$, $b = 1, \dots, B$. The global p-value is  
-
-$$
-p_\text{global} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_\text{perm}^{(b)} \ge S_\text{obs}\}.
-$$
-
-### Cluster-Level Inference
-
-For cluster $k$, define the cluster-average effect  
-
-$$
-\hat{\tau}_{kt} = \frac{1}{|I_k|} \sum_{j \in I_k} \hat{\tau}_{j,t}.
-$$
-
-Placebo effects are computed over blank periods for the cluster, $\hat{\tau}_{k, \text{blank}, t}$, and confidence intervals follow the same split-conformal procedure:
-
-$$
-q_{k,1-\alpha} = \text{Quantile}_{1-\alpha}\big(|\hat{\tau}_{k, \text{blank}, t}|\big), \quad t \in \mathcal{T}_\text{blank},
-$$
-
-$$
-\text{CI}_{kt} = \big[\hat{\tau}_{kt} - q_{k,1-\alpha}, \hat{\tau}_{kt} + q_{k,1-\alpha}\big].
-$$
-
-Cluster-specific permutation tests are performed analogously to the global test, generating $p_{k, \text{global}}$ for each cluster. This allows evaluation of heterogeneity in treatment effects while preserving rigorous control for pre-treatment variability.
+This flexibility makes the synthetic experimentation method a powerful planning tool. It enables researchers and practitioners to prototype experiments cheaply and safely, ensuring that the data support a credible design before any real-world action. Large-scale RCTs remain the gold standard, but they are expensive and logistically demanding. Synthetic design exercises open the door to an iterative, exploratory phase of experimental planning—helping ensure that when we do invest in a full study, it is targeted, efficient, and built on a solid foundation.

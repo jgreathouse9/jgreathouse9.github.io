@@ -229,20 +229,22 @@ window.Quarto = {
 
 <section id="the-difficulties-of-market-experimentation" class="level1">
 <h1>The Difficulties of Market Experimentation</h1>
-<p><a href="https://www.travelpulse.com/news/destinations/curacao-takes-proactive-steps-toward-sustainability-amid-global-overtourism">Suppose the government of Curaçao</a> wishes to implement a new <a href="https://www.businesstravelnewseurope.com/Accommodation/HRS-Green-Stay-updates-are-set-to-increase-hotel-participation">“Green Stay” initiative</a> that encourages hotels to adopt sustainability measures such as reducing water usage, improving waste management, and shifting toward renewable energy. From a methodological standpoint, the most rigorous way to measure the impact of such a program would be through a randomized controlled trial, where some neighborhoods are randomly assigned to implement the policy while others serve as controls. Randomization ensures that, in expectation, treated and control groups are balanced, and that differences in outcomes can be attributed to the policy. It also provides a clear framework for statistical inference and lends credibility to the findings.</p>
-<p>Despite these advantages, there are serious obstacles to conducting a true RCT in this context. Ethically, assigning certain neighborhoods to receive the benefits while denying them to others may be perceived as unfair, particularly if the policy boosts reputation, attracts eco-conscious travelers, or leads to financial advantages. Guests might also experience different standards unknowingly, raising questions about fairness and transparency.</p>
-<p>Politically, implementing randomization across hundreds of neighborhoods would require coordination among the government, hotel associations, and local businesses, all of whom may resist being “experimented on.” Because tourism is central to the island’s economy, public perception would be sensitive, and randomized assignment could easily be framed as a risk to one of Curaçao’s most important industries.</p>
-<p>The logistical burden is equally daunting: monitoring and enforcing different sustainability requirements neighborhood by neighborhood would be complex and costly, with significant overhead required for compliance and enforcement. In practice, coordinating hundreds of independent hotels is unlikely to succeed. In other words, while an RCT is desirable in theory, ethical, political, and feasibility barriers make it impractical in the context of Curaçao’s hotel sector.</p>
-<p>Given these challenges, a more practical approach is to consider the market at a localized level, grouping neighborhoods into clusters that share similar characteristics, such as geographic location, customer demographics, or historical patterns of tourist activity. By focusing on clusters rather than individual units, we mitigate ethical concerns of treating some neighborhoods differently than others, since selection occurs within naturally similar groups rather than arbitrarily across the whole market.</p>
-<p>Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can select treated neighborhoods that closely resemble the local market and control neighborhoods that reflect the cluster’s underlying dynamics. This ensures that observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors, but rather capture the typical response within a given market segment.</p>
-<p>But how would we select which neighborhoods to treat and which to use as controls? Even within a single cluster, we cannot treat everybody for practical reasons. To address this, we can use synthetic control methods, which construct “synthetic neighborhoods” that mimic the characteristics of treated clusters, allowing analysts to experiment with different treatment assignments and evaluate their likely impact rigorously.</p>
+<p><a href="https://www.travelpulse.com/news/destinations/curacao-takes-proactive-steps-toward-sustainability-amid-global-overtourism">Suppose the government of Curaçao</a> wishes to implement a new <a href="https://www.businesstravelnewseurope.com/Accommodation/HRS-Green-Stay-updates-are-set-to-increase-hotel-participation">“Green Stay” initiative</a> that encourages hotels to adopt sustainability measures such as reducing water usage, improving waste management, and shifting toward renewable energy. Such initiatives are becoming <a href="https://www.travelandtourworld.com/news/article/aruba-manchebo-beach-resort-and-spa-reinforces-sustainable-practices-now-with-green-globe-platinum-recertification/">increasingly</a> <a href="https://www.travelagewest.com/Travel/Caribbean/eco-hotels-caribbean">popular</a> in recent years.</p>
+<p>From a methodological standpoint, the most rigorous way to measure the impact of such a program would be through a randomized controlled trial (RCT), where some hotels are randomly assigned to implement a policy while others serve as controls. Randomization ensures that, <em>in expectation</em>, treated and control groups are balanced, and that as a result of that balance whatever differences in outcomes after randomization can be attributed to the policy. RCTs provide a clear framework for statistical inference and is considered the ideal setup in must areas of impact analysis.</p>
+<p>Despite these advantages, there are serious obstacles to conducting a true RCT in this context. Ethically, assigning certain hotels to receive the benefits while denying them to others may be perceived as unfair, particularly if the policy boosts reputation, attracts eco-conscious travelers, or leads to financial advantages of some hotels over others. Guests might also experience different standards of service unknowingly, raising questions about fairness and transparency.</p>
+<p>Politically, implementing randomization across hundreds/thousands of hotels would require coordination among the government, hotel associations, and local businesses, some of whom may resist being “experimented on” for policy research. Because tourism is central to the island’s economy, public perception would be sensitive, putting it politely, and randomized assignment could easily be framed as a risk to one of Curaçao’s most important industries.</p>
+<p>The logistical burden is equally daunting: monitoring and enforcing different sustainability requirements hotel by hotel would be complex and costly, with significant overhead required for compliance and enforcement. In practice, coordinating hundreds of independent hotels is unlikely to succeed. In other words, while an RCT is desirable in theory, ethical, political, and feasibility barriers make it impractical in the context of Curaçao’s hotel sector. This of course generalizes to many practical scenarios where experimentation cannot happen due to simple feasibility reasons.</p>
+<p>Given these challenges, a more practical approach is to consider the market at a localized level, grouping neighborhoods into clusters that share similar characteristics, such as geographic location, customer demographics, or historical patterns of tourist activity. By focusing on clusters rather than individual units, we mitigate ethical concerns of treating some hotels differently than others, since selection occurs within naturally similar groups rather than arbitrarily across the whole market.</p>
+<p>Cluster analysis also reduces logistical complexity, because interventions can be coordinated at the cluster level rather than needing to monitor and enforce policies across hundreds of disparate hotels. Within each cluster, we can select neighborhoods to be treated that closely resemble the local market and control neighborhoods that reflect the cluster’s underlying dynamics. This ensures that observed effects of the intervention are not driven by unusual outliers or idiosyncratic behaviors of certain units, but rather capture the typical response within a given market segment.</p>
+<p>But how would we select which neighborhoods to treat and which to use as controls? Surely we could throw darts at a board, but this likely may may be the best strategy. To address this, <a href="https://arxiv.org/abs/2108.02196">we can use synthetic control methods</a>, which construct “synthetic treated units” and “synthetic control units” that mimic the characteristics of clusters more broadly, enabling us to do treatment effect estimation as a result.</p>
 <section id="notation-and-synthetic-control-designs" class="level2">
 <h2 class="anchored" data-anchor-id="notation-and-synthetic-control-designs">Notation and Synthetic Control Designs</h2>
-<p>In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let <span class="math inline">\(\mathcal{J} = \{1, \dots, J\}\)</span> denote neighborhoods observed over <span class="math inline">\(T_0\)</span> pre-treatment periods <span class="math inline">\(\mathcal{T}_0 = \{1, \dots, T_0\}\)</span>, nested within <span class="math inline">\(K\)</span> clusters <span class="math inline">\(\mathcal{K} = \{1, \dots, K\}\)</span> that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let <span class="math inline">\(I_k \subseteq \mathcal{J}\)</span> denote neighborhoods in cluster <span class="math inline">\(k\)</span>, with <span class="math inline">\(j \in I_{k(j)}\)</span> indicating cluster membership. In our case, we have 21 units of interest, where some will be treated and others will not. We have 128 pre-treatment periods, and 28 post periods. Observed outcomes, like occupancy rates or energy use, are collected in <span class="math inline">\(\mathbf{Y} \in \mathbb{R}^{J \times T_0}\)</span>, with <span class="math inline">\(y_{jt}\)</span> representing the outcome for neighborhood <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. Potential outcomes are <span class="math inline">\(y_{jt}^I\)</span> if the neighborhood participates in Green Stay and <span class="math inline">\(y_{jt}^N\)</span> if not. The cluster-weighted average treatment effect is</p>
+<p>In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let <span class="math inline">\(\mathcal{J} = \{1, \dots, J\}\)</span> denote neighborhoods observed over <span class="math inline">\(T_0\)</span> pre-treatment periods <span class="math inline">\(\mathcal{T}_0 = \{1, \dots, T_0\}\)</span>, nested within <span class="math inline">\(K\)</span> clusters <span class="math inline">\(\mathcal{K} = \{1, \dots, K\}\)</span> that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let <span class="math inline">\(I_k \subseteq \mathcal{J}\)</span> denote neighborhoods in cluster <span class="math inline">\(k\)</span>, with <span class="math inline">\(j \in I_{k(j)}\)</span> indicating cluster membership.</p>
+<p>In our case, we have 21 units of interest, where some will be treated and others will not. We have 128 pre-treatment periods, and 28 post periods. Observed outcomes, like occupancy rates or energy use, are collected in the matrix <span class="math inline">\(\mathbf{Y} \in \mathbb{R}^{J \times T_0}\)</span>, with <span class="math inline">\(y_{jt}\)</span> representing the outcome for neighborhood <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. Potential outcomes are <span class="math inline">\(y_{jt}^I\)</span> if the neighborhood participates in Green Stay and <span class="math inline">\(y_{jt}^N\)</span> if not. The cluster-weighted average treatment effect is</p>
 <p><span class="math display">\[
 \tau_t = \sum_{j=1}^J f_j \, (y_{jt}^I - y_{jt}^N), \quad t &gt; T_0,
 \]</span></p>
-<p>where <span class="math inline">\(f_j \ge 0\)</span> and <span class="math inline">\(\sum_{j=1}^J f_j = 1\)</span>. Predictor vectors <span class="math inline">\(\mathbf{x}_j \in \mathbb{R}^r\)</span> capture pre-treatment characteristics of neighborhoods, such as the average energy use, hotel occupancy, or typical guest demographics, with cluster mean</p>
+<p>where <span class="math inline">\(f_j \ge 0\)</span> and <span class="math inline">\(\sum_{j=1}^J f_j = 1\)</span>, denoting the mean treatment effect of observed compared to controls. Predictor vectors <span class="math inline">\(\mathbf{x}_j \in \mathbb{R}^r\)</span> capture pre-treatment characteristics of neighborhoods, such as the average energy use, hotel occupancy, or typical guest demographics, with cluster means being</p>
 <p><span class="math display">\[
 \mathbf{\bar{x}}_k = \frac{\sum_{j \in I_k} f_j \mathbf{x}_j}{\sum_{j \in I_k} f_j}.
 \]</span></p>
@@ -251,7 +253,13 @@ window.Quarto = {
 D_{1,j,k} = \|\mathbf{x}_j - \mathbf{\bar{x}}_k\|_2^2, \quad
 D_{2,j,j,k} = \|\mathbf{x}_j - \mathbf{x}_{j}\|_2^2.
 \]</span></p>
-<p>We define synthetic treated and control neighborhoods via weights <span class="math inline">\(w_j \ge 0\)</span> and <span class="math inline">\(v_{i,j} \ge 0\)</span>, and neighborhoods are either treated or not via <span class="math inline">\(z_j \in \{0,1\}\)</span>. Optional costs <span class="math inline">\(\mathbf{c}\)</span> and cluster budgets <span class="math inline">\(B_k\)</span> constrain feasible assignments. The feasible set is</p>
+<p>We define synthetic treated and control neighborhoods via weights <span class="math inline">\(w_j \ge 0\)</span> and <span class="math inline">\(v_{j} \ge 0\)</span> respectively, and neighborhoods are either treated or not as the decision variable <span class="math inline">\(z_j \in \{0,1\}\)</span>. The clustered synthetic control estimator is obtained by solving</p>
+<p><span class="math display">\[
+\min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{F}\)</span> is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster <span class="math inline">\(k \in \{1,\dots,K\}\)</span> has member indices <span class="math inline">\(I_k\)</span>, cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k\)</span>, and outcomes <span class="math inline">\(\mathbf{X}_{I_k}\)</span>.</p>
+<p>The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method constructs weighted averages of units to be treated and untreated, such that both averages resemble the cluster as a whole and each other.</p>
+<p>In addition to the above, we also may face operational costs <span class="math inline">\(\mathbf{c}\)</span> and cluster budgets <span class="math inline">\(B_k\)</span> which constrain feasible assignments. Thus, the feasible set is</p>
 <p><span class="math display">\[
 \begin{aligned}
 \mathcal{F} = \Big\{ (w,v) \,\Big| \;
@@ -262,53 +270,33 @@ D_{2,j,j,k} = \|\mathbf{x}_j - \mathbf{x}_{j}\|_2^2.
 \Big\}.
 \end{aligned}
 \]</span></p>
-<p>Intuitively, in the Curaçao context:</p>
-<ol type="1">
-<li><p><strong>Non-negativity and normalization (<span class="math inline">\(w_j, v_j \ge 0\)</span>, <span class="math inline">\(\sum w_j = \sum v_j = 1\)</span>):</strong><br>
-Synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply “subtracting” a neighborhood’s influence. Summing to one ensures each synthetic neighborhood is a proper mixture of real neighborhoods.</p></li>
-<li><p><strong>Treatment assignment (<span class="math inline">\(z_j \in \{0,1\}, w_j \le z_j, v_j \le 1 - z_j\)</span>):</strong><br>
-Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, avoiding “double-counting.”</p></li>
-<li><p><strong>Cardinality constraints (<span class="math inline">\(\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]\)</span>):</strong><br>
-Ensures at least one neighborhood is treated per cluster to observe effects, but not every neighborhood, respecting ethical, financial, or logistical limits.</p></li>
-<li><p><strong>Budget constraints (<span class="math inline">\(\sum c_j w_j \le B_k\)</span>, <span class="math inline">\(\sum c_j w_j \le B_{\text{total}}\)</span>):</strong><br>
-Neighborhoods may have different costs. Cluster- and global-level budgets ensure the program remains financially feasible.</p></li>
-<li><p><strong>Cluster exclusivity (<span class="math inline">\(\sum_k z_{j,k} \le 1\)</span>):</strong><br>
-Each neighborhood can only be treated in one cluster to avoid overlapping treatments that could confound the effect.</p></li>
-</ol>
-<p>The clustered synthetic control estimator is obtained by solving</p>
-<p><span class="math display">\[
-\min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
-\]</span></p>
-<p>where <span class="math inline">\(\mathcal{F}\)</span> is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster <span class="math inline">\(k \in \{1,\dots,K\}\)</span> has member indices <span class="math inline">\(I_k\)</span>, cluster mean <span class="math inline">\(\mathbf{\bar{x}}_k\)</span>, and outcomes <span class="math inline">\(\mathbf{X}_{I_k}\)</span>.</p>
-<p>The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method constructs weighted averages of units to be treated and untreated, such that both averages resemble the cluster as a whole and each other.</p>
-<p>The base estimator is the most straightforward. For each cluster <span class="math inline">\(k\)</span>, it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:</p>
+<p>Non-negativity and normalization (<span class="math inline">\(w_j, v_j \ge 0\)</span>, <span class="math inline">\(\sum w_j = \sum v_j = 1\)</span>) mean that synthetic neighborhoods are weighted averages of real neighborhoods. Negative weights would imply “subtracting” a neighborhood’s influence. Summing to one ensures each synthetic neighborhood is in the same scale/mixture of real neighborhoods. Ourv decision variable <span class="math inline">\(z_j \in \{0,1\}, w_j \le z_j, v_j \le 1 - z_j\)</span> asks whether a unit should be treated. Each neighborhood is either treated or not. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, avoiding “double-counting.”</p>
+<p>Practically, analysts may place cardinality constraints <span class="math inline">\(\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]\)</span> upon the size of the treated group such that at least one neighborhood is treated per cluster to observe effects, but not every neighborhood, respecting ethical, financial, or logistical limits. In a similar vein, budget constraints (<span class="math inline">\(\sum c_j w_j \le B_k\)</span>, $c_j w_j B_{}, especially given that some neighborhoods may have different costs to treat.</p>
+<p>Abadie and Zhou propose numerous ways of implementing this. The base experimental SC estimator is the most straightforward. For each cluster <span class="math inline">\(k\)</span>, it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:</p>
 <p><span class="math display">\[
 \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v}) = \sum_{k=1}^K \Big( \mathbf{f}_{I_k}^\top \mathbf{1} \Big) \Big[
 \|\bar{\mathbf{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{w}_{I_k}\|_2^2
 + \|\bar{\mathbf{x}}_k - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2
 \Big].
 \]</span></p>
-<p>This guarantees that both sides of the experiment are anchored to the same benchmark—the average of their cluster.</p>
-<p>The weakly penalized version extends this idea by also encouraging the treated and control groups to resemble each other directly:</p>
+<p>This guarantees that both sides of the experiment are anchored to the same benchmark—the average of their cluster. The weakly targeted version extends this idea by also encouraging the treated and control groups to resemble each other directly:</p>
 <p><span class="math display">\[
 \mathcal{L}_{\text{Weak}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \beta \|\mathbf{X}_{I_k}^\top \mathbf{w}_{I_k} - \mathbf{X}_{I_k}^\top \mathbf{v}_{I_k}\|_2^2.
 \]</span></p>
-<p>In practice, this prevents the optimization from drifting toward two very different synthetic groups that both happen to match the cluster mean.</p>
-<p>The penalized estimator takes things further by adding distance-based penalties. These ensure that the selected neighborhoods are not only good statistical matches but also geographically or demographically close to the cluster mean:</p>
+<p>In practice, this prevents the optimization from drifting toward two very different synthetic groups that both happen to match the cluster mean. The penalized estimator takes things further by adding distance-based penalties to match the cluster well. While we can use outcomes here (as my current code does), there is no reason why we could not use a different distance metric to favor units that are literally closer in terms of geography/other factors:</p>
 <p><span class="math display">\[
 \mathcal{L}_{\text{Penalized}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \lambda_1 \mathbf{w}_{I_k}^\top D_{1,k} \mathbf{w}_{I_k}
 + \lambda_2 \mathbf{v}_{I_k}^\top D_{1,k} \mathbf{v}_{I_k}.
 \]</span></p>
 <p>Here, the matrices <span class="math inline">\(D_{1,k}\)</span> encode distances, so neighborhoods that are far from the cluster center are penalized more heavily.</p>
-<p>Finally, the unit-level estimator introduces the most granular controls. It not only enforces closeness to cluster means but also requires that each treated neighborhood has a tight match with its synthetic control, and that pairs of neighborhoods within the cluster do not diverge too much:</p>
+<p>Finally, the unit-level estimator introduces the most granular setup. It not only enforces closeness to cluster means but also requires that each treated neighborhood has a tight match with its synthetic control:</p>
 <p><span class="math display">\[
 \mathcal{L}_{\text{Unit}}(\mathbf{w},\mathbf{v}) = \mathcal{L}_{\text{Base}}(\mathbf{w},\mathbf{v})
 + \xi \, \big(\mathbf{w}_{I_k}^\top \, \mathrm{diag}(\|\mathbf{X}_{I_k} - \mathbf{X}_{I_k} \mathbf{V}_k\|_F^2)\big)
 + \lambda_{2,\text{unit}} \, \mathrm{tr}(\mathbf{W}_{I_k}^\top D_{2,k} \mathbf{V}_{I_k}).
 \]</span></p>
-<p>This is the most restrictive design. It is best suited for cases where heterogeneity across neighborhoods matters, and analysts want each treated area to have a carefully matched control counterpart.</p>
 <p>Together, these estimators form a hierarchy. The base version establishes a simple anchor; the weak estimator prevents divergence; the penalized estimator incorporates geographic or demographic realism; and the unit-level estimator enforces fine-grained one-to-one balance. Analysts can experiment across this ladder, choosing the design that best matches the goals and constraints of their study.</p>
 </section>
 <section id="intuition" class="level2">
@@ -400,7 +388,7 @@ p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \
 <h1>A Simple Example</h1>
 <p>I applied the experimental synthetic control method to the Curaçao Green Stay example, estimating treatment effects by constructing synthetic treated and control units. The analysis used two optimization formulations: Mixed Integer Quadratic Programming (MIQP) and its respective Quadratic Programming (QP) relaxation. I selected 2 to 3 treated units per cluster, with pre-treatment fit assessed via root mean squared error (RMSE). Below, I summarize results for two clustering setups (two clusters and one cluster) and different penalty settings.</p>
 <p>For the two-cluster setup (the first two plots below), both MIQP and QP formulations produced identical outcomes, suggesting that the integer constraints in MIQP did not alter the solution, making QP a computationally efficient alternative. In Cluster 1 (non-Willemstad), the pre-treatment RMSE was 0.1961, indicating an excellent fit. The control weights were distributed across six neighborhoods—Barber (0.1922), Lagún (0.1583), Oostpunt (0.1377), Santa Rosa (0.1940), Tera Corá (0.1293), and Westpunt (0.1885)—while the treated weights were assigned to Sint Willibrordus (0.3819), Soto (0.3003), and Spaanse Water (0.3179), summing to 1. In Cluster 2, Willemstad, the RMSE was slightly higher at 0.2185. Nine neighborhoods contributed to the control weights—Brievengat (0.1107), Groot Kwartier (0.1126), Hato (0.0633), Koraal Partir (0.1013), Otrobanda (0.1024), Pietermaai (0.1486), Piscadera Bay (0.1268), Sint Michiel (0.1240), and Steenrijk (0.1103), while the treated weights went to Groot Piscadera (0.2195), Saliña (0.3298), and Scharloo (0.4508), with Scharloo having the largest influence.</p>
-<div id="b07db920" class="cell" data-execution_count="1">
+<div id="57bae01c" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:121: UserWarning:
 
@@ -415,7 +403,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 </div>
 </div>
 </div>
-<div id="955ac6f7" class="cell" data-execution_count="2">
+<div id="127c60f5" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:121: UserWarning:
 
@@ -447,7 +435,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758650075685" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758654428681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -471,7 +459,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758650075686" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758654428682" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -495,7 +483,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758650075686" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758654428682" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -519,7 +507,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758650075691" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758654428687" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -543,7 +531,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758650075692" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758654428688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -567,7 +555,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758650075689" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758654428685" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -589,7 +577,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758650075689" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758654428684" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -613,7 +601,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758650075692" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758654428688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -635,7 +623,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758650075692" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758654428688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -657,7 +645,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758650075692" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758654428688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -681,7 +669,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758650075686" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758654428681" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -705,7 +693,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758650075693" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758654428688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -727,7 +715,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758650075689" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758654428684" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -744,7 +732,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1758650075692" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5654">
+<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1758654428688" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5654">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -761,7 +749,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758650075686" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758654428681" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -772,7 +760,7 @@ Sep 22, 2025
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1758650146160" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1758654498393" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

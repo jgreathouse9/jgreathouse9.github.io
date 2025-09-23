@@ -137,7 +137,7 @@ Because the framework is fully flexible, it becomes a sandbox for experimental d
 
 We now evaluate the treatment effects implied by the synthetic control design. The design phase determines which neighborhoods are treated versus control and how clusters are formed; the inference phase estimates the treatment effects and quantifies their uncertainty. Specifically, we (1) compute unit-level differences between synthetic treated and synthetic control outcomes, (2) aggregate these differences to obtain cluster-weighted and overall effects, and (3) use blank pre-treatment periods to quantify uncertainty via split-conformal confidence intervals and permutation tests.
 
-The full pre-treatment period is $\mathcal{T}_0 = \{1, \dots, T_0\}$, with $T_0 = 128$ periods in the Curaçao example. This is divided into the fitting period $\mathcal{T}_1 = \{1, \dots, T_0 - |\mathcal{B}|\}$, used to compute the synthetic control weights ($\mathbf{w}_j$, $\mathbf{v}_j$) and treatment assignments ($z_j$), and the blank period $\mathcal{B} = \{T_0 - |\mathcal{B}| + 1, \dots, T_0\}$, or the final group of periods that are withheld for placebo tests, with $|\mathcal{B}| = 28$ periods. The post-treatment period is $\mathcal{T}_2 = \{T_0 + 1, \dots, T_0 + 28\}$, also covering 28 periods. Thus, $\mathcal{T}_0 = \mathcal{T}_1 \cup \mathcal{B}$.
+The full pre-treatment period is $\mathcal{T}_0 = \{1, \dots, T_0\}$, with $T_0 = 128$ periods in the Curaçao example. This is divided into the fitting period $\mathcal{T}_1 = \{1, \dots, T_0 - |\mathcal{B}|\}$, used to compute the synthetic control weights ($\mathbf{w}_j$, $\mathbf{v}_j$) and treatment assignments ($z_j$), and the blank period $\mathcal{B} = \{T_0 - |\mathcal{B}| + 1, \dots, T_0\}$, or the final group of periods that are withheld for placebo tests, with $|\mathcal{B}| = 28$ periods. The post-treatment period is $\mathcalpena1 = \{T_0 + 1, \dots, T_0 + 28\}$, also covering 28 periods. Thus, $\mathcal{T}_0 = \mathcal{T}_1 \cup \mathcal{B}$.
 
 We estimate treatment effects by comparing synthetic treated and control outcomes. For neighborhood $j \in \mathcal{J}$, the synthetic treated outcome at time $t$ is constructed using the weights $\mathbf{w}_j$ from the design phase:
 
@@ -154,7 +154,7 @@ $$
 The unit-level treatment effect for neighborhood $j$ at post-treatment time $t \in \mathcal{T}_1$ is:
 
 $$
-\hat{\tau}_{j \in \mathcal{N}_1t} = y_{j \in \mathcal{N}_1t} - y_{j \in \mathcal{N}_0t}, \quad j \in \mathcal{J}, \, t \in \mathcal{T}_2.
+\hat{\tau}_{j \in \mathcal{N}_1t} = y_{j \in \mathcal{N}_1t} - y_{j \in \mathcal{N}_0t}, \quad j \in \mathcal{J}, \, t \in \mathcal{T}_1.
 $$
 
 This represents the difference between the synthetic treated and control outcomes for neighborhood $j$. We aggregate unit-level effects for treated neighborhoods ($z_j = 1$) within each cluster $k \in \mathcal{K}$ using pre-specified weights $f_j \ge 0$, where $\sum_{j \in I_k} f_j = 1$ within each cluster, to form the cluster-level effect:
@@ -204,7 +204,7 @@ $$
 The confidence interval for $\hat{\tau}_t$ is:
 
 $$
-\mathrm{CI}_{t} = \big[\hat{\tau}_{t} - q_{1-\alpha}, \, \hat{\tau}_{t} + q_{1-\alpha}\big], \quad t \in \mathcal{T}_2.
+\mathrm{CI}_{t} = \big[\hat{\tau}_{t} - q_{1-\alpha}, \, \hat{\tau}_{t} + q_{1-\alpha}\big], \quad t \in \mathcal{T}_1.
 $$
 
 For cluster-level effects, we compute:
@@ -226,10 +226,10 @@ These intervals provide interpretable bounds on the treatment effects, calibrate
 To test whether the post-treatment effects are statistically significant, we perform permutation tests at both the overall and cluster levels. The observed global statistic is the average absolute effect over post-treatment periods:
 
 $$
-S_{\text{obs}} = \frac{1}{|\mathcal{T}_1|} \sum_{t \in \mathcal{T}_2} \big|\hat{\tau}_{t}\big|.
+S_{\text{obs}} = \frac{1}{|\mathcal{T}_1|} \sum_{t \in \mathcal{T}_1} \big|\hat{\tau}_{t}\big|.
 $$
 
-We form a permutation distribution by pooling the placebo effects $\{\hat{\tau}_{t}^{\mathcal{B}} : t \in \mathcal{B}\}$ and post-treatment effects $\{\hat{\tau}_{t} : t \in \mathcal{T}_2\}$, then repeatedly sampling subsets of size $|\mathcal{T}_1|$ to compute:
+We form a permutation distribution by pooling the placebo effects $\{\hat{\tau}_{t}^{\mathcal{B}} : t \in \mathcal{B}\}$ and post-treatment effects $\{\hat{\tau}_{t} : t \in \mathcal{T}_1\}$, then repeatedly sampling subsets of size $|\mathcal{T}_1|$ to compute:
 
 $$
 S_{\text{perm}}^{(b)} = \frac{1}{|\mathcal{T}_1|} \sum_{t \in \text{sample}} \big|\hat{\tau}_{t}\big|, \quad b = 1, \dots, B.

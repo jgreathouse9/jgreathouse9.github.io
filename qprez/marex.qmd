@@ -1,6 +1,13 @@
 ---
 title: "Causal Inference and Market Experiment Design with MLSYNTH"
-format: revealjs
+format:
+  revealjs: 
+    slide-number: true
+    transition: fade
+    scrollable: true
+    background-color: "#EAF7F1"
+    theme: clean.scss
+highlight-style: github
 ---
 
 # Introduction
@@ -13,43 +20,71 @@ Jared Amani Greathouse
 
 ---
 
+## Classic Synthetic Control Model
+
+The SCM estimator constructs a weighted combination of control units to approximate the treated unit **pre-treatment**. It solves:  
+
+$$
+\mathbf{w}^{\mathrm{SCM}} 
+= \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; 
+\left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2, 
+\quad 
+\mathcal{W}_{\mathrm{conv}} = \{\mathbf{w} \ge 0, \; \mathbf{1}^\top \mathbf{w} = 1 \}
+$$
+
+- Treated unit: $\mathbf{y}_1$  
+- Donor/control units: $\mathbf{Y}_0$  
+- Constraint: weights are non-negative and sum to 1  
+
+The synthetic control prediction for any time $t$ is  
+
+$$
+\hat{\mathbf{y}}_1^{\mathrm{SCM}} = \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} = \sum_{j \in \mathcal{J}_0} w_j^{\mathrm{SCM}} \, y_{jt}
+$$
+
+**Intuition:** A weighted average of controls can resemble the treated unit better than any single control or the simple mean of all controls. Deviations post-treatment estimate the causal effect.
+
+
+---
+
 ## My Work
 
 - Developed mlsynth, the largest Python SCM package to date  
 - Suite of tools for policy evaluation using panel data  
-- Supports dozens of estimators: vanilla SCM, cluster SCM, factor models, PDA, proximal SCM, and more  
-- Handles complex, high-dimensional causal inference settings  
+- Supports dozens of estimators, using techniques from matrix factorization methods to forward selection and proximal inference methods 
 
 ---
 
 ## What Makes MLSYNTH Special
 
-- Consolidates decades of non-experimental SCM and panel methods from multiple software ecosystems into Python with one singular syntax  
-- Easy installation, automation, and scaling  
-- Supports a broad set of estimators for diverse research questions  
-- MAREX: Market Experiment Design feature for selecting treated and control units under constraints  
-- Decision-making tool: explore multiple scenarios with penalties, clusters, costs, budgets—overnight simulations possible  
+- Consolidates numerous SCMs across multiple software ecosystems into Python with one singular syntax  (e.g., R or MATLAB). 
+
+```{bash}
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+- Offers a simple syntax where uses have a treatment indicator, and unit and time column, and a numerioc outcome in a pandas dataframe.
 
 ---
 
 ## Challenges of Standard Experiments
 
-- Randomized trials are often impractical at scale  
-  - High coordination and cost  
-  - Ethical or logistical constraints  
-- Simple randomization ignores pre-existing heterogeneity  
-- Cannot easily accommodate budgets, costs, or cluster structures  
-- Slow to iterate: each new design requires manual planning  
+- Randomized trials are often impractical at scale for many kinds of interventions
+  - High coordination and costs
+  - Ethical or logistical constraints    
+- Slow to iterate: each new design requires manual planning and coordination 
 
 ---
 
-## Why Prefer MAREX
+## Introducing MAREX of ```mlsynth```
 
-- Optimizes both treated and control selection simultaneously  
-- Enforces cluster structure, budgets, and cardinality constraints  
-- Penalizes units far from cluster means to ensure representativeness  
-- Allows overnight simulation of multiple experimental scenarios  
-- Treats synthetic control as a planning tool, not just an estimator  
+* Abadie, Alberto, and Jinglong Zhao. (2025). Synthetic Controls for Experimental Design. https://arxiv.org/abs/2108.02196
+
+- Selects both treated and control units simultaneously
+
+- Enforces cluster structure (if specified), budgets, and cardinality constraints
+
+- Penalizes units far from cluster means to ensure representativeness
 
 ---
 
@@ -66,6 +101,8 @@ Jared Amani Greathouse
 ---
 
 ## An Example
+
+Suppose we have 21 units. We wish to roll out an intervention that we cannot randomize (say, differences in closing times/work hours)
 
 ```{python}
 
@@ -87,7 +124,7 @@ config = {"df": df,
           "outcome": "Y_obs",
           "T0": 128,
           "m_min": 1,
-          "m_max": 5,
+          "m_max": 3,
           "cluster": "Region",
           "program_type": "MIQP", "blank_periods": 28}
 

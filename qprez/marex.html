@@ -6,7 +6,7 @@
 <script src="marex_files/libs/quarto-html/tippy.umd.min.js"></script>
 <link href="marex_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="marex_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="marex_files/libs/quarto-html/quarto-syntax-highlighting-fae04a4dda57acfb7da1e58796bfa73f.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+<link href="marex_files/libs/quarto-html/quarto-syntax-highlighting-bbf0a7f1146ec3f739f17469cf885ec8.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.8">
 
   <title>Causal Inference and Market Experiment Design with MLSYNTH</title>
@@ -27,8 +27,73 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      { color: #24292e;  }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #24292e; } /* Normal */
+    code span.al { color: #ff5555; font-weight: bold; } /* Alert */
+    code span.an { color: #6a737d; } /* Annotation */
+    code span.at { color: #d73a49; } /* Attribute */
+    code span.bn { color: #005cc5; } /* BaseN */
+    code span.bu { color: #d73a49; } /* BuiltIn */
+    code span.cf { color: #d73a49; } /* ControlFlow */
+    code span.ch { color: #032f62; } /* Char */
+    code span.cn { color: #005cc5; } /* Constant */
+    code span.co { color: #6a737d; } /* Comment */
+    code span.cv { color: #6a737d; } /* CommentVar */
+    code span.do { color: #6a737d; } /* Documentation */
+    code span.dt { color: #d73a49; } /* DataType */
+    code span.dv { color: #005cc5; } /* DecVal */
+    code span.er { color: #ff5555; text-decoration: underline; } /* Error */
+    code span.ex { color: #d73a49; font-weight: bold; } /* Extension */
+    code span.fl { color: #005cc5; } /* Float */
+    code span.fu { color: #6f42c1; } /* Function */
+    code span.im { color: #032f62; } /* Import */
+    code span.in { color: #6a737d; } /* Information */
+    code span.kw { color: #d73a49; } /* Keyword */
+    code span.op { color: #24292e; } /* Operator */
+    code span.ot { color: #6f42c1; } /* Other */
+    code span.pp { color: #d73a49; } /* Preprocessor */
+    code span.re { color: #6a737d; } /* RegionMarker */
+    code span.sc { color: #005cc5; } /* SpecialChar */
+    code span.ss { color: #032f62; } /* SpecialString */
+    code span.st { color: #032f62; } /* String */
+    code span.va { color: #e36209; } /* Variable */
+    code span.vs { color: #032f62; } /* VerbatimString */
+    code span.wa { color: #ff5555; } /* Warning */
   </style>
-  <link rel="stylesheet" href="marex_files/libs/revealjs/dist/theme/quarto-bbe7401fe57d4b791b917637bb662036.css">
+  <link rel="stylesheet" href="marex_files/libs/revealjs/dist/theme/quarto-edbdae3ce6706c89dc07b5c8bce70f6a.css">
   <link href="marex_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="marex_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="marex_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -44,6 +109,7 @@
     }
     .reveal .slide:not(.center) {
       height: 100%;
+      overflow-y: auto;
     }
     .reveal .slide.scrollable {
       overflow-y: auto;
@@ -141,6 +207,29 @@
 - Specialization: Econometrics and Causal Inference<br>
 - Focus: Synthetic Control Methods, High-Dimensional Panel Data, Machine Learning for Treatment Effects</p>
 </section>
+<section id="classic-synthetic-control-model" class="slide level2">
+<h2>Classic Synthetic Control Model</h2>
+<p>The SCM estimator constructs a weighted combination of control units to approximate the treated unit <strong>pre-treatment</strong>. It solves:</p>
+<p><span class="math display">\[
+\mathbf{w}^{\mathrm{SCM}}
+= \underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \;
+\left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \right\|_2^2,
+\quad
+\mathcal{W}_{\mathrm{conv}} = \{\mathbf{w} \ge 0, \; \mathbf{1}^\top \mathbf{w} = 1 \}
+\]</span></p>
+<ul>
+<li>Treated unit: <span class="math inline">\(\mathbf{y}_1\)</span><br>
+</li>
+<li>Donor/control units: <span class="math inline">\(\mathbf{Y}_0\)</span><br>
+</li>
+<li>Constraint: weights are non-negative and sum to 1</li>
+</ul>
+<p>The synthetic control prediction for any time <span class="math inline">\(t\)</span> is</p>
+<p><span class="math display">\[
+\hat{\mathbf{y}}_1^{\mathrm{SCM}} = \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} = \sum_{j \in \mathcal{J}_0} w_j^{\mathrm{SCM}} \, y_{jt}
+\]</span></p>
+<p><strong>Intuition:</strong> A weighted average of controls can resemble the treated unit better than any single control or the simple mean of all controls. Deviations post-treatment estimate the causal effect.</p>
+</section>
 <section id="my-work" class="slide level2">
 <h2>My Work</h2>
 <ul>
@@ -148,54 +237,38 @@
 </li>
 <li>Suite of tools for policy evaluation using panel data<br>
 </li>
-<li>Supports dozens of estimators: vanilla SCM, cluster SCM, factor models, PDA, proximal SCM, and more<br>
-</li>
-<li>Handles complex, high-dimensional causal inference settings</li>
+<li>Supports dozens of estimators, using techniques from matrix factorization methods to forward selection and proximal inference methods</li>
 </ul>
 </section>
 <section id="what-makes-mlsynth-special" class="slide level2">
 <h2>What Makes MLSYNTH Special</h2>
 <ul>
-<li>Consolidates decades of non-experimental SCM and panel methods from multiple software ecosystems into Python with one singular syntax<br>
-</li>
-<li>Easy installation, automation, and scaling<br>
-</li>
-<li>Supports a broad set of estimators for diverse research questions<br>
-</li>
-<li>MAREX: Market Experiment Design feature for selecting treated and control units under constraints<br>
-</li>
-<li>Decision-making tool: explore multiple scenarios with penalties, clusters, costs, budgets—overnight simulations possible</li>
+<li>Consolidates numerous SCMs across multiple software ecosystems into Python with one singular syntax (e.g., R or MATLAB).</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource {bash} number-lines code-with-copy"><code class="sourceCode"><span id="cb1-1"><a href=""></a>pip install -U git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li>Offers a simple syntax where uses have a treatment indicator, and unit and time column, and a numerioc outcome in a pandas dataframe.</li>
 </ul>
 </section>
 <section id="challenges-of-standard-experiments" class="slide level2">
 <h2>Challenges of Standard Experiments</h2>
 <ul>
-<li>Randomized trials are often impractical at scale
+<li>Randomized trials are often impractical at scale for many kinds of interventions
 <ul>
-<li>High coordination and cost<br>
-</li>
+<li>High coordination and costs</li>
 <li>Ethical or logistical constraints<br>
 </li>
 </ul></li>
-<li>Simple randomization ignores pre-existing heterogeneity<br>
-</li>
-<li>Cannot easily accommodate budgets, costs, or cluster structures<br>
-</li>
-<li>Slow to iterate: each new design requires manual planning</li>
+<li>Slow to iterate: each new design requires manual planning and coordination</li>
 </ul>
 </section>
-<section id="why-prefer-marex" class="slide level2">
-<h2>Why Prefer MAREX</h2>
+<section id="introducing-marex-of-mlsynth" class="slide level2">
+<h2>Introducing MAREX of <code>mlsynth</code></h2>
 <ul>
-<li>Optimizes both treated and control selection simultaneously<br>
-</li>
-<li>Enforces cluster structure, budgets, and cardinality constraints<br>
-</li>
-<li>Penalizes units far from cluster means to ensure representativeness<br>
-</li>
-<li>Allows overnight simulation of multiple experimental scenarios<br>
-</li>
-<li>Treats synthetic control as a planning tool, not just an estimator</li>
+<li><p>Abadie, Alberto, and Jinglong Zhao. (2025). Synthetic Controls for Experimental Design. https://arxiv.org/abs/2108.02196</p></li>
+<li><p>Selects both treated and control units simultaneously</p></li>
+<li><p>Enforces cluster structure (if specified), budgets, and cardinality constraints</p></li>
+<li><p>Penalizes units far from cluster means to ensure representativeness</p></li>
 </ul>
 </section>
 <section id="marex-vs.-standard-experiment" class="slide level2">
@@ -249,7 +322,8 @@
 </section>
 <section id="an-example" class="slide level2">
 <h2>An Example</h2>
-<div id="84e7c126" class="cell" data-execution_count="1">
+<p>Suppose we have 21 units. We wish to roll out an intervention that we cannot randomize (say, differences in closing times/work hours)</p>
+<div id="81774450" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -328,7 +402,7 @@
         progress: true,
 
         // Display the page number of the current slide
-        slideNumber: false,
+        slideNumber: 'c/t',
 
         // 'all', 'print', or 'speaker'
         showSlideNumber: 'all',
@@ -433,7 +507,7 @@
         previewLinks: false,
 
         // Transition style (none/fade/slide/convex/concave/zoom)
-        transition: 'none',
+        transition: 'fade',
 
         // Transition speed (default/fast/slow)
         transitionSpeed: 'default',

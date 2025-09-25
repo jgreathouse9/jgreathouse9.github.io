@@ -17,7 +17,9 @@ A more feasible alternative is to focus on the market at a cluster level, groupi
 The question then becomes: how do we select which neighborhoods to treat and which to use as controls? We could throw darts at a map to decide, but this is unlikely to produce reliable estimates. Instead, the goal should be to select both a treated group of units and a control group of units which look like the cluster/group level aggregate. [Synthetic control methods](https://arxiv.org/abs/2108.02196) offer a solution, constructing "synthetic treated units" and "synthetic control units" that closely mimic the characteristics of clusters, enabling rigorous estimation of treatment effects even when randomization is infeasible.  
 
 
-## Notation and Synthetic Control Designs
+# Notation and Synthetic Control Designs
+
+## Setup
 
 As usual, this is where I get into the math details. In our Curaçao Green Stay example, the unit of treatment is the neighborhood, not individual hotels. That is, entire neighborhoods may adopt sustainability measures, while others remain untreated. Let $\mathcal{J} = \{1, \dots, J\}$ denote neighborhoods observed over $T_0$ pre-treatment periods $\mathcal{T}_0 = \{1, \dots, T_0\}$, nested within $K$ clusters $\mathcal{K} = \{1, \dots, K\}$ that group neighborhoods with similar characteristics (e.g., location, tourist demographics, historical occupancy). Let $I_k \subseteq \mathcal{J}$ denote neighborhoods in cluster $k$, with $j \in I_{k(j)}$ indicating cluster membership.
 
@@ -39,7 +41,9 @@ $$
 \min_{(\mathbf{w},\mathbf{v}) \in \mathcal{F}} \; \mathcal{L}(\mathbf{w},\mathbf{v}),
 $$
 
-where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$. 
+where $\mathcal{F}$ is the feasible set defined by nonnegativity, within–cluster normalization, exclusivity, and any budget constraints. Each cluster $k \in \{1,\dots,K\}$ has member indices $I_k$, cluster mean $\mathbf{\bar{x}}_k$, and outcomes $\mathbf{X}_{I_k}$.
+
+## The Optimization
 
 The optimization problem chooses synthetic treated and control neighborhoods by minimizing a loss function subject to feasibility constraints. At its core, the method constructs weighted averages of units to be treated and untreated, such that both averages resemble the cluster as a whole and each other. In addition to the above, we also may face operational costs $\mathbf{c}$ and cluster budgets $B_k$ which constrain feasible assignments. The feasible set is
 
@@ -55,6 +59,8 @@ $$
 $$
 
 Non-negativity and normalization ($w_j, v_j \ge 0$, $\sum w_j = \sum v_j = 1$) mean that synthetic neighborhoods are weighted averages of real neighborhoods. Summing to one ensures each synthetic neighborhood is on the same scale as the real neighborhoods. The decision variable $z_j \in \{0,1\}$, together with $w_j \le z_j$ and $v_j \le 1 - z_j$, asks whether a unit should be treated. A treated neighborhood contributes to the synthetic treated unit but not the control unit, and vice versa, so that each neighborhood contributes to only one synthetic assignment, avoiding overlap between treated and control contributions. Cardinality constraints ($\sum z_j \in [m_{\text{min},k}, m_{\text{max},k}]$) ensure that at least one neighborhood is treated per cluster, but not all. Budget constraints ($\sum c_j w_j \le B_k$, $\sum c_j w_j \le B_{\text{total}}$) account for heterogeneous costs across neighborhoods.
+
+## Variations
 
 Abadie and Zhou propose numerous ways of implementing the synthetic control design. The base experimental SC estimator is the most straightforward. For each cluster \(k\), it tries to make the synthetic treated and synthetic control neighborhoods look like the cluster mean:
 
@@ -102,18 +108,6 @@ $$
 $$
 
 Together, these estimators form a hierarchy. The base version establishes a simple anchor, the weak estimator prevents divergence, the penalized estimator incorporates geographic or demographic realism, and the unit-level estimator enforces fine-grained one-to-one balance. Analysts can select the design that best aligns with the goals and constraints of their study, balancing statistical rigor with practical considerations.
-
-## Intuition
-
-Let’s take a step back from all the matrices, weights, and constraints and ask: what does this framework actually *do* in practice? Think of the experimental synthetic control framework not as a mysterious math exercise, but as a decision-making engine for planning market experiments before we do any effect size estimation. Suppose you or I were literally hired by the government to do this. Their goal is to figure out which neighborhoods (or groups of units) should receive a treatment, like implementing sustainability initiatives, and which should serve as controls. The team does not (or should not!!!!!) make these decisions arbitrarily. Very likely, they must follow the rules of the framework spelt out to them by their clients. These constraints encode trade-offs among fairness, cost, donor pool/market representativeness, and logistical feasibility.  
-
-Analysts first group neighborhoods into clusters that share similar characteristics such as geographic proximity, tourist demographics, historical activity, or energy usage patterns. This clustering makes it more likely that any comparison between treated and untreated neighborhoods is meaningful: we want to compare apples to apples, not oranges to pineapples. Remember in this setting, our ultimate goal is generally inference about the average treatment effect, NOT the average treatment effect on the treated. So, the analysts specify objectives. Perhaps treated neighborhoods should closely resemble the average of their cluster, or maybe we should match to the units themselves more tightly, informing us of our design decision. At the same time, there are real-world constraints, including budgets, maximum or minimum numbers of neighborhoods that can be treated, operational limitations, or ethical considerations. These are encoded in the optimization problem.  
-
-The optimization process then selects synthetic treated and control neighborhoods. Instead of picking actual neighborhoods at random or by instinct, the framework identifies weighted combinations of neighborhoods that best satisfy the objectives and constraints with respect to the broader market our cluster. As I just mentioned, different formulations can be used. The base estimator ensures the treated and control groups reflect the cluster average. The weakly targeted estimator additionally encourages treated and control units to resemble each other. Penalized and unit-level estimators introduce more sophisticated distance or micro-level penalties, reflecting geography, demographics, or other practical considerations which we can code for. 
-
-The experimental SC framework produces a recommendation: given the priorities and constraints, here is the set of neighborhoods that should be treated, and here is the synthetic control to compare them against.  The government or client then takes these recommendations and implements the policy, working with hotel associations, local communities, or other relevant stakeholders. Ethical and political considerations are respected because the framework allows analysts to control for fairness and logistical feasibility in advance. After the treatment is rolled out and enough time has passed, analysts can return to the synthetic control weights and use them to estimate and conduct inference about the treatment effects. The same weights that informed the design now form the backbone of the causal comparison.
-
-The synthetic control framework is a full-cycle experimental design tool. It is not just about estimation — it is about making a good plan for who gets treated and why, under the constraints of budgets, fairness, and logistics. By adjusting parameters, analysts can explore different trade-offs. Increasing beta prioritizes representativeness of treated neighborhoods relative to the controls. This flexibility transforms the framework into a sandbox. Analysts can simulate multiple scenarios, see how treatment assignments change under different priorities, and produce recommendations that are robust, realistic, and implementable. This approach bridges the gap between theory and practice. It answers the question that truly matters for applied practitioners: given our goals, constraints, and the characteristics of our market, which neighborhoods should we treat, and why?  
 
 ## Inference
 
@@ -194,6 +188,18 @@ p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \
 $$
 
 Cluster-level significance tests follow the same logic using cluster-specific effects and placebo distributions. In this way, the combination of synthetic control construction, placebo comparisons, and permutation testing provides a complete and interpretable framework for estimating treatment effects while accounting for uncertainty.
+
+# Intuition
+
+Let’s take a step back from all the matrices, weights, and constraints and ask: what does this framework actually *do* in practice? Think of the experimental synthetic control framework not as a mysterious math exercise, but as a decision-making engine for planning market experiments before we do any effect size estimation. Suppose you or I were literally hired by the government to do this. Their goal is to figure out which neighborhoods (or groups of units) should receive a treatment, like implementing sustainability initiatives, and which should serve as controls. The team does not (or should not!!!!!) make these decisions arbitrarily. Very likely, they must follow the rules of the framework spelt out to them by their clients. These constraints encode trade-offs among fairness, cost, donor pool/market representativeness, and logistical feasibility.  
+
+Analysts first group neighborhoods into clusters that share similar characteristics such as geographic proximity, tourist demographics, historical activity, or energy usage patterns. This clustering makes it more likely that any comparison between treated and untreated neighborhoods is meaningful: we want to compare apples to apples, not oranges to pineapples. Remember in this setting, our ultimate goal is generally inference about the average treatment effect, NOT the average treatment effect on the treated. So, the analysts specify objectives. Perhaps treated neighborhoods should closely resemble the average of their cluster, or maybe we should match to the units themselves more tightly, informing us of our design decision. At the same time, there are real-world constraints, including budgets, maximum or minimum numbers of neighborhoods that can be treated, operational limitations, or ethical considerations. These are encoded in the optimization problem.  
+
+The optimization process then selects synthetic treated and control neighborhoods. Instead of picking actual neighborhoods at random or by instinct, the framework identifies weighted combinations of neighborhoods that best satisfy the objectives and constraints with respect to the broader market our cluster. As I just mentioned, different formulations can be used. The base estimator ensures the treated and control groups reflect the cluster average. The weakly targeted estimator additionally encourages treated and control units to resemble each other. Penalized and unit-level estimators introduce more sophisticated distance or micro-level penalties, reflecting geography, demographics, or other practical considerations which we can code for. 
+
+The experimental SC framework produces a recommendation: given the priorities and constraints, here is the set of neighborhoods that should be treated, and here is the synthetic control to compare them against.  The government or client then takes these recommendations and implements the policy, working with hotel associations, local communities, or other relevant stakeholders. Ethical and political considerations are respected because the framework allows analysts to control for fairness and logistical feasibility in advance. After the treatment is rolled out and enough time has passed, analysts can return to the synthetic control weights and use them to estimate and conduct inference about the treatment effects. The same weights that informed the design now form the backbone of the causal comparison.
+
+The synthetic control framework is a full-cycle experimental design tool. It is not just about estimation — it is about making a good plan for who gets treated and why, under the constraints of budgets, fairness, and logistics. By adjusting parameters, analysts can explore different trade-offs. Increasing beta prioritizes representativeness of treated neighborhoods relative to the controls. This flexibility transforms the framework into a sandbox. Analysts can simulate multiple scenarios, see how treatment assignments change under different priorities, and produce recommendations that are robust, realistic, and implementable. This approach bridges the gap between theory and practice. It answers the question that truly matters for applied practitioners: given our goals, constraints, and the characteristics of our market, which neighborhoods should we treat, and why?  
 
 # A Simple Example
 

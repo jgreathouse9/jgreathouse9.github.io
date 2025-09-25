@@ -145,17 +145,15 @@ $$
 \hat{\tau}_t = \sum_{k=1}^K \hat{\tau}_{k t} = \sum_{j \in \mathcal{J}, z_j = 1} f_j \hat{\tau}_{j \in \mathcal{N}_1 t}.
 $$
 
-Although the current implementation uses uniform weights for simplicity, alternative schemes—such as population- or traffic-weighted averages—could also be applied.
+Although the current implementation uses weights based on the number of units in each clsuter, at some point I will allow them to specify things such as population or traffic or whaterver the analyst wishes to weight the units by.
 
-To understand the variability in our estimates and build confidence intervals, we look at placebo effects. These are computed in the blank pre-treatment period $\mathcal{B}$ and capture the variation of synthetic differences when no treatment is applied. The unit-level placebo effect is
+To build confidence intervals, we use at placebo effects. These are computed in the blank set of the pre-treatment period $\mathcal{B}$ and capture the residuals when no treatment is applied. The unit-level placebo effect is
 
 $$
 \hat{\tau}_{j \in \mathcal{N}_1 t}^{\mathcal{B}} = y_{j \in \mathcal{N}_1 t} - y_{j \in \mathcal{N}_0 t}, \quad t \in \mathcal{B},
 $$
 
-and cluster-level and global placebo effects are defined similarly. By examining these distributions, we can gauge the natural fluctuations in the synthetic control differences.
-
-Using the placebo distributions, split-conformal confidence intervals can be constructed. For the global effect, we take the $(1-\alpha)$ quantile of the absolute placebo effects,
+and cluster-level and global placebo effects are defined similarly. By examining these distributions, we can gauge the natural fluctuations in the synthetic control differences. Split-conformal confidence intervals can be constructed. For the global effect, we take the $(1-\alpha)$ quantile of the absolute placebo effects,
 
 $$
 q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|\hat{\tau}_t^{\mathcal{B}}|), \quad t \in \mathcal{B},
@@ -175,7 +173,7 @@ $$
 S_{\text{obs}} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_t|.
 $$
 
-By sampling permutations from placebo and post-treatment effects, we generate permuted statistics
+By randomly sampling permutations from placebo and post-treatment effects, we generate test statistics
 
 $$
 S_{\text{perm}}^{(b)} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \text{sample}} |\hat{\tau}_t|, \quad b = 1, \dots, B,
@@ -187,7 +185,7 @@ $$
 p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \ge S_{\text{obs}}\}.
 $$
 
-Cluster-level significance tests follow the same logic using cluster-specific effects and placebo distributions. In this way, the combination of synthetic control construction, placebo comparisons, and permutation testing provides a complete and interpretable framework for estimating treatment effects while accounting for uncertainty.
+Cluster-level significance tests follow the exact same logic.
 
 # Intuition
 
@@ -270,14 +268,10 @@ When all 21 neighborhoods were treated as a single cluster using MIQP with 2 to 
 
 The results show that the unpenalized MIQP and QP formulations consistently achieved excellent pre-treatment fit, with RMSEs ranging from 0.1961 to 0.2185 in the two-cluster setup and 0.1999 in the unpenalized one-cluster setup, supporting reliable counterfactual estimation. The penalized design, however, compromised fit quality, likely due to the restrictive $\lambda_1 = \lambda_2 = 0.2$ penalties, which prioritized sparsity and proximity to the cluster mean but led to a high RMSE. Ofcourse, in reality we can choose these penalties via cross validation, instead of setting them manually, these were just chosen for the sake of example.
 
-Treated weights were balanced across 2–3 units in all setups, ensuring no single unit dominated, while control weights varied from moderate (6–19% in two-cluster) to highly diversified (1–10% in one-cluster unpenalized) to sparse (Scharloo at 0.7368 in penalized). The identical results from MIQP and QP in the two-cluster setup suggest that the QP relaxation is a viable alternative for computational efficiency. Also, these data were simualted [from Wikipedia](https://en.wikipedia.org/wiki/List_of_populated_places_in_Cura%C3%A7ao), in theory [we could get both population and density data](https://www.citypopulation.de/en/curacao/admin/) on a wider variety of places in Curaçao, with a more sophisitcated hierarchical linear factor model, to see how the estimator would play with even more clusters/units.
+Treated weights were balanced across 2–3 units in all setups, ensuring no single unit dominated, while control weights varied from moderate (6–19% in two-cluster) to highly diversified (1–10% in one-cluster unpenalized) to sparse (Scharloo at 0.7368 in penalized). The identical results from MIQP and QP in the two-cluster setup suggest that the QP relaxation is a viable alternative for computational efficiency. What this shows is that the synthetic design is robust: whether we divide Curaçao into clusters or treat it as a single unit, whether we enforce integer treatment assignments or relax them, the method generally produces stable synthetic matches. Also, these data were simualted [from Wikipedia](https://en.wikipedia.org/wiki/List_of_populated_places_in_Cura%C3%A7ao), in theory [we could get both population and density data](https://www.citypopulation.de/en/curacao/admin/) on a wider variety of places in Curaçao, with a more sophisitcated hierarchical linear factor model, to see how the estimator would play with even more clusters/units.
 
 ## Takeaways for Practice
 
-What this shows is that the synthetic design is robust: whether we divide Curaçao into clusters or treat it as a single unit, whether we enforce integer treatment assignments or relax them, the method generally produces stable synthetic matches. Notice that we have not yet discussed the ATT/ATE or the uncertainty of estimated treatment effects. This is because the framework above is focused on experimental design. The main goal is to decide *who should be treated* and *why* before any real-world intervention. In other words, we can be confident in the design itself—who is treated, who is not, and why—before estimating treatment effects or reporting uncertainty.
+Notice that we have not yet discussed the ATT/ATE or the uncertainty of estimated treatment effects. This is because the framework above is focused on experimental design. The main goal is to decide *who should be treated* and *why* before any real-world intervention. In other words, we can be confident in the design itself—who is treated, who is not, and why—before estimating treatment effects or reporting uncertainty. The data from above was simulated without a treatment effect, suggesting that if we did apply the treatment effect, we would see if, if it were there. Crucially, in settings with few treatable units, synthetic control designs can achieve balance analogous to an RCT, even when only a handful of units are treated. In fact, Abadie and Zhou "show that synthetic control design can substantially outperform randomized designs in experimental settings with a small number of treated units." This allows interventions to be targeted strategically, saving resources while using a valid identification method.
 
-Contrast this with a traditional RCT. In an RCT, randomization occurs once in the field. Designing an RCT is costly and requires coordination across multiple actors. We cannot experiment with different randomization schemes beforehand, since the quality of the randomization can only be assessed *after* it occurs. Once units are assigned, the study must proceed, with all associated costs, risks, and constraints.
-
-By contrast, the synthetic control design can be iterated rapidly on a laptop. We can explore different cluster groupings, penalties, cost constraints, or solver formulations and observe how stable the resulting design is before committing any resources. Crucially, in settings with few treatable units, synthetic control designs can achieve balance analogous to an RCT, even when only a handful of units are treated. This allows interventions to be targeted strategically, saving resources while maintaining credible comparisons.
-
-This flexibility makes the synthetic experimentation method a powerful planning tool. It enables researchers and practitioners to prototype experiments cheaply and safely, ensuring that the data support a credible design before any real-world action. Large-scale RCTs remain the gold standard, but they are expensive and logistically demanding. Synthetic design exercises open the door to an iterative, exploratory phase of experimental planning—helping ensure that when we do invest in a full study, it is targeted, efficient, and built on a solid foundation.
+Contrast this with a traditional RCT. In an RCT, randomization occurs once in the field. Designing an RCT is costly and requires coordination across multiple actors. We cannot experiment with different randomization schemes beforehand, since the quality of the randomization can only be assessed *after* it occurs. Once units are assigned, the study must proceed, with all associated costs, risks, and constraints. By contrast, the synthetic control design can be iterated rapidly on a laptop. We can explore different cluster groupings, penalties, cost and budget constraints, or solver formulations and observe how stable the resulting design is before committing any resources. This flexibility makes the synthetic experimentation method a powerful planning tool. It enables researchers and practitioners to prototype experiments cheaply and safely, ensuring that the data support a credible design before any real-world action. Large-scale RCTs remain the gold standard, but they are expensive and logistically demanding. Synthetic control methods open the door to an iterative, exploratory phase of experimental planning, especially in the setting where only a few units may be treated, so that when we do invest in a full study, it is built on a solid foundation that is business aware.

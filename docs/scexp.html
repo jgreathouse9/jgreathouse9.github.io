@@ -332,13 +332,12 @@ y_{j \in \mathcal{N}_0 t} = \sum_{j \in I_k, z_j = 0} v_j y_{jt}.
 <p><span class="math display">\[
 \hat{\tau}_t = \sum_{k=1}^K \hat{\tau}_{k t} = \sum_{j \in \mathcal{J}, z_j = 1} f_j \hat{\tau}_{j \in \mathcal{N}_1 t}.
 \]</span></p>
-<p>Although the current implementation uses uniform weights for simplicity, alternative schemes—such as population- or traffic-weighted averages—could also be applied.</p>
-<p>To understand the variability in our estimates and build confidence intervals, we look at placebo effects. These are computed in the blank pre-treatment period <span class="math inline">\(\mathcal{B}\)</span> and capture the variation of synthetic differences when no treatment is applied. The unit-level placebo effect is</p>
+<p>Although the current implementation uses weights based on the number of units in each clsuter, at some point I will allow them to specify things such as population or traffic or whaterver the analyst wishes to weight the units by.</p>
+<p>To build confidence intervals, we use at placebo effects. These are computed in the blank set of the pre-treatment period <span class="math inline">\(\mathcal{B}\)</span> and capture the residuals when no treatment is applied. The unit-level placebo effect is</p>
 <p><span class="math display">\[
 \hat{\tau}_{j \in \mathcal{N}_1 t}^{\mathcal{B}} = y_{j \in \mathcal{N}_1 t} - y_{j \in \mathcal{N}_0 t}, \quad t \in \mathcal{B},
 \]</span></p>
-<p>and cluster-level and global placebo effects are defined similarly. By examining these distributions, we can gauge the natural fluctuations in the synthetic control differences.</p>
-<p>Using the placebo distributions, split-conformal confidence intervals can be constructed. For the global effect, we take the <span class="math inline">\((1-\alpha)\)</span> quantile of the absolute placebo effects,</p>
+<p>and cluster-level and global placebo effects are defined similarly. By examining these distributions, we can gauge the natural fluctuations in the synthetic control differences. Split-conformal confidence intervals can be constructed. For the global effect, we take the <span class="math inline">\((1-\alpha)\)</span> quantile of the absolute placebo effects,</p>
 <p><span class="math display">\[
 q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|\hat{\tau}_t^{\mathcal{B}}|), \quad t \in \mathcal{B},
 \]</span></p>
@@ -351,7 +350,7 @@ q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|\hat{\tau}_t^{\mathcal{B}}|), \quad t
 <p><span class="math display">\[
 S_{\text{obs}} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_t|.
 \]</span></p>
-<p>By sampling permutations from placebo and post-treatment effects, we generate permuted statistics</p>
+<p>By randomly sampling permutations from placebo and post-treatment effects, we generate test statistics</p>
 <p><span class="math display">\[
 S_{\text{perm}}^{(b)} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \text{sample}} |\hat{\tau}_t|, \quad b = 1, \dots, B,
 \]</span></p>
@@ -359,7 +358,7 @@ S_{\text{perm}}^{(b)} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \text{sample}} |\h
 <p><span class="math display">\[
 p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \ge S_{\text{obs}}\}.
 \]</span></p>
-<p>Cluster-level significance tests follow the same logic using cluster-specific effects and placebo distributions. In this way, the combination of synthetic control construction, placebo comparisons, and permutation testing provides a complete and interpretable framework for estimating treatment effects while accounting for uncertainty.</p>
+<p>Cluster-level significance tests follow the exact same logic.</p>
 </section>
 </section>
 <section id="intuition" class="level1">
@@ -374,7 +373,7 @@ p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \
 <h1>A Simple Example</h1>
 <p>I applied the experimental synthetic control method to the Curaçao Green Stay example, estimating treatment effects by constructing synthetic treated and control units with simulated data. The analysis used two optimization formulations: Mixed Integer Quadratic Programming (MIQP) and its respective Quadratic Programming (QP) relaxation. I selected 2 to 3 treated units per cluster, with pre-treatment fit assessed via root mean squared error (RMSE). Below, I summarize results for two clustering setups (two clusters and one cluster) and different penalty settings.</p>
 <p>For the two-cluster setup (the first two plots below), both MIQP and QP formulations produced identical outcomes, suggesting that the integer constraints in MIQP did not alter the solution, making QP a computationally efficient alternative. In Cluster 1 (non-Willemstad), the pre-treatment RMSE was 0.1961, indicating an excellent fit. The control weights were distributed across six neighborhoods—Barber (0.1922), Lagún (0.1583), Oostpunt (0.1377), Santa Rosa (0.1940), Tera Corá (0.1293), and Westpunt (0.1885)—while the treated weights were assigned to Sint Willibrordus (0.3819), Soto (0.3003), and Spaanse Water (0.3179), summing to 1. In Cluster 2, Willemstad, the RMSE was slightly higher at 0.2185. Nine neighborhoods contributed to the control weights—Brievengat (0.1107), Groot Kwartier (0.1126), Hato (0.0633), Koraal Partir (0.1013), Otrobanda (0.1024), Pietermaai (0.1486), Piscadera Bay (0.1268), Sint Michiel (0.1240), and Steenrijk (0.1103), while the treated weights went to Groot Piscadera (0.2195), Saliña (0.3298), and Scharloo (0.4508), with Scharloo having the largest influence.</p>
-<div id="3c2693d5" class="cell" data-execution_count="1">
+<div id="9b171dde" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:121: UserWarning:
 
@@ -389,7 +388,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 </div>
 </div>
 </div>
-<div id="c1369d64" class="cell" data-execution_count="2">
+<div id="1c260a15" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.7/x64/lib/python3.13/site-packages/mlsynth/config_models.py:121: UserWarning:
 
@@ -406,13 +405,11 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 </div>
 <p>When all 21 neighborhoods were treated as a single cluster using MIQP with 2 to 3 treated units, the RMSE was 0.1999, comparable to the two-cluster setup and indicating excellent fit. The control weights were spread across 18 neighborhoods—Barber (0.0721), Brievengat (0.0739), Groot Kwartier (0.0435), Groot Piscadera (0.0401), Hato (0.0690), Koraal Partir (0.0439), Oostpunt (0.0279), Pietermaai (0.0559), Saliña (0.0451), Santa Rosa (0.0620), Scharloo (0.0686), Sint Michiel (0.0608), Sint Willibrordus (0.1004), Soto (0.0309), Spaanse Water (0.0671), Steenrijk (0.0647), Tera Corá (0.0603), and Westpunt (0.0137), with each contributing 1–10% to the synthetic control. The treated weights were assigned to Lagún (0.3335), Otrobanda (0.3730), and Piscadera Bay (0.2935). In a separate one-cluster setup using MIQP with a cluster-penalized design, where penalties <span class="math inline">\(\lambda_1 = 0.2\)</span> and <span class="math inline">\(\lambda_2 = 0.2\)</span> were applied to encourage proximity to the cluster mean, the RMSE increased to 1.52. The fit quality degrades slighly, but is still acceptable. The control weights were concentrated on three neighborhoods—Santa Rosa (0.0415), Scharloo (0.7368), and Tera Corá (0.2217)—with Scharloo dominating the synthetic control. The treated weights were assigned to two neighborhoods, Pietermaai (0.5161) and Piscadera Bay (0.4839), summing to 1, reflecting a sparser solution driven by the penalties.</p>
 <p>The results show that the unpenalized MIQP and QP formulations consistently achieved excellent pre-treatment fit, with RMSEs ranging from 0.1961 to 0.2185 in the two-cluster setup and 0.1999 in the unpenalized one-cluster setup, supporting reliable counterfactual estimation. The penalized design, however, compromised fit quality, likely due to the restrictive <span class="math inline">\(\lambda_1 = \lambda_2 = 0.2\)</span> penalties, which prioritized sparsity and proximity to the cluster mean but led to a high RMSE. Ofcourse, in reality we can choose these penalties via cross validation, instead of setting them manually, these were just chosen for the sake of example.</p>
-<p>Treated weights were balanced across 2–3 units in all setups, ensuring no single unit dominated, while control weights varied from moderate (6–19% in two-cluster) to highly diversified (1–10% in one-cluster unpenalized) to sparse (Scharloo at 0.7368 in penalized). The identical results from MIQP and QP in the two-cluster setup suggest that the QP relaxation is a viable alternative for computational efficiency. Also, these data were simualted <a href="https://en.wikipedia.org/wiki/List_of_populated_places_in_Cura%C3%A7ao">from Wikipedia</a>, in theory <a href="https://www.citypopulation.de/en/curacao/admin/">we could get both population and density data</a> on a wider variety of places in Curaçao, with a more sophisitcated hierarchical linear factor model, to see how the estimator would play with even more clusters/units.</p>
+<p>Treated weights were balanced across 2–3 units in all setups, ensuring no single unit dominated, while control weights varied from moderate (6–19% in two-cluster) to highly diversified (1–10% in one-cluster unpenalized) to sparse (Scharloo at 0.7368 in penalized). The identical results from MIQP and QP in the two-cluster setup suggest that the QP relaxation is a viable alternative for computational efficiency. What this shows is that the synthetic design is robust: whether we divide Curaçao into clusters or treat it as a single unit, whether we enforce integer treatment assignments or relax them, the method generally produces stable synthetic matches. Also, these data were simualted <a href="https://en.wikipedia.org/wiki/List_of_populated_places_in_Cura%C3%A7ao">from Wikipedia</a>, in theory <a href="https://www.citypopulation.de/en/curacao/admin/">we could get both population and density data</a> on a wider variety of places in Curaçao, with a more sophisitcated hierarchical linear factor model, to see how the estimator would play with even more clusters/units.</p>
 <section id="takeaways-for-practice" class="level2">
 <h2 class="anchored" data-anchor-id="takeaways-for-practice">Takeaways for Practice</h2>
-<p>What this shows is that the synthetic design is robust: whether we divide Curaçao into clusters or treat it as a single unit, whether we enforce integer treatment assignments or relax them, the method generally produces stable synthetic matches. Notice that we have not yet discussed the ATT/ATE or the uncertainty of estimated treatment effects. This is because the framework above is focused on experimental design. The main goal is to decide <em>who should be treated</em> and <em>why</em> before any real-world intervention. In other words, we can be confident in the design itself—who is treated, who is not, and why—before estimating treatment effects or reporting uncertainty.</p>
-<p>Contrast this with a traditional RCT. In an RCT, randomization occurs once in the field. Designing an RCT is costly and requires coordination across multiple actors. We cannot experiment with different randomization schemes beforehand, since the quality of the randomization can only be assessed <em>after</em> it occurs. Once units are assigned, the study must proceed, with all associated costs, risks, and constraints.</p>
-<p>By contrast, the synthetic control design can be iterated rapidly on a laptop. We can explore different cluster groupings, penalties, cost constraints, or solver formulations and observe how stable the resulting design is before committing any resources. Crucially, in settings with few treatable units, synthetic control designs can achieve balance analogous to an RCT, even when only a handful of units are treated. This allows interventions to be targeted strategically, saving resources while maintaining credible comparisons.</p>
-<p>This flexibility makes the synthetic experimentation method a powerful planning tool. It enables researchers and practitioners to prototype experiments cheaply and safely, ensuring that the data support a credible design before any real-world action. Large-scale RCTs remain the gold standard, but they are expensive and logistically demanding. Synthetic design exercises open the door to an iterative, exploratory phase of experimental planning—helping ensure that when we do invest in a full study, it is targeted, efficient, and built on a solid foundation.</p>
+<p>Notice that we have not yet discussed the ATT/ATE or the uncertainty of estimated treatment effects. This is because the framework above is focused on experimental design. The main goal is to decide <em>who should be treated</em> and <em>why</em> before any real-world intervention. In other words, we can be confident in the design itself—who is treated, who is not, and why—before estimating treatment effects or reporting uncertainty. The data from above was simulated without a treatment effect, suggesting that if we did apply the treatment effect, we would see if, if it were there. Crucially, in settings with few treatable units, synthetic control designs can achieve balance analogous to an RCT, even when only a handful of units are treated. In fact, Abadie and Zhou “show that synthetic control design can substantially outperform randomized designs in experimental settings with a small number of treated units.” This allows interventions to be targeted strategically, saving resources while using a valid identification method.</p>
+<p>Contrast this with a traditional RCT. In an RCT, randomization occurs once in the field. Designing an RCT is costly and requires coordination across multiple actors. We cannot experiment with different randomization schemes beforehand, since the quality of the randomization can only be assessed <em>after</em> it occurs. Once units are assigned, the study must proceed, with all associated costs, risks, and constraints. By contrast, the synthetic control design can be iterated rapidly on a laptop. We can explore different cluster groupings, penalties, cost and budget constraints, or solver formulations and observe how stable the resulting design is before committing any resources. This flexibility makes the synthetic experimentation method a powerful planning tool. It enables researchers and practitioners to prototype experiments cheaply and safely, ensuring that the data support a credible design before any real-world action. Large-scale RCTs remain the gold standard, but they are expensive and logistically demanding. Synthetic control methods open the door to an iterative, exploratory phase of experimental planning, especially in the setting where only a few units may be treated, so that when we do invest in a full study, it is built on a solid foundation that is business aware.</p>
 
 
 
@@ -421,7 +418,7 @@ DataFrame was not sorted by [town, time] — auto-sorting applied.
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758805601025" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1758807388923" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -445,7 +442,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758805601026" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1758807388923" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -469,7 +466,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758805601026" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1758807388923" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -493,7 +490,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758805601031" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1758807388929" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -517,7 +514,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758805601032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1758807388930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -541,7 +538,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758805601028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1758807388926" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -563,7 +560,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758805601028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1758807388926" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -587,7 +584,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758805601032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1758807388929" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -609,7 +606,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758805601031" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1758807388929" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -631,7 +628,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758805601032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1758807388929" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -655,7 +652,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758805601025" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1758807388923" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -679,7 +676,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758805601032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1756080000000" data-listing-file-modified-sort="1758807388930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4385">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./wwwf.html" class="no-external">What Are We Weighting For?</a>
@@ -701,7 +698,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758805601028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1758807388926" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -718,7 +715,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1758805601032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1758807388930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -735,7 +732,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758805601025" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1758807388923" data-listing-reading-time-sort="1" data-listing-word-count-sort="98">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -746,7 +743,7 @@ Sep 22, 2025
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1758805657020" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1758807451841" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

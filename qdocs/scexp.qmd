@@ -111,81 +111,15 @@ Analysts can select the design that best aligns with the goals and constraints o
 
 ## Inference
 
-After defining which neighborhoods are treated, which serve as controls, and how clusters are formed, the next step is to estimate the treatment effects and quantify the uncertainty around them. The design phase determines the structure, while the inference phase translates that structure into measurable effects.
+After defining which neighborhoods are treated, which serve as controls, and how clusters are formed, the next step is to estimate the treatment effects and quantify uncertainty. The full pre-treatment period is $\mathcal{T}_0 = \{1, \dots, T_0\}$, which in the Curaçao example consists of 128 periods. This period is split into a fitting period $\mathcal{T}_1 = \{1, \dots, T_0 - |\mathcal{B}|\}$, used to compute the synthetic control weights $(\mathbf{w}_j, \mathbf{v}_j)$ and treatment assignments $z_j$, and a blank period $\mathcal{B} = \{T_0 - |\mathcal{B}| + 1, \dots, T_0\}$, withheld for placebo checks. In the example, the blank period has 28 observations. The post-treatment period is $\mathcal{T}_2 = \{T_0 + 1, \dots, T_0 + 28\}$.
 
-Consider the full pre-treatment period $\mathcal{T}_0 = \{1, \dots, T_0\}$, which in the Curaçao example consists of 128 periods. We split this period into two parts: a fitting period $\mathcal{T}_1 = \{1, \dots, T_0 - |\mathcal{B}|\}$, which we use to compute the synthetic control weights $(\mathbf{w}_j, \mathbf{v}_j)$ and treatment assignments $z_j$, and a blank period $\mathcal{B} = \{T_0 - |\mathcal{B}| + 1, \dots, T_0\}$ that is withheld for placebo checks. In the example, the blank period has 28 observations. The post-treatment period is then $\mathcal{T}_2 = \{T_0 + 1, \dots, T_0 + 28\}$, the timeframe in which we observe the actual treatment effects.
+For each neighborhood $j$ in cluster $k$, the synthetic treated and control outcomes at time $t \in \mathcal{T}_2$ are constructed as weighted averages of the units. The difference between these outcomes is the unit-level treatment effect: $\hat{\tau}_{j \in \mathcal{N}_1 t} = y_{j \in \mathcal{N}_1 t} - y_{j \in \mathcal{N}_0 t}$. Within each cluster, unit-level effects are aggregated using pre-specified weights $f_j$ to obtain the cluster-level effect: $\hat{\tau}_{k t} = \sum_{j \in I_k, z_j = 1} f_j \hat{\tau}_{j \in \mathcal{N}_1 t}$. Summing over clusters gives the overall treatment effect: $\hat{\tau}_t = \sum_{k=1}^K \hat{\tau}_{k t} = \sum_{j \in \mathcal{J}, z_j = 1} f_j \hat{\tau}_{j \in \mathcal{N}_1 t}$.
 
-For each neighborhood $j$ in a cluster, the synthetic treated and control outcomes at a given time $t \in \mathcal{T}_2$ are constructed by taking weighted averages of the relevant units. Specifically, the synthetic treated outcome is
+To build confidence intervals, we use the distribution of in-time placebo effects. These are computed in the blank pre-treatment period $\mathcal{B}$ and capture residual fluctuations when no treatment is applied. The cluster-level placebo effect is $\hat{\tau}_{k t}^{\mathcal{B}} = \sum_{j \in I_k, z_j = 1} f_j (w_j y_{jt} - v_j y_{jt}), \quad t \in \mathcal{B}$. Global placebo effects are obtained by summing across clusters:
 
-$$
-y_{j \in \mathcal{N}_1 t} = \sum_{j \in I_k, z_j = 1} w_j y_{jt},
-$$
+$\hat{\tau}_t^{\mathcal{B}} = \sum_{k=1}^K \hat{\tau}_{k t}^{\mathcal{B}}, \quad t \in \mathcal{B}$. Split-conformal confidence intervals are then constructed. For the global effect, we take the $(1-\alpha)$ quantile of the absolute placebo effects: $q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|\hat{\tau}_t^{\mathcal{B}}|), \quad t \in \mathcal{B}$, and define the confidence interval as $\mathrm{CI}_t = [\hat{\tau}_t - q_{1-\alpha}, \hat{\tau}_t + q_{1-\alpha}], \quad t \in \mathcal{T}_2$. Cluster-level confidence intervals are defined similarly, replacing global effects with the corresponding cluster-level placebo distributions.
 
-and the synthetic control outcome is
-
-$$
-y_{j \in \mathcal{N}_0 t} = \sum_{j \in I_k, z_j = 0} v_j y_{jt}.
-$$
-
-The difference between these two synthetic outcomes represents the unit-level treatment effect:
-
-$$
-\hat{\tau}_{j \in \mathcal{N}_1 t} = y_{j \in \mathcal{N}_1 t} - y_{j \in \mathcal{N}_0 t}.
-$$
-
-Within a cluster, we aggregate these unit-level effects using pre-specified weights $f_j$, which sum to one across all units in the cluster. This gives the cluster-level effect:
-
-$$
-\hat{\tau}_{k t} = \sum_{j \in I_k, z_j = 1} f_j \hat{\tau}_{j \in \mathcal{N}_1 t}.
-$$
-
-Summing across all clusters produces the overall treatment effect at time $t$:
-
-$$
-\hat{\tau}_t = \sum_{k=1}^K \hat{\tau}_{k t} = \sum_{j \in \mathcal{J}, z_j = 1} f_j \hat{\tau}_{j \in \mathcal{N}_1 t}.
-$$
-
-Although the current implementation uses weights based on the number of units in each clsuter, at some point I will allow them to specify things such as population or traffic or whaterver the analyst wishes to weight the units by.
-
-To build confidence intervals, we use at placebo effects. These are computed in the blank set of the pre-treatment period $\mathcal{B}$ and capture the residuals when no treatment is applied. The unit-level placebo effect is
-
-$$
-\hat{\tau}_{j \in \mathcal{N}_1 t}^{\mathcal{B}} = y_{j \in \mathcal{N}_1 t} - y_{j \in \mathcal{N}_0 t}, \quad t \in \mathcal{B},
-$$
-
-and cluster-level and global placebo effects are defined similarly. By examining these distributions, we can gauge the natural fluctuations in the synthetic control differences. Split-conformal confidence intervals can be constructed. For the global effect, we take the $(1-\alpha)$ quantile of the absolute placebo effects,
-
-$$
-q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|\hat{\tau}_t^{\mathcal{B}}|), \quad t \in \mathcal{B},
-$$
-
-and define the confidence interval as
-
-$$
-\mathrm{CI}_t = [\hat{\tau}_t - q_{1-\alpha}, \hat{\tau}_t + q_{1-\alpha}], \quad t \in \mathcal{T}_2.
-$$
-
-Cluster-level confidence intervals are obtained in the same way, replacing global effects with the corresponding cluster-level placebo distributions.
-
-Finally, to assess statistical significance, permutation tests can be employed. The observed global statistic is calculated as the average absolute effect over the post-treatment period:
-
-$$
-S_{\text{obs}} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_t|.
-$$
-
-By randomly sampling permutations from placebo and post-treatment effects, we generate test statistics
-
-$$
-S_{\text{perm}}^{(b)} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \text{sample}} |\hat{\tau}_t|, \quad b = 1, \dots, B,
-$$
-
-and compute the global p-value as
-
-$$
-p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \ge S_{\text{obs}}\}.
-$$
-
-Cluster-level significance tests follow the exact same logic.
+Statistical significance can be assessed using permutation tests. The observed global statistic is $S_{\text{obs}} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_t|$. By randomly sampling permutations from placebo and post-treatment effects, we generate test statistics $S_{\text{perm}}^{(b)} = \frac{1}{|\mathcal{T}_2|} \sum_{t \in \text{sample}} |\hat{\tau}_t|, \quad b = 1, \dots, B$, and compute the global p-value as $p_{\text{global}} = \frac{1}{B} \sum_{b=1}^B \mathbf{1}\{S_{\text{perm}}^{(b)} \ge S_{\text{obs}}\}$. Cluster-level significance tests follow the same logic using the cluster-level placebo distributions.
 
 # Intuition
 

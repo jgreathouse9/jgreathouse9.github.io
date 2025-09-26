@@ -311,16 +311,24 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 </div>
 </section>
-<section id="how-to-choose-the-weights" class="slide level2">
-<h2>How to Choose the Weights?</h2>
+<section id="applied-averages" class="slide level2">
+<h2>Applied Averages</h2>
+<div class="panel-tabset">
+<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">National Averages</a></li><li><a href="#tabset-3-2">Basque</a></li></ul>
+<div class="tab-content">
+<div id="tabset-3-1">
 <ul>
 <li><p>In the earlier examples, the weights we used were arbitrary. We split 50/50 between you and your friend, but there was no real reason for that choice. In real life anyways, weights are never given to us from the Heavens: we, the econometricians, must assign them. The trouble is that assigning them poorly can create nonsense averages.</p></li>
 <li><p>The arithmetic average is familiar to economists as the national. It is used all the time in policy discussions from <a href="(https://www.pbs.org/newshour/politics/trump-deploys-national-guard-to-memphis-calling-it-a-replica-of-his-crackdown-on-washington)">militarized crackdowns on crime</a>, <a href="https://www.cnn.com/2025/03/07/politics/medicaid-cuts-republican-districts-analysis">healthcare spending</a>, and <a href="https://calmatters.org/commentary/2024/10/political-theater-californias-gasoline-prices/">gas prices</a>.</p></li>
 <li><p>But again, this still presumes the aggregate weights provide a more meaningful comparison for a single unit than they actually do.</p></li>
+</ul>
+</div>
+<div id="tabset-3-2">
+<ul>
 <li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita via taking a weighted average of control units, but how to choose the weights? The Basque Country is on average much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
 <li><p>Optimization solves this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="9896851a" class="cell" data-execution_count="1">
+<div id="007210e3" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -329,14 +337,17 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 </div>
 </div>
+</div>
+</div>
+</div>
 </section>
 <section id="using-least-squares" class="slide level2">
 <h2>Using Least Squares</h2>
-<p>One method of optimization we could use to do this is least-squares in the form of a linear regression model, which economists are quite familiar with. In multiple linear regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
+<p>One method of optimization we could use is ordinary least-squares. In multiple linear regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
 <div class="panel-tabset">
-<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Notation</a></li><li><a href="#tabset-3-2">Data</a></li><li><a href="#tabset-3-3">OLS Problem</a></li><li><a href="#tabset-3-4">Interpretation</a></li><li><a href="#tabset-3-5">Treatment Effect</a></li></ul>
+<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Notation</a></li><li><a href="#tabset-4-2">Data</a></li><li><a href="#tabset-4-3">OLS Problem</a></li><li><a href="#tabset-4-4">Interpretation</a></li><li><a href="#tabset-4-5">Treatment Effect</a></li></ul>
 <div class="tab-content">
-<div id="tabset-3-1">
+<div id="tabset-4-1">
 <ul>
 <li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: outcome vector (e.g., GDP per capita) for the treated unit (Basque Country) over all <span class="math inline">\(T\)</span> time periods</li>
 <li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units in this case)</li>
@@ -346,13 +357,13 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><span class="math inline">\(\mathcal{J}_0 = \{1,\dots,J\}\)</span>: set of untreated donor units, with cardinality <span class="math inline">\(|\mathcal{J}_0| = J\)</span></li>
 </ul>
 </div>
-<div id="tabset-3-2">
+<div id="tabset-4-2">
 <p>Here is the dataset, literally displayed in preparation for regression. We can see the Basque column as well as the donor columns. We wish to take a weighted average of these control unit columns to well approximate the Basque Country in the preintervention period, such that the weighted average provides a counterfactual estimate for the Basque Country in the post-intervention period.</p>
 <p><em>Reminder: a weighted average can be written as</em></p>
 <p><span class="math display">\[
-\hat{y}_1(t) = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_j \, y_j(t), \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
+\hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="8982515a" class="cell" data-execution_count="2">
+<div id="e3a51742" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -520,7 +531,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <hr>
 </div>
-<div id="tabset-3-3">
+<div id="tabset-4-3">
 <ul>
 <li>We can choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:</li>
 </ul>
@@ -532,14 +543,14 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </ul>
 <hr>
 </div>
-<div id="tabset-3-4">
+<div id="tabset-4-4">
 <ul>
 <li><p>Once we have <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, we multiply all the values for each control unit by its regression coefficient and sum these across donors.</p></li>
 <li><p>This gives the predicted Basque trajectory pre- and post-intervention.</p></li>
 </ul>
 <hr>
 </div>
-<div id="tabset-3-5">
+<div id="tabset-4-5">
 <ul>
 <li>The average treatment effect on the treated (ATT) can be expressed as the mean difference between observed outcomes and the weighted average in the post-intervention period:</li>
 </ul>
@@ -558,11 +569,11 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <section id="least-squares-cont." class="slide level2">
 <h2>Least Squares Cont.</h2>
 <div class="panel-tabset">
-<ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Our Weights</a></li><li><a href="#tabset-4-2">Plotting the Donors</a></li><li><a href="#tabset-4-3">Plotting Predictions</a></li></ul>
+<ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">Our Weights</a></li><li><a href="#tabset-5-2">Plotting the Donors</a></li><li><a href="#tabset-5-3">Plotting Predictions</a></li></ul>
 <div class="tab-content">
-<div id="tabset-4-1">
+<div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="a0cd4061" class="cell" data-execution_count="3">
+<div id="fe3e54df" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -642,9 +653,9 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <p>Notice that OLS assigns some positive and some negative weights. These tell us how similar the control units is to the treated unit. Notice how some units have negative weights. These can be hard to interpret substantively: which units are truly most similar to the Basque Country before terrorism happened? Is it Andalucia or Castilla Y Leon?</p>
 </div>
-<div id="tabset-4-2">
+<div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="741d21ea" class="cell" data-execution_count="4">
+<div id="b2a9baab" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -655,9 +666,9 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <p>Much of this does not really square very nicely with intution. Cataluna, which is very close to the Basque Country (both literally in terms of GDP and being a French border region in Northern Spain) gets <strong>negative</strong> weight from OLS. The units which are much farther away from the Basque Country (on top of having much different political/economic histories) get much more weight</p>
 </div>
-<div id="tabset-4-3">
+<div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="d9535cb1" class="cell" data-execution_count="5">
+<div id="e7cdccd3" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -677,7 +688,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="640c6eb6" class="cell" data-execution_count="6">
+<div id="cce20d49" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -716,10 +727,10 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <h2>Placebos</h2>
 <p>Validating SCM designs are important as well, Consider a few robustness checks:</p>
 <div class="panel-tabset">
-<ul id="tabset-5" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-5-1">In Time</a></li><li><a href="#tabset-5-2">In Space</a></li></ul>
+<ul id="tabset-6" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-6-1">In Time</a></li><li><a href="#tabset-6-2">In Space</a></li></ul>
 <div class="tab-content">
-<div id="tabset-5-1">
-<div id="58be92ab" class="cell" data-execution_count="8">
+<div id="tabset-6-1">
+<div id="030ab39c" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -729,8 +740,8 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 </div>
 </div>
-<div id="tabset-5-2">
-<div id="0a889c1f" class="cell" data-execution_count="9">
+<div id="tabset-6-2">
+<div id="ebc262ca" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>

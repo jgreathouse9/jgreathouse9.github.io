@@ -196,8 +196,6 @@ For the two-cluster setup (the first two plots below), both MIQP and QP formulat
 
 from mlsynth import MAREX
 import pandas as pd
-from mlsynth.utils.exputils import plot_cluster_full
-
 
 df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
 df_pre = df[df["time"] <= 120].copy()
@@ -211,12 +209,9 @@ config = {"df": df,
           "m_min": 2,
           "m_max": 3,
           "cluster": "Region",
-          "program_type": "MIQP", "blank_periods": 28}
+          "program_type": "MIQP", "blank_periods": 28, "inference": True, "display_graph": True}
 
 design = MAREX(config).fit()
-
-
-plot_cluster_full(df,design)
 
 ```
 
@@ -227,7 +222,6 @@ plot_cluster_full(df,design)
 from mlsynth import MAREX
 import pandas as pd
 import matplotlib.pyplot as plt
-from mlsynth.utils.exputils import plot_cluster_full
 
 
 df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
@@ -242,11 +236,10 @@ config = {"df": df,
           "m_min": 1,
           "m_max": 5,
           "cluster": "Region",
-          "program_type": "MIQP", "blank_periods": 28}
+          "program_type": "MIQP", "blank_periods": 28, "inference": True, "display_graph": True}
 
 design = MAREX(config).fit()
 
-plot_cluster_full(df,design)
 ```
 
 When all 21 neighborhoods were treated as a single cluster using MIQP with 2 to 3 treated units, the RMSE was 0.1999, comparable to the two-cluster setup and indicating excellent fit. The control weights were spread across 18 neighborhoods—Barber (0.0721), Brievengat (0.0739), Groot Kwartier (0.0435), Groot Piscadera (0.0401), Hato (0.0690), Koraal Partir (0.0439), Oostpunt (0.0279), Pietermaai (0.0559), Saliña (0.0451), Santa Rosa (0.0620), Scharloo (0.0686), Sint Michiel (0.0608), Sint Willibrordus (0.1004), Soto (0.0309), Spaanse Water (0.0671), Steenrijk (0.0647), Tera Corá (0.0603), and Westpunt (0.0137), with each contributing 1–10% to the synthetic control. The treated weights were assigned to Lagún (0.3335), Otrobanda (0.3730), and Piscadera Bay (0.2935). In a separate one-cluster setup using MIQP with a cluster-penalized design, where penalties $\lambda_1 = 0.2$ and $\lambda_2 = 0.2$ were applied to encourage proximity to the cluster mean, the RMSE increased to 1.52. The fit quality degrades slighly, but is still acceptable. The control weights were concentrated on three neighborhoods—Santa Rosa (0.0415), Scharloo (0.7368), and Tera Corá (0.2217)—with Scharloo dominating the synthetic control. The treated weights were assigned to two neighborhoods, Pietermaai (0.5161) and Piscadera Bay (0.4839), summing to 1, reflecting a sparser solution driven by the penalties.

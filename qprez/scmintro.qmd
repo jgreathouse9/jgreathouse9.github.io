@@ -698,7 +698,7 @@ plt.close(fig)
 
 ![Convex Combination](scm_weighted_combo.gif)
 
-## Placebos
+## Inference: Placebos
 
 Validating SCM designs are important as well, Consider a few robustness checks:
 
@@ -831,18 +831,15 @@ plt.legend()
 plt.show()
 ```
 
-### Block Permutation Inference {#block-permutation}
+:::
 
-Block permutation inference assesses the statistical significance of synthetic control treatment effects while accounting for temporal dependence in pre-treatment residuals.
+## Block Permutation Inference
 
-#### Notation
+A more modern approach however is block permutation. Block permutation accounts for temporal dependence in pre-treatment residuals.
 
-- Treated outcomes: $\mathbf{y}_1 \in \mathbb{R}^{T}$  
-- Synthetic control outcomes: $\hat{\mathbf{y}}_1 \in \mathbb{R}^{T}$  
-- Pre-treatment period: $\mathcal{T}_1 = \{1, \dots, T_0\}$  
-- Post-treatment period: $\mathcal{T}_2 = \{T_0+1, \dots, T\}$  
+::: {.panel-tabset}
 
-#### Step 1: Compute residuals
+### Residuals
 
 Pre-treatment residuals:
 
@@ -862,9 +859,7 @@ $$
 \hat{\tau}_{1t}^{\text{full}} = y_{1t} - \hat{y}_{1t}, \quad t \in \{1, \dots, T\}
 $$
 
----
-
-#### Step 2: Estimate block size
+### Block Size
 
 Lag-$k$ autocorrelation of pre-treatment residuals:
 
@@ -880,25 +875,19 @@ $$
 N_B = \left\lfloor \frac{T_0}{B} \right\rfloor
 $$
 
----
-
-#### Step 3: Partition residuals into blocks
+### Residual Blocks
 
 $$
 \mathbf{e}^{(b)} = \{ e_{(b-1)B+1}, \dots, e_{bB} \}, \quad b=1,\dots,N_B
 $$
 
----
-
-#### Step 4: Compute observed global statistic
+### Global Test Statistic
 
 $$
 S_{\text{obs}} = \frac{1}{T_2}\sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
 $$
 
----
-
-#### Step 5: Block permutation
+### Permutation
 
 For $m = 1, \dots, M$ permutations:
 
@@ -907,6 +896,8 @@ S^{*(m)} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \big| \mathbf{e}^{*(m)}_t \b
 $$
 
 where $\mathbf{e}^{*(m)}$ is a concatenation of randomly sampled blocks with replacement.
+
+### P-Value
 
 Global p-value:
 
@@ -920,9 +911,7 @@ $$
 p_t = \frac{1}{T_0} \sum_{s \in \mathcal{T}_1} \mathbf{1}\big(|e_s| \ge |\hat{\tau}_{1t}|\big), \quad t \in \mathcal{T}_2
 $$
 
----
-
-#### Step 6: Split-conformal confidence intervals
+### Confidence Intervals
 
 $$
 q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
@@ -932,8 +921,7 @@ $$
 \text{CI}_t = \big[\hat{\tau}_{1t} - q_{1-\alpha}, \, \hat{\tau}_{1t} + q_{1-\alpha}\big], \quad t \in \mathcal{T}_2
 $$
 
-For $t \in \mathcal{T}_1$, set $\text{CI}_t = \text{NaN}$.
-
+:::
 
 ## Block Results
 

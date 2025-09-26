@@ -186,9 +186,44 @@ That’s the bridge from theory to practice. The real question is: *given our go
 
 # A Simulated Example
 
-I applied the experimental synthetic control method to the Curaçao Green Stay example, estimating treatment effects by constructing synthetic treated and control units with simulated data. The analysis used two optimization formulations: Mixed Integer Quadratic Programming (MIQP) and its respective Quadratic Programming (QP) relaxation. I selected 2 to 3 treated units per cluster, with pre-treatment fit assessed via root mean squared error (RMSE). Below, I summarize results for two clustering setups (two clusters and one cluster) and different penalty settings.
+I applied the experimental synthetic control method to the Curaçao Green Stay example, estimating treatment effects by constructing synthetic treated and control units with simulated data. The analysis uses the Mixed Integer Quadratic Programming formulation of the objective. I selected 1 to 3 treated units per cluster, with pre-treatment fit assessed via root mean squared error (RMSE). Below, I summarize results for two clustering setups (two clusters and one cluster) and different penalty settings.
 
-For the two-cluster setup (the first two plots below), both MIQP and QP formulations produced identical outcomes, suggesting that the integer constraints in MIQP did not alter the solution, making QP a computationally efficient alternative. In Cluster 1 (non-Willemstad), the pre-treatment RMSE was 0.1961, indicating an excellent fit. The control weights were distributed across six neighborhoods—Barber (0.1922), Lagún (0.1583), Oostpunt (0.1377), Santa Rosa (0.1940), Tera Corá (0.1293), and Westpunt (0.1885)—while the treated weights were assigned to Sint Willibrordus (0.3819), Soto (0.3003), and Spaanse Water (0.3179), summing to 1. In Cluster 2, Willemstad, the RMSE was slightly higher at 0.2185. Nine neighborhoods contributed to the control weights—Brievengat (0.1107), Groot Kwartier (0.1126), Hato (0.0633), Koraal Partir (0.1013), Otrobanda (0.1024), Pietermaai (0.1486), Piscadera Bay (0.1268), Sint Michiel (0.1240), and Steenrijk (0.1103), while the treated weights went to Groot Piscadera (0.2195), Saliña (0.3298), and Scharloo (0.4508), with Scharloo having the largest influence.
+The pre-treatment RMSE for Cluster 0 (Non-Willemstad) is 0.215, indicating an excellent pre-treatment fit. The synthetic control is constructed from the following control units:
+
+| Unit          | Weight  |
+|---------------|---------|
+| Barber        | 0.124   |
+| Lagún         | 0.062   |
+| Santa Rosa    | 0.281   |
+| Westpunt      | 0.533   |
+
+The treated group is represented by the following units:
+
+| Unit              | Weight  |
+|-------------------|---------|
+| Sint Willibrordus | 0.382   |
+| Soto              | 0.303   |
+| Spaanse Water     | 0.315   |
+
+Here, Westpunt dominates the control group at 53.3% and Sint Willibrordus leads the treated group at 38.2%. With balanced weights and an excellent fit, this setup indicates reliable treatment effect estimates for non-Willemstad areas.
+
+The pre-treatment RMSE for Cluster 1 (Willemstad) is 0.413, representing a fine fit though less precise than in Cluster 0. The synthetic control draws from these control units:
+
+| Unit             | Weight  |
+|------------------|---------|
+| Groot Kwartier   | 0.093   |
+| Groot Piscadera  | 0.302   |
+| Piscadera Bay    | 0.605   |
+
+The treated group consists of the following units:
+
+| Unit       | Weight  |
+|------------|---------|
+| Otrobanda  | 0.415   |
+| Saliña     | 0.306   |
+| Scharloo   | 0.279   |
+
+Here for the controls, Piscadera Bay exerts heavy influence on the synthetic control at 60.5% and Otrobanda heads the treated group at 41.5%. The somewhat higher RMSE implies slightly less confidence in treatment effect estimates for Willemstad, but the overall fit remains acceptable.
 
 ```{python}
 
@@ -198,18 +233,17 @@ from mlsynth import MAREX
 import pandas as pd
 
 df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
-df_pre = df[df["time"] <= 120].copy()
-#df_pre["Region"]=0
 
 config = {"df": df,
           "unitid": "town",
           "time": "time",
           "outcome": "Y_obs",
+          "design": "eq11",
           "T0": 128,
-          "m_min": 2,
+          "m_min": 1,
           "m_max": 3,
           "cluster": "Region",
-          "program_type": "MIQP", "blank_periods": 28, "inference": True, "display_graph": True}
+          "program_type": "MIQP", "blank_periods": 28, "inference": True, "display_graph": True, "lambda1": 0.02, "lambda2": 0.02}
 
 design = MAREX(config).fit()
 
@@ -242,11 +276,71 @@ design = MAREX(config).fit()
 
 ```
 
-When all 21 neighborhoods were treated as a single cluster using MIQP with 2 to 3 treated units, the RMSE was 0.1999, comparable to the two-cluster setup and indicating excellent fit. The control weights were spread across 18 neighborhoods—Barber (0.0721), Brievengat (0.0739), Groot Kwartier (0.0435), Groot Piscadera (0.0401), Hato (0.0690), Koraal Partir (0.0439), Oostpunt (0.0279), Pietermaai (0.0559), Saliña (0.0451), Santa Rosa (0.0620), Scharloo (0.0686), Sint Michiel (0.0608), Sint Willibrordus (0.1004), Soto (0.0309), Spaanse Water (0.0671), Steenrijk (0.0647), Tera Corá (0.0603), and Westpunt (0.0137), with each contributing 1–10% to the synthetic control. The treated weights were assigned to Lagún (0.3335), Otrobanda (0.3730), and Piscadera Bay (0.2935). In a separate one-cluster setup using MIQP with a cluster-penalized design, where penalties $\lambda_1 = 0.2$ and $\lambda_2 = 0.2$ were applied to encourage proximity to the cluster mean, the RMSE increased to 1.52. The fit quality degrades slighly, but is still acceptable. The control weights were concentrated on three neighborhoods—Santa Rosa (0.0415), Scharloo (0.7368), and Tera Corá (0.2217)—with Scharloo dominating the synthetic control. The treated weights were assigned to two neighborhoods, Pietermaai (0.5161) and Piscadera Bay (0.4839), summing to 1, reflecting a sparser solution driven by the penalties.
+In the context of the Curaçao Green Stay example, the synthetic control analysis was extended to a single-cluster setup, treating all units as part of one cluster to estimate treatment effects using simulated data and Mixed Integer Quadratic Programming. Below is a Quarto document summarizing the results for this one-cluster setup, presented narratively with tables for weight distributions, as requested. The pre-treatment RMSE is 0.449, which, given outcome values in the 40s, represents a very small error and a reasonable fit for analysis. The summary integrates these results with the previous two-cluster findings for a cohesive overview.text# Curaçao Green Stay: Synthetic Control Analysis Summary
 
-The results show that the unpenalized MIQP and QP formulations consistently achieved excellent pre-treatment fit, with RMSEs ranging from 0.1961 to 0.2185 in the two-cluster setup and 0.1999 in the unpenalized one-cluster setup, supporting reliable counterfactual estimation. The penalized design, however, compromised fit quality, likely due to the restrictive $\lambda_1 = \lambda_2 = 0.2$ penalties, which prioritized sparsity and proximity to the cluster mean but led to a high RMSE. Ofcourse, in reality we can choose these penalties via cross validation, instead of setting them manually, these were just chosen for the sake of example.
+This document presents the results of a synthetic control analysis applied to the Curaçao Green Stay example, using simulated data to estimate treatment effects via Mixed Integer Quadratic Programming. The analysis constructs synthetic treated and control units, with pre-treatment fit assessed by root mean squared error (RMSE). Two setups are considered: a two-cluster setup (Non-Willemstad and Willemstad) and a one-cluster setup treating all units together. All configurations yield acceptable fits, with the two-cluster setup showing varying precision and the one-cluster setup providing a reasonable fit relative to the outcome scale.
 
-Treated weights were balanced across 2–3 units in all setups, ensuring no single unit dominated, while control weights varied from moderate (6–19% in two-cluster) to highly diversified (1–10% in one-cluster unpenalized) to sparse (Scharloo at 0.7368 in penalized). The identical results from MIQP and QP in the two-cluster setup suggest that the QP relaxation is a viable alternative for computational efficiency. What this shows is that the synthetic design is robust: whether we divide Curaçao into clusters or treat it as a single unit, whether we enforce integer treatment assignments or relax them, the method generally produces stable synthetic matches. Also, these data were simualted [from Wikipedia](https://en.wikipedia.org/wiki/List_of_populated_places_in_Cura%C3%A7ao), in theory [we could get both population and density data](https://www.citypopulation.de/en/curacao/admin/) on a wider variety of places in Curaçao, with a more sophisitcated hierarchical linear factor model, to see how the estimator would play with even more clusters/units.
+## Two-Cluster Setup: Non-Willemstad (Cluster 0)
+
+For the Non-Willemstad cluster, the pre-treatment RMSE is 0.215, reflecting an excellent fit that ensures a highly accurate synthetic control. The control group draws from the following units:
+
+| Unit          | Weight  |
+|---------------|---------|
+| Barber        | 0.124   |
+| Lagún         | 0.062   |
+| Santa Rosa    | 0.281   |
+| Westpunt      | 0.533   |
+
+The treated group comprises these units:
+
+| Unit              | Weight  |
+|-------------------|---------|
+| Sint Willibrordus | 0.382   |
+| Soto              | 0.303   |
+| Spaanse Water     | 0.315   |
+
+This low RMSE of 0.215 underscores a robust synthetic control, with Westpunt exerting the strongest influence on the control group at 53.3% and Sint Willibrordus leading the treated group at 38.2%. The balanced weights and excellent fit suggest highly reliable treatment effect estimates for non-Willemstad areas.
+
+## Two-Cluster Setup: Willemstad (Cluster 1)
+
+For the Willemstad cluster, the pre-treatment RMSE is 0.413, indicating a fine fit, though less precise than Cluster 0, yet still suitable for analysis. The control group is constructed from these units:
+
+| Unit             | Weight  |
+|------------------|---------|
+| Groot Kwartier   | 0.093   |
+| Groot Piscadera  | 0.302   |
+| Piscadera Bay    | 0.605   |
+
+The treated group includes the following units:
+
+| Unit       | Weight  |
+|------------|---------|
+| Otrobanda  | 0.415   |
+| Saliña     | 0.306   |
+| Scharloo   | 0.279   |
+
+With an RMSE of 0.413, the fit is reasonable, with Piscadera Bay dominating the control group at 60.5% and Otrobanda leading the treated group at 41.5%. The higher RMSE suggests slightly less confidence in treatment effect estimates for Willemstad, but the fit remains acceptable for analysis.
+
+## One-Cluster Setup: All Units
+
+When treating all units as a single cluster, the pre-treatment RMSE is 0.449, which, given outcome values in the 40s, represents a very small error and a reasonable fit for analysis. The control group is formed from the following units:
+
+| Unit          | Weight  |
+|---------------|---------|
+| Barber        | 0.137   |
+| Santa Rosa    | 0.029   |
+| Scharloo      | 0.728   |
+| Soto          | 0.107   |
+
+The treated group consists of these units:
+
+| Unit           | Weight  |
+|----------------|---------|
+| Pietermaai     | 0.239   |
+| Piscadera Bay  | 0.537   |
+| Tera Corá      | 0.224   |
+
+This RMSE of 0.449 indicates a fine fit, with Scharloo heavily influencing the control group at 72.8% and Piscadera Bay dominating the treated group at 53.7%. The fit, while slightly less precise than Cluster 0’s RMSE of 0.215, remains robust given the scale of the outcomes and supports reliable treatment effect estimates. The results show that the penalized design obtains good pretreatment fit $\lambda_1 = \lambda_2 = 0.02$ penalties. Of course, in reality we can choose these lambdas via cross validation, instead of setting them manually. These were just chosen for the sake of example. Either way, the synthetic design is robust whether we divide Curaçao into clusters or treat it as a single unit. Also, these data were simualted [from Wikipedia](https://en.wikipedia.org/wiki/List_of_populated_places_in_Cura%C3%A7ao), in theory [we could get both population and density data](https://www.citypopulation.de/en/curacao/admin/) on a wider variety of places in Curaçao, with a more sophisitcated hierarchical linear factor model, to see how the estimator would play with even more clusters/units.
 
 ## Takeaways for Practice
 

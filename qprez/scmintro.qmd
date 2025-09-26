@@ -343,10 +343,6 @@ $$
 
 - In practice, this is just OLS on the pre-1975 period, where $\mathbf{y}_1$ is the Basque GDP column and $\mathbf{Y}_0$ are the columns for the donor pool. The regression coefficients (what we call the betas ($\beta$) in our introductory econometrics classes) are the weights.
 
----
-
-### Interpretation
-
 - Once we have $\mathbf{w}^{\ast}$, we multiply all the values for each control unit by its regression coefficient and sum these across donors.  
 
 - This gives the predicted Basque trajectory pre- and post-intervention.
@@ -373,14 +369,14 @@ $$
 
 $$
 \text{ATT} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
-= T_{2}^{1}\sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
+= T_{2}^{-1}\sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
 $$
 
 - **Percentage treatment effect (PTE)** relative to the counterfactual mean:
 
 $$
 \%\text{Treatment Effect} = 
-\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}{T_{2}^{1}\sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
+\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}{T_{2}^{-1}\sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
 $$
 
 *Intuition:*  
@@ -710,6 +706,8 @@ Validating SCM designs are important as well, Consider a few robustness checks:
 
 ### In Time
 
+ideally, shifting the treatement back in time should not change the practical results of the conclusions very much.
+
 ```{python}
 
 import pandas as pd
@@ -745,6 +743,8 @@ arco = CLUSTERSC(config).fit()
 
 
 ### In Space
+
+ideally, the treated unit's treatment effect should look extreme compared to the placebo effect given to other untreated units. Here, we rerun the SCM over the other donor units.
 
 ```{python}
 

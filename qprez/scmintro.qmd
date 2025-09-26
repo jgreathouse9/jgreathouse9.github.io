@@ -867,7 +867,7 @@ $$
 \text{ACF}(k) = \frac{\sum_{t=1}^{T_0-k} (e_t - \bar{e})(e_{t+k}-\bar{e})}{\sum_{t=1}^{T_0} (e_t-\bar{e})^2}
 $$
 
-Block size $B$ is chosen as the smallest lag such that $|\text{ACF}(B)| < \text{acf\_threshold}$.
+Block size $B$ is chosen as the smallest lag such that $|\text{ACF}(B)| < c$ where $c$ is a positive constant
 
 Number of blocks:
 
@@ -875,13 +875,9 @@ $$
 N_B = \left\lfloor \frac{T_0}{B} \right\rfloor
 $$
 
-### Residual Blocks
-
 $$
 \mathbf{e}^{(b)} = \{ e_{(b-1)B+1}, \dots, e_{bB} \}, \quad b=1,\dots,N_B
 $$
-
-### Global Test Statistic
 
 $$
 S_{\text{obs}} = \frac{1}{T_2}\sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
@@ -932,7 +928,7 @@ from mlsynth import FSCM # The method of interest
 import numpy as np
 
 
-def block_permutation_inference(Y_treated, Y_control, T0, alpha=0.05, max_combinations=1000, acf_threshold=0.1,
+def block_permutation_inference(Y_treated, Y_control, T0, alpha=0.05, max_combinations=2000, acf_threshold=0.1,
                                 random_state=None):
     """
     Compute synthetic control inference using block permutation.
@@ -1160,13 +1156,7 @@ def plot_scm_treatment_effect(obs, cf, T0, CI=None, alpha=0.05, title_prefix="Tr
 # --- Usage example ---
 plot_scm_treatment_effect(obs, cf, T0, CI=inference["CI"])
 
-
-
-
-
 ```
-
-:::
 
 
 ## [Key Takeaways for Classic SCM](https://arxiv.org/pdf/2203.06279)

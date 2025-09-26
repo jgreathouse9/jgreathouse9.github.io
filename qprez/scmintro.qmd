@@ -203,7 +203,11 @@ Now the average is back to what it was initially. Bill clearly is not representa
 
 :::
 
-## How to Choose the Weights?
+## Applied Averages
+
+::: {.panel-tabset}
+
+### National Averages
 
 - In the earlier examples, the weights we used were arbitrary. We split 50/50 between you and your friend, but there was no real reason for that choice. In real life anyways, weights are never given to us from the Heavens: we, the econometricians, must assign them. The trouble is that assigning them poorly can create nonsense averages.  
 
@@ -211,11 +215,14 @@ Now the average is back to what it was initially. Bill clearly is not representa
 
 - But again, this still presumes the aggregate weights provide a more meaningful comparison for a single unit than they actually do.
 
+### Basque
+
 - Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita via taking a weighted average of control units, but how to choose the weights? The Basque Country is on average much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.
 
 - Optimization solves this problem. Instead of us just arbitrarily assigning weights, we *choose the weights that minimize the pre-intervention gap* between the Basque Country and the weighted donor units.  
 
 ```{python}
+
 
 import cvxpy as cp
 import matplotlib.pyplot as plt
@@ -257,7 +264,7 @@ fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 # --- Left subplot: observed Basque only ---
 axes[0].plot(time, y, color='black', linewidth=2, label='Basque')
 axes[0].plot(time, donor_mean, color='blue', linewidth=2, linestyle='--', label='National Mean')
-axes[0].set_title("Observed Basque GDP")
+axes[0].set_title("Basque GDP")
 axes[0].set_xlabel("Year")
 axes[0].set_ylabel("GDP")
 axes[0].axvline(x=time[T0], color='red', linestyle='--', label='Terrorism Begins')
@@ -271,7 +278,7 @@ for j in range(Y0.shape[1]):
 # Plot Basque and donor mean on top
 axes[1].plot(time, y, color='black', linewidth=2, label='Basque')
 axes[1].plot(time, donor_mean, color='blue', linewidth=2, linestyle='--', label='National Mean')
-axes[1].set_title("Basque vs Donor Units")
+axes[1].set_title("Basque vs National Donor Mean/Donor Units")
 axes[1].set_xlabel("Year")
 axes[1].axvline(x=time[T0], color='red', linestyle='--', label='Terrorism Begins')
 axes[1].legend()
@@ -281,9 +288,11 @@ plt.show()
 
 ```
 
+:::
+
 ## Using Least Squares
 
-One method of optimization we could use to do this is least-squares in the form of a linear regression model, which economists are quite familiar with. In multiple linear regression, the coefficients returned to us can be interpreted as weights for our control group.
+One method of optimization we could use is ordinary least-squares. In multiple linear regression, the coefficients returned to us can be interpreted as weights for our control group.
 
 ::: {.panel-tabset}
 
@@ -303,7 +312,7 @@ Here is the dataset, literally displayed in preparation for regression. We can s
 *Reminder: a weighted average can be written as*  
 
 $$
-\hat{y}_1(t) = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_j \, y_j(t), \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
+\hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 $$
 
 ```{python}

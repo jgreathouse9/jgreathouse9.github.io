@@ -328,7 +328,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita via taking a weighted average of control units, but how to choose the weights? The Basque Country is on average much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
 <li><p>Optimization solves this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="007210e3" class="cell" data-execution_count="1">
+<div id="f8ce2dd0" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -363,7 +363,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <p><span class="math display">\[
 \hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="e3a51742" class="cell" data-execution_count="2">
+<div id="d13ca5c0" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -536,7 +536,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li>We can choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:</li>
 </ul>
 <p><span class="math display">\[
-\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2
+\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2  \quad \forall \, t \in \mathcal{T}_{1}
 \]</span></p>
 <ul>
 <li>In practice, this is just OLS on the pre-1975 period, where <span class="math inline">\(\mathbf{y}_1\)</span> is the Basque GDP column and <span class="math inline">\(\mathbf{Y}_0\)</span> are the columns for the donor pool. The regression coefficients (what we call the betas (<span class="math inline">\(\beta\)</span>) in our introductory econometrics classes) are the weights.</li>
@@ -552,16 +552,40 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-4-5">
 <ul>
-<li>The average treatment effect on the treated (ATT) can be expressed as the mean difference between observed outcomes and the weighted average in the post-intervention period:</li>
+<li>First, define the period-level treatment effect as the difference between the observed outcome and the synthetic control prediction:</li>
 </ul>
 <p><span class="math display">\[
-\text{ATT} = T_{2}^{-1}\sum_{t \in \mathcal{T}_{2}}\left( y_{1t} - \hat{y}_{1t} \right)
+\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t},
+\qquad t \in \mathcal{T}_2
 \]</span></p>
 <ul>
-<li><p><span class="math inline">\(y_{1t}\)</span>: observed outcome of the treated unit at time <span class="math inline">\(t\)</span></p></li>
-<li><p><span class="math inline">\(\hat{y}_{1t}\)</span>: OLS prediction at time <span class="math inline">\(t\)</span></p></li>
+<li><strong>Total treatment effect</strong> (sum across all post-treatment periods):</li>
 </ul>
-<p><em>Intuition:</em> ATT measures how much the real, treated Basque GDP deviates from the model’s prediction (estimated via OLS in this case).</p>
+<p><span class="math display">\[
+\text{Total Treatment Effect (TTE)} = \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
+= \sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
+\]</span></p>
+<ul>
+<li><strong>Average treatment effect on the treated (ATT)</strong>, the mean of the period-level effects:</li>
+</ul>
+<p><span class="math display">\[
+\text{ATT} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
+= T_{2}^{1}\sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
+\]</span></p>
+<ul>
+<li><strong>Percentage treatment effect (PTE)</strong> relative to the counterfactual mean:</li>
+</ul>
+<p><span class="math display">\[
+\%\text{Treatment Effect} =
+\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}{T_{2}^{1}\sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
+\]</span></p>
+<p><em>Intuition:</em></p>
+<ul>
+<li><p><span class="math inline">\(\hat{\tau}_{1t}\)</span> shows the effect at each post-treatment time point.</p></li>
+<li><p>ATT averages these effects to summarize the overall post-treatment deviation.</p></li>
+<li><p>Total treatment effect aggregates the deviations into a single cumulative number.</p></li>
+<li><p>Percentage treatment effect scales the ATT relative to the counterfactual, giving a sense of magnitude in context.</p></li>
+</ul>
 </div>
 </div>
 </div>
@@ -573,7 +597,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <div class="tab-content">
 <div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="fe3e54df" class="cell" data-execution_count="3">
+<div id="d284a90e" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -655,7 +679,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="b2a9baab" class="cell" data-execution_count="4">
+<div id="ea11c16e" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -668,7 +692,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="e7cdccd3" class="cell" data-execution_count="5">
+<div id="6b05537c" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -688,7 +712,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="cce20d49" class="cell" data-execution_count="6">
+<div id="bbd6a3b9" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -730,7 +754,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <ul id="tabset-6" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-6-1">In Time</a></li><li><a href="#tabset-6-2">In Space</a></li></ul>
 <div class="tab-content">
 <div id="tabset-6-1">
-<div id="030ab39c" class="cell" data-execution_count="8">
+<div id="738accab" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -741,7 +765,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 </div>
 <div id="tabset-6-2">
-<div id="ebc262ca" class="cell" data-execution_count="9">
+<div id="fb9f11aa" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>

@@ -831,6 +831,353 @@ plt.legend()
 plt.show()
 ```
 
+### Block Permutation Inference {#block-permutation}
+
+Block permutation inference assesses the statistical significance of synthetic control treatment effects while accounting for temporal dependence in pre-treatment residuals.
+
+#### Notation
+
+- Treated outcomes: $\mathbf{y}_1 \in \mathbb{R}^{T}$  
+- Synthetic control outcomes: $\hat{\mathbf{y}}_1 \in \mathbb{R}^{T}$  
+- Pre-treatment period: $\mathcal{T}_1 = \{1, \dots, T_0\}$  
+- Post-treatment period: $\mathcal{T}_2 = \{T_0+1, \dots, T\}$  
+
+#### Step 1: Compute residuals
+
+Pre-treatment residuals:
+
+$$
+e_t = y_{1t} - \hat{y}_{1t}, \quad t \in \mathcal{T}_1
+$$
+
+Post-treatment treatment effects:
+
+$$
+\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}, \quad t \in \mathcal{T}_2
+$$
+
+Full-period effects:
+
+$$
+\hat{\tau}_{1t}^{\text{full}} = y_{1t} - \hat{y}_{1t}, \quad t \in \{1, \dots, T\}
+$$
+
+---
+
+#### Step 2: Estimate block size
+
+Lag-$k$ autocorrelation of pre-treatment residuals:
+
+$$
+\text{ACF}(k) = \frac{\sum_{t=1}^{T_0-k} (e_t - \bar{e})(e_{t+k}-\bar{e})}{\sum_{t=1}^{T_0} (e_t-\bar{e})^2}
+$$
+
+Block size $B$ is chosen as the smallest lag such that $|\text{ACF}(B)| < \text{acf\_threshold}$.
+
+Number of blocks:
+
+$$
+N_B = \left\lfloor \frac{T_0}{B} \right\rfloor
+$$
+
+---
+
+#### Step 3: Partition residuals into blocks
+
+$$
+\mathbf{e}^{(b)} = \{ e_{(b-1)B+1}, \dots, e_{bB} \}, \quad b=1,\dots,N_B
+$$
+
+---
+
+#### Step 4: Compute observed global statistic
+
+$$
+S_{\text{obs}} = \frac{1}{T_2}\sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
+$$
+
+---
+
+#### Step 5: Block permutation
+
+For $m = 1, \dots, M$ permutations:
+
+$$
+S^{*(m)} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \big| \mathbf{e}^{*(m)}_t \big|
+$$
+
+where $\mathbf{e}^{*(m)}$ is a concatenation of randomly sampled blocks with replacement.
+
+Global p-value:
+
+$$
+p_{\text{global}} = \frac{1}{M} \sum_{m=1}^{M} \mathbf{1}\big(S^{*(m)} \ge S_{\text{obs}}\big)
+$$
+
+Per-period p-values:
+
+$$
+p_t = \frac{1}{T_0} \sum_{s \in \mathcal{T}_1} \mathbf{1}\big(|e_s| \ge |\hat{\tau}_{1t}|\big), \quad t \in \mathcal{T}_2
+$$
+
+---
+
+#### Step 6: Split-conformal confidence intervals
+
+$$
+q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
+$$
+
+$$
+\text{CI}_t = \big[\hat{\tau}_{1t} - q_{1-\alpha}, \, \hat{\tau}_{1t} + q_{1-\alpha}\big], \quad t \in \mathcal{T}_2
+$$
+
+For $t \in \mathcal{T}_1$, set $\text{CI}_t = \text{NaN}$.
+
+
+## Block Results
+
+```{python}
+
+import pandas as pd # To work with panel data
+from mlsynth import FSCM # The method of interest
+import numpy as np
+
+
+def block_permutation_inference(Y_treated, Y_control, T0, alpha=0.05, max_combinations=1000, acf_threshold=0.1,
+                                random_state=None):
+    """
+    Compute synthetic control inference using block permutation.
+
+    Parameters
+    ----------
+    Y_treated : np.ndarray
+        Treated unit outcomes (1D array, length T).
+    Y_control : np.ndarray
+        Synthetic control outcomes (1D array, length T).
+    T0 : int
+        Index separating pre-treatment (0..T0-1) from post-treatment (T0..T-1).
+    alpha : float
+        Significance level for split-conformal confidence intervals.
+    max_combinations : int
+        Number of permutations to run.
+    acf_threshold : float
+        Threshold for autocorrelation to determine block size.
+    random_state : int or None
+        Random seed for reproducibility.
+
+    Returns
+    -------
+    results : dict
+        Dictionary containing:
+        - treated_effects: post-treatment treatment effects
+        - fulltreated_effects: all-period treatment effects
+        - S_obs: observed global statistic
+        - global_p_value: p-value from block permutation
+        - per_period_pvals: per-period p-values
+        - CI: split-conformal confidence intervals
+        - block_size: estimated block size
+    """
+    rng = np.random.default_rng(random_state)
+    T = len(Y_treated)
+
+    # --- Compute residuals ---
+    residuals = Y_treated[:T0] - Y_control[:T0]
+    treated_effects = Y_treated[T0:] - Y_control[T0:]
+    fulltreated_effects = Y_treated - Y_control
+
+    # --- Estimate block size from autocorrelation ---
+    def estimate_block_size(residuals, threshold):
+        acf_vals = [1.0]  # lag 0
+        n = len(residuals)
+        mean_resid = np.mean(residuals)
+        var_resid = np.var(residuals)
+        for lag in range(1, n):
+            cov = np.mean((residuals[:n - lag] - mean_resid) * (residuals[lag:] - mean_resid))
+            acf_vals.append(cov / var_resid)
+            if abs(cov / var_resid) < threshold:
+                return lag
+        return n // 2  # fallback
+
+    block_size = estimate_block_size(residuals, acf_threshold)
+
+    # --- Prepare blocks ---
+    n_blocks = len(residuals) // block_size
+    block_indices = np.arange(n_blocks)
+
+    # --- Block permutation test ---
+    T_post = len(treated_effects)
+    S_obs = np.mean(np.abs(treated_effects))
+
+    S_perm = []
+    for _ in range(max_combinations):
+        sampled_blocks = rng.choice(block_indices, size=(T_post // block_size + 1), replace=True)
+        permuted = np.concatenate([
+            residuals[b * block_size:(b + 1) * block_size] for b in sampled_blocks
+        ])[:T_post]
+        S_perm.append(np.mean(np.abs(permuted)))
+    S_perm = np.array(S_perm)
+
+    global_p_value = np.mean(S_perm >= S_obs)
+
+    # --- Per-period p-values ---
+    per_period_pvals = np.mean(
+        np.abs(residuals)[:, None] >= np.abs(treated_effects)[None, :],
+        axis=0
+    )
+
+    # --- Split-conformal confidence intervals ---
+    q = np.quantile(np.abs(residuals), 1 - alpha)
+    interval = np.column_stack([treated_effects - q, treated_effects + q])
+    CI = np.vstack([np.full((T0, 2), np.nan), interval])
+
+    return {
+        "treated_effects": treated_effects,
+        "fulltreated_effects": fulltreated_effects,
+        "S_obs": S_obs,
+        "global_p_value": global_p_value,
+        "per_period_pvals": per_period_pvals,
+        "CI": CI,
+        "block_size": block_size
+    }
+
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
+
+# Feel free to change "smoking" with "basque" above in the URL
+
+data = pd.read_csv(url)
+
+# Our method inputs
+
+config = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": False,
+    "save": False,
+    "counterfactual_color": ["red"]}
+
+arco = FSCM(config).fit()
+
+
+obs = arco.raw_results['Vectors']['Observed Unit']
+
+cf = arco.raw_results['Vectors']['Counterfactual']
+
+T0 = arco.raw_results['Fit']['Pre-Periods']
+
+
+inference = block_permutation_inference(obs,cf,T0)
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def plot_scm_treatment_effect(obs, cf, T0, CI=None, alpha=0.05, title_prefix="Treatment Effect Plot",
+                              style_params=None):
+    """
+    Plot SCM treatment effects with in-sample residuals and confidence intervals.
+
+    Parameters
+    ----------
+    obs : np.ndarray
+        Observed unit outcomes (1D array, length T).
+    cf : np.ndarray
+        Counterfactual / synthetic control outcomes (1D array, length T).
+    T0 : int
+        Pre-treatment period length (index separating pre- and post-treatment).
+    CI : np.ndarray, optional
+        Split-conformal or other confidence intervals, shape (T, 2). Default None.
+    alpha : float
+        Significance level for CI (default 0.05).
+    title_prefix : str
+        Title prefix for the plot.
+    style_params : dict, optional
+        Matplotlib styling parameters. Default is a preset style.
+
+    Returns
+    -------
+    fig, ax : matplotlib Figure and Axes
+        The created figure and axes.
+    """
+    T = len(obs)
+    time = np.arange(T)
+
+    # --- Compute in-sample residuals and post-treatment effects ---
+    residuals = obs[:T0] - cf[:T0]
+    treated_effects = obs[T0:] - cf[T0:]
+
+    # --- Compute ATT and global CI ---
+    ATT = np.mean(treated_effects)
+    q_global = np.quantile(np.abs(residuals), 1 - alpha)
+    global_CI_lower = ATT - q_global
+    global_CI_upper = ATT + q_global
+
+    # --- Default styling ---
+    if style_params is None:
+        style_params = {
+            "figure.figsize": (10, 6),
+            "figure.dpi": 100,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "font.size": 14,
+            "font.family": "sans-serif",
+            "axes.titlesize": 18,
+            "axes.titleweight": "bold",
+            "axes.labelsize": "large",
+            "xtick.labelsize": "medium",
+            "ytick.labelsize": "medium",
+            "legend.fontsize": 10,
+            "axes.grid": True,
+            "axes.axisbelow": True,
+            "grid.color": "#d3d3d3",
+            "grid.linestyle": ":",
+            "grid.linewidth": 1.0,
+            "lines.linewidth": 1.0,
+        }
+    plt.rcParams.update(style_params)
+
+    # --- Create plot ---
+    fig, ax = plt.subplots(figsize=(style_params["figure.figsize"]))
+
+    # In-sample residuals
+    ax.plot(time[:T0], residuals, color="black", linewidth=1.5, label="In-Sample Residuals")
+
+    # Post-treatment effects
+    ax.plot(time[T0:], treated_effects, color="black", linewidth=2, label="Treatment Effect")
+
+    # Confidence interval
+    if CI is not None:
+        ax.fill_between(time[T0:], CI[T0:, 0], CI[T0:, 1], color="#dbe1dd", alpha=0.7,
+                        label=f"{100 * (1 - alpha):.0f}% CI")
+
+    # Treatment start marker
+    ax.axvline(x=T0 - 1, color="Red", linestyle="--", label="Treatment Begins")
+
+    # Labels and legend
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Effect on Outcome")
+    ax.set_title(
+        f"{title_prefix} | ATT: {ATT:.2f} | 95% CI: [{global_CI_lower:.2f}, {global_CI_upper:.2f}]"
+    )
+    ax.legend()
+
+    plt.show()
+
+    return fig, ax
+
+# --- Usage example ---
+plot_scm_treatment_effect(obs, cf, T0, CI=inference["CI"])
+
+
+
+
+
+```
+
 :::
 
 

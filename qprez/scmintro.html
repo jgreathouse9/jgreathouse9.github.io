@@ -319,16 +319,17 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <div id="tabset-3-1">
 <ul>
 <li><p>In the earlier examples, the weights we used were arbitrary. We split 50/50 between you and your friend, but there was no real reason for that choice. In real life anyways, weights are never given to us from the Heavens: we, the econometricians, must assign them. The trouble is that assigning them poorly can create nonsense averages.</p></li>
-<li><p>The arithmetic average is familiar to economists as the national. It is used all the time in policy discussions from <a href="(https://www.pbs.org/newshour/politics/trump-deploys-national-guard-to-memphis-calling-it-a-replica-of-his-crackdown-on-washington)">militarized crackdowns on crime</a>, <a href="https://www.cnn.com/2025/03/07/politics/medicaid-cuts-republican-districts-analysis">healthcare spending</a>, and <a href="https://calmatters.org/commentary/2024/10/political-theater-californias-gasoline-prices/">gas prices</a>.</p></li>
-<li><p>But again, this still presumes the aggregate weights provide a more meaningful comparison for a single unit than they actually do.</p></li>
+<li><p>The arithmetic average is familiar to economists as the national average. It is used all the time in policy discussions from <a href="(https://www.pbs.org/newshour/politics/trump-deploys-national-guard-to-memphis-calling-it-a-replica-of-his-crackdown-on-washington)">militarized crackdowns on crime</a>, <a href="https://www.cnn.com/2025/03/07/politics/medicaid-cuts-republican-districts-analysis">healthcare spending</a>, and <a href="https://calmatters.org/commentary/2024/10/political-theater-californias-gasoline-prices/">gas prices</a>.</p></li>
+<li><p>But again, this still presumes the aggregate weights provide a more meaningful comparison for a single unit than they actually might (recall the Bill Gates example).</p></li>
 </ul>
 </div>
 <div id="tabset-3-2">
 <ul>
-<li><p>Suppose we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita via taking a weighted average of control units, but how to choose the weights? The Basque Country is on average much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
-<li><p>Optimization solves this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
+<li><p><a href="https://www.aeaweb.org/articles?id=10.1257/000282803321455188">Suppose</a> we have one unit exposed to terrorism in 1975 (the Basque Country), and a set of 16 other units that are not exposed. We want to estimate the effect of terrorism on GDP per capita. How to choose the weights?</p></li>
+<li><p>The Basque Country is much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
+<li><p>Optimization can solve this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="58ab4440" class="cell" data-execution_count="1">
+<div id="2f3e789d" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -343,7 +344,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </section>
 <section id="using-least-squares" class="slide level2">
 <h2>Using Least Squares</h2>
-<p>One method of optimization we could use is ordinary least-squares. In multiple linear regression, the coefficients returned to us can be interpreted as weights for our control group.</p>
+<p>We could use ordinary least-squares, where the coefficient vector returned to us will be the weights for our control units.</p>
 <div class="panel-tabset">
 <ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Notation</a></li><li><a href="#tabset-4-2">Data</a></li><li><a href="#tabset-4-3">OLS Problem</a></li><li><a href="#tabset-4-4">Treatment Effect</a></li></ul>
 <div class="tab-content">
@@ -363,7 +364,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <p><span class="math display">\[
 \hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="970b49f5" class="cell" data-execution_count="2">
+<div id="845bb568" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -592,7 +593,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <div class="tab-content">
 <div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="0db7ade5" class="cell" data-execution_count="3">
+<div id="65f9fb38" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -674,7 +675,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="7be0a038" class="cell" data-execution_count="4">
+<div id="bf855afa" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -687,7 +688,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="1a178591" class="cell" data-execution_count="5">
+<div id="34ccb03a" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -707,7 +708,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="c247ebad" class="cell" data-execution_count="6">
+<div id="3a250325" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -750,7 +751,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 <div class="tab-content">
 <div id="tabset-6-1">
 <p>ideally, shifting the treatement back in time should not change the practical results of the conclusions very much.</p>
-<div id="a97316c1" class="cell" data-execution_count="8">
+<div id="40973a87" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -762,7 +763,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
 </div>
 <div id="tabset-6-2">
 <p>ideally, the treated unit’s treatment effect should look extreme compared to the placebo effect given to other untreated units. Here, we rerun the SCM over the other donor units.</p>
-<div id="525cfabf" class="cell" data-execution_count="9">
+<div id="70016f7b" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -842,7 +843,7 @@ q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
 </section>
 <section id="block-results" class="slide level2">
 <h2>Block Results</h2>
-<div id="68ec9da0" class="cell" data-execution_count="10">
+<div id="5b80d2f4" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -893,6 +894,19 @@ Use placebo tests (in-time and in-space) to check robustness.<br>
 p\text{-value} \approx \frac{1}{J}\sum_{j\neq 1} \mathbf{1}\big(|\widehat{\text{ATT}}_j|\ge |\widehat{\text{ATT}}_1|\big)
 \]</span> should be small. Furthermore, the ATT for the real treatment period should not change substantively given <em>reasonable</em> in-time placebos.</p></li>
 </ul>
+</section>
+<section id="extensions" class="slide level2">
+<h2>Extensions</h2>
+<p>Synthetic Control methods have undergone many advances since their inception. If you wish to use Python to estimate synthetic controls, I wrote the largest such package that exists. See here for details:</p>
+<div id="edda2e59" class="cell" data-execution_count="11">
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="scmintro_files/figure-revealjs/cell-12-output-1.png" class="quarto-figure quarto-figure-center" width="482" height="482"></p>
+</figure>
+</div>
+</div>
+</div>
 
 </section>
     </div>

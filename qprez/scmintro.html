@@ -188,7 +188,7 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt},
 <li><p>For example, say you have 12 apples and your friend has 18. Denote this as the sequence <span class="math inline">\(A = (12, 18) \in \mathbb{N}^2\)</span>. The mean is</p></li>
 </ul>
 <p><span class="math display">\[
-\bar{x} = \frac{1}{2}(12 + 18) = 15.
+\bar{x} = \frac{1}{2}(12 + 18)=((0.5. \times 12) + (0.5 \times 18))=6+9 = 15.
 \]</span></p>
 <p>On average, you have 15 apples. Pretty straightforward.</p>
 <hr>
@@ -202,14 +202,32 @@ y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt},
 \]</span></p>
 <ul>
 <li><p>Here, the sequence <span class="math inline">\(A\)</span> is mapped onto a spreadsheet, where each column entry represents a person. The value in each column is the number of apples that person has.</p></li>
-<li><p>To compute the average, we apply the same formula. Since there are two people, each entry gets weight <span class="math inline">\(1/2\)</span>. We multiply each entry by its weight and sum:</p></li>
+<li><p>To compute the average, we apply the same formula. Since there are two people, each entry gets weight <span class="math inline">\(1/2\)</span>. We multiply each entry by its weight and sum. Thus,</p></li>
 </ul>
 <p><span class="math display">\[
-\bar{x} = \frac{1}{2} \cdot 12 + \frac{1}{2} \cdot 18 = 15.
+\begin{bmatrix}
+12 &amp; 18
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+0.5 \\ 0.5
+\end{bmatrix}
+=
+\begin{bmatrix}
+12 \times 0.5 &amp; 18 \times 0.5
+\end{bmatrix}
+=
+\begin{bmatrix}
+6 &amp; 9
+\end{bmatrix},
+\]</span></p>
+<p>and then summing entries:</p>
+<p><span class="math display">\[
+6 + 9 = 15.
 \]</span></p>
 <ul>
-<li>This is mathematically equivalent to dividing the sum of the entries by 2, as we did with scalars.<br>
-In other words, arithmetic averaging is just taking a <strong>weighted sum</strong>, where each weight is the reciprocal of the number of entries.</li>
+<li><p>This is mathematically equivalent to dividing the sum of the entries by 2, as we did with scalars.</p></li>
+<li><p>In other words, arithmetic averaging is just taking a <strong>weighted sum</strong>, where each weight is the reciprocal of the number of entries.</p></li>
 </ul>
 <hr>
 </div>
@@ -255,23 +273,21 @@ Each row “collapses” into a single number representing the average for that 
 <section id="what-are-we-weighting-for-introducing-weighted-averages" class="slide level2">
 <h2>What Are We Weighting For? Introducing Weighted Averages</h2>
 <div class="panel-tabset">
-<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Simple Averages</a></li><li><a href="#tabset-2-2">Weighted Average</a></li><li><a href="#tabset-2-3">Weighted Average Cont.</a></li></ul>
+<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Simple Averages</a></li><li><a href="#tabset-2-2">Weighted Average 1</a></li><li><a href="#tabset-2-3">Weighted Average 2</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1">
-<p>You are at a bar with your friend. You earn $60k/year. Your friend earns $70k/year.<br>
-The simple average of your incomes is:</p>
+<p>You are at a bar with your friend. You earn $60k/year. Your friend earns $70k/year. The simple average of your incomes is:</p>
 <p><span class="math display">\[
 \mathbf{x} = \begin{bmatrix} 60 &amp; 70 \end{bmatrix}, \quad
-\mathbf{w} = \begin{bmatrix} \frac{1}{2} \\[1mm] \frac{1}{2} \end{bmatrix}
-\]</span></p>
-<p><span class="math display">\[
+\mathbf{w} = \begin{bmatrix} \frac{1}{2} \\[1mm] \frac{1}{2} \end{bmatrix},
+\]</span> and the average is computed like <span class="math display">\[
 \bar{x} = \mathbf{x} \mathbf{w}&nbsp;
 = \begin{bmatrix} 60 &amp; 70 \end{bmatrix}&nbsp;
 \begin{bmatrix} \frac{1}{2} \\[1mm] \frac{1}{2} \end{bmatrix}&nbsp;
 = \frac{1}{2}\cdot 60 + \frac{1}{2}\cdot 70&nbsp;
 = 65 \text{ k/year}.
 \]</span></p>
-<p>Now, suddenly Bill Gates walks in, with a net worth of $107B/year. Taking the simple average of all three income levels:&nbsp;&nbsp;</p>
+<p>Now, suddenly Bill Gates walks in, with a net income of $107B/year. Taking the simple average of all three income levels, we now just add one to the denominator since we now have three people:&nbsp;&nbsp;</p>
 <p><span class="math display">\[
 \mathbf{x} = \begin{bmatrix} 60 &amp; 70 &amp; 1.07\times 10^{11} \end{bmatrix}, \quad
 \mathbf{w} = \begin{bmatrix} \frac{1}{3} \\[1mm] \frac{1}{3} \\[1mm] \frac{1}{3} \end{bmatrix}
@@ -281,11 +297,9 @@ The simple average of your incomes is:</p>
 = \frac{1}{3}\cdot 60 + \frac{1}{3}\cdot 70 + \frac{1}{3}\cdot 1.07\times 10^{11}
 \approx 35.7 \text{ B/year}.
 \]</span></p>
-<p>Clearly, treating Bill Gates the same as the others <strong>skews the average</strong>.</p>
 <ul>
-<li><p>If the bartender next day bragged about earning 50k that night, we’d say:<br>
-“It’s not that you earned 50k organically; a wealthy dude happened to be there that night.<br>
-We can’t use this as evidence that your business is booming.”</p></li>
+<li><p>Clearly, treating Bill Gates the same as the others <strong>skews the average</strong>. In other words, if the bartender next day bragged about earning 50k that night, we’d say: “It’s not that you earned 50k organically; a wealthy dude happened to be there that night, that is not a typical night for you.</p></li>
+<li><p>We would not say that this is business as usual, we’d say that times where Bill Gates comes in are anomalous and cannot be used as the baseline.</p></li>
 <li><p>In other words, if we want a meaningful “bar average,” Bill should likely get much <strong>less weight</strong> (if any) than the other patrons.</p></li>
 </ul>
 <hr>
@@ -300,25 +314,25 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <p><span class="math display">\[
 \bar{x}_{\text{weighted}} = \sum_{i=1}^{n} w_i x_i, \quad \sum_{i=1}^{n} w_i = 1.
 \]</span></p>
-<ul>
-<li>Here, Bill can get a tiny weight (if any), and you and your friend get larger weights, giving a more reasonable “average bar income.”</li>
-</ul>
+<p>Here, Bill can get a tiny weight (if any), and you and your friend get larger weights, giving a more reasonable “average bar income.”</p>
 <hr>
 </div>
 <div id="tabset-2-3">
 <p>Suppose we only care about you and your friend, and ignore Bill Gates (weight = 0):</p>
 <p><span class="math display">\[
 \mathbf{x} = \begin{bmatrix} 60 &amp; 70 &amp; 1.07\times 10^{11} \end{bmatrix}, \quad
-\mathbf{w} = \begin{bmatrix} 0.5 \\[1mm] 0.5 \\[1mm] 0 \end{bmatrix}
+\mathbf{w} = \begin{bmatrix} 0.5 \\[1mm] 0.5 \\[1mm] 0 \end{bmatrix}.
 \]</span></p>
 <p>Then the weighted average is:</p>
 <p><span class="math display">\[
-\bar{x} = \mathbf{x} \mathbf{w}&nbsp;
-= 0.5\cdot 60 + 0.5\cdot 70 + 0 \cdot 1.07\times 10^{11}
-= 65 \text{ k/year}.
+\bar{x} = \mathbf{x} \mathbf{w}
+= 0.5\cdot 60 + 0.5\cdot 70 + 0\cdot 1.07\times 10^{11}
+= 65 \,\text{k/year}.
 \]</span></p>
-<p>Now the average is back to what it was initially.<br>
-Bill clearly is <strong>not representative</strong> of a bar or even a country. Giving him as much weight as regular humans does not make sense.</p>
+<ul>
+<li><p>So the average is back to what it was initially. Bill clearly is <strong>not representative</strong> of the bar (or even the country).</p></li>
+<li><p>Giving him as much weight as regular patrons does not make sense. Weighted averages let us reflect this reality.</p></li>
+</ul>
 </div>
 </div>
 </div>
@@ -330,12 +344,8 @@ Bill clearly is <strong>not representative</strong> of a bar or even a country. 
 <div class="tab-content">
 <div id="tabset-3-1">
 <ul>
-<li><p>In the earlier examples, the weights we used were arbitrary.<br>
-We split 50/50 between you and your friend, but there was no real reason for that choice.<br>
-In real life, weights are never handed down from the heavens: we, the econometricians, must assign them.<br>
-Assigning them poorly can produce nonsensical averages.</p></li>
-<li><p>The arithmetic average is familiar to economists as the <strong>national average</strong>.<br>
-It is used all the time in policy discussions, for example:</p>
+<li><p>In real life, weights are never handed down from the heavens: we, the econometricians, must assign them. Assigning them poorly can produce nonsensical averages if we wish to use averages as comparisons, as we often do.</p></li>
+<li><p>The arithmetic average is familiar to applied economists, coming up sometimes as the <strong>national average</strong>. It is used all the time in policy discussions, for example:</p>
 <ul>
 <li><a href="https://www.pbs.org/newshour/politics/trump-deploys-national-guard-to-memphis-calling-it-a-replica-of-his-crackdown-on-washington">Crime and militarized crackdowns</a><br>
 </li>
@@ -352,7 +362,7 @@ It is used all the time in policy discussions, for example:</p>
 <li><p>The Basque Country is much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
 <li><p>Optimization can solve this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="a911cb9b" class="cell" data-execution_count="1">
+<div id="5bf00e83" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -387,7 +397,7 @@ It is used all the time in policy discussions, for example:</p>
 <p><span class="math display">\[
 \hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="f23cd183" class="cell" data-execution_count="2">
+<div id="25f820a4" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -621,7 +631,7 @@ It is used all the time in policy discussions, for example:</p>
 <div class="tab-content">
 <div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="4b4e1420" class="cell" data-execution_count="3">
+<div id="27823c6e" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -703,7 +713,7 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="e4ef43ca" class="cell" data-execution_count="4">
+<div id="1d89804f" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -716,7 +726,7 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="8b2face2" class="cell" data-execution_count="5">
+<div id="a869b6e9" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -736,7 +746,7 @@ It is used all the time in policy discussions, for example:</p>
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="f2797258" class="cell" data-execution_count="6">
+<div id="e2fb1b62" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -779,7 +789,7 @@ It is used all the time in policy discussions, for example:</p>
 <div class="tab-content">
 <div id="tabset-6-1">
 <p>ideally, shifting the treatement back in time should not change the practical results of the conclusions very much.</p>
-<div id="d18b3b34" class="cell" data-execution_count="8">
+<div id="798a9698" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -791,7 +801,7 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-6-2">
 <p>ideally, the treated unit’s treatment effect should look extreme compared to the placebo effect given to other untreated units. Here, we rerun the SCM over the other donor units.</p>
-<div id="21b3612a" class="cell" data-execution_count="9">
+<div id="b5d620e4" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -871,7 +881,7 @@ q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
 </section>
 <section id="block-results" class="slide level2">
 <h2>Block Results</h2>
-<div id="88010427" class="cell" data-execution_count="10">
+<div id="27dec9e8" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -922,7 +932,7 @@ p\text{-value} \approx \frac{1}{J}\sum_{j\neq 1} \mathbf{1}\big(|\widehat{\text{
 <section id="extensions" class="slide level2">
 <h2>Extensions</h2>
 <p>Synthetic Control methods have undergone many advances since their inception. If you wish to use Python to estimate synthetic controls, I wrote the largest such package that exists. See here for details:</p>
-<div id="feff723c" class="cell" data-execution_count="11">
+<div id="933ba10d" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>

@@ -362,7 +362,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <li><p>The Basque Country is much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
 <li><p>Optimization can solve this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="43f0d25f" class="cell" data-execution_count="1">
+<div id="007ae559" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -373,7 +373,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 </div>
 <div id="tabset-3-3">
-<div id="7466a650" class="cell" data-execution_count="2">
+<div id="a55bc207" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -393,29 +393,29 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Notation</a></li><li><a href="#tabset-4-2">Data</a></li><li><a href="#tabset-4-3">OLS Problem</a></li><li><a href="#tabset-4-4">Treatment Effect</a></li></ul>
 <div class="tab-content">
 <div id="tabset-4-1">
-<p>We index time by <span class="math inline">\(t \in \{1,\dots,T\}\)</span> and units by <span class="math inline">\(j \in \mathcal{J} = \{1,\dots,J+1\}\)</span>, where unit 1 is treated and the others are controls.</p>
+<p>We index time by <span class="math inline">\(t \in \mathbb{N}\)</span> and units by <span class="math inline">\(j \in \mathbb{N}\)</span>, where unit 1 is treated and the others are controls.</p>
 <ul>
-<li><span class="math inline">\(\mathcal{T}_1 = \{1,\dots,T_0\}\)</span>: set of <strong>pre-treatment</strong> periods, with cardinality <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span><br>
+<li><span class="math inline">\(\mathcal{T}_1 = \{1,\dots,T_0\} \subset \mathbb{N}\)</span>: set of <strong>pre-treatment</strong> periods, with cardinality <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span><br>
 </li>
-<li><span class="math inline">\(\mathcal{T}_2 = \{T_0+1,\dots,T\}\)</span>: set of <strong>post-treatment</strong> periods, with cardinality <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span><br>
+<li><span class="math inline">\(\mathcal{T}_2 = \{T_0+1,\dots,T\} \subset \mathbb{N}\)</span>: set of <strong>post-treatment</strong> periods, with cardinality <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span><br>
 </li>
-<li><span class="math inline">\(\mathcal{J} = \{1,\dots,J+1\}\)</span>: set of all units (1 treated + <span class="math inline">\(J\)</span> controls)<br>
+<li><span class="math inline">\(\mathcal{J} = \{1,\dots,J+1\} \subset \mathbb{N}\)</span>: set of all units (1 treated + <span class="math inline">\(J\)</span> controls)<br>
 </li>
-<li><span class="math inline">\(\mathcal{J}_0 = \mathcal{J} \setminus \{1\} = \{2,\dots,J+1\}\)</span>: set of untreated donor units, with cardinality <span class="math inline">\(|\mathcal{J}_0| = J\)</span></li>
-<li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: outcome vector (e.g., GDP per capita) for the <strong>treated unit</strong> (e.g., Basque Country) over all <span class="math inline">\(T\)</span> time periods<br>
+<li><span class="math inline">\(\mathcal{J}_0 = \mathcal{J} \setminus \{1\} = \{2,\dots,J+1\} \subset \mathbb{N}\)</span>: set of untreated donor units, with cardinality <span class="math inline">\(|\mathcal{J}_0| = J\)</span></li>
+<li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: outcome vector (e.g., GDP per capita) for the <strong>treated unit</strong> over all <span class="math inline">\(T\)</span> time periods<br>
 </li>
-<li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units in this case)<br>
+<li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period<br>
 </li>
 <li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of donor weights where each entry <span class="math inline">\(w_j\)</span> indicates the contribution of control unit <span class="math inline">\(j \in \mathcal{J}_0\)</span> to the synthetic control</li>
 </ul>
 </div>
 <div id="tabset-4-2">
-<p>Here is the dataset, literally displayed in preparation for regression. We can see the Basque column as well as the donor columns. We wish to take a weighted average of these control unit columns to well approximate the Basque Country in the preintervention period, such that the weighted average provides a counterfactual estimate for the Basque Country in the post-intervention period.</p>
+<p>We can see the Basque column as well as some of the donor columns. We wish to take a weighted average of these control unit columns to approximate the Basque Country in the preintervention period. Given that there is good pretreatment fit between the weighted average and the Basque Country, the post-1975 predictions serve as the counterfactual estimate.</p>
 <p><em>Reminder: a weighted average can be written as</em></p>
 <p><span class="math display">\[
 \hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="7d2524b6" class="cell" data-execution_count="3">
+<div id="8444b313" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -649,7 +649,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <div class="tab-content">
 <div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="6ba7d336" class="cell" data-execution_count="4">
+<div id="e088e204" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -731,7 +731,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 <div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="39359522" class="cell" data-execution_count="5">
+<div id="83b04e11" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -744,7 +744,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 <div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="afe2c920" class="cell" data-execution_count="6">
+<div id="008a5a42" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -764,7 +764,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="607c6cac" class="cell" data-execution_count="7">
+<div id="f7b1f468" class="cell" data-execution_count="7">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -807,7 +807,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <div class="tab-content">
 <div id="tabset-6-1">
 <p>ideally, shifting the treatement back in time should not change the practical results of the conclusions very much.</p>
-<div id="ceec3dc2" class="cell" data-execution_count="9">
+<div id="54169449" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -819,7 +819,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 <div id="tabset-6-2">
 <p>ideally, the treated unit’s treatment effect should look extreme compared to the placebo effect given to other untreated units. Here, we rerun the SCM over the other donor units.</p>
-<div id="6d66124b" class="cell" data-execution_count="10">
+<div id="c7504909" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -836,70 +836,107 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <h2>Block Permutation Inference</h2>
 <p>A more modern approach however is block permutation. Block permutation accounts for temporal dependence in pre-treatment residuals.</p>
 <div class="panel-tabset">
-<ul id="tabset-7" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-7-1">Residuals</a></li><li><a href="#tabset-7-2">Block Size</a></li><li><a href="#tabset-7-3">Permutation</a></li><li><a href="#tabset-7-4">P-Value</a></li><li><a href="#tabset-7-5">Confidence Intervals</a></li></ul>
+<ul id="tabset-7" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-7-1">Residuals and Block Permutation Test</a></li><li><a href="#tabset-7-2">Block Size</a></li><li><a href="#tabset-7-3">Observed Test Statistic</a></li><li><a href="#tabset-7-4">Permutation Test</a></li><li><a href="#tabset-7-5">P-Values</a></li><li><a href="#tabset-7-6">Confidence Intervals via Pre-Treatment Residuals</a></li></ul>
 <div class="tab-content">
 <div id="tabset-7-1">
-<p>Pre-treatment residuals:</p>
-<p><span class="math display">\[
+<ul>
+<li><p><strong>Pre-treatment residuals:</strong> difference between actual and synthetic control outcomes: <span class="math display">\[
 e_t = y_{1t} - \hat{y}_{1t}, \quad t \in \mathcal{T}_1
-\]</span></p>
-<p>Post-treatment treatment effects:</p>
-<p><span class="math display">\[
+\]</span></p></li>
+<li><p><strong>Post-treatment treatment effects:</strong> difference after treatment: <span class="math display">\[
 \hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}, \quad t \in \mathcal{T}_2
-\]</span></p>
-<p>Full-period effects:</p>
-<p><span class="math display">\[
-\hat{\tau}_{1t}^{\text{full}} = y_{1t} - \hat{y}_{1t}, \quad t \in \{1, \dots, T\}
-\]</span></p>
+\]</span></p></li>
+<li><p>Goal: test if post-treatment gaps (the treatment effect) are unusually large relative to pre-treatment residuals (pre-treatment error). The problem is that we have small samples, so we need to use small sample inference.</p></li>
+</ul>
+<hr>
 </div>
 <div id="tabset-7-2">
-<p>Lag-<span class="math inline">\(k\)</span> autocorrelation of pre-treatment residuals:</p>
+<ul>
+<li><p>Residuals may be very reasonably be correlated over time; we split pre-treatment residuals into blocks of length <span class="math inline">\(B\)</span>.</p></li>
+<li><p>Compute <strong>lag-<span class="math inline">\(k\)</span> autocorrelation</strong>:</p></li>
+</ul>
 <p><span class="math display">\[
 \text{ACF}(k) = \frac{\sum_{t=1}^{T_0-k} (e_t - \bar{e})(e_{t+k}-\bar{e})}{\sum_{t=1}^{T_0} (e_t-\bar{e})^2}
 \]</span></p>
-<p>Block size <span class="math inline">\(B\)</span> is chosen as the smallest lag such that <span class="math inline">\(|\text{ACF}(B)| &lt; c\)</span> where <span class="math inline">\(c\)</span> is a positive constant</p>
-<p>Number of blocks:</p>
+<ul>
+<li><p>Choose <span class="math inline">\(B\)</span> as the smallest lag where <span class="math inline">\(|\text{ACF}(B)| &lt; c\)</span>, where <span class="math inline">\(c\)</span> is some positive constant</p></li>
+<li><p>Split residuals into <span class="math inline">\(N_B\)</span> blocks:</p></li>
+</ul>
 <p><span class="math display">\[
-N_B = \left\lfloor \frac{T_0}{B} \right\rfloor
-\]</span></p>
-<p><span class="math display">\[
+N_B = \left\lfloor \frac{T_0}{B} \right\rfloor, \quad
 \mathbf{e}^{(b)} = \{ e_{(b-1)B+1}, \dots, e_{bB} \}, \quad b=1,\dots,N_B
 \]</span></p>
-<p><span class="math display">\[
-S_{\text{obs}} = \frac{1}{T_2}\sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
-\]</span></p>
+<hr>
 </div>
 <div id="tabset-7-3">
-<p>For <span class="math inline">\(m = 1, \dots, M\)</span> permutations:</p>
 <p><span class="math display">\[
-S^{*(m)} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \big| \mathbf{e}^{*(m)}_t \big|
+S_{\text{obs}} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
 \]</span></p>
-<p>where <span class="math inline">\(\mathbf{e}^{*(m)}\)</span> is a concatenation of randomly sampled blocks with replacement.</p>
+<ul>
+<li>Average absolute post-treatment effect.</li>
+</ul>
+<hr>
 </div>
 <div id="tabset-7-4">
-<p>Global p-value:</p>
+<ul>
+<li>We now randomly resample pre-treatment blocks with replacement to create synthetic post-treatment residuals <span class="math inline">\(\mathbf{e}^{\ast(m)}\)</span>, <span class="math inline">\(m=1,\dots,M\)</span>:</li>
+</ul>
 <p><span class="math display">\[
-p_{\text{global}} = \frac{1}{M} \sum_{m=1}^{M} \mathbf{1}\big(S^{*(m)} \ge S_{\text{obs}}\big)
+S^{\ast(m)} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \big| \mathbf{e}^{\ast(m)}_t \big|
 \]</span></p>
-<p>Per-period p-values:</p>
+<ul>
+<li>This generates a null distribution under no treatment.</li>
+</ul>
+<hr>
+</div>
+<div id="tabset-7-5">
+<ul>
+<li><strong>Global p-value:</strong></li>
+</ul>
+<p><span class="math display">\[
+p_{\text{global}} = \frac{1}{M} \sum_{m=1}^{M} \mathbf{1}\big(S^{\ast(m)} \ge S_{\text{obs}}\big)
+\]</span></p>
+<ul>
+<li><strong>Per-period p-values:</strong></li>
+</ul>
 <p><span class="math display">\[
 p_t = \frac{1}{T_0} \sum_{s \in \mathcal{T}_1} \mathbf{1}\big(|e_s| \ge |\hat{\tau}_{1t}|\big), \quad t \in \mathcal{T}_2
 \]</span></p>
+<p>These are simply p-values measuring how unusual the absolute value of the ATT or a given post-intervnetion residual is relative to what we would expect.</p>
+<hr>
 </div>
-<div id="tabset-7-5">
+<div id="tabset-7-6">
+<ul>
+<li>We define the <span class="math inline">\((1-\alpha)\)</span> quantile of the absolute pre-treatment residuals using the infimum:</li>
+</ul>
 <p><span class="math display">\[
-q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
+q_{1-\alpha} = \inf \Big\{ q \in \mathbb{R} \;\Big|\;
+\frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \mathbf{1}(|e_t| \le q) \ge 1-\alpha \Big\}.
 \]</span></p>
+<p><strong>Definition / intuition:</strong></p>
+<ul>
+<li><p>The quantile <span class="math inline">\(q_{1-\alpha}\)</span> is the <em>smallest number</em> such that at least <span class="math inline">\((1-\alpha)\)</span> fraction of the pre-treatment residuals are less than or equal to it.</p></li>
+<li><p>In other words, it tells us what magnitude of residuals is “typical” in the pre-treatment period.</p></li>
+<li><p>Using this, we construct <em>post-treatment confidence intervals</em> around the estimated treatment effect:</p></li>
+</ul>
 <p><span class="math display">\[
-\text{CI}_t = \big[\hat{\tau}_{1t} - q_{1-\alpha}, \, \hat{\tau}_{1t} + q_{1-\alpha}\big], \quad t \in \mathcal{T}_2
+\text{CI}_t = \big[ \hat{\tau}_{1t} - q_{1-\alpha}, \; \hat{\tau}_{1t} + q_{1-\alpha} \big],
+\quad t \in \mathcal{T}_2.
 \]</span></p>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li><p>If the post-treatment effect <span class="math inline">\(\hat{\tau}_{1t}\)</span> lies <em>outside this interval</em>… it is larger than what we would normally expect based on pre-treatment variability.</p></li>
+<li><p>This provides a simple, non-parametric confidence interval that accounts for the observed variation before treatment.</p></li>
+<li><p>In theory, we could do this with <em>moving</em> blocks too, but that requires a little more bookeeping.</p></li>
+</ul>
 </div>
 </div>
 </div>
 </section>
 <section id="block-results" class="slide level2">
 <h2>Block Results</h2>
-<div id="7c2c8daf" class="cell" data-execution_count="11">
+<p>Here are our results.</p>
+<div id="90ba0248" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -950,7 +987,7 @@ p\text{-value} \approx \frac{1}{J}\sum_{j\neq 1} \mathbf{1}\big(|\widehat{\text{
 <section id="extensions" class="slide level2">
 <h2>Extensions</h2>
 <p>Synthetic Control methods have undergone many advances since their inception. If you wish to use Python to estimate synthetic controls, I wrote the largest such package that exists. See here for details:</p>
-<div id="c67d5def" class="cell" data-execution_count="12">
+<div id="df170486" class="cell" data-execution_count="12">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>

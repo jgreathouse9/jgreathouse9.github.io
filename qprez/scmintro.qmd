@@ -361,60 +361,56 @@ display(Markdown(md_table))
 
 ### OLS Problem
 
-- We can choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:  
+- Choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:  
 
 $$
-\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2  \quad \forall \, t \in \mathcal{T}_{1}
+\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2, 
+\qquad t \in \mathcal{T}_1
 $$
 
-- In practice, this is just OLS on the pre-1975 period, where $\mathbf{y}_1$ is the Basque GDP column and $\mathbf{Y}_0$ are the columns for the donor pool. The regression coefficients (what we call the betas ($\beta$) in our introductory econometrics classes) are the weights.
+- In practice, this is just OLS on the pre-1975 period, where $\mathbf{y}_1$ is the Basque GDP column and $\mathbf{Y}_0$ contains donor columns.  
+- The regression coefficients (betas, $\beta$) are the **weights** $\mathbf{w}^{\ast}$.
+- Multiply each control unit by its weight and sum across donors to get predicted Basque GDP pre- and post-intervention.
 
-- Once we have $\mathbf{w}^{\ast}$, we multiply all the values for each control unit by its regression coefficient and sum these across donors.  
-
-- This gives the predicted Basque trajectory pre- and post-intervention.
 
 ---
 
 ### Treatment Effect
 
-- First, define the period-level treatment effect as the difference between the observed outcome and the synthetic control prediction:
+- Define the **period-level treatment effect** as the difference between observed outcome and synthetic control prediction:
 
 $$
-\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}, 
-\qquad t \in \mathcal{T}_2
+\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}, \qquad t \in \mathcal{T}_2
 $$
 
-- **Total treatment effect** (sum across all post-treatment periods):
+- **Total treatment effect (TTE)**:
 
 $$
-\text{Total Treatment Effect (TTE)} = \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
+\text{TTE} = \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t} 
 = \sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
 $$
 
-- **Average treatment effect on the treated (ATT)**, the mean of the period-level effects:
+- **Average treatment effect on the treated (ATT)**:
 
 $$
-\text{ATT} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
-= T_{2}^{-1}\sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
+\text{ATT} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t} 
+= T_2^{-1} \sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
 $$
 
 - **Percentage treatment effect (PTE)** relative to the counterfactual mean:
 
 $$
 \%\text{Treatment Effect} = 
-\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}{T_{2}^{-1}\sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
+\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}
+{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
 $$
 
 *Intuition:*  
 
 - $\hat{\tau}_{1t}$ shows the effect at each post-treatment time point.  
-
-- ATT averages these effects to summarize the overall post-treatment deviation. 
-
-- Total treatment effect aggregates the deviations into a single cumulative number.
-
-- Percentage treatment effect scales the ATT relative to the counterfactual, giving a sense of magnitude in context.
-
+- ATT summarizes the overall post-treatment deviation.  
+- TTE aggregates deviations into a single cumulative number.  
+- PTE scales ATT relative to the counterfactual, giving magnitude in context.
 
 :::
 

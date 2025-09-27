@@ -16,6 +16,7 @@ highlight-style: github
 ## Introduction to Synthetic Control Methods (SCM)
 
 - **Historical roots**  
+
   Originates from the *comparative case study* framework:  
 
   - Small number of treated units.  
@@ -28,7 +29,7 @@ highlight-style: github
     y_{jt}(0) = \mu_j + \lambda_t + \epsilon_{jt},
     $$
 
-    where $\mu_j$ is a **unit-specific intercept** (unobserved) and $\lambda_t$ is a **time-specific effect** common to all units.  
+    where $\mu_j$ is a *unit-specific intercept* (unobserved) and $\lambda_t$ is a *time-specific effect* common to all units.  
     The errors $\epsilon_{jt}$ capture idiosyncratic shocks.
 
   - SCM generalizes this to an *interactive fixed effects model*, allowing time factors to affect units differently:  
@@ -37,9 +38,9 @@ highlight-style: github
     y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt},
     $$
 
-    where $\mathbf{\mu}_j \in \mathbb{R}^r$ and $\mathbf{\lambda}_t \in \mathbb{R}^r$ are **latent factor vectors**.  
+    where $\mathbf{\mu}_j \in \mathbb{R}^r$ and $\mathbf{\lambda}_t \in \mathbb{R}^r$ are *latent factor vectors*.  
     - Each dimension $k = 1,\dots,r$ represents a latent factor driving variation across units and time.  
-    - SCM attempts to construct a **weighted combination of control units** that approximates $\mathbf{\mu}_j^\top \mathbf{\lambda}_t$ for the treated unit.
+    - SCM attempts to construct a *weighted combination of control units* that approximates $\mathbf{\mu}_j^\top \mathbf{\lambda}_t$ for the treated unit.
 
 
 ## What Is An Average?
@@ -64,11 +65,10 @@ We need to understand what an average is.
   $A = (12, 18) \in \mathbb{N}^2$:  
 
   $$
-  \bar{x} = \frac{1}{2}(12 + 18) = (6+9) = 15.
+  \bar{x} = \frac{1}{2}(12 + 18) = 15.
   $$
 
 On average, you have 15 apples. Pretty straightforward.
-
 
 ---
 
@@ -88,10 +88,10 @@ $$
 \bar{x} = \frac{1}{2} \cdot 12 + \frac{1}{2} \cdot 18 = 15.
 $$
 
-- This is mathematically equivalent to dividing the sum of the entries by 2, as we did with scalars. In other words, arithmetic averaging is just taking a weighted sum where each weight is the reciprocal of the number of entries.
+- This is mathematically equivalent to dividing the sum of the entries by 2, as we did with scalars.  
+  In other words, arithmetic averaging is just taking a **weighted sum**, where each weight is the reciprocal of the number of entries.
 
 ---
-
 
 ### Matrices
 
@@ -106,7 +106,7 @@ $$
 \in \mathbb{R}^{2 \times 2}.
 $$
 
-- Now, we have columns *and* rows. Each row represents a snapshot in time. Each column represents a person.
+- Now, we have columns *and* rows. Each row represents a snapshot in time, and each column represents a person.
 
 - To find the average number of apples per time period, we use the same weights as before (1/2 for each person). Multiplying the matrix by the weight vector gives a row-wise weighted sum:
 
@@ -126,7 +126,8 @@ $$
 
 - Interpretation: Today, the average is 15 apples; tomorrow, the average is 26 apples.  
 
-- Row-wise averaging is thus just taking a weighted sum across the columns for each row. Each row "collapses" into a single number representing the average for that time period.  
+- Row-wise averaging is thus just taking a weighted sum across the columns for each row.  
+  Each row "collapses" into a single number representing the average for that time period.  
 
 - This concept generalizes to any time-series or panel data, such as GDPs, incomes, or other outcomes measured across multiple units.
 
@@ -139,7 +140,8 @@ $$
 
 ### Simple Averages
 
-You are at a bar with your friend. You earn \$60k/year. Your friend earns \$70k/year. The simple average of your incomes is:
+You are at a bar with your friend. You earn \$60k/year. Your friend earns \$70k/year.  
+The simple average of your incomes is:
 
 $$
 \mathbf{x} = \begin{bmatrix} 60 & 70 \end{bmatrix}, \quad
@@ -147,14 +149,14 @@ $$
 $$
 
 $$
-\bar{x} = \mathbf{x} \mathbf{w} 
-= \begin{bmatrix} 60 & 70 \end{bmatrix} 
-\begin{bmatrix} \frac{1}{2} \\[1mm] \frac{1}{2} \end{bmatrix} 
-= \frac{1}{2}\cdot 60 + \frac{1}{2}\cdot 70 
-= 65 \text{ k/year}
+\bar{x} = \mathbf{x} \mathbf{w} 
+= \begin{bmatrix} 60 & 70 \end{bmatrix} 
+\begin{bmatrix} \frac{1}{2} \\[1mm] \frac{1}{2} \end{bmatrix} 
+= \frac{1}{2}\cdot 60 + \frac{1}{2}\cdot 70 
+= 65 \text{ k/year}.
 $$
 
-Now, suddenly Bill Gates walks in, with a net worth of \$107B/year. Taking the simple average of all three income levels:  
+Now, suddenly Bill Gates walks in, with a net worth of \$107B/year. Taking the simple average of all three income levels:  
 
 $$
 \mathbf{x} = \begin{bmatrix} 60 & 70 & 1.07\times 10^{11} \end{bmatrix}, \quad
@@ -162,30 +164,35 @@ $$
 $$
 
 $$
-\bar{x} = \mathbf{x} \mathbf{w} 
+\bar{x} = \mathbf{x} \mathbf{w} 
 = \frac{1}{3}\cdot 60 + \frac{1}{3}\cdot 70 + \frac{1}{3}\cdot 1.07\times 10^{11}
-\approx 35.7\text{B/year}
+\approx 35.7 \text{ B/year}.
 $$
 
-Clearly, treating Bill Gates the same as the others skews the average.
+Clearly, treating Bill Gates the same as the others **skews the average**.
 
-- If the bartender next day bragged about earning 50k that night, we'd say: "It's not that you earned 50k organically; a wealthy dude happened to be there that night. We can't use this as evidence that your business is booming."  
+- If the bartender next day bragged about earning 50k that night, we'd say:  
+  "It's not that you earned 50k organically; a wealthy dude happened to be there that night.  
+  We can't use this as evidence that your business is booming."
 
-- In other words, if we want a meaningful "bar average," Bill should likely get much less weight (if any!) than the other patrons.
+- In other words, if we want a meaningful "bar average," Bill should likely get much **less weight** (if any) than the other patrons.
 
 ---
 
 ### Weighted Average
 
-- Well, why do we not try this? After all, there is no law of nature that says the weight needs to be the reciprocal of the number of observations. Practically, we can assign weights however we like.
+- There is no law of nature that says the weight must be $1/n$. Practically, we can assign weights however we like.
 
-- Instead of treating Bill as equal to you two, we can give each person a weight $w_i \in [0,1]$ to decide how much they count in the average. This weight $w_i$ is equivalent to the fraction we used before in the arithmetic average, which previously was simply $\tfrac{1}{n}$. Our weights may take the form:  
+- Instead of treating Bill as equal to you two, we can give each person a weight $w_i \in [0,1]$, deciding how much they count in the average.  
+  Previously, in the arithmetic mean, $w_i = 1/n$.  
+
+- Formally, the **weighted average** is:
 
 $$
 \bar{x}_{\text{weighted}} = \sum_{i=1}^{n} w_i x_i, \quad \sum_{i=1}^{n} w_i = 1.
 $$
 
-Here, Bill can get a tiny weight (if any), and you and your friend get larger weights, giving a more reasonable "average bar income."
+- Here, Bill can get a tiny weight (if any), and you and your friend get larger weights, giving a more reasonable "average bar income."
 
 ---
 
@@ -201,14 +208,16 @@ $$
 Then the weighted average is:
 
 $$
-\bar{x} = \mathbf{x} \mathbf{w} 
+\bar{x} = \mathbf{x} \mathbf{w} 
 = 0.5\cdot 60 + 0.5\cdot 70 + 0 \cdot 1.07\times 10^{11}
-= 65 \text{ k/year}
+= 65 \text{ k/year}.
 $$
 
-Now the average is back to what it was initially. Bill clearly is not representative of a bar or even a country. Giving him as much weight as regular humans does not make sense.
+Now the average is back to what it was initially.  
+Bill clearly is **not representative** of a bar or even a country. Giving him as much weight as regular humans does not make sense.
 
 :::
+
 
 ## Applied Averages
 
@@ -216,11 +225,19 @@ Now the average is back to what it was initially. Bill clearly is not representa
 
 ### National Averages
 
-- In the earlier examples, the weights we used were arbitrary. We split 50/50 between you and your friend, but there was no real reason for that choice. In real life anyways, weights are never given to us from the Heavens: we, the econometricians, must assign them. The trouble is that assigning them poorly can create nonsense averages.  
+- In the earlier examples, the weights we used were arbitrary.  
+  We split 50/50 between you and your friend, but there was no real reason for that choice.  
+  In real life, weights are never handed down from the heavens: we, the econometricians, must assign them.  
+  Assigning them poorly can produce nonsensical averages.
 
-- The arithmetic average is familiar to economists as the national average. It is used all the time in policy discussions from [militarized crackdowns on crime]((https://www.pbs.org/newshour/politics/trump-deploys-national-guard-to-memphis-calling-it-a-replica-of-his-crackdown-on-washington)), [healthcare spending](https://www.cnn.com/2025/03/07/politics/medicaid-cuts-republican-districts-analysis), and [gas prices](https://calmatters.org/commentary/2024/10/political-theater-californias-gasoline-prices/).
+- The arithmetic average is familiar to economists as the **national average**.  
+  It is used all the time in policy discussions, for example:  
+  - [Crime and militarized crackdowns](https://www.pbs.org/newshour/politics/trump-deploys-national-guard-to-memphis-calling-it-a-replica-of-his-crackdown-on-washington)  
+  - [Healthcare spending](https://www.cnn.com/2025/03/07/politics/medicaid-cuts-republican-districts-analysis)  
+  - [Gasoline prices](https://calmatters.org/commentary/2024/10/political-theater-californias-gasoline-prices/)
 
-- But again, this still presumes the aggregate weights provide a more meaningful comparison for a single unit than they actually might (recall the Bill Gates example).
+- But again, this assumes that the **aggregate weights** produce a meaningful comparison for a single unit — which may not be true (recall the Bill Gates example).
+
 
 ### Basque
 

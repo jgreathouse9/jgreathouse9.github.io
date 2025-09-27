@@ -362,7 +362,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <li><p>The Basque Country is much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
 <li><p>Optimization can solve this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="5bf00e83" class="cell" data-execution_count="1">
+<div id="8496ae32" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -382,13 +382,20 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <ul id="tabset-4" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-4-1">Notation</a></li><li><a href="#tabset-4-2">Data</a></li><li><a href="#tabset-4-3">OLS Problem</a></li><li><a href="#tabset-4-4">Treatment Effect</a></li></ul>
 <div class="tab-content">
 <div id="tabset-4-1">
+<p>We index time by <span class="math inline">\(t \in \{1,\dots,T\}\)</span> and units by <span class="math inline">\(j \in \mathcal{J} = \{1,\dots,J+1\}\)</span>, where unit 1 is treated and the others are controls.</p>
 <ul>
-<li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: outcome vector (e.g., GDP per capita) for the treated unit (Basque Country) over all <span class="math inline">\(T\)</span> time periods</li>
-<li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units in this case)</li>
-<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of donor weights where each entry <span class="math inline">\(w_j\)</span> indicates the contribution of control unit <span class="math inline">\(j \in \mathcal{J}_0\)</span> to the weighted average of the treated unit</li>
-<li><span class="math inline">\(\mathcal{T}_1 = \{1,\dots,T_0\}\)</span>: set of pre-treatment periods, with cardinality <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span></li>
-<li><span class="math inline">\(\mathcal{T}_2 = \{T_0+1,\dots,T\}\)</span>: set of post-treatment periods, with cardinality <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span></li>
-<li><span class="math inline">\(\mathcal{J}_0 = \{1,\dots,J\}\)</span>: set of untreated donor units, with cardinality <span class="math inline">\(|\mathcal{J}_0| = J\)</span></li>
+<li><span class="math inline">\(\mathcal{T}_1 = \{1,\dots,T_0\}\)</span>: set of <strong>pre-treatment</strong> periods, with cardinality <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span><br>
+</li>
+<li><span class="math inline">\(\mathcal{T}_2 = \{T_0+1,\dots,T\}\)</span>: set of <strong>post-treatment</strong> periods, with cardinality <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span><br>
+</li>
+<li><span class="math inline">\(\mathcal{J} = \{1,\dots,J+1\}\)</span>: set of all units (1 treated + <span class="math inline">\(J\)</span> controls)<br>
+</li>
+<li><span class="math inline">\(\mathcal{J}_0 = \mathcal{J} \setminus \{1\} = \{2,\dots,J+1\}\)</span>: set of untreated donor units, with cardinality <span class="math inline">\(|\mathcal{J}_0| = J\)</span></li>
+<li><span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T}\)</span>: outcome vector (e.g., GDP per capita) for the <strong>treated unit</strong> (e.g., Basque Country) over all <span class="math inline">\(T\)</span> time periods<br>
+</li>
+<li><span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times J}\)</span>: donor matrix; each column is a control unit, each row is a time period (<span class="math inline">\(J=16\)</span> control units in this case)<br>
+</li>
+<li><span class="math inline">\(\mathbf{w} \in \mathbb{R}^{J}\)</span>: vector of donor weights where each entry <span class="math inline">\(w_j\)</span> indicates the contribution of control unit <span class="math inline">\(j \in \mathcal{J}_0\)</span> to the synthetic control</li>
 </ul>
 </div>
 <div id="tabset-4-2">
@@ -397,7 +404,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <p><span class="math display">\[
 \hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="25f820a4" class="cell" data-execution_count="2">
+<div id="b7715f10" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -631,7 +638,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <div class="tab-content">
 <div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="27823c6e" class="cell" data-execution_count="3">
+<div id="dfb5296a" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -713,7 +720,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 <div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="1d89804f" class="cell" data-execution_count="4">
+<div id="74fa2f81" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -726,7 +733,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 <div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="a869b6e9" class="cell" data-execution_count="5">
+<div id="ca676b1d" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -746,7 +753,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="e2fb1b62" class="cell" data-execution_count="6">
+<div id="431873e6" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -789,7 +796,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 <div class="tab-content">
 <div id="tabset-6-1">
 <p>ideally, shifting the treatement back in time should not change the practical results of the conclusions very much.</p>
-<div id="798a9698" class="cell" data-execution_count="8">
+<div id="f745040e" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -801,7 +808,7 @@ Previously, in the arithmetic mean, <span class="math inline">\(w_i = 1/n\)</spa
 </div>
 <div id="tabset-6-2">
 <p>ideally, the treated unit’s treatment effect should look extreme compared to the placebo effect given to other untreated units. Here, we rerun the SCM over the other donor units.</p>
-<div id="b5d620e4" class="cell" data-execution_count="9">
+<div id="ba983ef6" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -881,7 +888,7 @@ q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
 </section>
 <section id="block-results" class="slide level2">
 <h2>Block Results</h2>
-<div id="27dec9e8" class="cell" data-execution_count="10">
+<div id="3620d185" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -932,7 +939,7 @@ p\text{-value} \approx \frac{1}{J}\sum_{j\neq 1} \mathbf{1}\big(|\widehat{\text{
 <section id="extensions" class="slide level2">
 <h2>Extensions</h2>
 <p>Synthetic Control methods have undergone many advances since their inception. If you wish to use Python to estimate synthetic controls, I wrote the largest such package that exists. See here for details:</p>
-<div id="933ba10d" class="cell" data-execution_count="11">
+<div id="da3e71af" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>

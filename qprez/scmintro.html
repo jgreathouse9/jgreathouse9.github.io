@@ -356,7 +356,7 @@ It is used all the time in policy discussions, for example:</p>
 <li><p>The Basque Country is much wealthier than many areas of Spain, has a unique political climate, and was more educated and industrialized than other areas.</p></li>
 <li><p>Optimization can solve this problem. Instead of us just arbitrarily assigning weights, we <em>choose the weights that minimize the pre-intervention gap</em> between the Basque Country and the weighted donor units.</p></li>
 </ul>
-<div id="9e0a59c9" class="cell" data-execution_count="1">
+<div id="2a4fb521" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -391,7 +391,7 @@ It is used all the time in policy discussions, for example:</p>
 <p><span class="math display">\[
 \hat{y}_{1t} = \mathbf{Y}_0 \mathbf{w} = \sum_{j \in \mathcal{J}_0} w_jy_{jt}, \qquad t \in \mathcal{T}_1 \cup \mathcal{T}_2.
 \]</span></p>
-<div id="10e9317c" class="cell" data-execution_count="2">
+<div id="adc49be9" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <colgroup>
@@ -561,53 +561,58 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-4-3">
 <ul>
-<li>We can choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:</li>
+<li>Choose weights to minimize the squared pre-intervention difference between Basque and the weighted donors:</li>
 </ul>
 <p><span class="math display">\[
-\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2  \quad \forall \, t \in \mathcal{T}_{1}
+\mathbf{w}^{\ast} = \underset{\mathbf{w} \in \mathbb{R}^J}{\operatorname*{argmin}} \; \| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \|_2^2,
+\qquad t \in \mathcal{T}_1
 \]</span></p>
 <ul>
-<li><p>In practice, this is just OLS on the pre-1975 period, where <span class="math inline">\(\mathbf{y}_1\)</span> is the Basque GDP column and <span class="math inline">\(\mathbf{Y}_0\)</span> are the columns for the donor pool. The regression coefficients (what we call the betas (<span class="math inline">\(\beta\)</span>) in our introductory econometrics classes) are the weights.</p></li>
-<li><p>Once we have <span class="math inline">\(\mathbf{w}^{\ast}\)</span>, we multiply all the values for each control unit by its regression coefficient and sum these across donors.</p></li>
-<li><p>This gives the predicted Basque trajectory pre- and post-intervention.</p></li>
+<li>In practice, this is just OLS on the pre-1975 period, where <span class="math inline">\(\mathbf{y}_1\)</span> is the Basque GDP column and <span class="math inline">\(\mathbf{Y}_0\)</span> contains donor columns.<br>
+</li>
+<li>The regression coefficients (betas, <span class="math inline">\(\beta\)</span>) are the <strong>weights</strong> <span class="math inline">\(\mathbf{w}^{\ast}\)</span>.</li>
+<li>Multiply each control unit by its weight and sum across donors to get predicted Basque GDP pre- and post-intervention.</li>
 </ul>
 <hr>
 </div>
 <div id="tabset-4-4">
 <ul>
-<li>First, define the period-level treatment effect as the difference between the observed outcome and the synthetic control prediction:</li>
+<li>Define the <strong>period-level treatment effect</strong> as the difference between observed outcome and synthetic control prediction:</li>
 </ul>
 <p><span class="math display">\[
-\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t},
-\qquad t \in \mathcal{T}_2
+\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}, \qquad t \in \mathcal{T}_2
 \]</span></p>
 <ul>
-<li><strong>Total treatment effect</strong> (sum across all post-treatment periods):</li>
+<li><strong>Total treatment effect (TTE)</strong>:</li>
 </ul>
 <p><span class="math display">\[
-\text{Total Treatment Effect (TTE)} = \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
+\text{TTE} = \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
 = \sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
 \]</span></p>
 <ul>
-<li><strong>Average treatment effect on the treated (ATT)</strong>, the mean of the period-level effects:</li>
+<li><strong>Average treatment effect on the treated (ATT)</strong>:</li>
 </ul>
 <p><span class="math display">\[
 \text{ATT} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}
-= T_{2}^{-1}\sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
+= T_2^{-1} \sum_{t \in \mathcal{T}_2} \Big( y_{1t} - \hat{y}_{1t} \Big)
 \]</span></p>
 <ul>
 <li><strong>Percentage treatment effect (PTE)</strong> relative to the counterfactual mean:</li>
 </ul>
 <p><span class="math display">\[
 \%\text{Treatment Effect} =
-\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}{T_{2}^{-1}\sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
+\frac{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{\tau}_{1t}}
+{\frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \hat{y}_{1t}} \times 100
 \]</span></p>
 <p><em>Intuition:</em></p>
 <ul>
-<li><p><span class="math inline">\(\hat{\tau}_{1t}\)</span> shows the effect at each post-treatment time point.</p></li>
-<li><p>ATT averages these effects to summarize the overall post-treatment deviation.</p></li>
-<li><p>Total treatment effect aggregates the deviations into a single cumulative number.</p></li>
-<li><p>Percentage treatment effect scales the ATT relative to the counterfactual, giving a sense of magnitude in context.</p></li>
+<li><span class="math inline">\(\hat{\tau}_{1t}\)</span> shows the effect at each post-treatment time point.<br>
+</li>
+<li>ATT summarizes the overall post-treatment deviation.<br>
+</li>
+<li>TTE aggregates deviations into a single cumulative number.<br>
+</li>
+<li>PTE scales ATT relative to the counterfactual, giving magnitude in context.</li>
 </ul>
 </div>
 </div>
@@ -620,7 +625,7 @@ It is used all the time in policy discussions, for example:</p>
 <div class="tab-content">
 <div id="tabset-5-1">
 <p>Here are the weights OLS returns to us for the 16 donor units:</p>
-<div id="81773326" class="cell" data-execution_count="3">
+<div id="b0bed23a" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top">
 <thead>
@@ -702,7 +707,7 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-5-2">
 <p>Here are some of the predicted donors plotted against the Basque Country</p>
-<div id="05d37e82" class="cell" data-execution_count="4">
+<div id="6344cdc0" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -715,7 +720,7 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-5-3">
 <p>Here is our prediction using OLS. Unfortunately, while OLS fits very well to the Basque Country before terrorism happened, the out-of-sample/post-1975 predicions exhibits a lot more variance than any control unit in the pre-treatment period did. The counterfactual has a weird zig-zag-y prediction. We can see that the prediction line for the Basque country suggests that its economy would have fallen off a cliff, had terrorism <strong>not</strong> happened. In other words, if the OLS estmate is to be taken seriously, the onset of terrorism saved the Basque economy… This does not seem like a sensible finding historically, or a very reasonable prediction statistically.</p>
-<div id="73b1bd34" class="cell" data-execution_count="5">
+<div id="2bcab513" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -735,7 +740,7 @@ It is used all the time in policy discussions, for example:</p>
 <li><p>In other words, we want the model predictions to lie inside the full range of the donors only.</p></li>
 <li><p>The plot below shows the area spanned by all donor regions in Spain (shaded), along with the Basque Country. This visualizes the full feasible range for any weighted average of donors.</p></li>
 </ul>
-<div id="51fc83cd" class="cell" data-execution_count="6">
+<div id="e15e3190" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -778,7 +783,7 @@ It is used all the time in policy discussions, for example:</p>
 <div class="tab-content">
 <div id="tabset-6-1">
 <p>ideally, shifting the treatement back in time should not change the practical results of the conclusions very much.</p>
-<div id="37a12f02" class="cell" data-execution_count="8">
+<div id="08912dab" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -790,7 +795,7 @@ It is used all the time in policy discussions, for example:</p>
 </div>
 <div id="tabset-6-2">
 <p>ideally, the treated unit’s treatment effect should look extreme compared to the placebo effect given to other untreated units. Here, we rerun the SCM over the other donor units.</p>
-<div id="ce943e9d" class="cell" data-execution_count="9">
+<div id="c499ce89" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -870,7 +875,7 @@ q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
 </section>
 <section id="block-results" class="slide level2">
 <h2>Block Results</h2>
-<div id="13a47fd4" class="cell" data-execution_count="10">
+<div id="ea0e2e05" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div>
 <figure>
@@ -921,7 +926,7 @@ p\text{-value} \approx \frac{1}{J}\sum_{j\neq 1} \mathbf{1}\big(|\widehat{\text{
 <section id="extensions" class="slide level2">
 <h2>Extensions</h2>
 <p>Synthetic Control methods have undergone many advances since their inception. If you wish to use Python to estimate synthetic controls, I wrote the largest such package that exists. See here for details:</p>
-<div id="2bab2478" class="cell" data-execution_count="11">
+<div id="7001d055" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>

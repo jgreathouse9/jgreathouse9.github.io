@@ -365,7 +365,7 @@ basque = gdf[gdf['acom_code'] == '16']
 fig, ax = plt.subplots(figsize=(10, 10))
 
 # Main map: selected communities
-gdf.plot(ax=ax, color='#f0f0f0', edgecolor='white', linewidth=0.8)
+gdf.plot(ax=ax, color='#899b8d', edgecolor='white', linewidth=1)
 basque.plot(ax=ax, color='#1f77b4', edgecolor='black', linewidth=1.2)
 
 # Title
@@ -401,19 +401,20 @@ We could use ordinary least-squares, where the coefficient vector returned to us
 
 ### Notation
 
-We index time by $t \in \{1,\dots,T\}$ and units by $j \in \mathcal{J} = \{1,\dots,J+1\}$, where unit 1 is treated and the others are controls.
+We index time by $t \in \mathbb{N}$ and units by $j \in \mathbb{N}$, where unit 1 is treated and the others are controls.
 
-- $\mathcal{T}_1 = \{1,\dots,T_0\}$: set of **pre-treatment** periods, with cardinality $|\mathcal{T}_1| = T_0$  
-- $\mathcal{T}_2 = \{T_0+1,\dots,T\}$: set of **post-treatment** periods, with cardinality $|\mathcal{T}_2| = T - T_0$  
-- $\mathcal{J} = \{1,\dots,J+1\}$: set of all units (1 treated + $J$ controls)  
-- $\mathcal{J}_0 = \mathcal{J} \setminus \{1\} = \{2,\dots,J+1\}$: set of untreated donor units, with cardinality $|\mathcal{J}_0| = J$
-- $\mathbf{y}_1 \in \mathbb{R}^{T}$: outcome vector (e.g., GDP per capita) for the **treated unit** (e.g., Basque Country) over all $T$ time periods  
-- $\mathbf{Y}_0 \in \mathbb{R}^{T \times J}$: donor matrix; each column is a control unit, each row is a time period ($J=16$ control units in this case)  
-- $\mathbf{w} \in \mathbb{R}^{J}$: vector of donor weights where each entry $w_j$ indicates the contribution of control unit $j \in \mathcal{J}_0$ to the synthetic control  
+- $\mathcal{T}_1 = \{1,\dots,T_0\} \subset \mathbb{N}$: set of **pre-treatment** periods, with cardinality $|\mathcal{T}_1| = T_0$  
+- $\mathcal{T}_2 = \{T_0+1,\dots,T\} \subset \mathbb{N}$: set of **post-treatment** periods, with cardinality $|\mathcal{T}_2| = T - T_0$  
+- $\mathcal{J} = \{1,\dots,J+1\} \subset \mathbb{N}$: set of all units (1 treated + $J$ controls)  
+- $\mathcal{J}_0 = \mathcal{J} \setminus \{1\} = \{2,\dots,J+1\} \subset \mathbb{N}$: set of untreated donor units, with cardinality $|\mathcal{J}_0| = J$
+- $\mathbf{y}_1 \in \mathbb{R}^{T}$: outcome vector (e.g., GDP per capita) for the **treated unit** over all $T$ time periods  
+- $\mathbf{Y}_0 \in \mathbb{R}^{T \times J}$: donor matrix; each column is a control unit, each row is a time period  
+- $\mathbf{w} \in \mathbb{R}^{J}$: vector of donor weights where each entry $w_j$ indicates the contribution of control unit $j \in \mathcal{J}_0$ to the synthetic control
+
 
 ### Data
 
-Here is the dataset, literally displayed in preparation for regression. We can see the Basque column as well as the donor columns. We wish to take a weighted average of these control unit columns to well approximate the Basque Country in the preintervention period, such that the weighted average provides a counterfactual estimate for the Basque Country in the post-intervention period.
+We can see the Basque column as well as some of the donor columns. We wish to take a weighted average of these control unit columns to approximate the Basque Country in the preintervention period. Given that there is good pretreatment fit between the weighted average and the Basque Country, the post-1975 predictions serve as the counterfactual estimate.
 
 *Reminder: a weighted average can be written as*  
 
@@ -941,87 +942,118 @@ A more modern approach however is block permutation. Block permutation accounts 
 
 ::: {.panel-tabset}
 
-### Residuals
+### Residuals and Block Permutation Test
 
-Pre-treatment residuals:
-
+- **Pre-treatment residuals:** difference between actual and synthetic control outcomes:
 $$
 e_t = y_{1t} - \hat{y}_{1t}, \quad t \in \mathcal{T}_1
 $$
 
-Post-treatment treatment effects:
-
+- **Post-treatment treatment effects:** difference after treatment:
 $$
 \hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}, \quad t \in \mathcal{T}_2
 $$
 
-Full-period effects:
+- Goal: test if post-treatment gaps (the treatment effect) are unusually large relative to pre-treatment residuals (pre-treatment error). The problem is that we have small samples, so we need to use small sample inference.
 
-$$
-\hat{\tau}_{1t}^{\text{full}} = y_{1t} - \hat{y}_{1t}, \quad t \in \{1, \dots, T\}
-$$
+---
 
 ### Block Size
 
-Lag-$k$ autocorrelation of pre-treatment residuals:
+- Residuals may be very reasonably be correlated over time; we split pre-treatment residuals into blocks of length $B$.
+
+- Compute **lag-$k$ autocorrelation**:
 
 $$
 \text{ACF}(k) = \frac{\sum_{t=1}^{T_0-k} (e_t - \bar{e})(e_{t+k}-\bar{e})}{\sum_{t=1}^{T_0} (e_t-\bar{e})^2}
 $$
 
-Block size $B$ is chosen as the smallest lag such that $|\text{ACF}(B)| < c$ where $c$ is a positive constant
+- Choose $B$ as the smallest lag where $|\text{ACF}(B)| < c$, where $c$ is some positive constant  
 
-Number of blocks:
-
-$$
-N_B = \left\lfloor \frac{T_0}{B} \right\rfloor
-$$
+- Split residuals into $N_B$ blocks:
 
 $$
+N_B = \left\lfloor \frac{T_0}{B} \right\rfloor, \quad
 \mathbf{e}^{(b)} = \{ e_{(b-1)B+1}, \dots, e_{bB} \}, \quad b=1,\dots,N_B
 $$
 
-$$
-S_{\text{obs}} = \frac{1}{T_2}\sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
-$$
+---
 
-### Permutation
-
-For $m = 1, \dots, M$ permutations:
+### Observed Test Statistic
 
 $$
-S^{*(m)} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \big| \mathbf{e}^{*(m)}_t \big|
+S_{\text{obs}} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} |\hat{\tau}_{1t}|
 $$
 
-where $\mathbf{e}^{*(m)}$ is a concatenation of randomly sampled blocks with replacement.
+- Average absolute post-treatment effect.
 
-### P-Value
+---
 
-Global p-value:
+### Permutation Test
+
+- We now randomly resample pre-treatment blocks with replacement to create synthetic post-treatment residuals $\mathbf{e}^{\ast(m)}$, $m=1,\dots,M$:
 
 $$
-p_{\text{global}} = \frac{1}{M} \sum_{m=1}^{M} \mathbf{1}\big(S^{*(m)} \ge S_{\text{obs}}\big)
+S^{\ast(m)} = \frac{1}{T_2} \sum_{t \in \mathcal{T}_2} \big| \mathbf{e}^{\ast(m)}_t \big|
 $$
 
-Per-period p-values:
+- This generates a null distribution under no treatment.
+
+---
+
+### P-Values
+
+- **Global p-value:**
+
+$$
+p_{\text{global}} = \frac{1}{M} \sum_{m=1}^{M} \mathbf{1}\big(S^{\ast(m)} \ge S_{\text{obs}}\big)
+$$
+
+- **Per-period p-values:**
 
 $$
 p_t = \frac{1}{T_0} \sum_{s \in \mathcal{T}_1} \mathbf{1}\big(|e_s| \ge |\hat{\tau}_{1t}|\big), \quad t \in \mathcal{T}_2
 $$
 
-### Confidence Intervals
+These are simply p-values measuring how unusual the absolute value of the ATT or a given post-intervnetion residual is relative to what we would expect.
+
+---
+
+### Confidence Intervals via Pre-Treatment Residuals
+
+- We define the $(1-\alpha)$ quantile of the absolute pre-treatment residuals using the infimum:
 
 $$
-q_{1-\alpha} = \text{Quantile}_{1-\alpha}(|e_t|, t \in \mathcal{T}_1)
+q_{1-\alpha} = \inf \Big\{ q \in \mathbb{R} \;\Big|\; 
+\frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \mathbf{1}(|e_t| \le q) \ge 1-\alpha \Big\}.
 $$
 
+**Definition / intuition:**  
+
+- The quantile $q_{1-\alpha}$ is the *smallest number* such that at least $(1-\alpha)$ fraction of the pre-treatment residuals are less than or equal to it.  
+
+- In other words, it tells us what magnitude of residuals is "typical" in the pre-treatment period.  
+
+- Using this, we construct *post-treatment confidence intervals* around the estimated treatment effect:
+
 $$
-\text{CI}_t = \big[\hat{\tau}_{1t} - q_{1-\alpha}, \, \hat{\tau}_{1t} + q_{1-\alpha}\big], \quad t \in \mathcal{T}_2
+\text{CI}_t = \big[ \hat{\tau}_{1t} - q_{1-\alpha}, \; \hat{\tau}_{1t} + q_{1-\alpha} \big], 
+\quad t \in \mathcal{T}_2.
 $$
+
+**Interpretation:**  
+
+- If the post-treatment effect $\hat{\tau}_{1t}$ lies *outside this interval*... it is larger than what we would normally expect based on pre-treatment variability.
+
+- This provides a simple, non-parametric confidence interval that accounts for the observed variation before treatment.
+
+- In theory, we could do this with *moving* blocks too, but that requires a little more bookeeping.
 
 :::
 
 ## Block Results
+
+Here are our results.
 
 ```{python}
 

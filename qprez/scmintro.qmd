@@ -18,22 +18,28 @@ highlight-style: github
 - **Historical roots**  
   Originates from the *comparative case study* framework:  
 
-  - Small number of treated units.
-
-  - Compare against untreated units to infer causal effects.
+  - Small number of treated units.  
+  - Compare treated units against untreated units to infer causal effects.
 
 - **Connection to Difference-in-Differences (DiD)**  
-  - DiD assumes outcomes follow:  
-    $$
-    y_{jt}(0) = \mu_j + \lambda_t + \epsilon_{jt}
-    $$
-    where $\mu_j$ is an unobservable unit factor and $\lambda_t$ is a time variant, unit constant factor (note they are additive) 
+  - DiD assumes potential outcomes for unit $j$ at time $t$ under no treatment follow:  
 
-  - SCM generalizes this with an *interactive fixed effects model*, where time factor*s* may affect units differently:  
     $$
-    y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt}
+    y_{jt}(0) = \mu_j + \lambda_t + \epsilon_{jt},
     $$
-    where $\mathbf{\mu}_j \in \mathbb{R}^r$ and $\mathbf{\lambda}_t \in \mathbb{R}^r$ are *latent factor vectors*.
+
+    where $\mu_j$ is a **unit-specific intercept** (unobserved) and $\lambda_t$ is a **time-specific effect** common to all units.  
+    The errors $\epsilon_{jt}$ capture idiosyncratic shocks.
+
+  - SCM generalizes this to an *interactive fixed effects model*, allowing time factors to affect units differently:  
+
+    $$
+    y_{jt}(0) = \mathbf{\mu}_j^\top \mathbf{\lambda}_t + \epsilon_{jt},
+    $$
+
+    where $\mathbf{\mu}_j \in \mathbb{R}^r$ and $\mathbf{\lambda}_t \in \mathbb{R}^r$ are **latent factor vectors**.  
+    - Each dimension $k = 1,\dots,r$ represents a latent factor driving variation across units and time.  
+    - SCM attempts to construct a **weighted combination of control units** that approximates $\mathbf{\mu}_j^\top \mathbf{\lambda}_t$ for the treated unit.
 
 
 ## What Is An Average?

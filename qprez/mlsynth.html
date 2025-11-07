@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.7.8">
 
   <meta name="author" content="Jared Greathouse">
-  <meta name="dcterms.date" content="2025-10-02">
+  <meta name="dcterms.date" content="2025-11-07">
   <title>Counterfactual Estimation via mlsynth: A Practical Guide</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,7 +95,7 @@
     code span.vs { color: #032f62; } /* VerbatimString */
     code span.wa { color: #ff5555; } /* Warning */
   </style>
-  <link rel="stylesheet" href="mlsynth_files/libs/revealjs/dist/theme/quarto-423d414d36ce366a9d05f36d06304417.css">
+  <link rel="stylesheet" href="mlsynth_files/libs/revealjs/dist/theme/quarto-edbdae3ce6706c89dc07b5c8bce70f6a.css">
   <link href="mlsynth_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="mlsynth_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="mlsynth_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -199,12 +199,12 @@
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-Jared Greathouse 
+<a href="https://jgreathouse9.github.io">Jared Greathouse</a> 
 </div>
 </div>
 </div>
 
-  <p class="date">2025-10-02</p>
+  <p class="date">2025-11-07</p>
 </section>
 <section id="counterfactual-estimation" class="slide level2">
 <h2>Counterfactual Estimation</h2>
@@ -216,107 +216,74 @@ Jared Greathouse
 </section>
 <section id="did-and-scm" class="slide level2">
 <h2>DID and SCM</h2>
-<p>Both methods optimize over pre-treatment periods.</p>
-<ul>
-<li><p>For DID, we have<br>
-<span class="math display">\[
-\begin{aligned}
-    \underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} &amp;\quad \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \boldsymbol{\beta}_0 \rVert_2^2, \\
-    \text{s.t.} &amp;\quad \mathbf{w} = \frac{1}{N_0} \mathbf{1}_{N_0}.
-\end{aligned}
-\]</span></p></li>
-<li><p>SCM imposes <span class="math inline">\(\Delta \operatorname{:=} \{\lVert \mathbf{w} \rVert_1 = 1  \mid \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0}\}.\)</span> We learn the weights via<br>
-<span class="math display">\[
-\underset{\mathbf{w} \in \Delta}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \rVert_2^2.
-\]</span></p></li>
-</ul>
-<p>Note there is no intercept, and we presume the convex combination of the donor pool will be well-fitting.</p>
-</section>
-<section id="potential-problems" class="slide level2">
-<h2>Potential Problems</h2>
-<p>However, SCM and DID may struggle sometimes.</p>
-<div class="panel-tabset">
-<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">DID</a></li><li><a href="#tabset-1-2">SCM</a></li></ul>
-<div class="tab-content">
-<div id="tabset-1-1">
 <ul>
 <li>DID requires <span class="math inline">\(\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]\)</span>, or parallel trends. Does not hold when the mean of controls is dissimilar to the trend of the treated unit/group.</li>
 </ul>
-</div>
-<div id="tabset-1-2">
+<p>For the SCM, we solve another least squares problem</p>
+<p><span class="math display">\[\begin{align}
+&amp;\mathbf{w}^{\mathrm{SCM}}
+= \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \;
+\left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} \right\|_2^2 \quad \forall \, t \in \mathcal{T}_{1}, \\
+&amp;\mathcal{W}_{\mathrm{conv}} \in \Big\{ \mathbf{w}^{\mathrm{SCM}} \in (\{0\} \cup \mathbb{R}_+)^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1 \Big\}.
+\end{align}\]</span></p>
 <ul>
-<li><p>SCM struggles when <span class="math inline">\(N_0&gt;&gt;T_0\)</span>, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls.</p></li>
-<li><p>Convex SCM also favors sparse solutions. But what if the true vector of weights is <em>not</em> mostly 0? What if the DGP is actually dense instead of sparse?</p></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="potential-solutions" class="slide level2">
-<h2>Potential Solutions</h2>
-<ul>
-<li><p>Fortunately, econometricians have crafted methods which address these issues.</p></li>
-<li><p>Many of these methods are re-formulations or relaxations of the standard toolkit.</p></li>
+<li>SCM struggles when <span class="math inline">\(N_0&gt;&gt;T_0\)</span>, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls.</li>
 </ul>
 </section>
-<section id="potential-solutions-cont." class="slide level2">
-<h2>Potential Solutions, cont.</h2>
-<p>For example…</p>
-<div class="panel-tabset">
-<ul id="tabset-2" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-2-1">Forward DID</a></li><li><a href="#tabset-2-2">RSC</a></li><li><a href="#tabset-2-3">And…</a></li></ul>
-<div class="tab-content">
-<div id="tabset-2-1">
-<div id="1616f070" class="cell" data-execution_count="1">
-<div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="mlsynth_files/figure-revealjs/cell-2-output-1.png" class="quarto-figure quarto-figure-center" width="389" height="389"></p>
-</figure>
-</div>
-</div>
-</div>
+<section id="many-scm-libraries-exist" class="slide level2">
+<h2>Many SCM Libraries Exist</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 5%">
+<col style="width: 80%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Estimator / Method</th>
+<th>Software</th>
+<th>Notes / Accessibility</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Classical SCM</strong></td>
+<td>R / Stata</td>
+<td>Original Abadie et al.&nbsp;implementation; widely used in policy/econ.</td>
+</tr>
+<tr class="even">
+<td><strong>PySyncon</strong></td>
+<td>Python</td>
+<td>Python implementation of Robust/Augmented Synthetic Control.</td>
+</tr>
+<tr class="odd">
+<td><strong>microsynth</strong></td>
+<td>R</td>
+<td>Focused on disaggregated data.</td>
+</tr>
+<tr class="even">
+<td><strong>augsynth</strong></td>
+<td>R</td>
+<td>Augmented SCM; automates some covariate adjustments but still R-only.</td>
+</tr>
+<tr class="odd">
+<td><strong>sdid (Synthetic DID)</strong></td>
+<td>R/Stata</td>
+<td>Implements Synthetic Difference-in-Differences.</td>
+</tr>
+</tbody>
+</table>
+<p>While having all these is nice, they are all scattered in differnt libraries.</p>
+</section>
+<section id="scm-challenges-in-practice" class="slide level2">
+<h2>SCM Challenges in Practice</h2>
 <ul>
-<li><p>Forward DID uses forward selection to choose a donor pool/control group for a single treated unit, using the DID estimator.</p></li>
-<li><p>However, its only existing implementations are either in MATLAB and R.</p></li>
-<li><p>MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods (see the below).</p></li>
-<li><p>This may work fine for one study, but what about if we do not have 44 pretreatment periods?</p></li>
+<li><p><strong>High-dimensional donor pools</strong>: When <span class="math inline">\(N_0 \gg T_0\)</span>, standard SCM can overfit/be undefined.</p></li>
+<li><p><strong>Sparse weight assumption</strong>: Convex SCM favors sparse solutions; if the true data-generating process is dense, the model misallocates weights.</p></li>
+<li><p><strong>Donor pool selection</strong>: Picking the “right” controls is tricky. Including irrelevant units can bias predictions.</p></li>
+<li><p><strong>Missing data / noisy outcomes</strong>: Classical SCM struggles if the pre-treatment data has high variance.</p></li>
 </ul>
-<div id="8e5639dc" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href=""></a>data <span class="op">=</span> read.csv(<span class="st">"GDP.csv"</span>, sep<span class="op">=</span><span class="st">","</span>, header <span class="op">=</span> TRUE)</span>
-<span id="cb1-2"><a href=""></a></span>
-<span id="cb1-3"><a href=""></a>t<span class="op">=</span>dim(data)[<span class="dv">1</span>]</span>
-<span id="cb1-4"><a href=""></a>no_control<span class="op">=</span>dim(data)[<span class="dv">2</span>]<span class="op">-</span><span class="dv">1</span></span>
-<span id="cb1-5"><a href=""></a>control_ID<span class="op">=</span><span class="dv">1</span>:no_control</span>
-<span id="cb1-6"><a href=""></a>t1<span class="op">=</span><span class="dv">44</span>           <span class="co"># t1 is the pretreatment sample size</span></span>
-<span id="cb1-7"><a href=""></a>y<span class="op">=</span>data[,<span class="dv">1</span>]</span>
-<span id="cb1-8"><a href=""></a>y1<span class="op">=</span>data[<span class="dv">1</span>:t1,<span class="dv">1</span>]</span>
-<span id="cb1-9"><a href=""></a>y2<span class="op">=</span>data[(t1<span class="op">+</span><span class="dv">1</span>):t,<span class="dv">1</span>]}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-<div id="tabset-2-2">
-<div id="0beb5d0d" class="cell" data-execution_count="3">
-<div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="mlsynth_files/figure-revealjs/cell-4-output-1.png" class="quarto-figure quarto-figure-center" width="389" height="389"></p>
-</figure>
-</div>
-</div>
-</div>
-<ul>
-<li><p>Robust Synthetic Control uses PCA to denoise the donor pool and use the low-rank approximation to learn the weights. An upshot of this method is that, in their empirical applications at least, the method appears to not rely on additional covariate metrics that standard SCMs need to attain acceptable fit.</p></li>
-<li><p>However, one <a href="https://github.com/sdfordham/pysyncon/blob/main/examples/robust/basque_robust.ipynb">existing implementation</a> requires the user to manually specify the number of principal components/singular values as well as the lambda parameter. <a href="https://github.com/deshen24/panel-data-regressions/blob/master/case_study.py">Another</a> requires an even more complex setup.</p></li>
-</ul>
-</div>
-<div id="tabset-2-3">
-<ul>
-<li><p>The existing implementations (arguably) presume a more advanced knowledge of machine-learning, econometrics, and/or programming than the modal marketing scientist, policy analyst/economist, or data scientist is <strong>likely</strong> to have.</p></li>
-<li><p>Many of the steps critical to the analysis are not automated, leaving room for small errors.</p></li>
-<li><p>This combination makes it harder/more cumbersome for the applied scientist to use these methods in practice.</p></li>
-</ul>
-</div>
-</div>
-</div>
+<p><strong>Implication:</strong> Researchers need methods that handle high-dimensional, noisy, and imperfect real-world data while still producing interpretable counterfactuals.</p>
 </section>
 <section id="enter-mlsynth" class="slide level2">
 <h2>Enter <code>mlsynth</code>…</h2>
@@ -335,7 +302,7 @@ Jared Greathouse
 <li><p><code>cvxpy, matplotlib, numpy, pandas, scipy, scikit-learn, statsmodels, pydantic</code></p></li>
 <li><p>And then, we can install this from the command line</p></li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href=""></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href=""></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="using-mlsynth" class="slide level2">
 <h2>Using <code>mlsynth</code></h2>
@@ -351,53 +318,83 @@ Jared Greathouse
 <h2><a href="https://doi.org/10.1198/jasa.2009.ap08746">Proposition 99</a></h2>
 <p>Find the data <a href="https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv">here</a>.</p>
 <div class="panel-tabset">
-<ul id="tabset-3" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-3-1">Inspection</a></li><li><a href="#tabset-3-2">SCM</a></li><li><a href="#tabset-3-3">FDID</a></li></ul>
+<ul id="tabset-1" class="panel-tabset-tabby"><li><a data-tabby-default="" href="#tabset-1-1">Inspection</a></li><li><a href="#tabset-1-2">SCM</a></li><li><a href="#tabset-1-3">FDID</a></li></ul>
 <div class="tab-content">
-<div id="tabset-3-1">
+<div id="tabset-1-1">
 <p>This is the classical example from the Abadie 2010 paper.</p>
-<div id="2852fb23" class="cell" data-results="hide" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-2"><a href=""></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
-<span id="cb3-3"><a href=""></a></span>
-<span id="cb3-4"><a href=""></a><span class="co"># Load smoking data</span></span>
-<span id="cb3-5"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/smoking_data.csv"</span></span>
-<span id="cb3-6"><a href=""></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb3-7"><a href=""></a></span>
-<span id="cb3-8"><a href=""></a><span class="co"># Configure the SC_DIAGPLOT method</span></span>
-<span id="cb3-9"><a href=""></a>plotconfig <span class="op">=</span> {</span>
-<span id="cb3-10"><a href=""></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb3-11"><a href=""></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
-<span id="cb3-12"><a href=""></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb3-13"><a href=""></a>    <span class="st">"unitid"</span>: df.columns[<span class="dv">0</span>],</span>
-<span id="cb3-14"><a href=""></a>    <span class="st">"time"</span>: df.columns[<span class="dv">1</span>],</span>
-<span id="cb3-15"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb3-16"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-17"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"red"</span>,</span>
-<span id="cb3-18"><a href=""></a>    <span class="st">"method"</span>: <span class="st">"RPCA"</span>,</span>
-<span id="cb3-19"><a href=""></a>    <span class="st">"Frequentist"</span>: <span class="va">True</span></span>
-<span id="cb3-20"><a href=""></a>}</span>
-<span id="cb3-21"><a href=""></a></span>
-<span id="cb3-22"><a href=""></a>sc_diagplot([plotconfig])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="b77220d1" class="cell" data-results="hide" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-2"><a href=""></a><span class="im">from</span> mlsynth.utils.helperutils <span class="im">import</span> sc_diagplot</span>
+<span id="cb2-3"><a href=""></a></span>
+<span id="cb2-4"><a href=""></a><span class="co"># Load smoking data</span></span>
+<span id="cb2-5"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/smoking_data.csv"</span></span>
+<span id="cb2-6"><a href=""></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-7"><a href=""></a></span>
+<span id="cb2-8"><a href=""></a><span class="co"># Configure the SC_DIAGPLOT method</span></span>
+<span id="cb2-9"><a href=""></a>plotconfig <span class="op">=</span> {</span>
+<span id="cb2-10"><a href=""></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-11"><a href=""></a>    <span class="st">"outcome"</span>: df.columns[<span class="dv">2</span>],</span>
+<span id="cb2-12"><a href=""></a>    <span class="st">"treat"</span>: df.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb2-13"><a href=""></a>    <span class="st">"unitid"</span>: df.columns[<span class="dv">0</span>],</span>
+<span id="cb2-14"><a href=""></a>    <span class="st">"time"</span>: df.columns[<span class="dv">1</span>],</span>
+<span id="cb2-15"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb2-16"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb2-17"><a href=""></a>    <span class="st">"counterfactual_color"</span>: <span class="st">"red"</span>,</span>
+<span id="cb2-18"><a href=""></a>    <span class="st">"method"</span>: <span class="st">"RPCA"</span>,</span>
+<span id="cb2-19"><a href=""></a>    <span class="st">"Frequentist"</span>: <span class="va">True</span></span>
+<span id="cb2-20"><a href=""></a>}</span>
+<span id="cb2-21"><a href=""></a></span>
+<span id="cb2-22"><a href=""></a>sc_diagplot([plotconfig])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="mlsynth_files/figure-revealjs/cell-5-output-1.png" class="quarto-figure quarto-figure-center" width="560" height="508"></p>
+<p><img data-src="mlsynth_files/figure-revealjs/cell-2-output-1.png" class="quarto-figure quarto-figure-center" width="519" height="477"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Parallel trends does not appear to hold for California with respect to its donor pool. California has a steeper downward sloping trend of cigarette consumption compared to the average of the donor pool. No matter what scalar constant we would shift the mean of the donor pool by, the mean difference would not be constant with respect to California. This suggests one of two solutions is viable: either parallel trends would hold with <em>some</em> control units, or we simply need to re-weight the donor pool to better match the pre-intervention trajectory.</p>
 </div>
-<div id="tabset-3-2">
+<div id="tabset-1-2">
 <p>Here is the results of the <code>CLUSTERSC</code> class. This class implements the Robust Synthetic Control Method. We can see that this model fits the pre-treatment trajectory very well, without needing to use any of the seven covariates that the original paper uses.</p>
-<div id="d4ab3646" class="cell" data-results="hide" data-execution_count="5">
+<div id="fb722b43" class="cell" data-results="hide" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> CLUSTERSC</span>
+<span id="cb3-3"><a href=""></a></span>
+<span id="cb3-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
+<span id="cb3-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb3-6"><a href=""></a></span>
+<span id="cb3-7"><a href=""></a>SCconfig <span class="op">=</span> {</span>
+<span id="cb3-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb3-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb3-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb3-11"><a href=""></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb3-12"><a href=""></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb3-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb3-14"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb3-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"method"</span>: <span class="st">"PCR"</span>, <span class="st">"cluster"</span>: <span class="va">False</span></span>
+<span id="cb3-16"><a href=""></a>}</span>
+<span id="cb3-17"><a href=""></a></span>
+<span id="cb3-18"><a href=""></a>SCResult <span class="op">=</span> CLUSTERSC(SCconfig).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="mlsynth_files/figure-revealjs/cell-3-output-1.png" class="quarto-figure quarto-figure-center" width="919" height="532"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Of course, this estimator presumes that some units should matter more than others (hence the weighting scheme).</p>
+</div>
+<div id="tabset-1-3">
+<div id="b099684a" class="cell" data-results="hide" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb4-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> CLUSTERSC</span>
+<span id="cb4-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FDID</span>
 <span id="cb4-3"><a href=""></a></span>
 <span id="cb4-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
 <span id="cb4-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
 <span id="cb4-6"><a href=""></a></span>
-<span id="cb4-7"><a href=""></a>SCconfig <span class="op">=</span> {</span>
+<span id="cb4-7"><a href=""></a>FDIDconfig <span class="op">=</span> {</span>
 <span id="cb4-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
 <span id="cb4-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
 <span id="cb4-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
@@ -405,44 +402,14 @@ Jared Greathouse
 <span id="cb4-12"><a href=""></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
 <span id="cb4-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
 <span id="cb4-14"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb4-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"method"</span>: <span class="st">"PCR"</span>, <span class="st">"cluster"</span>: <span class="va">False</span></span>
+<span id="cb4-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>, <span class="st">"red"</span>]</span>
 <span id="cb4-16"><a href=""></a>}</span>
 <span id="cb4-17"><a href=""></a></span>
-<span id="cb4-18"><a href=""></a>SCResult <span class="op">=</span> CLUSTERSC(SCconfig).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-18"><a href=""></a>FDIDResult <span class="op">=</span> FDID(FDIDconfig).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="mlsynth_files/figure-revealjs/cell-6-output-1.png" class="quarto-figure quarto-figure-center" width="919" height="532"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>Of course, this estimator presumes that some units should matter more than others (hence the weighting scheme).</p>
-</div>
-<div id="tabset-3-3">
-<div id="90fa14e9" class="cell" data-results="hide" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href=""></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb5-2"><a href=""></a><span class="im">from</span> mlsynth <span class="im">import</span> FDID</span>
-<span id="cb5-3"><a href=""></a></span>
-<span id="cb5-4"><a href=""></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"</span></span>
-<span id="cb5-5"><a href=""></a>data <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb5-6"><a href=""></a></span>
-<span id="cb5-7"><a href=""></a>FDIDconfig <span class="op">=</span> {</span>
-<span id="cb5-8"><a href=""></a>    <span class="st">"df"</span>: data,</span>
-<span id="cb5-9"><a href=""></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
-<span id="cb5-10"><a href=""></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb5-11"><a href=""></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
-<span id="cb5-12"><a href=""></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
-<span id="cb5-13"><a href=""></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb5-14"><a href=""></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb5-15"><a href=""></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>, <span class="st">"red"</span>]</span>
-<span id="cb5-16"><a href=""></a>}</span>
-<span id="cb5-17"><a href=""></a></span>
-<span id="cb5-18"><a href=""></a>FDIDResult <span class="op">=</span> FDID(FDIDconfig).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="mlsynth_files/figure-revealjs/cell-7-output-1.png" class="quarto-figure quarto-figure-center" width="919" height="532"></p>
+<p><img data-src="mlsynth_files/figure-revealjs/cell-4-output-1.png" class="quarto-figure quarto-figure-center" width="919" height="532"></p>
 </figure>
 </div>
 </div>
@@ -509,7 +476,7 @@ Jared Greathouse
         progress: true,
 
         // Display the page number of the current slide
-        slideNumber: false,
+        slideNumber: 'c/t',
 
         // 'all', 'print', or 'speaker'
         showSlideNumber: 'all',
@@ -614,7 +581,7 @@ Jared Greathouse
         previewLinks: false,
 
         // Transition style (none/fade/slide/convex/concave/zoom)
-        transition: 'none',
+        transition: 'fade',
 
         // Transition speed (default/fast/slow)
         transitionSpeed: 'default',

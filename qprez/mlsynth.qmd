@@ -1,11 +1,15 @@
 ---
 title: "Counterfactual Estimation via ```mlsynth```: A Practical Guide"
-author: "Jared Greathouse"
 date: today
-format: 
-  revealjs:
+author:
+  - name: "[Jared Greathouse](https://jgreathouse9.github.io)"
+format:
+  revealjs: 
+    slide-number: true
+    transition: fade
     scrollable: true
-theme: simple
+    background-color: "#EAF7F1"
+    theme: clean.scss
 highlight-style: github
 ---
 
@@ -22,142 +26,49 @@ highlight-style: github
 
 ## DID and SCM
 
-Both methods optimize over pre-treatment periods.
-
-- For DID, we have  
-  $$
-  \begin{aligned}
-      \underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} &\quad \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \boldsymbol{\beta}_0 \rVert_2^2, \\
-      \text{s.t.} &\quad \mathbf{w} = \frac{1}{N_0} \mathbf{1}_{N_0}.
-  \end{aligned}
-  $$
-
-- SCM imposes $\Delta \operatorname{:=} \{\lVert \mathbf{w} \rVert_1 = 1  \mid \mathbf{w} \in \mathbb{R}_{\geq 0}^{N_0}\}.$ We learn the weights via  
-  $$
-  \underset{\mathbf{w} \in \Delta}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} \rVert_2^2.
-  $$
-
-Note there is no intercept, and we presume the convex combination of the donor pool will be well-fitting.
-
----
-
-## Potential Problems
-
-However, SCM and DID may struggle sometimes.
-
-::: {.panel-tabset}
-
-### DID
-
 - DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. Does not hold when the mean of controls is dissimilar to the trend of the treated unit/group.
 
+For the SCM, we solve another least squares problem
 
-### SCM
+\begin{align}
+&\mathbf{w}^{\mathrm{SCM}}
+= \underset{\mathbf{w}^{\mathrm{SCM}} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \;
+\left\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}^{\mathrm{SCM}} \right\|_2^2 \quad \forall \, t \in \mathcal{T}_{1}, \\
+&\mathcal{W}_{\mathrm{conv}} \in \Big\{ \mathbf{w}^{\mathrm{SCM}} \in (\{0\} \cup \mathbb{R}_+)^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1 \Big\}.
+\end{align}
 
 - SCM struggles when $N_0>>T_0$, and is prone to overfitting in this setting. Also, smaller donor pools are preferable to mitigate interpolation biases. But picking a good donor pool can be challenging when there are very many controls.
 
-- Convex SCM also favors sparse solutions. But what if the true vector of weights is _not_ mostly 0? What if the DGP is actually dense instead of sparse?
+---
 
-:::
+## Many SCM Libraries Exist
+
+| Estimator / Method       | Software  | Notes / Accessibility                                                                                                                  |
+| ------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Classical SCM**        | R / Stata | Original Abadie et al. implementation; widely used in policy/econ.                                                                     |
+| **PySyncon**           | Python    | Python implementation of Robust/Augmented Synthetic Control.                                |
+| **microsynth**           | R         | Focused on disaggregated data.                                                                 |
+| **augsynth**             | R         | Augmented SCM; automates some covariate adjustments but still R-only.                                                                  |
+| **sdid (Synthetic DID)** | R/Stata         | Implements Synthetic Difference-in-Differences.                                                            |
+
+While having all these is nice, they are all scattered in differnt libraries.
 
 ---
 
-## Potential Solutions
+## SCM Challenges in Practice
 
-- Fortunately, econometricians have crafted methods which address these issues.
+- **High-dimensional donor pools**: When $N_0 \gg T_0$, standard SCM can overfit/be undefined.  
 
-- Many of these methods are re-formulations or relaxations of the standard toolkit.
+- **Sparse weight assumption**: Convex SCM favors sparse solutions; if the true data-generating process is dense, the model misallocates weights.  
 
----
+- **Donor pool selection**: Picking the "right" controls is tricky. Including irrelevant units can bias predictions.  
 
-## Potential Solutions, cont.
+- **Missing data / noisy outcomes**: Classical SCM struggles if the pre-treatment data has high variance.   
 
-For example...
-
-::: {.panel-tabset}
-
-### Forward DID
-
-```{python}
-#| echo: false
-#| fig-align: center
-
-import qrcode
-from PIL import Image
-import matplotlib.pyplot as plt
-
-# Generate QR code
-url = "https://doi.org/10.1287/mksc.2022.0212"
-
-# Display the QR code in Quarto
-plt.imshow(qrcode.make(url), cmap="gray")
-plt.axis("off")  # Hide axes
-plt.show()
-
-```
-
-- Forward DID uses forward selection to choose a donor pool/control group for a single treated unit, using the DID estimator.
-
-- However, its only existing implementations are either in MATLAB and R.
-
-- MATLAB naturally is not free! And it, as well as the R code, requires users to have a wide dataframe and manually specify the number of pre-treatment periods (see the below).
-
-- This may work fine for one study, but what about if we do not have 44 pretreatment periods?
-
-
-```{python}
-
-#| eval: false
-#| echo: true
-
-data = read.csv("GDP.csv", sep=",", header = TRUE)
-
-t=dim(data)[1]
-no_control=dim(data)[2]-1
-control_ID=1:no_control
-t1=44           # t1 is the pretreatment sample size
-y=data[,1]
-y1=data[1:t1,1]
-y2=data[(t1+1):t,1]}
-
-
-```
-
-### RSC
-
-```{python}
-#| echo: false
-#| fig-align: center
-
-import qrcode
-from PIL import Image
-import matplotlib.pyplot as plt
-
-# Generate QR code
-url = "https://jmlr.org/papers/v19/17-777.html"
-
-# Display the QR code in Quarto
-plt.imshow(qrcode.make(url), cmap="gray")
-plt.axis("off")  # Hide axes
-plt.show()
-
-```
-
-- Robust Synthetic Control uses PCA to denoise the donor pool and use the low-rank approximation to learn the weights. An upshot of this method is that, in their empirical applications at least, the method appears to not rely on additional covariate metrics that standard SCMs need to attain acceptable fit.
-
-- However, one [existing implementation](https://github.com/sdfordham/pysyncon/blob/main/examples/robust/basque_robust.ipynb) requires the user to manually specify the number of principal components/singular values as well as the lambda parameter. [Another](https://github.com/deshen24/panel-data-regressions/blob/master/case_study.py) requires an even more complex setup.
-
-### And...
-
-- The existing implementations (arguably) presume a more advanced knowledge of machine-learning, econometrics, and/or programming than the modal marketing scientist, policy analyst/economist, or data scientist is **likely** to have.
-
-- Many of the steps critical to the analysis are not automated, leaving room for small errors.
-
-- This combination makes it harder/more cumbersome for the applied scientist to use these methods in practice. 
-
-:::
+**Implication:** Researchers need methods that handle high-dimensional, noisy, and imperfect real-world data while still producing interpretable counterfactuals.
 
 ---
+
 
 ## Enter ```mlsynth```...
 

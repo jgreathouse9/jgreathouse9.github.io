@@ -20,15 +20,9 @@ highlight-style: github
 
 - Researchers commonly use Difference-in-Differences designs and Synthetic Control methods (DID and SCM) to measure causal impacts.
 
-- Both approaches use weighted averages of control groups from the pre-treatment period to estimate counterfactuals, or the post-treatment values of the outcome we'd see absent treatment.
-
----
-
-## DID and SCM
-
 - DID requires $\mathbb{E}[y_{1t}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t}(0)] = \mathbb{E}[y_{1t-1}(0)] - \mathbb{E}[y_{\mathcal{N}_0 t-1}(0)]$, or parallel trends. Does not hold when the mean of controls is dissimilar to the trend of the treated unit/group.
 
-For the SCM, we solve another least squares problem
+For the SCM, we solve a least squares problem
 
 \begin{align}
 &\mathbf{w}^{\mathrm{SCM}}
@@ -45,50 +39,41 @@ For the SCM, we solve another least squares problem
 
 | Estimator / Method       | Software  | Notes / Accessibility                                                                                                                  |
 | ------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Classical SCM**        | R / Stata | Original Abadie et al. implementation; widely used in policy/econ.                                                                     |
-| **PySyncon**           | Python    | Python implementation of Robust/Augmented Synthetic Control.                                |
-| **microsynth**           | R         | Focused on disaggregated data.                                                                 |
-| **augsynth**             | R         | Augmented SCM; automates some covariate adjustments but still R-only.                                                                  |
-| **sdid (Synthetic DID)** | R/Stata         | Implements Synthetic Difference-in-Differences.                                                            |
+| [**Classical SCM**](https://www.aeaweb.org/articles?id=10.1257/jel.20191450)         | [R](https://doi.org/10.18637/jss.v042.i13) / [Stata](https://doi.org/10.1177/1536867X231195278) | Original SC implementation.                                                                     |
+| [**PySyncon**](https://sdfordham.github.io/pysyncon/)           | Python    | [Robust](https://jmlr.csail.mit.edu/papers/volume19/17-777/17-777.pdf)/[Penalized](https://economics.mit.edu/sites/default/files/publications/A%20Penalized%20Synthetic%20Control%20Estimator%20for%20Disagg.pdf) SC.                                |
+| [**microsynth**](https://doi.org/10.1080/01621459.2016.1213634)           | [R](https://cran.r-project.org/web/packages/microsynth/vignettes/introduction.html)         | Focused on disaggregated data.                                                                 |
+| [**augsynth**](https://doi.org/10.1080/01621459.2021.1929245)             | [R](https://github.com/ebenmichael/augsynth)/[Python](https://sdfordham.github.io/pysyncon/)         | bias corrects and performs inference.                                                                  |
+| [**sdid (Synthetic DID)**](https://www.aeaweb.org/articles?id=10.1257/aer.20190159) | [R](https://synth-inference.github.io/synthdid/)/[Stata](https://doi.org/10.1177/1536867X241297914)         | Implements Synthetic Difference-in-Differences.                                                            |
 
-While having all these is nice, they are all scattered in differnt libraries.
+While having all these is nice, they are all scattered in different libraries. They have different data structure demands, different options, and so on.
 
----
+## Other SCMs...
 
-## SCM Challenges in Practice
+| Estimator / Method       | Software  | Notes / Accessibility                                                                                                                  |
+| ------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| [**Forward SCM**](https://doi.org/10.1016/j.econlet.2024.111976)         | Stata | Do File Only, not production ready                                                                     |
+| [**Forward PDA**](https://doi.org/10.1016/j.jeconom.2021.04.009)           | [R](https://zhentaoshi.github.io/fsPDA/)/[Stata](https://doi.org/10.1177/1536867X221140960)    | R Requires wide data, Stata proprietary                                |
+| [**TSSC**](https://doi.org/10.1287/mnsc.2023.4878)           | MATLAB         | MATLAB is proprietary, TSSC not packaged                                                                 |
+| [**Relaxed $\ell_2$ SCM**](https://doi.org/10.48550/arXiv.2508.01793)             | [Python](https://github.com/YapengZheng/Relaxed_SC/tree/main)         | handles high dimensional data, but requires wide data.                                                                  |   
+| [**Synthetic Historical Control**](http://dx.doi.org/10.2139/ssrn.4995085) | Not Packaged | Time Series only Approach, but no package exists |
+| [**Forward Difference-in-Differences**](https://doi.org/10.1287/mksc.2022.0212) | [Stata](https://jgreathouse9.github.io/publications/FDIDSJ.pdf)/R | Stata is not free, and R code is not a package |
+| [**Robust PCA SCM**](https://arxiv.org/abs/2108.12542) | Not Packaged| Author's Code is in R and Python |
 
-- **High-dimensional donor pools**: When $N_0 \gg T_0$, standard SCM can overfit/be undefined.  
 
-- **Sparse weight assumption**: Convex SCM favors sparse solutions; if the true data-generating process is dense, the model misallocates weights.  
-
-- **Donor pool selection**: Picking the "right" controls is tricky. Including irrelevant units can bias predictions.  
-
-- **Missing data / noisy outcomes**: Classical SCM struggles if the pre-treatment data has high variance.   
-
-**Implication:** Researchers need methods that handle high-dimensional, noisy, and imperfect real-world data while still producing interpretable counterfactuals.
+These approaches are very useful; they address high dimensional data structures via clustering/forward selection, allow for model selection between different SCM variants, address noisily observed outcomes, but many are either proprietary or not packaged, making the actual use of these estimators difficult.
 
 ---
 
 
 ## Enter ```mlsynth```...
 
-- The Python library ```mlsynth``` is meant to further democratize causal inference and econometrics, making its benefits available to a wider class of researchers.
+- The Python library ```mlsynth``` is meant to further democratize causal inference SC methods.
 
-- ```mlsynth``` automates these estimators (and more!).
-
-- Its syntax is very simple, and the steps are totally automated.
-
-- This presentation will cover ```mlsynth``` and how to use it in practice. I will describe a few of the algorithms and give examples of how to use them.
-
-## Installing ```mlsynth```
+- All users need is a single pandas dataframe with an outcome columns, as well as columns for time, the unit names, and an indicator dummy.
 
 To install ```mlsynth```, we need:
 
 - Python 3.9 or later
-
-- ```cvxpy, matplotlib, numpy, pandas, scipy, scikit-learn, statsmodels, pydantic```
-
-- And then, we can install this from the command line
 
 ```bash
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
@@ -116,9 +101,24 @@ Find the data [here](https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs
 
 ::: {.panel-tabset}
 
-### Inspection
+### Dataset
 
-This is the classical example from the Abadie 2010 paper.
+```{python}
+#| echo: False
+
+from IPython.display import Markdown, display
+import pandas as pd
+
+# Load smoking data
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/smoking_data.csv"
+df = pd.read_csv(url)
+
+# Display head
+display(Markdown(df.head().to_markdown(index=False)))
+display(Markdown(df.tail().to_markdown(index=False)))
+```
+
+### Donors
 
 ```{python}
 #| echo: true
@@ -132,6 +132,12 @@ from mlsynth.utils.helperutils import sc_diagplot
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/smoking_data.csv"
 df = pd.read_csv(url)
 
+print("### Head of the dataset")
+print(df.head().to_markdown(index=False))
+
+print("\n### Tail of the dataset")
+print(df.tail().to_markdown(index=False))
+
 # Configure the SC_DIAGPLOT method
 plotconfig = {
     "df": df,
@@ -141,9 +147,7 @@ plotconfig = {
     "time": df.columns[1],
     "display_graphs": True,
     "save": False,
-    "counterfactual_color": "red",
-    "method": "RPCA",
-    "Frequentist": True
+    "counterfactual_color": "red"
 }
 
 sc_diagplot([plotconfig])
@@ -152,7 +156,7 @@ sc_diagplot([plotconfig])
 
 Parallel trends does not appear to hold for California with respect to its donor pool. California has a steeper downward sloping trend of cigarette consumption compared to the average of the donor pool. No matter what scalar constant we would shift the mean of the donor pool by, the mean difference would not be constant with respect to California. This suggests one of two solutions is viable: either parallel trends would hold with _some_ control units, or we simply need to re-weight the donor pool to better match the pre-intervention trajectory.
 
-### SCM
+### Robust SC
 
 Here is the results of the ```CLUSTERSC``` class. This class implements the Robust Synthetic Control Method. We can see that this model fits the pre-treatment trajectory very well, without needing to use any of the seven covariates that the original paper uses.
 
@@ -164,8 +168,11 @@ Here is the results of the ```CLUSTERSC``` class. This class implements the Robu
 import pandas as pd
 from mlsynth import CLUSTERSC
 
-url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/smoking_data.csv"
-data = pd.read_csv(url)
+stub = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/"
+trail = "refs/heads/main/basedata/"
+file = "smoking_data.csv"
+
+data = pd.read_csv(stub + trail + file)
 
 SCconfig = {
     "df": data,
@@ -181,9 +188,59 @@ SCconfig = {
 SCResult = CLUSTERSC(SCconfig).fit()
 ```
 
-Of course, this estimator presumes that some units should matter more than others (hence the weighting scheme).
+Here, the weights are allowed to be negative and there is no summation constraint: PCA is used to denoise the donor pool, we select the number of singular values via a singular value thresholding, and we reconstruct the donor matrix to learn the weights via OLS. We may also use the Bayesian version of this estimator if we set `Frequentist` to False
 
 ### FDID
+
+FDID is an iterative, data-driven approach that selects the control group for a treated unit.  
+By design, it is agnostic to which units to include or how many controls to use. The algorithm adds controls sequentially based on pre-treatment fit.
+
+1. Initialization  
+
+$\widehat{U}_0 = \emptyset \qquad \mathcal{U} = \emptyset$
+
+2. Forward Selection (Iteration $k = 1$)
+
+For each candidate control $i \in \mathcal{N}_0$:
+
+$$
+\underset{\beta_{\widehat{U}_0 \cup \{i\}}}{\operatorname*{argmin}} 
+\big\| 
+\mathbf{y}_1 - \mathbf{Y}_{\widehat{U}_0 \cup \{i\}} \beta_{\widehat{U}_0 \cup \{i\}} - \beta_\text{cons}\mathbf{1} 
+\big\|_2^2, \quad
+\beta_{\widehat{U}_0 \cup \{i\}} = \frac{1}{|\widehat{U}_0| + 1}
+$$
+
+Select the control with highest $R^2$:
+
+$$
+i_1^\ast = \underset{i \in \mathcal{N}_0}{\operatorname*{argmax}} R^2_i, \quad
+\widehat{U}_1 = \{ i_1^\ast \}, \quad
+\mathcal{U} = \{\widehat{U}_1\}.
+$$
+
+3. Subsequent Iterations ($k = 2, \dots, N_0$)
+
+For each remaining candidate $i \notin \widehat{U}_{k-1}$:
+
+$$
+i_k^\ast = \underset{i \in \mathcal{N}_0 \setminus \widehat{U}_{k-1}}{\operatorname*{argmax}} 
+R^2_{\widehat{U}_{k-1} \cup \{i\}}, \quad
+\widehat{U}_k = \widehat{U}_{k-1} \cup \{ i_k^\ast \}, \quad
+\mathcal{U} = \mathcal{U} \cup \{ \widehat{U}_k \}.
+$$
+
+4. Final Control Group
+
+$$
+\widehat{U} := \underset{\widehat{U}_k \in \mathcal{U}}{\operatorname*{argmax}} R^2(\widehat{U}_k)
+$$
+
+The selected control set $\widehat{U}$ maximizes pre-treatment fit ($R^2$) among all candidate sets.
+
+
+
+
 
 ```{python}
 #| echo: true
@@ -213,3 +270,236 @@ FDIDResult = FDID(FDIDconfig).fit()
 Here all _selected_ units are given equal weight, adjusted only by an intercept.
 
 :::
+
+---
+
+
+## [Basque Country](https://www.aeaweb.org/articles?id=10.1257/000282803321455188)
+
+Basque Treated in 1975 with the other 16 Spanish communities under control.
+
+::: {.panel-tabset}
+
+### Donors
+
+
+```{python}
+
+#| echo: true
+
+#| fig-align: center
+
+import pandas as pd
+from mlsynth.utils.helperutils import sc_diagplot
+
+# Load smoking data
+stub = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/"
+trail = "refs/heads/main/basedata/"
+file = "basque_data.csv"
+
+df = pd.read_csv(stub + trail + file)
+
+plotconfig = {
+    "df": df,
+    "outcome": df.columns[2],
+    "treat": df.columns[-1],
+    "unitid": df.columns[0],
+    "time": df.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": "red"
+}
+
+sc_diagplot([plotconfig])
+
+```
+
+### Relaxed SC
+
+- A feature of Classic SCM is that the weights are often very sparse, which may overfit to certain donor units and produce unstable results.  
+
+- Relaxed Balanced SCM introduces two modifications:
+  1. Encourages dense weight vectors to diversify prediction risk.
+  2. Allows a slack in the pre-treatment fit to reduce overfitting to a few donors.
+
+- Let
+
+$$
+\mathbf{G} \operatorname{:=} \mathbf{Y}_0^\top \mathbf{Y}_0 \in \mathbb{R}^{N_0 \times N_0}, \quad
+\mathbf{g} \operatorname{:=} \mathbf{Y}_0^\top \mathbf{y}_1 \in \mathbb{R}^{N_0}.
+$$
+
+- The optimization problem is
+
+$$
+\begin{aligned}
+\mathbf{w}^{\mathrm{RBSCM}} &= 
+\underset{\mathbf{w} \in \mathcal{W}_{\mathrm{conv}}}{\operatorname*{argmin}} \; 
+\|\mathbf{w}\|_2^2, \\
+\text{s.t.} \quad & 
+\big\| \mathbf{G}\mathbf{w} - \mathbf{g} \big\|_\infty \le \tau,
+\end{aligned}
+$$
+
+where
+
+$$
+\mathcal{W}_{\mathrm{conv}} \operatorname{:=} 
+\Big\{ \mathbf{w} \in (\{0\} \cup \mathbb{R}_+)^{N_0} : \sum_{j=1}^{N_0} w_j = 1 \Big\}.
+$$
+
+- $\tau \ge 0$ controls the allowed relaxation of the pre-treatment fit.
+
+- The $\ell_2$-norm penalty encourages dense weights, distributing contribution across multiple donor units instead of concentrating on a few.
+
+
+```{python}
+
+#| echo: True
+#| fig-align: center
+
+import pandas as pd
+from mlsynth import RESCM
+
+stub = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/"
+trail = "refs/heads/main/basedata/"
+file = "basque_data.csv"
+
+data = pd.read_csv(stub + trail + file)
+
+Relconfig = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["blue", "red"]
+}
+
+RelResult = RESCM(Relconfig).fit()
+```
+
+```{python}
+
+#| echo: False
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from mlsynth import RESCM
+
+stub = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/"
+trail = "refs/heads/main/basedata/"
+file = "basque_data.csv"
+
+data = pd.read_csv(stub + trail + file)
+
+Relconfig = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": False,
+    "save": False,
+    "counterfactual_color": ["blue", "red"]
+}
+
+RelResult = RESCM(Relconfig).fit()
+
+# Define the weights
+weights_scm = {
+    "Cataluna": 0.84,
+    "Madrid (Comunidad De)": 0.14,
+}
+
+weights_rbscm = RelResult.raw_results['Weights']
+
+# Convert to DataFrame
+df_rbscm = pd.DataFrame(list(weights_rbscm.items()), columns=['Region', 'RBSCM_Weight'])
+
+# Add standard SCM weights
+df_rbscm['SCM_Weight'] = df_rbscm['Region'].map(weights_scm).fillna(0.0)
+
+# Filter out rows where both weights are 0
+df_plot = df_rbscm[(df_rbscm['RBSCM_Weight'] != 0) | (df_rbscm['SCM_Weight'] != 0)].reset_index(drop=True)
+
+# Plot
+fig, ax = plt.subplots(figsize=(10, 6))
+width = 0.35
+x = np.arange(len(df_plot))
+
+ax.bar(x - width/2, df_plot['RBSCM_Weight'], width, label='Relaxed Balanced SCM', color='#00adff')
+ax.bar(x + width/2, df_plot['SCM_Weight'], width, label='ADH SCM', color='#c80815')
+
+ax.set_xticks(x)
+ax.set_xticklabels(df_plot['Region'], rotation=45, ha='right')
+ax.set_ylabel('Weight')
+ax.set_title('SCM vs Relaxed Balanced SCM Weights')
+ax.legend()
+plt.tight_layout()
+plt.show()
+
+```
+
+The ATT for ADH-SCM and the Relaxed Balanced SC are very similar, as is their pretreatment fits. However we can see that they select very different unit weights. The relaxed SC, with $\tau$ chosen by cross validation, diversifies the prediction risk.
+
+
+### FDID
+
+
+```{python}
+
+#| echo: True
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from mlsynth import FDID
+
+stub = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/"
+trail = "refs/heads/main/basedata/"
+file = "basque_data.csv"
+
+data = pd.read_csv(stub + trail + file)
+
+FDIDconfig = {
+    "df": data,
+    "outcome": data.columns[2],
+    "treat": data.columns[-1],
+    "unitid": data.columns[0],
+    "time": data.columns[1],
+    "display_graphs": True,
+    "save": False,
+    "counterfactual_color": ["blue", "red"]
+}
+
+FDIDResult = FDID(FDIDconfig).fit()
+
+```
+
+Aragon and Catalonia (weighted at 0.5), counterfactual similar to the relaxed SCM.
+
+
+
+:::
+
+
+## Simplicity of Use
+
+- Estimating multiple SCM/DID variants across different datasets requires only minimal changes to the API call (just the class name).  
+- Furthermore, we can do this with essentially zero change in the data structure or input requirements beyond simple changes to a dictionary. Each `.fit()` call returns a comprehensive `BaseEstimatorResults` object containing treatment effects, fit diagnostics (e.g., RMSE, R-squared), time-series data, and (where applicable) donor weights, ready for analysis or visualization.  
+- No manual data reshaping, cross-validation loops, or separate plotting functions are needed—`mlsynth` handles these under the hood.  
+- Users can focus on the analysis, not on boilerplate preprocessing or plotting code.
+
+`mlsynth` is also customizable. For advanced users, each class has its own configuration dictionary. To add a proprietary method, you can:
+
+1. Add it to [the base models](https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/config_models.py),  
+2. Update [`__init__.py`](https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/__init__.py) locally or in a fork, and  
+3. Use the existing helpers and utilities to implement a new proprietary method seamlessly.
+
+

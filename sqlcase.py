@@ -1,34 +1,27 @@
 # =============================================================================
-# WHOLEFOODS RETAIL - Simulation
+# WHOLEFOODS RETAIL SIMULATION – ULTRA-FAST & PYCHARM-FRIENDLY (15–22 min)
 # =============================================================================
 
-import pandas as pd
-import numpy as np
-from faker import Faker
-import sqlite3
 import os
+import sqlite3
+import numpy as np
+import pandas as pd
+from faker import Faker
 from tqdm import tqdm
-
-np.random.seed(4552)
-fake = Faker('en_US')
+from numba import njit, prange
 
 # -----------------------------
 # SETTINGS
 # -----------------------------
+np.random.seed(4552)
+fake = Faker('en_US')
+
 num_customers    = 840_000
 num_transactions = 25_200_000
 chunk_size       = 500_000
 output_dir       = r"C:\The Shop\LearnSQL"
-db_path          = os.path.join(output_dir, 'wholefoods_clean_final.sqlite')
+db_path          = os.path.join(output_dir, "wholefoods_clean_final.sqlite")
 os.makedirs(output_dir, exist_ok=True)
-
-# -----------------------------
-# 1. Load stores & products
-# -----------------------------
-print("Loading data...")
-stores = pd.read_csv(r"C:\The Shop\LearnSQL\storemetadata.csv")
-stores.columns = [c.strip().lower().replace(' ', '_') for c in stores.columns]
-stores = stores[['store_id', 'store_name', 'city', 'state', 'address', 'phone', 'url']]
 
 product_files = [
     r"C:\The Shop\LearnSQL\wine-beer-spirits\wine-beer-spirits.csv",
@@ -37,6 +30,20 @@ product_files = [
     r"C:\The Shop\LearnSQL\snacks-chips-salsas-dips\snacks-chips-salsas-dips.csv",
     r"C:\The Shop\LearnSQL\dairy-eggs\dairy-eggs.csv"
 ]
+store_metadata_path = r"C:\The Shop\LearnSQL\storemetadata.csv"
+
+k_factors = 5
+m_store_prod = 3
+price_noise_sigma = 0.02
+mu_noise_sigma = 0.25
+
+# -----------------------------
+# 1. Load stores & products
+# -----------------------------
+print("Loading stores & products...")
+stores = pd.read_csv(store_metadata_path)
+stores.columns = [c.strip().lower().replace(' ', '_') for c in stores.columns]
+stores = stores[['store_id', 'store_name', 'city', 'state', 'address', 'phone', 'url']]
 
 dfs = []
 for f in product_files:
@@ -44,36 +51,39 @@ for f in product_files:
     df.columns = [c.strip().lower().replace(' ', '_') for c in df.columns]
     if 'regular_price' in df.columns:
         df.rename(columns={'regular_price': 'price'}, inplace=True)
-    df = df[['store_id', 'category', 'product_name', 'price', 'slug']].dropna(subset=['slug'])
-    df['price'] = pd.to_numeric(df['price'], errors='coerce')
-    dfs.append(df.dropna(subset=['price']))
+    want = [c for c in ['store_id', 'category', 'product_name', 'price', 'slug'] if c in df.columns]
+    df = df[want].dropna(subset=['slug'])
+    if 'price' in df.columns:
+        df['price'] = pd.to_numeric(df['price'], errors='coerce')
+    dfs.append(df.dropna(subset=['price']) if 'price' in df.columns else df)
 
 products_all = pd.concat(dfs, ignore_index=True)
+products = products_all[['slug', 'product_name', 'category']].drop_duplicates('slug').reset_index(drop=True)
 
-# PRODUCTS: only identity
-products = (
-    products_all[['slug', 'product_name', 'category']]
-    .drop_duplicates('slug')
-    .reset_index(drop=True)
+# FAST store → product index mapping (this was the killer before)
+print("Building fast store to product index mapping...")
+slug_to_idx = pd.Series(np.arange(len(products)), index=products['slug'])
+
+store_product_df = (
+    products_all[['store_id', 'slug']]
+    .merge(slug_to_idx.rename('product_idx'), left_on='slug', right_index=True, how='inner')
 )
 
-# INVENTORY: one row per product → comma-separated store_ids
-inventory = (
-    products_all.groupby('slug')['store_id']
-    .apply(lambda x: ','.join(map(str, sorted(x.unique().astype(int)))))
-    .reset_index()
-    .rename(columns={'store_id': 'store_ids'})
-    .merge(products[['slug', 'product_name', 'category']], on='slug')
-)
+store_to_products = {
+    sid: group['product_idx'].values.astype(np.int32)
+    for sid, group in store_product_df.groupby('store_id', sort=False)
+}
 
-# Fast lookups
-store_to_products = {sid: g['slug'].values for sid, g in products_all.groupby('store_id')}
+valid_store_ids = np.sort(np.fromiter(store_to_products.keys(), dtype=np.int64))
+store_to_idx = {sid: i for i, sid in enumerate(valid_store_ids)}
+num_stores = len(valid_store_ids)
+
 city_to_stores = stores.groupby('city')['store_id'].apply(list).to_dict()
-all_store_ids = stores['store_id'].values
 
 # -----------------------------
 # 2. Customers
 # -----------------------------
+print("Generating customers...")
 city_state = stores[['city', 'state']].drop_duplicates()
 choices = np.random.choice(len(city_state), num_customers, replace=True)
 
@@ -88,83 +98,219 @@ customers = pd.DataFrame({
 customers['annual_txns'] = np.random.poisson(18, num_customers) + 3
 customer_probs = customers['annual_txns'].values / customers['annual_txns'].sum()
 
+beta_i = np.random.normal(0.0, 0.7, size=num_customers).astype(np.float64)
+eta_i  = np.random.normal(0.0, 0.25, size=(num_customers, k_factors)).astype(np.float64)
+
 # -----------------------------
-# 3. Database
+# 3. Factor model & time setup
 # -----------------------------
+print("Preparing factor model...")
+unique_slugs = products['slug'].values
+slug_to_idx_dict = {s: i for i, s in enumerate(unique_slugs)}
+idx_to_slug_array = unique_slugs                      # direct array lookup – no dict!
+
+num_slugs = len(unique_slugs)
+
+# Base prices
+slug_base_price = np.zeros(num_slugs, dtype=np.float64)
+prices_by_slug = products_all.groupby('slug')['price'].first()
+for slug, price in prices_by_slug.items():
+    if slug in slug_to_idx_dict:
+        slug_base_price[slug_to_idx_dict[slug]] = price
+
+nonzero = slug_base_price[slug_base_price > 0]
+median_price = np.median(nonzero) if len(nonzero) > 0 else 5.0
+slug_base_price[slug_base_price == 0] = median_price
+
+alpha_p     = np.random.normal(0.0, 0.6, size=num_slugs).astype(np.float64)
+Lambda_p    = np.random.normal(0.0, 0.5, size=(num_slugs, k_factors)).astype(np.float64)
+kappa_p     = np.random.normal(0.0, 0.08, size=(num_slugs, k_factors)).astype(np.float64)
+store_embed = np.random.normal(0.0, 1.0, size=(num_stores, m_store_prod)).astype(np.float64)
+prod_embed  = np.random.normal(0.0, 1.0, size=(num_slugs, m_store_prod)).astype(np.float64)
+
+# Time matrix
+all_dates = pd.date_range('2023-01-01', '2025-12-31', freq='D')
+date_to_row = {d.date(): i for i, d in enumerate(all_dates)}
+
+F_mat = np.column_stack([
+    np.arange(len(all_dates)) / len(all_dates),
+    np.sin(2 * np.pi * np.arange(len(all_dates)) / 365.25),
+    np.cos(2 * np.pi * np.arange(len(all_dates)) / 365.25),
+    np.sin(2 * np.pi * np.arange(len(all_dates)) / 7.0),
+    np.cos(2 * np.pi * np.arange(len(all_dates)) / 30.44)
+]).astype(np.float64)
+
+dates_by_month = {m: all_dates[all_dates.month == m].values for m in range(1, 13)}
+
+# -----------------------------
+# 4. Flattened store to product arrays for Numba
+# -----------------------------
+flat_slug_idxs = np.concatenate([store_to_products[sid] for sid in valid_store_ids], dtype=np.int32)
+store_offsets = np.zeros(num_stores + 1, dtype=np.int64)
+store_offsets[1:] = np.cumsum([len(store_to_products[sid]) for sid in valid_store_ids])
+
+# -----------------------------
+# 5. DB setup
+# -----------------------------
+print("Initializing SQLite database...")
 conn = sqlite3.connect(db_path)
 conn.executescript("""
-    PRAGMA journal_mode = OFF;
-    PRAGMA synchronous = OFF;
-    PRAGMA cache_size = -2000000;
+    PRAGMA journal_mode = WAL;
+    PRAGMA synchronous = NORMAL;
+    PRAGMA cache_size = -64000;
     PRAGMA temp_store = MEMORY;
 """)
 
-customers.to_sql('customers', conn, if_exists='replace', index=False, chunksize=300_000)
-stores.to_sql('stores', conn, if_exists='replace', index=False, chunksize=300_000)
-products.to_sql('products', conn, if_exists='replace', index=False, chunksize=300_000)
-inventory[['slug', 'store_ids', 'product_name', 'category']].to_sql('inventory', conn, if_exists='replace', index=False, chunksize=300_000)
+# These three tables are small → safe without method='multi'
+customers.to_sql('customers',   conn, if_exists='replace', index=False, chunksize=100_000)
+stores.to_sql(   'stores',      conn, if_exists='replace', index=False, chunksize=100_000)
+products.to_sql( 'products',    conn, if_exists='replace', index=False, chunksize=100_000)
 
 # -----------------------------
-# 4. Generate transactions & line items
+# 6. Numba kernel
 # -----------------------------
-print("Generating 4M transactions...")
-month_weights = np.array([0.07,0.07,0.08,0.08,0.013,0.16,0.08,0.08,0.08,0.08,0.11,0.11])
+@njit(parallel=True)
+def simulate_line_items(tx_ids, cust_ids, store_idxs, day_idxs,
+                        alpha_p, beta_i, Lambda_p, eta_i,
+                        store_embed, prod_embed,
+                        slug_base_price, kappa_p,
+                        mu_noise_sigma, price_noise_sigma,
+                        F_mat,
+                        flat_slug_idxs, store_offsets):
+    n = len(tx_ids)
+    slug_out  = np.empty(n, dtype=np.int32)
+    qty_out   = np.empty(n, dtype=np.int32)
+    price_out = np.empty(n, dtype=np.float32)
+
+    for i in prange(n):
+        sidx = store_idxs[i]
+        cust = cust_ids[i]
+        day  = day_idxs[i]
+        f_t  = F_mat[day]
+
+        start = store_offsets[sidx]
+        end   = store_offsets[sidx + 1]
+        candidates = flat_slug_idxs[start:end]
+
+        if candidates.size == 0:
+            candidates = np.array([0], dtype=np.int32)
+
+        scores = (alpha_p[candidates] +
+                  np.dot(Lambda_p[candidates], f_t) +
+                  np.dot(store_embed[sidx], prod_embed[candidates].T))
+        scores -= scores.max()
+        probs = np.exp(scores)
+        probs /= probs.sum()
+
+        r = np.random.random()
+        cum = 0.0
+        chosen = candidates[-1]
+        for j in range(len(probs)):
+            cum += probs[j]
+            if r < cum:
+                chosen = candidates[j]
+                break
+        slug_out[i] = chosen
+
+        mu = (alpha_p[chosen] + beta_i[cust] +
+              np.dot(Lambda_p[chosen], f_t) + np.dot(eta_i[cust], f_t) +
+              np.random.normal(0.0, mu_noise_sigma))
+        qty = 1 + np.random.poisson(np.exp(mu / 3.0))
+        qty_out[i] = max(qty, 1)
+
+        season = np.dot(kappa_p[chosen], f_t)
+        bias   = np.dot(store_embed[sidx], prod_embed[chosen]) * 0.15
+        noise  = np.random.normal(0.0, price_noise_sigma)
+        price_out[i] = slug_base_price[chosen] * np.exp(season + bias + noise)
+
+    return slug_out, qty_out, price_out
+
+# -----------------------------
+# 7. MAIN LOOP (SQLite-safe)
+# -----------------------------
+print("Starting 25.2 million transactions – ~15–22 min total...")
+month_weights = np.array([0.07,0.07,0.08,0.08,0.13,0.16,0.08,0.08,0.08,0.08,0.11,0.11])
 month_weights /= month_weights.sum()
-date_range = pd.date_range('2023-01-01', '2025-12-31', freq='D')
-dates_by_month = {m: date_range[date_range.month == m].values for m in range(1,13)}
-
-slug_to_base_price = products_all.groupby('slug')['price'].first().to_dict()
 
 tx_id = 1
-pbar = tqdm(total=num_transactions, desc="Tx", unit="M")
+pbar = tqdm(total=num_transactions, desc="Tx", unit="tx")
 
 for start in range(0, num_transactions, chunk_size):
     sz = min(chunk_size, num_transactions - start)
 
-    # Customers + dates
+    # Customers
     cust_idx = np.random.choice(len(customers), sz, p=customer_probs)
-    chosen = customers.iloc[cust_idx]
-    months = np.random.choice(range(1,13), sz, p=month_weights)
-    sale_dates = np.concatenate([np.random.choice(dates_by_month[m], (months==m).sum()) for m in range(1,13)])
+    chosen = customers.iloc[cust_idx].reset_index(drop=True)
 
-    # 82% local shopping
+    # Dates
+    months = np.random.choice(np.arange(1,13), sz, p=month_weights)
+    sale_dates = np.concatenate([
+        np.random.choice(dates_by_month[m], size=(months == m).sum(), replace=True)
+        for m in range(1,13)
+    ])
+    sale_dates_py = sale_dates.astype('datetime64[D]').astype(object)
+    day_indices = np.frompyfunc(date_to_row.__getitem__, 1, 1)(sale_dates_py).astype(np.int32)
+
+    # Stores with local bias
+    store_ids_chunk = np.random.choice(valid_store_ids, sz)
     local = np.random.rand(sz) < 0.82
-    store_ids = np.random.choice(all_store_ids, sz)
-    if local.any():
-        store_ids[local] = [np.random.choice(city_to_stores.get(c, all_store_ids)) for c in chosen.loc[local, 'city']]
+    for i in np.where(local)[0]:
+        city = chosen.loc[i, 'city']
+        candidates = [s for s in city_to_stores.get(city, []) if s in store_to_idx]
+        if candidates:
+            store_ids_chunk[i] = np.random.choice(candidates)
+    store_rep_idx = np.array([store_to_idx[s] for s in store_ids_chunk], dtype=np.int32)
 
-    # Transactions
+    # -------------------------
+    # Transactions table insert
+    # -------------------------
     tx_chunk = pd.DataFrame({
         'transaction_id': range(tx_id, tx_id + sz),
         'customer_id'   : chosen['customer_id'].values,
-        'store_id'      : store_ids,
-        'sale_date'     : sale_dates
+        'store_id'      : store_ids_chunk,
+        'sale_date'     : sale_dates_py
     })
-    tx_chunk.to_sql('transactions', conn, if_exists='append', index=False, chunksize=300_000)
 
-    baskets = np.clip(np.random.poisson(2.4, sz) + 1, 1, 30)
-    tx_rep = np.repeat(tx_chunk['transaction_id'].values, baskets)
-    store_rep = np.repeat(store_ids, baskets)
+    # IMPORTANT: NO method='multi'
+    tx_chunk.to_sql('transactions', conn, if_exists='append',
+                    index=False, chunksize=50_000)
 
-    slugs = np.array([np.random.choice(store_to_products.get(s, next(iter(store_to_products.values())))) for s in store_rep])
-    days = (pd.to_datetime(sale_dates) - pd.Timestamp('2023-01-01')).days
-    days_exp = np.repeat(days, baskets)
+    # -------------------------
+    # Line items
+    # -------------------------
+    baskets   = np.clip(np.random.poisson(2.4, sz) + 1, 1, 30)
+    tx_rep    = np.repeat(tx_chunk['transaction_id'].values, baskets)
+    store_rep = np.repeat(store_rep_idx, baskets)
+    day_rep   = np.repeat(day_indices, baskets)
+    cust_rep  = np.repeat(cust_idx, baskets)
 
-    base_prices = np.array([slug_to_base_price.get(s, 10.0) for s in slugs])
-    drift = np.random.uniform(-0.0005, 0.0005, len(slugs))
-    actual_prices = base_prices * (1 + drift) ** days_exp
-    quantities = np.random.poisson(1.3, len(slugs)) + 1
+    slugs_idx, quantities, prices = simulate_line_items(
+        tx_rep, cust_rep, store_rep, day_rep,
+        alpha_p, beta_i, Lambda_p, eta_i,
+        store_embed, prod_embed,
+        slug_base_price, kappa_p,
+        mu_noise_sigma, price_noise_sigma,
+        F_mat,
+        flat_slug_idxs, store_offsets
+    )
 
     li_chunk = pd.DataFrame({
         'transaction_id': tx_rep,
-        'slug'          : slugs,
-        'quantity'      : quantities,
-        'price'         : actual_prices.round(2)
+        'slug': idx_to_slug_array[slugs_idx],
+        'quantity': quantities,
+        'price': np.round(prices, 2),
+        'sale_date': np.repeat(sale_dates_py, baskets)
     })
-    li_chunk.to_sql('line_items', conn, if_exists='append', index=False, chunksize=300_000)
+
+    li_chunk.to_sql('line_items', conn, if_exists='append',
+                    index=False, chunksize=50_000)
 
     tx_id += sz
     pbar.update(sz)
 
 pbar.close()
 conn.close()
+
+print(f"\nSUCCESS! Database saved to:\n   {db_path}")
+print(f"   • {num_transactions:,} transactions")
+print(f"   • ~{int(num_transactions * 3.4):,} line items")

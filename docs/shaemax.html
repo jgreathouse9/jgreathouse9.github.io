@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
+<meta name="dcterms.date" content="2025-12-26">
 
-<title>Policy Analysis, Data Science, and Causal Inference</title>
+<title>Shake it to the Max? Using the \ell_\infty norm for Synthetic Control Methods – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,6 +21,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -166,15 +201,26 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(16)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(10)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(2)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#regularized-synthetic-control" id="toc-regularized-synthetic-control" class="nav-link active" data-scroll-target="#regularized-synthetic-control">Regularized Synthetic Control</a></li>
+  <li><a href="#a-relaxed-balanced-approach" id="toc-a-relaxed-balanced-approach" class="nav-link" data-scroll-target="#a-relaxed-balanced-approach">A Relaxed Balanced Approach</a></li>
+  </ul>
+</nav>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(16)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(9)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Policy Analysis, Data Science, and Causal Inference</h1>
-</div>
+<h1 class="title">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Machine Learning</div>
+    <div class="quarto-category">Econometrics</div>
+  </div>
+  </div>
 
 
 
@@ -187,6 +233,12 @@ window.Quarto = {
           </div>
   </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 26, 2025</p>
+    </div>
+  </div>
   
     
   </div>
@@ -196,10 +248,170 @@ window.Quarto = {
 </header>
 
 
-<p>Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics.</p>
+<p>Regularization in synthetic control methods has become an important econometric topic. Let <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T_0}\)</span> denote the pre-treatment outcomes for the treated unit and let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times |\mathcal{N}_0|}\)</span> denote the corresponding donor matrix. In the most general terms, an SCM is a form of convex optimization where we use a set of donor units that were not exposed to a treatment to predict how the outcomes for a single (or set of) target unit(s) would have evolved without the treatment. In full generality, a synthetic control estimator solves the following family of programs:</p>
+<p><span class="math display">\[
+\mathbf{w} \;\in\;
+\underset{\mathbf{w} \in \mathcal{C}}{\operatorname*{argmin}}
+\;
+\mathcal{L}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w})
+\;+\;
+\mathcal{P}(\mathbf{w}),
+\]</span></p>
+<p>subject to</p>
+<p><span class="math display">\[
+\mathcal{B}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w}) \;\le\; \boldsymbol{\tau}.
+\]</span></p>
+<p>Here <span class="math inline">\(\mathcal{L}(\cdot)\)</span> denotes a data-dependent loss function governing pre-treatment fit, <span class="math inline">\(\mathcal{P}(\cdot)\)</span> denotes a regularization or geometry-inducing penalty on the weights, and <span class="math inline">\(\mathcal{C}\)</span> denotes a convex admissible set for the donor weights. The operator <span class="math inline">\(\mathcal{B}(\cdot)\)</span> encodes balance or moment conditions, and <span class="math inline">\(\boldsymbol{\tau}\)</span> controls the degree of relaxation. Either <span class="math inline">\(\mathcal{L}\)</span> or <span class="math inline">\(\mathcal{B}\)</span> may be identically zero, but not both. The classical synthetic control estimator of Abadie, Diamond, and Hainmueller is obtained by setting</p>
+<p><span class="math display">\[
+\mathcal{L}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w}) =
+\left\|
+\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}
+\right\|_2^2,
+\quad
+\mathcal{P}(\mathbf{w}) = 0,
+\quad
+\mathcal{B} \equiv 0,
+\]</span></p>
+<p>with admissible weights given by</p>
+<p><span class="math display">\[
+\mathcal{C} =
+\left\{
+\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
+\right\},
+\]</span></p>
+<p>where <span class="math inline">\(\mathbb{R}_+\)</span> denotes the nonnegative reals. In this case, balance is enforced entirely through the objective function.</p>
+<section id="regularized-synthetic-control" class="level2">
+<h2 class="anchored" data-anchor-id="regularized-synthetic-control">Regularized Synthetic Control</h2>
+<p>Analysts have developed formulations of synthetic control that simultaneously account for level differences and control the geometry of the donor weights. To allow for level differences, we augment the donor matrix with an intercept term:</p>
+<p><span class="math display">\[
+\widetilde{\mathbf{Y}}_0
+=
+\begin{bmatrix}
+\mathbf{Y}_0 &amp; \mathbf{1}
+\end{bmatrix},
+\qquad
+\widetilde{\mathbf{w}}
+=
+\begin{bmatrix}
+\mathbf{w} \\
+b_0
+\end{bmatrix},
+\]</span></p>
+<p>where <span class="math inline">\(b_0 \in \mathbb{R}\)</span> captures an additive baseline shift. Regularization of the coefficients is also an important issue. Note that all penalties are applied to <span class="math inline">\(\mathbf{w}\)</span>, while <span class="math inline">\(b_0\)</span> is left unpenalized. For a graphical example, see the plot:</p>
+<div id="bc103816" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Grid for contour plots</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.2</span>, <span class="dv">400</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.2</span>, <span class="dv">400</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>X, Y <span class="op">=</span> np.meshgrid(x, y)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Norms</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>L1 <span class="op">=</span> np.<span class="bu">abs</span>(X) <span class="op">+</span> np.<span class="bu">abs</span>(Y)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>L2 <span class="op">=</span> np.sqrt(X<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> Y<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Linf <span class="op">=</span> np.maximum(np.<span class="bu">abs</span>(X), np.<span class="bu">abs</span>(Y))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot unit balls</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>plt.contour(X, Y, L1, levels<span class="op">=</span>[<span class="dv">1</span>], colors<span class="op">=</span><span class="st">"k"</span>, linestyles<span class="op">=</span><span class="st">"dashed"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>plt.contour(X, Y, L2, levels<span class="op">=</span>[<span class="dv">1</span>], colors<span class="op">=</span><span class="st">"blue"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>plt.contour(X, Y, Linf, levels<span class="op">=</span>[<span class="dv">1</span>], colors<span class="op">=</span><span class="st">"red"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Axes and aesthetics</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>plt.axhline(<span class="dv">0</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>plt.axvline(<span class="dv">0</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">"equal"</span>, adjustable<span class="op">=</span><span class="st">"box"</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"2D Geometry of $</span><span class="ch">\\</span><span class="st">ell_1$, $</span><span class="ch">\\</span><span class="st">ell_2$, and $</span><span class="ch">\\</span><span class="st">ell_</span><span class="ch">\\</span><span class="st">infty$ Norms"</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"$w_1$"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"$w_2$"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="shaemax_files/figure-html/cell-2-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>A common choice is the elastic net penalty, which interpolates between sparsity and smooth weight spreading:</p>
+<p><span class="math display">\[
+\mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_2^2 \Big), \qquad \alpha \in [0,1].
+\]</span></p>
+<p>The <span class="math inline">\(\ell_1\)</span> term encourages the SC to be supported on a small subset of donors, while the <span class="math inline">\(\ell_2\)</span> term stabilizes the solution in the presence of collinearity. This is the formulation advocated by <a href="https://arxiv.org/pdf/1610.07748">Doudchenko and Imbens (2016)</a> for an elastic net regularized SC. Alternatively, one may replace the <span class="math inline">\(\ell_2\)</span> term with the <span class="math inline">\(\ell_\infty\)</span> norm, as discussed in <a href="https://doi.org/10.48550/arXiv.2510.26053">Wang, Xing, and Ye (2025)</a>:</p>
+<p><span class="math display">\[
+\mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_\infty \Big), \qquad \alpha \in [0,1].
+\]</span></p>
+<p>The <span class="math inline">\(\ell_\infty\)</span> component caps the maximum influence of any single donor, producing a “balanced sparsity” effect: a small number of donors may be selected, but none is allowed to dominate. Geometrically, the <span class="math inline">\(\ell_1\)</span>–<span class="math inline">\(\ell_\infty\)</span> penalty replaces the circular ridge constraint with a hyper-rectangular region, reflecting the analyst’s preference for bounding donor influence rather than merely smoothing it. Recently, there’s <a href="https://arxiv.org/pdf/2503.06454">been interest</a> in the sparsity versus density constraint in the SCM literature, and this is one form of trading off between sparsity and density.</p>
+<p>Within the general synthetic control framework, the corresponding optimization problem becomes</p>
+<p><span class="math display">\[
+(\mathbf{w}, b_0) \;\in\;
+\underset{(\mathbf{w}, b_0) \in \mathcal{C}}{\operatorname*{argmin}}
+\;
+\mathcal{L}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w}, b_0)
++
+\lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_q \Big),
+\]</span></p>
+<p>where <span class="math inline">\(q = 2\)</span> recovers the standard elastic net (Doudchenko–Imbens style) and <span class="math inline">\(q = \infty\)</span> recovers the max-norm penalty of Wang, Xing, and Ye. The <span class="math inline">\(\ell_\infty\)</span> norm differs from the <span class="math inline">\(\ell_2\)</span> norm in what aspect of the donor weights it constrains. While the <span class="math inline">\(\ell_2\)</span> term spreads weight smoothly and stabilizes the solution in the presence of collinearity, it does not prevent one donor from dominating. Replacing the <span class="math inline">\(\ell_2\)</span> term with the <span class="math inline">\(\ell_\infty\)</span> norm</p>
+<p><span class="math display">\[
+\lVert \mathbf{w} \rVert_\infty = \max_j |w_j|
+\]</span></p>
+<p>penalizes the largest absolute weight rather than the overall energy of the weight vector. Conceptually, it acts like a position limit in a portfolio: no single donor can dominate the synthetic control. This encourages a more balanced allocation among selected donors, enhancing robustness and interpretability, particularly when the donor pool is large or when one unit is naturally very similar to the treated unit but over-reliance is undesirable. In practice, this can be important: in <a href="https://www.aeaweb.org/articles?id=10.1257/000282803321455188">the original 2003 SCM paper</a>, the donors Catalonia and Madrid received weights of 0.8508 and 0.1492, respectively. While this allocation makes sense economically—Catalonia is very similar to the Basque Country, and Madrid is the capital, there are settings where analysts may wish to reduce the influence of any single donor.</p>
+</section>
+<section id="a-relaxed-balanced-approach" class="level2">
+<h2 class="anchored" data-anchor-id="a-relaxed-balanced-approach">A Relaxed Balanced Approach</h2>
+<p>Other approaches to mitigating high-dimensionality are possible. <a href="https://arxiv.org/pdf/2508.01793">Liao, Shi, and Zheng (2025)</a>, introduce a relaxation of the fit conditions imposed by the elastic net estimators above. Here, the loss is set to zero, a penalty is placed on the weights, and fit is enforced via a constraint</p>
+<p><span class="math display">\[
+\mathcal{L} \equiv 0,
+\qquad
+\text{penalty active on } \mathbf{w},
+\qquad
+\gamma \in \mathbb{R}.
+\]</span></p>
+<p>Define the Gram matrix of donor outcomes and the projection of the treated unit onto the donor space as</p>
+<p><span class="math display">\[
+\mathbf{G} := \frac{1}{T_0}\mathbf{Y}_0^\top \mathbf{Y}_0,
+\qquad
+\mathbf{a} := \frac{1}{T_0}\mathbf{Y}_0^\top \mathbf{y}_1.
+\]</span></p>
+<p>The relaxed balance constraint is</p>
+<p><span class="math display">\[
+\Big\|
+\mathbf{G}\mathbf{w} - \mathbf{a} + \gamma \mathbf{1}
+\Big\|_\infty \le \tau,
+\]</span></p>
+<p>and the optimization problem becomes</p>
+<p><span class="math display">\[
+(\mathbf{w},\gamma)
+\in
+\underset{\mathbf{w}\in\mathcal{C},\;\gamma\in\mathbb{R}}
+{\operatorname*{argmin}}
+\;
+\|\mathbf{w}\|_2^2
+\quad\text{s.t.}\quad
+\Big\|
+\mathbf{G}\mathbf{w} - \mathbf{a} + \gamma \mathbf{1}
+\Big\|_\infty \le \tau .
+\]</span></p>
+<p>The slack variable <span class="math inline">\(\gamma\)</span> shifts all donor projections uniformly and is estimated jointly with <span class="math inline">\(\mathbf{w}\)</span>, allowing small, evenly distributed violations when exact pre-treatment matching is infeasible. Alternative penalties can also be used: negative entropy</p>
+<p><span class="math display">\[
+\sum_j w_j \log w_j
+\]</span></p>
+<p>encourages dense allocation, while empirical likelihood</p>
+<p><span class="math display">\[
+- \sum_j \log w_j
+\]</span></p>
+<p>discourages zero weights. In all cases, the constraint enforces relaxed balance, while the penalty governs the weight structure.</p>
+<p>This contrasts with classical SCM and elastic net approaches. There, fit is minimized in the objective and the weights absorb all discrepancies. In the relaxed balance method, fit is a constraint, the objective imposes an <span class="math inline">\(\ell_2\)</span> (or other) penalty on the weights, and <span class="math inline">\(\gamma\)</span> allows controlled relaxation—analogous to portfolio optimization with position limits, where constraints cap exposure to any single asset while the objective encourages diversification or avoidance of zero positions. This separation is particularly useful in high-dimensional donor pools or when robustness to over-reliance on any single donor is desired.</p>
 
 
 
+</section>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
@@ -519,31 +731,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1766707200000" data-listing-file-modified-sort="1766769309136" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1040">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('TWFjaGluZSUyMExlYXJuaW5n'); return false;">Machine Learning</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./shaemax.html" class="no-external">
-<div class="listing-date">
-Dec 26, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1766769309130" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1766769309130" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -551,6 +739,20 @@ Jared Greathouse
 </div>
 <div class="metadata">
 <a href="./consulting.html" class="no-external">
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1766769379791" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./index.html" class="no-external">
+<div class="listing-author">
+Jared Greathouse
+</div>
 </a>
 </div>
 </div>

@@ -1,6 +1,6 @@
 ---
 title: "Shake it to the Max? Using the $\\ell_\\infty$ norm for Synthetic Control Methods"
-date: 2025-12-26
+date: 2025-12-25
 categories: [Machine Learning, Econometrics]
 ---
 
@@ -109,21 +109,19 @@ plt.show()
 
 
 
-A common choice is the elastic net penalty, which interpolates between sparsity and smooth weight spreading:
+A common choice is the elastic net penalty, and I cover two flavors of the elastic net in this post. The elastic net penalty is in fact a very general case of a very wide class of SC estimators. The first, [by Doudchenko and Imbens (2017)](https://arxiv.org/pdf/1610.07748), interpolates between the $\ell_1$ norm and the $\ell_2$ norm. The former term encourages the SC to be supported on a small subset of donors, while the latter stabilizes the solution in the presence of collinearity:
 
 $$
 \mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_2^2 \Big), \qquad \alpha \in [0,1].
 $$
 
-The $\ell_1$ term encourages the SC to be supported on a small subset of donors, while the $\ell_2$ term stabilizes the solution in the presence of collinearity. This is the formulation advocated by [Doudchenko and Imbens (2016)](https://arxiv.org/pdf/1610.07748) for an elastic net regularized SC. Alternatively, one may replace the $\ell_2$ term with the $\ell_\infty$ norm, as discussed in [Wang, Xing, and Ye (2025)](https://doi.org/10.48550/arXiv.2510.26053):
+Intermediate values of $\alpha \in (0,1)$ correspond to the elastic net. Special cases are obtained when $\alpha = 1$ (pure LASSO), $\alpha = 0$ (pure Ridge). Alternatively, as studied by [Wang, Xing, and Ye (2025)](https://doi.org/10.48550/arXiv.2510.26053), one may replace the $\ell_2$ term with the $\ell_\infty$ norm:
 
 $$
 \mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_\infty \Big), \qquad \alpha \in [0,1].
 $$
 
-The $\ell_\infty$ component caps the maximum influence of any single donor, producing a “balanced sparsity” effect: a small number of donors may be selected, but none is allowed to dominate. Geometrically, the $\ell_1$–$\ell_\infty$ penalty replaces the circular ridge constraint with a hyper-rectangular region, reflecting the analyst’s preference for bounding donor influence rather than merely smoothing it. Recently, there's [been interest](https://arxiv.org/pdf/2503.06454) in the sparsity versus density constraint in the SCM literature, and this is one form of trading off between sparsity and density.
-
-Within the general synthetic control framework, the corresponding optimization problem becomes
+The $\ell_\infty$ component caps the maximum influence of any single donor, producing a “balanced sparsity” effect: a small number of donors may be selected, but none is allowed to dominate. Geometrically, the $\ell_1$–$\ell_\infty$ penalty replaces the circular ridge constraint with a hyper-rectangular region, reflecting the analyst’s preference for bounding donor influence rather than merely smoothing it. When using the $\ell_\infty$ variant of hte elastic net, $\alpha = 0$ corresponds to the max-norm penalty. These special cases highlight how the elastic net family interpolates continuously between sparsity and smoothness (or maximum weight control). Within the general synthetic control framework, the corresponding optimization problem becomes
 
 $$
 (\mathbf{w}, b_0) \;\in\; 
@@ -134,14 +132,9 @@ $$
 \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_q \Big),
 $$
 
-where $q = 2$ recovers the standard elastic net (Doudchenko–Imbens style) and $q = \infty$ recovers the max-norm penalty of Wang, Xing, and Ye. The $\ell_\infty$ norm differs from the $\ell_2$ norm in what aspect of the donor weights it constrains. While the $\ell_2$ term spreads weight smoothly and stabilizes the solution in the presence of collinearity, it does not prevent one donor from dominating. Replacing the $\ell_2$ term with the $\ell_\infty$ norm
+where $q = 2$ recovers the standard elastic net and $q = \infty$ recovers the max-norm penalty. Conceptually, the $\ell_2$ term spreads weight smoothly, stabilizing against collinearity, while the $\ell_\infty$ term limits any single donor's dominance. This is analogous to a portfolio with position limits: no single donor can dominate the synthetic control, while overall weight distribution can be controlled via $\alpha$ and $\lambda$.  
 
-$$
-\lVert \mathbf{w} \rVert_\infty = \max_j |w_j|
-$$
-
-penalizes the largest absolute weight rather than the overall energy of the weight vector. Conceptually, it acts like a position limit in a portfolio: no single donor can dominate the synthetic control. This encourages a more balanced allocation among selected donors, enhancing robustness and interpretability, particularly when the donor pool is large or when one unit is naturally very similar to the treated unit but over-reliance is undesirable. In practice, this can be important: in [the original 2003 SCM paper](https://www.aeaweb.org/articles?id=10.1257/000282803321455188), the donors Catalonia and Madrid received weights of 0.8508 and 0.1492, respectively. While this allocation makes sense economically—Catalonia is very similar to the Basque Country, and Madrid is the capital, there are settings where analysts may wish to reduce the influence of any single donor.
-
+In practice, this can be important: in [the original 2003 SCM paper](https://www.aeaweb.org/articles?id=10.1257/000282803321455188), the donors Catalonia and Madrid received weights of 0.8508 and 0.1492, respectively. While this allocation makes sense economically, there are settings where analysts may wish to reduce the influence of any single donor.  
 
 
 ## A Relaxed Balanced Approach
@@ -203,3 +196,101 @@ $$
 discourages zero weights. In all cases, the constraint enforces relaxed balance, while the penalty governs the weight structure.
 
 This contrasts with classical SCM and elastic net approaches. There, fit is minimized in the objective and the weights absorb all discrepancies. In the relaxed balance method, fit is a constraint, the objective imposes an $\ell_2$ (or other) penalty on the weights, and $\gamma$ allows controlled relaxation—analogous to portfolio optimization with position limits, where constraints cap exposure to any single asset while the objective encourages diversification or avoidance of zero positions. This separation is particularly useful in high-dimensional donor pools or when robustness to over-reliance on any single donor is desired.
+
+
+## An Application to the Basque Country
+
+
+
+```{python}
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from mlsynth import RESCM
+
+# ---------------- Load data ----------------
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
+data = pd.read_csv(url)
+
+# ---------------- Relaxation types ----------------
+relax_types = ["l2", "entropy", "el"]
+
+# Dictionary to store results per model
+results = {}
+
+for i, rtype in enumerate(relax_types):
+    print(f"Fitting Relaxed SCM with relaxation_type='{rtype}'...")
+
+    # Only run ELASTIC once
+    models_to_run = {
+        "RELAXED": {"run": True, "relaxation": rtype, "n_taus": 100},
+        "ELASTIC": {"run": i == 0, "second_norm": "L1_INF",
+                    "constraint_type": "unit", "fit_intercept": False, "alpha": 0}
+    }
+
+    config = {
+        "df": data,
+        "outcome": data.columns[2],
+        "treat": data.columns[-1],
+        "unitid": data.columns[0],
+        "time": data.columns[1],
+        "display_graphs": False,
+        "save": False,
+        "counterfactual_color": ["blue", "red"],
+        "models_to_run": models_to_run
+    }
+
+    arco = RESCM(config).fit()
+
+    # RELAXED results
+    relax_results = {
+        "counterfactual": arco.relax.time_series.counterfactual_outcome,
+        "method_name": arco.relax.method_details.method_name,
+        "donor_weights": arco.relax.weights.donor_weights
+    }
+
+    # ELASTIC results (only if run)
+    if hasattr(arco, "elastic") and getattr(arco.elastic, "time_series", None):
+        elastic_results = {
+            "counterfactual": arco.elastic.time_series.counterfactual_outcome,
+            "method_name": arco.elastic.method_details.method_name,
+            "donor_weights": arco.elastic.weights.donor_weights
+        }
+    else:
+        elastic_results = None
+
+    results[rtype] = {
+        "RELAXED": relax_results,
+        "ELASTIC": elastic_results
+    }
+
+# ---------------- Plotting ----------------
+plt.figure(figsize=(12, 6))
+
+# Observed trajectory (from any iteration, all identical)
+observed = arco.relax.time_series.observed_outcome
+time_points = range(len(observed))
+
+plt.plot(time_points, observed, label="Observed", color="black", linewidth=2)
+
+# Plot RELAXED counterfactuals
+colors = {"l2": "blue", "entropy": "green", "el": "orange"}
+for rtype in relax_types:
+    cf = results[rtype]["RELAXED"]["counterfactual"]
+    plt.plot(time_points, cf, label=f"RELAXED ({rtype.upper()})", color=colors[rtype], linestyle="--")
+
+# Plot ELASTIC counterfactual only once (from first iteration)
+elastic_cf = results["l2"]["ELASTIC"]
+if elastic_cf is not None:
+    plt.plot(time_points, elastic_cf["counterfactual"], label="ELASTIC (L1_INF)", color="red", linestyle=":")
+
+plt.xlabel("Time")
+plt.ylabel("Outcome")
+plt.title("Observed vs Synthetic Counterfactual Outcomes")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+```

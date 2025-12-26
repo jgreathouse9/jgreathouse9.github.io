@@ -1,0 +1,205 @@
+---
+title: "Shake it to the Max? Using the $\\ell_\\infty$ norm for Synthetic Control Methods"
+date: 2025-12-26
+categories: [Machine Learning, Econometrics]
+---
+
+Regularization in synthetic control methods has become an important econometric topic. Let $\mathbf{y}_1 \in \mathbb{R}^{T_0}$ denote the pre-treatment outcomes for the treated unit and let $\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times |\mathcal{N}_0|}$ denote the corresponding donor matrix. In the most general terms, an SCM is a form of convex optimization where we use a set of donor units that were not exposed to a treatment to predict how the outcomes for a single (or set of) target unit(s) would have evolved without the treatment. In full generality, a synthetic control estimator solves the following family of programs:
+
+$$
+\mathbf{w} \;\in\;
+\underset{\mathbf{w} \in \mathcal{C}}{\operatorname*{argmin}}
+\;
+\mathcal{L}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w})
+\;+\;
+\mathcal{P}(\mathbf{w}),
+$$
+
+subject to
+
+$$
+\mathcal{B}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w}) \;\le\; \boldsymbol{\tau}.
+$$
+
+Here $\mathcal{L}(\cdot)$ denotes a data-dependent loss function governing pre-treatment fit, $\mathcal{P}(\cdot)$ denotes a regularization or geometry-inducing penalty on the weights, and $\mathcal{C}$ denotes a convex admissible set for the donor weights. The operator $\mathcal{B}(\cdot)$ encodes balance or moment conditions, and $\boldsymbol{\tau}$ controls the degree of relaxation. Either $\mathcal{L}$ or $\mathcal{B}$ may be identically zero, but not both. The classical synthetic control estimator of Abadie, Diamond, and Hainmueller is obtained by setting
+
+$$
+\mathcal{L}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w}) =
+\left\|
+\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}
+\right\|_2^2,
+\quad
+\mathcal{P}(\mathbf{w}) = 0,
+\quad
+\mathcal{B} \equiv 0,
+$$
+
+with admissible weights given by
+
+$$
+\mathcal{C} =
+\left\{
+\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
+\right\},
+$$
+
+where $\mathbb{R}_+$ denotes the nonnegative reals. In this case, balance is enforced entirely through the objective function.
+
+
+
+## Regularized Synthetic Control
+
+Analysts have developed formulations of synthetic control that simultaneously account for level differences and control the geometry of the donor weights. To allow for level differences, we augment the donor matrix with an intercept term:
+
+$$
+\widetilde{\mathbf{Y}}_0
+=
+\begin{bmatrix}
+\mathbf{Y}_0 & \mathbf{1}
+\end{bmatrix},
+\qquad
+\widetilde{\mathbf{w}}
+=
+\begin{bmatrix}
+\mathbf{w} \\
+b_0
+\end{bmatrix},
+$$
+
+where $b_0 \in \mathbb{R}$ captures an additive baseline shift. Regularization of the coefficients is also an important issue. Note that all penalties are applied to $\mathbf{w}$, while $b_0$ is left unpenalized.  For a graphical example, see the plot:
+
+
+
+```{python}
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Grid for contour plots
+x = np.linspace(-1.2, 1.2, 400)
+y = np.linspace(-1.2, 1.2, 400)
+X, Y = np.meshgrid(x, y)
+
+# Norms
+L1 = np.abs(X) + np.abs(Y)
+L2 = np.sqrt(X**2 + Y**2)
+Linf = np.maximum(np.abs(X), np.abs(Y))
+
+plt.figure(figsize=(6, 6))
+
+# Plot unit balls
+plt.contour(X, Y, L1, levels=[1], colors="k", linestyles="dashed")
+plt.contour(X, Y, L2, levels=[1], colors="blue")
+plt.contour(X, Y, Linf, levels=[1], colors="red")
+
+# Axes and aesthetics
+plt.axhline(0)
+plt.axvline(0)
+plt.gca().set_aspect("equal", adjustable="box")
+plt.xlim(-1.2, 1.2)
+plt.ylim(-1.2, 1.2)
+
+plt.title("2D Geometry of $\\ell_1$, $\\ell_2$, and $\\ell_\\infty$ Norms")
+plt.xlabel("$w_1$")
+plt.ylabel("$w_2$")
+
+plt.show()
+```
+
+
+
+A common choice is the elastic net penalty, which interpolates between sparsity and smooth weight spreading:
+
+$$
+\mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_2^2 \Big), \qquad \alpha \in [0,1].
+$$
+
+The $\ell_1$ term encourages the SC to be supported on a small subset of donors, while the $\ell_2$ term stabilizes the solution in the presence of collinearity. This is the formulation advocated by [Doudchenko and Imbens (2016)](https://arxiv.org/pdf/1610.07748) for an elastic net regularized SC. Alternatively, one may replace the $\ell_2$ term with the $\ell_\infty$ norm, as discussed in [Wang, Xing, and Ye (2025)](https://doi.org/10.48550/arXiv.2510.26053):
+
+$$
+\mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_\infty \Big), \qquad \alpha \in [0,1].
+$$
+
+The $\ell_\infty$ component caps the maximum influence of any single donor, producing a “balanced sparsity” effect: a small number of donors may be selected, but none is allowed to dominate. Geometrically, the $\ell_1$–$\ell_\infty$ penalty replaces the circular ridge constraint with a hyper-rectangular region, reflecting the analyst’s preference for bounding donor influence rather than merely smoothing it. Recently, there's [been interest](https://arxiv.org/pdf/2503.06454) in the sparsity versus density constraint in the SCM literature, and this is one form of trading off between sparsity and density.
+
+Within the general synthetic control framework, the corresponding optimization problem becomes
+
+$$
+(\mathbf{w}, b_0) \;\in\; 
+\underset{(\mathbf{w}, b_0) \in \mathcal{C}}{\operatorname*{argmin}}
+\;
+\mathcal{L}(\mathbf{Y}_0, \mathbf{y}_1, \mathbf{w}, b_0) 
++ 
+\lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_q \Big),
+$$
+
+where $q = 2$ recovers the standard elastic net (Doudchenko–Imbens style) and $q = \infty$ recovers the max-norm penalty of Wang, Xing, and Ye. The $\ell_\infty$ norm differs from the $\ell_2$ norm in what aspect of the donor weights it constrains. While the $\ell_2$ term spreads weight smoothly and stabilizes the solution in the presence of collinearity, it does not prevent one donor from dominating. Replacing the $\ell_2$ term with the $\ell_\infty$ norm
+
+$$
+\lVert \mathbf{w} \rVert_\infty = \max_j |w_j|
+$$
+
+penalizes the largest absolute weight rather than the overall energy of the weight vector. Conceptually, it acts like a position limit in a portfolio: no single donor can dominate the synthetic control. This encourages a more balanced allocation among selected donors, enhancing robustness and interpretability, particularly when the donor pool is large or when one unit is naturally very similar to the treated unit but over-reliance is undesirable. In practice, this can be important: in [the original 2003 SCM paper](https://www.aeaweb.org/articles?id=10.1257/000282803321455188), the donors Catalonia and Madrid received weights of 0.8508 and 0.1492, respectively. While this allocation makes sense economically—Catalonia is very similar to the Basque Country, and Madrid is the capital, there are settings where analysts may wish to reduce the influence of any single donor.
+
+
+
+## A Relaxed Balanced Approach
+
+Other approaches to mitigating high-dimensionality are possible. [Liao, Shi, and Zheng (2025)](https://arxiv.org/pdf/2508.01793), introduce a relaxation of the fit conditions imposed by the elastic net estimators above. Here, the loss is set to zero, a penalty is placed on the weights, and fit is enforced via a constraint
+
+$$
+\mathcal{L} \equiv 0,
+\qquad
+\text{penalty active on } \mathbf{w},
+\qquad
+\gamma \in \mathbb{R}.
+$$
+
+
+Define the Gram matrix of donor outcomes and the projection of the treated unit onto the donor space as
+
+$$
+\mathbf{G} := \frac{1}{T_0}\mathbf{Y}_0^\top \mathbf{Y}_0,
+\qquad
+\mathbf{a} := \frac{1}{T_0}\mathbf{Y}_0^\top \mathbf{y}_1.
+$$
+
+The relaxed balance constraint is
+
+$$
+\Big\|
+\mathbf{G}\mathbf{w} - \mathbf{a} + \gamma \mathbf{1}
+\Big\|_\infty \le \tau,
+$$
+
+and the optimization problem becomes
+
+$$
+(\mathbf{w},\gamma)
+\in
+\underset{\mathbf{w}\in\mathcal{C},\;\gamma\in\mathbb{R}}
+{\operatorname*{argmin}}
+\;
+\|\mathbf{w}\|_2^2
+\quad\text{s.t.}\quad
+\Big\|
+\mathbf{G}\mathbf{w} - \mathbf{a} + \gamma \mathbf{1}
+\Big\|_\infty \le \tau .
+$$
+
+The slack variable $\gamma$ shifts all donor projections uniformly and is estimated jointly with $\mathbf{w}$, allowing small, evenly distributed violations when exact pre-treatment matching is infeasible. Alternative penalties can also be used: negative entropy
+
+$$
+\sum_j w_j \log w_j
+$$
+
+encourages dense allocation, while empirical likelihood
+
+$$
+- \sum_j \log w_j
+$$
+
+discourages zero weights. In all cases, the constraint enforces relaxed balance, while the penalty governs the weight structure.
+
+This contrasts with classical SCM and elastic net approaches. There, fit is minimized in the objective and the weights absorb all discrepancies. In the relaxed balance method, fit is a constraint, the objective imposes an $\ell_2$ (or other) penalty on the weights, and $\gamma$ allows controlled relaxation—analogous to portfolio optimization with position limits, where constraints cap exposure to any single asset while the objective encourages diversification or avoidance of zero positions. This separation is particularly useful in high-dimensional donor pools or when robustness to over-reliance on any single donor is desired.

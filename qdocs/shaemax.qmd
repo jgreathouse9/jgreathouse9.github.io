@@ -277,6 +277,7 @@ Now for an empirical application for the Basque Country. I fit the three Relaxed
 import pandas as pd
 import matplotlib.pyplot as plt
 from mlsynth import RESCM
+from IPython.display import display, Markdown
 
 # ---------------- Load data ----------------
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
@@ -333,6 +334,19 @@ for i, rtype in enumerate(relax_types):
         "RELAXED": relax_results,
         "ELASTIC": elastic_results
     }
+
+
+weights_dict = {}
+for relax_type, models in results.items():
+    for model_name, output in models.items():
+        if output is not None and "donor_weights" in output:
+            col_name = f"{relax_type}_{model_name}"
+            weights_dict[col_name] = pd.Series(output["donor_weights"])
+
+weights_df = pd.DataFrame(weights_dict).round(3)
+
+# ---------------- Display as Markdown ----------------
+markdown_table = weights_df.to_markdown()
 ```
 
 
@@ -350,21 +364,31 @@ plt.plot(time_points, observed, label="Observed", color="black", linewidth=2)
 
 # Plot RELAXED counterfactuals
 colors = {"l2": "blue", "entropy": "green", "el": "orange"}
+norm_labels = {"l2": r"$\ell_2$", "entropy": r"$\ell_\infty^{\rm Entropy}$", "el": r"$\ell_\infty^{\rm EL}$"}
+
 for rtype in relax_types:
     cf = results[rtype]["RELAXED"]["counterfactual"]
-    plt.plot(time_points, cf, label=f"RELAXED ({rtype.upper()})", color=colors[rtype], linestyle="--")
+    plt.plot(time_points, cf, label=f"RELAXED ({norm_labels[rtype]})", color=colors[rtype], linestyle="--")
 
 # Plot ELASTIC counterfactual only once (from first iteration)
 elastic_cf = results["l2"]["ELASTIC"]
 if elastic_cf is not None:
-    plt.plot(time_points, elastic_cf["counterfactual"], label="ELASTIC (L1_INF)", color="red", linestyle=":")
+    plt.plot(time_points, elastic_cf["counterfactual"], label=r"ELASTIC ($\ell_1$-$\ell_\infty$)", color="red", linestyle="-")
 
-plt.xlabel("Time")
-plt.ylabel("Outcome")
-plt.title("Observed vs Synthetic Counterfactual Outcomes")
+plt.xlabel("Time Periods")
+plt.ylabel("GDP per Capita")
+plt.title("Machine Learning Synthetic Control Predictions, Basque Predictions")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
+```
+
+Here are the weights:
+
+
+```{python}
+
+display(Markdown(markdown_table))
 ```

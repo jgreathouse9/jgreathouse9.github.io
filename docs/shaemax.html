@@ -207,7 +207,7 @@ window.Quarto = {
   <ul>
   <li><a href="#regularized-synthetic-control" id="toc-regularized-synthetic-control" class="nav-link active" data-scroll-target="#regularized-synthetic-control">Regularized Synthetic Control</a></li>
   <li><a href="#a-relaxed-balanced-approach" id="toc-a-relaxed-balanced-approach" class="nav-link" data-scroll-target="#a-relaxed-balanced-approach">A Relaxed Balanced Approach</a></li>
-  <li><a href="#an-application-to-the-basque-country" id="toc-an-application-to-the-basque-country" class="nav-link" data-scroll-target="#an-application-to-the-basque-country">An Application to the Basque Country</a></li>
+  <li><a href="#an-example-in-mlsynth" id="toc-an-example-in-mlsynth" class="nav-link" data-scroll-target="#an-example-in-mlsynth">An Example in <code>mlsynth</code></a></li>
   </ul>
 </nav>
     <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(16)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(1)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(9)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
@@ -299,7 +299,7 @@ b_0
 \end{bmatrix},
 \]</span></p>
 <p>where <span class="math inline">\(b_0 \in \mathbb{R}\)</span> captures an additive baseline shift. Regularization of the coefficients is also an important issue. Note that all penalties are applied to <span class="math inline">\(\mathbf{w}\)</span>, while <span class="math inline">\(b_0\)</span> is left unpenalized. For a graphical example, see the plot:</p>
-<div id="a29758aa" class="cell" data-execution_count="1">
+<div id="d3728a75" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -406,96 +406,112 @@ b_0
 <p>discourages zero weights. In all cases, the constraint enforces relaxed balance, while the penalty governs the weight structure.</p>
 <p>This contrasts with classical SCM and elastic net approaches. There, fit is minimized in the objective and the weights absorb all discrepancies. In the relaxed balance method, fit is a constraint, the objective imposes an <span class="math inline">\(\ell_2\)</span> (or other) penalty on the weights, and <span class="math inline">\(\gamma\)</span> allows controlled relaxation—analogous to portfolio optimization with position limits, where constraints cap exposure to any single asset while the objective encourages diversification or avoidance of zero positions. This separation is particularly useful in high-dimensional donor pools or when robustness to over-reliance on any single donor is desired.</p>
 </section>
-<section id="an-application-to-the-basque-country" class="level2">
-<h2 class="anchored" data-anchor-id="an-application-to-the-basque-country">An Application to the Basque Country</h2>
-<div id="c9870f37" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> RESCM</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Load data ----------------</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Relaxation types ----------------</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>relax_types <span class="op">=</span> [<span class="st">"l2"</span>, <span class="st">"entropy"</span>, <span class="st">"el"</span>]</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Dictionary to store results per model</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {}</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, rtype <span class="kw">in</span> <span class="bu">enumerate</span>(relax_types):</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Fitting Relaxed SCM with relaxation_type='</span><span class="sc">{</span>rtype<span class="sc">}</span><span class="ss">'..."</span>)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Only run ELASTIC once</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    models_to_run <span class="op">=</span> {</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RELAXED"</span>: {<span class="st">"run"</span>: <span class="va">True</span>, <span class="st">"relaxation"</span>: rtype, <span class="st">"n_taus"</span>: <span class="dv">100</span>},</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: {<span class="st">"run"</span>: i <span class="op">==</span> <span class="dv">0</span>, <span class="st">"second_norm"</span>: <span class="st">"L1_INF"</span>,</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"constraint_type"</span>: <span class="st">"unit"</span>, <span class="st">"fit_intercept"</span>: <span class="va">False</span>, <span class="st">"alpha"</span>: <span class="dv">0</span>}</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    config <span class="op">=</span> {</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"df"</span>: data,</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>        <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>, <span class="st">"red"</span>],</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="st">"models_to_run"</span>: models_to_run</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    arco <span class="op">=</span> RESCM(config).fit()</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># RELAXED results</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    relax_results <span class="op">=</span> {</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        <span class="st">"counterfactual"</span>: arco.relax.time_series.counterfactual_outcome,</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>        <span class="st">"method_name"</span>: arco.relax.method_details.method_name,</span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="st">"donor_weights"</span>: arco.relax.weights.donor_weights</span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ELASTIC results (only if run)</span></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">hasattr</span>(arco, <span class="st">"elastic"</span>) <span class="kw">and</span> <span class="bu">getattr</span>(arco.elastic, <span class="st">"time_series"</span>, <span class="va">None</span>):</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>        elastic_results <span class="op">=</span> {</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>            <span class="st">"counterfactual"</span>: arco.elastic.time_series.counterfactual_outcome,</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>            <span class="st">"method_name"</span>: arco.elastic.method_details.method_name,</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>            <span class="st">"donor_weights"</span>: arco.elastic.weights.donor_weights</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>        elastic_results <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    results[rtype] <span class="op">=</span> {</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RELAXED"</span>: relax_results,</span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: elastic_results</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Plotting ----------------</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed trajectory (from any iteration, all identical)</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> arco.relax.time_series.observed_outcome</span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>time_points <span class="op">=</span> <span class="bu">range</span>(<span class="bu">len</span>(observed))</span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>plt.plot(time_points, observed, label<span class="op">=</span><span class="st">"Observed"</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot RELAXED counterfactuals</span></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> {<span class="st">"l2"</span>: <span class="st">"blue"</span>, <span class="st">"entropy"</span>: <span class="st">"green"</span>, <span class="st">"el"</span>: <span class="st">"orange"</span>}</span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rtype <span class="kw">in</span> relax_types:</span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>    cf <span class="op">=</span> results[rtype][<span class="st">"RELAXED"</span>][<span class="st">"counterfactual"</span>]</span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    plt.plot(time_points, cf, label<span class="op">=</span><span class="ss">f"RELAXED (</span><span class="sc">{</span>rtype<span class="sc">.</span>upper()<span class="sc">}</span><span class="ss">)"</span>, color<span class="op">=</span>colors[rtype], linestyle<span class="op">=</span><span class="st">"--"</span>)</span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ELASTIC counterfactual only once (from first iteration)</span></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>elastic_cf <span class="op">=</span> results[<span class="st">"l2"</span>][<span class="st">"ELASTIC"</span>]</span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> elastic_cf <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>    plt.plot(time_points, elastic_cf[<span class="st">"counterfactual"</span>], label<span class="op">=</span><span class="st">"ELASTIC (L1_INF)"</span>, color<span class="op">=</span><span class="st">"red"</span>, linestyle<span class="op">=</span><span class="st">":"</span>)</span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Time"</span>)</span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Outcome"</span>)</span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Observed vs Synthetic Counterfactual Outcomes"</span>)</span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="an-example-in-mlsynth" class="level2">
+<h2 class="anchored" data-anchor-id="an-example-in-mlsynth">An Example in <code>mlsynth</code></h2>
+<p>As usual, these may be implemented in <code>mlsynth</code>, using the <code>RESCM</code> class. To install <code>mlsynth</code>, you must have Github on your machine and and do</p>
+<pre class="{shell}"><code>pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+</code></pre>
+<p>from the command line or within your virtual Python environment. To run the model, users provide a panel data frame along with the outcome variable, a treatment indicator, a unit identifier, and a time variable. Optional configuration includes whether to display plots, save results, and customize the colors of treated and counterfactual series are also present.</p>
+<p>Modeling options are controlled via the <code>models_to_run</code> dictionary, where a <code>run: bool</code> specifies whether the model is estimated. Relaxed SCM estimators are specified by the <code>"RELAXED"</code> key, with the type of relaxation chosen through the <code>relaxation</code> parameter. Options include <code>l2</code> for standard Euclidean relaxation, <code>entropy</code> for entropy-based relaxation, and <code>el</code> for elementwise (max-norm) relaxation. The relaxation strength is controlled by the <code>tau</code> parameter, which can be provided explicitly (in which case no cross-validation is performed) or selected via cross-validation over a grid of candidate values. The number of candidate taus is controlled by <code>n_taus</code>, and the number of cross-validation folds by <code>n_splits</code>.</p>
+<p>Elastic Net SCM estimators are specified by the <code>"ELASTIC"</code> key and combine L1 with either <span class="math inline">\(\ell_2\)</span> or <span class="math inline">\(\ell_\infty\)</span> penalties on donor weights via <code>second_norm="l2"</code> or <code>second_norm="L1_INF"</code>. The <code>alpha</code> parameter controls the mixture between L1 and the second norm, while <code>lambda</code> controls the overall penalty strength. If <code>lambda</code> is zero, no cross-validation is performed. If <code>lambda</code> is provided but <code>alpha</code> is not, cross-validation is performed over <code>alpha</code>, and vice versa. An optional intercept can be added via <code>fit_intercept</code>.</p>
+<p>The feasible set for the donor weights is specified via the <code>constraint_type</code> parameter. Users may select <code>unit</code>, <code>simplex</code>, <code>affine</code>, <code>nonneg</code>, or <code>unconstrained</code>.</p>
+<p>The <code>"unit"</code> option constrains each weight to lie between 0 and 1 independently:</p>
+<p><span class="math display">\[
+\mathcal{C}_{\text{unit}} =
+\left\{
+\mathbf{w} \in [0,1]^{|\mathcal{N}_0|}
+\right\}
+\]</span></p>
+<p>The <code>"simplex"</code> option requires non-negative weights that sum to one:</p>
+<p><span class="math display">\[
+\mathcal{C}_{\text{simplex}} =
+\left\{
+\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
+\right\}
+\]</span></p>
+<p>The <code>"affine"</code> option requires weights to sum to one but allows negative values:</p>
+<p><span class="math display">\[
+\mathcal{C}_{\text{affine}} =
+\left\{
+\mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
+\right\}
+\]</span></p>
+<p>The <code>"nonneg"</code> option allows any non-negative weights:</p>
+<p><span class="math display">\[
+\mathcal{C}_{\text{nonneg}} =
+\left\{
+\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|}
+\right\}
+\]</span></p>
+<p>The <code>"unconstrained"</code> option allows weights to take any real value:</p>
+<p><span class="math display">\[
+\mathcal{C}_{\text{unconstrained}} =
+\left\{
+\mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|}
+\right\}
+\]</span></p>
+<p>Relaxation methods like <code>entropy</code> and <code>el</code> are simplex weights by definition. Once the configuration is set, calling <code>RESCM(config).fit()</code> estimates the selected models on the pre-treatment period and produces counterfactual predictions for both pre- and post-treatment periods. The output is an <code>EstimatorResults</code> object containing separate results for relaxed and elastic SCMs (depending on what the user specifies), including donor weights, time series of observed and counterfactual outcomes, and fit diagnostics such as pre- and post-treatment RMSE. To date, this is the most flexible class of estimators <code>mlsynth</code> provides.</p>
+<p>Now for an empirical application for the Basque Country. I fit the three Relaxed SCM models are fit, one for each relaxation type, and a pure <span class="math inline">\(\ell_\infty\)</span> norm SCM with unit interval donor weights. First I load the data and set up the model</p>
+<div id="254f7eb9" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> RESCM</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Load data ----------------</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Relaxation types ----------------</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>relax_types <span class="op">=</span> [<span class="st">"l2"</span>, <span class="st">"entropy"</span>, <span class="st">"el"</span>]</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Dictionary to store results per model</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {}</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, rtype <span class="kw">in</span> <span class="bu">enumerate</span>(relax_types):</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Fitting Relaxed SCM with relaxation_type='</span><span class="sc">{</span>rtype<span class="sc">}</span><span class="ss">'..."</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Only run ELASTIC once</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    models_to_run <span class="op">=</span> {</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RELAXED"</span>: {<span class="st">"run"</span>: <span class="va">True</span>, <span class="st">"relaxation"</span>: rtype, <span class="st">"n_taus"</span>: <span class="dv">100</span>},</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: {<span class="st">"run"</span>: i <span class="op">==</span> <span class="dv">0</span>, <span class="st">"second_norm"</span>: <span class="st">"L1_INF"</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"constraint_type"</span>: <span class="st">"unit"</span>, <span class="st">"fit_intercept"</span>: <span class="va">False</span>, <span class="st">"alpha"</span>: <span class="dv">0</span>}</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    config <span class="op">=</span> {</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"df"</span>: data,</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>        <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>        <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>        <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>        <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>, <span class="st">"red"</span>],</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>        <span class="st">"models_to_run"</span>: models_to_run</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    arco <span class="op">=</span> RESCM(config).fit()</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># RELAXED results</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    relax_results <span class="op">=</span> {</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>        <span class="st">"counterfactual"</span>: arco.relax.time_series.counterfactual_outcome,</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>        <span class="st">"method_name"</span>: arco.relax.method_details.method_name,</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        <span class="st">"donor_weights"</span>: arco.relax.weights.donor_weights</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ELASTIC results (only if run)</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">hasattr</span>(arco, <span class="st">"elastic"</span>) <span class="kw">and</span> <span class="bu">getattr</span>(arco.elastic, <span class="st">"time_series"</span>, <span class="va">None</span>):</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>        elastic_results <span class="op">=</span> {</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>            <span class="st">"counterfactual"</span>: arco.elastic.time_series.counterfactual_outcome,</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>            <span class="st">"method_name"</span>: arco.elastic.method_details.method_name,</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>            <span class="st">"donor_weights"</span>: arco.elastic.weights.donor_weights</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        elastic_results <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    results[rtype] <span class="op">=</span> {</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RELAXED"</span>: relax_results,</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: elastic_results</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Fitting Relaxed SCM with relaxation_type='l2'...</code></pre>
 </div>
@@ -506,296 +522,8 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.001953433854639767: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0022616844268081655: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.001953433854639767: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Number of tau candidates skipped before finding a feasible solution: 0
+<pre><code>Number of tau candidates skipped before finding a feasible solution: 0
 Fitting Relaxed SCM with relaxation_type='entropy'...
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.001953433854639767: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0022616844268081655: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.001953433854639767: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
 Number of tau candidates skipped before finding a feasible solution: 0
 Fitting Relaxed SCM with relaxation_type='el'...</code></pre>
 </div>
@@ -806,156 +534,42 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.001953433854639767: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0022616844268081655: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.001953433854639767: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0016871955164134158: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0014572434607111279: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0012586321402154592: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00108709004850177: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000938927853335509: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00081095905070995: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0007004314331416283: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0006049678983215471: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.000522515325101903: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0004513004173012053: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00038979156566655863: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00033666590776356813: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002907808773554268: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0002511496313875996: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00021691982608962296: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001873552857345565: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00016182016980861174: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.0001397652980764454: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00012071633943717498: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=0.00010426361055045849: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=9.005326483309474e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=7.777968232909846e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=6.717889678323136e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.8022918554961315e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=5.011483127653919e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=4.328455679968967e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.738519734820794e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=3.2289876207637975e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.7889009005179523e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.4087946893614907e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=2.080494095153591e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.796938402050496e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.5520292166584658e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.3404993107236184e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1.1577993395764304e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Solver failed for tau=1e-05: matmul: Input operand 1 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)-&gt;(n?,m?) requires 1)
-Number of tau candidates skipped before finding a feasible solution: 0</code></pre>
+<pre><code>Number of tau candidates skipped before finding a feasible solution: 0</code></pre>
 </div>
+</div>
+<p>and then I plot the model predictions:</p>
+<div id="5d7d3d07" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Plotting ----------------</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed trajectory (from any iteration, all identical)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> arco.relax.time_series.observed_outcome</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>time_points <span class="op">=</span> <span class="bu">range</span>(<span class="bu">len</span>(observed))</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>plt.plot(time_points, observed, label<span class="op">=</span><span class="st">"Observed"</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot RELAXED counterfactuals</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> {<span class="st">"l2"</span>: <span class="st">"blue"</span>, <span class="st">"entropy"</span>: <span class="st">"green"</span>, <span class="st">"el"</span>: <span class="st">"orange"</span>}</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rtype <span class="kw">in</span> relax_types:</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    cf <span class="op">=</span> results[rtype][<span class="st">"RELAXED"</span>][<span class="st">"counterfactual"</span>]</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    plt.plot(time_points, cf, label<span class="op">=</span><span class="ss">f"RELAXED (</span><span class="sc">{</span>rtype<span class="sc">.</span>upper()<span class="sc">}</span><span class="ss">)"</span>, color<span class="op">=</span>colors[rtype], linestyle<span class="op">=</span><span class="st">"--"</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ELASTIC counterfactual only once (from first iteration)</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>elastic_cf <span class="op">=</span> results[<span class="st">"l2"</span>][<span class="st">"ELASTIC"</span>]</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> elastic_cf <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    plt.plot(time_points, elastic_cf[<span class="st">"counterfactual"</span>], label<span class="op">=</span><span class="st">"ELASTIC (L1_INF)"</span>, color<span class="op">=</span><span class="st">"red"</span>, linestyle<span class="op">=</span><span class="st">":"</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Time"</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Outcome"</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Observed vs Synthetic Counterfactual Outcomes"</span>)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="shaemax_files/figure-html/cell-3-output-6.png" class="img-fluid figure-img"></p>
+<p><img src="shaemax_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -967,7 +581,7 @@ Number of tau candidates skipped before finding a feasible solution: 0</code></p
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1766771157932" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1766774033929" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -991,7 +605,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1766771157933" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1766774033930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -1015,7 +629,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1766771157933" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1766774033930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1039,7 +653,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1766771157938" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1766774033935" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -1063,7 +677,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1766771157939" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1766774033936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -1087,7 +701,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1766771157936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1766774033933" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -1109,7 +723,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1766771157936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1766774033932" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1133,7 +747,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1766771157939" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1766774033936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1155,7 +769,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1766771157939" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1766774033935" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1177,7 +791,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1766771157939" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1766774033936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1201,7 +815,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1766771157933" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1766774033930" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1225,7 +839,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1766771157936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1766774033932" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -1242,7 +856,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1766771157938" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1766774033935" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -1266,7 +880,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1766771157939" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1766774033936" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -1283,7 +897,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1766771157933" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1766774033930" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -1294,7 +908,7 @@ Sep 22, 2025
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1766771223606" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1766774092693" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

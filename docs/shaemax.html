@@ -299,7 +299,7 @@ b_0
 \end{bmatrix},
 \]</span></p>
 <p>where <span class="math inline">\(b_0 \in \mathbb{R}\)</span> captures an additive baseline shift. Regularization of the coefficients is also an important issue. Note that all penalties are applied to <span class="math inline">\(\mathbf{w}\)</span>, while <span class="math inline">\(b_0\)</span> is left unpenalized. For a graphical example, see the plot:</p>
-<div id="7696d09e" class="cell" data-execution_count="1">
+<div id="90e57ee0" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -466,45 +466,30 @@ b_0
 <p>from the command line or within your virtual Python environment. To run the model, users provide a panel data frame along with the outcome variable, a treatment indicator, a unit identifier, and a time variable. Optional configuration includes whether to display plots, save results, and customize the colors of treated and counterfactual series are also present.</p>
 <p>Modeling options are controlled via the <code>models_to_run</code> dictionary, where a <code>run: bool</code> specifies whether the model is estimated. Relaxed SCM estimators are specified by the <code>"RELAXED"</code> key, with the type of relaxation chosen through the <code>relaxation</code> parameter. Options include <code>l2</code> for standard Euclidean relaxation, <code>entropy</code> for entropy-based relaxation, and <code>el</code> for empirical likelihood relaxation. The relaxation strength is controlled by the <code>tau</code> parameter, which can be provided explicitly (in which case no cross-validation is performed) or selected via cross-validation over a grid of candidate values. The number of candidate taus is controlled by <code>n_taus</code>, and the number of cross-validation folds by <code>n_splits</code>.</p>
 <p>Elastic Net SCM estimators are specified by the <code>"ELASTIC"</code> key and combine L1 with either <span class="math inline">\(\ell_2\)</span> or <span class="math inline">\(\ell_\infty\)</span> penalties on donor weights via <code>second_norm="l2"</code> or <code>second_norm="L1_INF"</code>. The <code>alpha</code> parameter controls the mixture between L1 and the second norm, while <code>lambda</code> controls the overall penalty strength. If <code>lambda</code> is zero, no cross-validation is performed. If <code>lambda</code> is provided but <code>alpha</code> is not, cross-validation is performed over <code>alpha</code>, and vice versa. An optional intercept can be added via <code>fit_intercept</code>.</p>
-<p>The feasible set for the donor weights is specified via the <code>constraint_type</code> parameter. Users may select <code>unit</code>, <code>simplex</code>, <code>affine</code>, <code>nonneg</code>, or <code>unconstrained</code>.</p>
-<p>The <code>"unit"</code> option constrains each weight to lie between 0 and 1 independently:</p>
+<p>The feasible set for the donor weights is specified via the <code>constraint_type</code> parameter. Users may select <code>unit</code>, <code>simplex</code>, <code>affine</code>, <code>nonneg</code>, or <code>unconstrained</code>. These are defined as follows:</p>
 <p><span class="math display">\[
-\mathcal{C}_{\text{unit}} =
-\left\{
-\mathbf{w} \in [0,1]^{|\mathcal{N}_0|}
-\right\}
+\mathcal{C}_{\text{unit}} :=
+\left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : 0 \leq w_j \leq 1 \;\; \forall j \right\}
 \]</span></p>
-<p>The <code>"simplex"</code> option requires non-negative weights that sum to one:</p>
 <p><span class="math display">\[
-\mathcal{C}_{\text{simplex}} =
-\left\{
-\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
-\right\}
+\mathcal{C}_{\text{simplex}} :=
+\left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : \mathbf{w} \geq \mathbf{0},\; \mathbf{1}^\top \mathbf{w} = 1 \right\}
 \]</span></p>
-<p>The <code>"affine"</code> option requires weights to sum to one but allows negative values:</p>
 <p><span class="math display">\[
-\mathcal{C}_{\text{affine}} =
-\left\{
-\mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
-\right\}
+\mathcal{C}_{\text{affine}} :=
+\left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : \mathbf{1}^\top \mathbf{w} = 1 \right\}
 \]</span></p>
-<p>The <code>"nonneg"</code> option allows any non-negative weights:</p>
 <p><span class="math display">\[
-\mathcal{C}_{\text{nonneg}} =
-\left\{
-\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|}
-\right\}
+\mathcal{C}_{\text{nonneg}} :=
+\left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : \mathbf{w} \geq \mathbf{0} \right\}
 \]</span></p>
-<p>The <code>"unconstrained"</code> option allows weights to take any real value:</p>
 <p><span class="math display">\[
-\mathcal{C}_{\text{unconstrained}} =
-\left\{
-\mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|}
-\right\}
+\mathcal{C}_{\text{unconstrained}} :=
+\left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} \right\}
 \]</span></p>
 <p>Relaxation methods like <code>entropy</code> and <code>el</code> are simplex weights by definition. Once the configuration is set, calling <code>RESCM(config).fit()</code> estimates the selected models on the pre-treatment period and produces counterfactual predictions for both pre- and post-treatment periods. The output is an <code>EstimatorResults</code> object containing separate results for relaxed and elastic SCMs (depending on what the user specifies), including donor weights, time series of observed and counterfactual outcomes, and fit diagnostics such as pre- and post-treatment RMSE. To date, this is the most flexible class of estimators <code>mlsynth</code> provides.</p>
 <p>Now for an empirical application for the Basque Country. I fit the three Relaxed SCM models are fit, one for each relaxation type, and a pure <span class="math inline">\(\ell_\infty\)</span> norm SCM with unit interval donor weights. First I load the data and set up the model</p>
-<div id="7b5edf9f" class="cell" data-execution_count="2">
+<div id="d443d472" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> RESCM</span>
@@ -599,7 +584,7 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 </div>
 </div>
 <p>and then I plot the model predictions:</p>
-<div id="46e8cad5" class="cell" data-execution_count="3">
+<div id="f3241ca4" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Plotting ----------------</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -638,7 +623,7 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 </div>
 </div>
 <p>Here are the weights:</p>
-<div id="ceb604bd" class="cell" data-execution_count="4">
+<div id="e8235599" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>display(Markdown(markdown_table))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
@@ -782,7 +767,7 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1766931949093" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1766938082192" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -806,7 +791,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1766931949094" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1766938082193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -830,7 +815,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1766931949093" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1766938082193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -854,7 +839,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1766931949099" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1766938082198" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -878,7 +863,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1766931949100" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1766938082199" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -902,7 +887,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1766931949096" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1766938082196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -924,7 +909,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1766931949096" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1766938082196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -948,7 +933,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1766931949099" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1766938082199" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -970,7 +955,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1766931949099" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1766938082199" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -992,7 +977,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1766931949099" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1766938082199" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1016,7 +1001,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1766931949093" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1766938082193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1040,7 +1025,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1766931949096" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1766938082196" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -1057,7 +1042,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1766931949099" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1766938082198" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -1081,7 +1066,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1766931949100" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1766938082199" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -1098,7 +1083,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1766931949093" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1766938082193" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -1109,7 +1094,7 @@ Sep 22, 2025
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1766932019330" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1766938145818" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>

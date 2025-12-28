@@ -142,44 +142,38 @@ In practice, this can be important: in [the original 2003 SCM paper](https://www
 Other approaches to mitigating high-dimensionality are possible. [Liao, Shi, and Zheng (2025)](https://arxiv.org/pdf/2508.01793), introduce a relaxation of the fit conditions imposed by the elastic net estimators above. Here, the loss is set to zero, a penalty is placed on the weights, and fit is enforced via a constraint
 
 $$
-\mathcal{L} \equiv 0,
-\qquad
-\text{penalty active on } \mathbf{w},
-\qquad
-\gamma \in \mathbb{R}.
-$$
-
-
-Define the Gram matrix of donor outcomes and the projection of the treated unit onto the donor space as
-
-$$
-\mathbf{G} := \frac{1}{T_0}\mathbf{Y}_0^\top \mathbf{Y}_0,
-\qquad
-\mathbf{a} := \frac{1}{T_0}\mathbf{Y}_0^\top \mathbf{y}_1.
-$$
-
-The relaxed balance constraint is
-
-$$
-\Big\|
-\mathbf{G}\mathbf{w} - \mathbf{a} + \gamma \mathbf{1}
-\Big\|_\infty \le \tau,
-$$
-
-and the optimization problem becomes
-
-$$
 (\mathbf{w},\gamma)
 \in
-\underset{\mathbf{w}\in\mathcal{C},\;\gamma\in\mathbb{R}}
-{\operatorname*{argmin}}
-\;
+\underset{
+\substack{
+\mathbf{w}\in\mathbb{R}^{|\mathcal{N}_0|}_+,\\[2pt]
+\mathbf{1}^\top\mathbf{w}=1,\;\gamma\in\mathbb{R}
+}
+}{\operatorname*{argmin}}
+\;\;
 \|\mathbf{w}\|_2^2
-\quad\text{s.t.}\quad
-\Big\|
-\mathbf{G}\mathbf{w} - \mathbf{a} + \gamma \mathbf{1}
-\Big\|_\infty \le \tau .
+\quad
+\text{s.t.}
+\quad
+\left\|
+\mathbf{G}\mathbf{w}
+-
+\mathbf{a}
++
+\gamma\mathbf{1}
+\right\|_\infty
+\le
+\tau,
+\qquad
+\mathbf{G}
+=
+\frac{1}{T_0}\mathbf{Y}_0^\top\mathbf{Y}_0,
+\quad
+\mathbf{a}
+=
+\frac{1}{T_0}\mathbf{Y}_0^\top\mathbf{y}_1.
 $$
+
 
 The slack variable $\gamma$ shifts all donor projections uniformly and is estimated jointly with $\mathbf{w}$, allowing small, evenly distributed violations when exact pre-treatment matching is infeasible. Alternative penalties can also be used: negative entropy
 

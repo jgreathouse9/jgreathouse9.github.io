@@ -287,7 +287,7 @@ The `"simplex"` option requires non-negative weights that sum to one:
 $$
 \mathcal{C}_{\text{simplex}} =
 \left\{
-\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
+\mathbf{w} \geq \mathbf{0} :\; \mathbf{1}^\top \mathbf{w} = 1
 \right\}
 $$
 
@@ -296,7 +296,7 @@ The `"affine"` option requires weights to sum to one but allows negative values:
 $$
 \mathcal{C}_{\text{affine}} =
 \left\{
-\mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
+\mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|} :\; \mathbf{1}^\top \mathbf{w} = 1
 \right\}
 $$
 
@@ -305,7 +305,7 @@ The `"nonneg"` option allows any non-negative weights:
 $$
 \mathcal{C}_{\text{nonneg}} =
 \left\{
-\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|}
+\mathbf{w} \geq \mathbf{0}
 \right\}
 $$
 
@@ -318,9 +318,7 @@ $$
 \right\}
 $$
 
-
 Relaxation methods like `entropy` and `el` are simplex weights by definition. Once the configuration is set, calling `RESCM(config).fit()` estimates the selected models on the pre-treatment period and produces counterfactual predictions for both pre- and post-treatment periods. The output is an `EstimatorResults` object containing separate results for relaxed and elastic SCMs (depending on what the user specifies), including donor weights, time series of observed and counterfactual outcomes, and fit diagnostics such as pre- and post-treatment RMSE. To date, this is the most flexible class of estimators ```mlsynth``` provides.
-
 
 Now for an empirical application for the Basque Country. I fit the three Relaxed SCM models are fit, one for each relaxation type, and a pure $\ell_\infty$ norm SCM with unit interval donor weights. First I load the data and set up the model
 

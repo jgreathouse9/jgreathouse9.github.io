@@ -37,34 +37,25 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
 
-    - name: Log and Delete Existing Docs Directory
+    - name: Conditionally Remove docs/ Directory
       run: |
-        echo "Checking if docs/ directory exists before deletion..."
-        if [ -d docs ]; then
-          echo "docs/ directory found. Deleting..."
-          rm -rf docs
-          echo "docs/ directory deleted."
+        if [ -z "${{ github.event.inputs.qmd_path }}" ]; then
+          echo "Rendering all files. Removing existing docs/ directory..."
+          if [ -d docs ]; then rm -rf docs; fi
         else
-          echo "No existing docs/ directory found. Skipping deletion."
+          echo "Rendering single file only. Keeping existing docs/ directory."
         fi
 
-    - name: Verify docs Directory Removal
+    - name: Conditionally Generate index.qmd
       run: |
-        if [ -d docs ]; then
-          echo "ERROR: docs/ directory still exists after deletion attempt."
-          exit 1
-        else
-          echo "docs/ directory successfully removed."
+        if [ -z "${{ github.event.inputs.qmd_path }}" ]; then
+          echo "---" > qdocs/index.qmd
+          echo "format: html" >> qdocs/index.qmd
+          echo "---" >> qdocs/index.qmd
+          echo "" >> qdocs/index.qmd
+          echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
+          echo "" >> qdocs/index.qmd
         fi
-
-    - name: Generate index.qmd (excluding landing.qmd)
-      run: |
-        echo "---" > qdocs/index.qmd
-        echo "format: html" >> qdocs/index.qmd
-        echo "---" >> qdocs/index.qmd
-        echo "" >> qdocs/index.qmd
-        echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
-        echo "" >> qdocs/index.qmd
 
     - name: Conditionally Render Quarto File(s)
       run: |
@@ -80,12 +71,24 @@ jobs:
         fi
 
     - name: Check rendered output
-      run: |
-        ls -l docs/
+      run: ls -l docs/
 
     - name: Commit rendered output
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add docs/
-        git diff --cached --exit-code || (git commit -m "Render Quarto site with updated index" && git push)
+
+        # Add only changed files in docs/
+        git add -u docs/
+
+        # Commit if there are changes
+        if ! git diff --cached --quiet; then
+          if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
+            git commit -m "Render Quarto site for updated file ${{ github.event.inputs.qmd_path }}"
+          else
+            git commit -m "Render Quarto site with updated index and all posts"
+          fi
+          git push
+        else
+          echo "No changes to commit."
+        fi

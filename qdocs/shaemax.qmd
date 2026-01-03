@@ -324,13 +324,24 @@ results = {}
 for i, rtype in enumerate(relax_types):
     print(f"Fitting Relaxed SCM with relaxation_type='{rtype}'...")
 
-    # Only run ELASTIC once
+    # ---------------- Strictly valid models_to_run ----------------
     models_to_run = {
-        "RELAXED": {"run": True, "relaxation": rtype, "n_taus": 100},
-        "ELASTIC": {"run": i == 0, "second_norm": "L1_INF",
-                    "constraint_type": "unit", "fit_intercept": False, "alpha": 0}
+        "RELAXED": {
+            "run": True,
+            "relaxation": rtype,
+            "tau": None,
+            "n_taus": 100
+        },
+        "ELASTIC": {
+            "run": i == 0,
+            "simplex": True,
+            "intercept": False,
+            "enet_type": "L1_INF",
+            "alpha": 0
+        }
     }
 
+    # ---------------- Config dictionary ----------------
     config = {
         "df": data,
         "outcome": data.columns[2],
@@ -343,16 +354,17 @@ for i, rtype in enumerate(relax_types):
         "models_to_run": models_to_run
     }
 
+    # ---------------- Fit the RESCM ----------------
     arco = RESCM(config).fit()
 
-    # RELAXED results
+    # ---------------- RELAXED results ----------------
     relax_results = {
         "counterfactual": arco.relax.time_series.counterfactual_outcome,
         "method_name": arco.relax.method_details.method_name,
         "donor_weights": arco.relax.weights.donor_weights
     }
 
-    # ELASTIC results (only if run)
+    # ---------------- ELASTIC results ----------------
     if hasattr(arco, "elastic") and getattr(arco.elastic, "time_series", None):
         elastic_results = {
             "counterfactual": arco.elastic.time_series.counterfactual_outcome,
@@ -367,7 +379,7 @@ for i, rtype in enumerate(relax_types):
         "ELASTIC": elastic_results
     }
 
-
+# ---------------- Collect weights ----------------
 weights_dict = {}
 for relax_type, models in results.items():
     for model_name, output in models.items():

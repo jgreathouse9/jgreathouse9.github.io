@@ -1,7 +1,11 @@
 ---
 title: "Shake it to the Max? Using the $\\ell_\\infty$ norm for Synthetic Control Methods"
-date: 2025-12-25
+date: 2026-01-04
 categories: [Machine Learning, Econometrics]
+
+format:
+  html:
+    code-fold: true
 ---
 
 Regularization in synthetic control methods has become an important econometric topic. Let $\mathbf{y}_1 \in \mathbb{R}^{T_0}$ denote the pre-treatment outcomes for the treated unit and let $\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times |\mathcal{N}_0|}$ denote the corresponding donor matrix. In the most general terms, an SCM is a form of convex optimization where we use a set of donor units that were not exposed to a treatment to predict how the outcomes for a single (or set of) target unit(s) would have evolved without the treatment. In full generality, a synthetic control estimator solves the following family of programs:
@@ -299,7 +303,6 @@ import matplotlib.pyplot as plt
 from mlsynth import RESCM
 from IPython.display import display, Markdown
 
-
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"
 data = pd.read_csv(url)
 
@@ -319,6 +322,7 @@ relax_types = ["l2", "entropy", "el"]
 results = {}
 
 for rtype in relax_types:
+    print(f"Running RELAXED SCM ({rtype})")
 
     config = {
         **base_config,
@@ -337,15 +341,20 @@ for rtype in relax_types:
     results[f"RELAXED_{rtype}"] = {
         "counterfactual": arco.relax.time_series.counterfactual_outcome,
         "weights": arco.relax.weights.donor_weights,
-        "method": arco.relax.method_details.method_name
+        "method": arco.relax.method_details.method_name,
+        "tau": arco.relax.method_details.parameters_used['tau_used']
     }
+
+
+
+print("Running Elastic Net ℓ1–ℓ2")
 
 config_l1l2 = {
     **base_config,
     "models_to_run": {
         "ELASTIC": {
             "run": True,
-            "affine": True,      # sum-to-one, signed
+            "constraint_type": "unit",
             "intercept": False,
             "enet_type": "L1_L2"
         }
@@ -360,12 +369,15 @@ results["ELASTIC_L1_L2"] = {
     "method": arco_l1l2.elastic.method_details.method_name
 }
 
+
+print("Running Elastic Net ℓ1–ℓ∞")
+
 config_l1linf = {
     **base_config,
     "models_to_run": {
         "ELASTIC": {
             "run": True,
-            "affine": True,
+            "constraint_type": "unit",
             "intercept": False,
             "enet_type": "L1_INF"
         }

@@ -1,0 +1,83 @@
+
+// =========================================
+// Custom SCSS environments
+// =========================================
+
+// ---------- Counters ----------
+body {
+  counter-reset: chapter 0 assumption 0 proof 0 problem 0;
+}
+
+h1 {
+  counter-increment: chapter;
+  counter-reset: assumption proof problem; /* restart numbering per chapter */
+}
+
+// ---------- Base Blocks ----------
+div.assumption,
+div.proof,
+div.problem {
+  margin: 1em 0;
+  font-style: normal;
+  padding: 0.5em 1em;
+  border-radius: 4px;
+}
+
+// ---------- Visual Distinction ----------
+div.assumption {
+  border-left: 4px solid #008080;     // teal (matches assumptioncolor)
+  background-color: #f6ffff;          // subtle teal tint
+}
+
+div.proof {
+  border-left: 4px solid #555555;     // neutral gray for proofs
+  background-color: #fafafa;
+}
+
+div.problem {
+  border-left: 4px solid #007acc;     // blue for problems
+  background-color: #f9f9f9;
+}
+
+// ---------- Paragraph Behavior ----------
+/* Only the first paragraph starts inline (LaTeX style) */
+div.assumption p:first-of-type,
+div.proof p:first-of-type,
+div.problem p:first-of-type {
+  display: inline;
+  margin-top: 0;
+}
+
+/* Later paragraphs are full width with spacing */
+div.assumption p + p,
+div.proof p + p,
+div.problem p + p {
+  display: block;
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  line-height: 1.5;
+}
+
+// ---------- Injected Link Styles ----------
+div.assumption a.assumption-link,
+div.proof a.proof-link,
+div.problem a.problem-link {
+  display: inline-block;
+  font-weight: 600;
+  text-decoration: none;
+  margin-right: 0.25em;
+}
+
+/* Environment-specific link colors */
+div.assumption a.assumption-link { color: #008080; }  // teal
+div.proof a.proof-link { color: #000000; }            // black
+div.problem a.problem-link { color: #007acc; }        // blue
+
+/* Proof [RESULT] links */
+div.proof a.statement-link {
+  text-decoration: none;
+  color: #444;
+  font-style: italic;
+  margin-left: 0.5em;
+  font-weight: 400;
+}

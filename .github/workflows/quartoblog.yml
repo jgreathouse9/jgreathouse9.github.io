@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       qmd_path:
-        description: "Optional: Path or filename of a specific .qmd file to render (e.g. shaemax.qmd or qdocs/posts/my-post.qmd)"
+        description: "Optional: Path to a specific .qmd file to render (e.g. qdocs/posts/my-post.qmd)"
         required: false
         default: ""
 
@@ -35,6 +35,60 @@ jobs:
     - name: Install required Python packages
       run: |
         python -m pip install --upgrade pip setuptools wheel
+        pip install -r qdocs/requirements.txt
+
+    - name: Log and Delete Existing Docs Directory
+      run: |
+        echo "Checking if docs/ directory exists before deletion..."
+        if [ -d docs ]; then
+          echo "docs/ directory found. Deleting..."
+          rm -rf docs
+          echo "docs/ directory deleted."
+        else
+          echo "No existing docs/ directory found. Skipping deletion."
+        fi
+
+    - name: Verify docs Directory Removal
+      run: |
+        if [ -d docs ]; then
+          echo "ERROR: docs/ directory still exists after deletion attempt."
+          exit 1
+        else
+          echo "docs/ directory successfully removed."
+        fi
+
+    - name: Generate index.qmd (excluding landing.qmd)
+      run: |
+        echo "---" > qdocs/index.qmd
+        echo "format: html" >> qdocs/index.qmd
+        echo "---" >> qdocs/index.qmd
+        echo "" >> qdocs/index.qmd
+        echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
+        echo "" >> qdocs/index.qmd
+
+    - name: Conditionally Render Quarto File(s)
+      run: |
+        if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
+          echo "Rendering only: ${{ github.event.inputs.qmd_path }}"
+          quarto render "${{ github.event.inputs.qmd_path }}"
+        else
+          echo "Rendering all .qmd files in qdocs/"
+          for file in qdocs/*.qmd; do
+            echo "Rendering $file..."
+            quarto render "$file"
+          done
+        fi
+
+    - name: Check rendered output
+      run: |
+        ls -l docs/
+
+    - name: Commit rendered output
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add docs/
+        git diff --cached --exit-code || (git commit -m "Render Quarto site with updated index" && git push)        python -m pip install --upgrade pip setuptools wheel
         pip install -r qdocs/requirements.txt
 
     - name: Conditionally Remove docs/ Directory

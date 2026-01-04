@@ -276,12 +276,9 @@ window.Quarto = {
 \]</span></p>
 <p>with admissible weights given by</p>
 <p><span class="math display">\[
-\mathcal{C} =
-\left\{
-\mathbf{w} \in \mathbb{R}_{+}^{|\mathcal{N}_0|} : \sum_{j \in \mathcal{N}_0} w_j = 1
-\right\},
+\mathcal{C}_{\text{simplex}}:= \left\{ \mathbf{w} \in \mathbb{R}_{\geq 0}^{|\mathcal{N}_0|} : \mathbf{1}^\top \mathbf{w} = 1 \right\}.
 \]</span></p>
-<p>where <span class="math inline">\(\mathbb{R}_+\)</span> denotes the nonnegative reals. In this case, balance is enforced entirely through the objective function.</p>
+<p>In this case, balance is enforced entirely through the objective function.</p>
 <section id="regularized-synthetic-control" class="level2">
 <h2 class="anchored" data-anchor-id="regularized-synthetic-control">Regularized Synthetic Control</h2>
 <p>Analysts have developed formulations of synthetic control that simultaneously account for level differences and control the geometry of the donor weights. To allow for level differences, we augment the donor matrix with an intercept term:</p>
@@ -300,7 +297,7 @@ b_0
 \end{bmatrix},
 \]</span></p>
 <p>where <span class="math inline">\(b_0 \in \mathbb{R}\)</span> captures an additive baseline shift. Regularization of the coefficients is also an important issue. Note that all penalties are applied to <span class="math inline">\(\mathbf{w}\)</span>, while <span class="math inline">\(b_0\)</span> is left unpenalized. For a graphical example, see the plot:</p>
-<div id="8ac1223c" class="cell" data-execution_count="1">
+<div id="40fbf12e" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -466,7 +463,7 @@ b_0
 </code></pre>
 <p>from the command line or within your virtual Python environment. To run the model, users provide a panel data frame along with the outcome variable, a treatment indicator, a unit identifier, and a time variable. Optional configuration includes whether to display plots, save results, and customize the colors of treated and counterfactual series are also present.</p>
 <p>Modeling options are controlled via the <code>models_to_run</code> dictionary, where a <code>run: bool</code> specifies whether the model is estimated. Relaxed SCM estimators are specified by the <code>"RELAXED"</code> key, with the type of relaxation chosen through the <code>relaxation</code> parameter. Options include <code>l2</code> for standard Euclidean relaxation, <code>entropy</code> for entropy-based relaxation, and <code>el</code> for empirical likelihood relaxation. The relaxation strength is controlled by the <code>tau</code> parameter, which can be provided explicitly (in which case no cross-validation is performed) or selected via cross-validation over a grid of candidate values. The number of candidate taus is controlled by <code>n_taus</code>, and the number of cross-validation folds by <code>n_splits</code>.</p>
-<p>Elastic Net SCM estimators are specified by the <code>"ELASTIC"</code> key and combine L1 with either <span class="math inline">\(\ell_2\)</span> or <span class="math inline">\(\ell_\infty\)</span> penalties on donor weights via <code>second_norm="l2"</code> or <code>second_norm="L1_INF"</code>. The <code>alpha</code> parameter controls the mixture between L1 and the second norm, while <code>lambda</code> controls the overall penalty strength. If <code>lambda</code> is zero, no cross-validation is performed. If <code>lambda</code> is provided but <code>alpha</code> is not, cross-validation is performed over <code>alpha</code>, and vice versa. An optional intercept can be added via <code>fit_intercept</code>.</p>
+<p>Elastic Net SCM estimators are specified by the <code>"ELASTIC"</code> key and combine L1 with either <span class="math inline">\(\ell_2\)</span> or <span class="math inline">\(\ell_\infty\)</span> penalties on donor weights via <code>enet_type="L1_L2"</code> or <code>second_norm="L1_INF"</code>. The <code>alpha</code> parameter controls the mixture between L1 and the second norm, while <code>lambda</code> controls the overall penalty strength. If <code>lambda</code> is zero, no cross-validation is performed. If <code>lambda</code> is provided but <code>alpha</code> is not, cross-validation is performed over <code>alpha</code>, and vice versa. An optional intercept can be added via <code>fit_intercept</code>.</p>
 <p>The feasible set for the donor weights is specified via the <code>constraint_type</code> parameter. Users may select <code>unit</code>, <code>simplex</code>, <code>affine</code>, <code>nonneg</code>, or <code>unconstrained</code>. These are defined as follows:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -477,141 +474,148 @@ b_0
 \mathcal{C}_{\text{unconstrained}} &amp;:= \mathbb{R}^{|\mathcal{N}_0|}
 \end{aligned}
 \]</span></p>
-<p>The unit constraint restricts each weight to the unit interval independently. This forces the synthetic control to be a strict interpolation with bounded contributions—no single donor can contribute more than 100%, making it the most conservative option that completely rules out extrapolation while providing highly interpretable, share-like weights.</p>
-<p>The classical simplex constraint requires non-negative weights that sum to one. The synthetic control is therefore a convex combination of the donors, lying inside or on the boundary of their convex hull. This setting offers excellent interpretability (weights resemble portfolio shares or probabilities) and prohibits any extrapolation, which is why it remains the default choice in most applied synthetic control studies.</p>
-<p>The affine constraint relaxes non-negativity but retains the sum-to-one requirement. It allows negative weights, meaning the synthetic control can lie outside the convex hull while staying within the affine subspace spanned by the donors. This introduces controlled extrapolation (useful when the treated unit has a different level or trend but shares parallel paths), but at the cost of reduced interpretability, as negative weights imply “subtracting” the contribution of certain donors.</p>
-<p>The nonneg constraint permits any non-negative weights without normalization. The synthetic control can lie far outside the convex hull along positive directions (conic extrapolation), which can substantially improve pre-treatment fit in some cases, though the lack of scaling makes the weights harder to interpret economically.</p>
-<p>Finally, the unconstrained option imposes no restrictions whatsoever, allowing signed weights of any magnitude. This grants maximum flexibility and typically yields the best pre-treatment fit (as in most elastic-net or machine-learning-style SCMs), but it also permits unrestricted extrapolation and offers the lowest interpretability, with weights often lacking direct economic meaning.</p>
+<p>The unit constraint restricts each weight to the unit interval independently. This forces the synthetic control to be a strict interpolation with bounded contributions—no single donor can contribute more than 100%, making it the most conservative option that completely rules out extrapolation while providing highly interpretable, share-like weights. The classical simplex constraint requires non-negative weights that sum to one. The synthetic control is therefore a convex combination of the donors, lying inside or on the boundary of their convex hull. This setting offers excellent interpretability (weights resemble portfolio shares or probabilities) and prohibits any extrapolation, which is why it remains the default choice in most applied synthetic control studies. The affine constraint relaxes non-negativity but retains the sum-to-one requirement. It allows negative weights, meaning the synthetic control can lie outside the convex hull while staying within the affine subspace spanned by the donors. This introduces controlled extrapolation (useful when the treated unit has a different level or trend but shares parallel paths), but at the cost of reduced interpretability, as negative weights imply “subtracting” the contribution of certain donors. The nonneg constraint permits any non-negative weights without normalization. The synthetic control can lie far outside the convex hull along positive directions (conic extrapolation), which can substantially improve pre-treatment fit in some cases, though the lack of scaling makes the weights harder to interpret economically. Finally, the unconstrained option imposes no restrictions whatsoever, allowing signed weights of any magnitude. This grants maximum flexibility and typically yields the best pre-treatment fit (as in most elastic-net or machine-learning-style SCMs), but it also permits unrestricted extrapolation and offers the lowest interpretability, with weights often lacking direct economic meaning.</p>
 <p>Relaxation methods like <code>entropy</code> and <code>el</code> are simplex weights by definition. Once the configuration is set, calling <code>RESCM(config).fit()</code> estimates the selected models on the pre-treatment period and produces counterfactual predictions for both pre- and post-treatment periods. The output is an <code>EstimatorResults</code> object containing separate results for relaxed and elastic SCMs (depending on what the user specifies), including donor weights, time series of observed and counterfactual outcomes, and fit diagnostics such as pre- and post-treatment RMSE. To date, this is the most flexible class of estimators <code>mlsynth</code> provides.</p>
 </section>
 <section id="application" class="level2">
 <h2 class="anchored" data-anchor-id="application">Application</h2>
-<p>Now for an empirical application for the Basque Country. I fit the three Relaxed SCM models are fit, one for each relaxation type, and a pure <span class="math inline">\(\ell_\infty\)</span> norm SCM with unit interval donor weights. First I load the data and set up the model</p>
-<div id="45b0e924" class="cell" data-execution_count="2">
+<p>Now for an empirical application for the Basque Country. First I load the data and set up the model</p>
+<div id="277afdd2" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> RESCM</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Load data ----------------</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/basque_data.csv"</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Relaxation types ----------------</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>relax_types <span class="op">=</span> [<span class="st">"l2"</span>, <span class="st">"entropy"</span>, <span class="st">"el"</span>]</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Dictionary to store results per model</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {}</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, rtype <span class="kw">in</span> <span class="bu">enumerate</span>(relax_types):</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Fitting Relaxed SCM with relaxation_type='</span><span class="sc">{</span>rtype<span class="sc">}</span><span class="ss">'..."</span>)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Only run ELASTIC once</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    models_to_run <span class="op">=</span> {</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RELAXED"</span>: {<span class="st">"run"</span>: <span class="va">True</span>, <span class="st">"relaxation"</span>: rtype, <span class="st">"n_taus"</span>: <span class="dv">100</span>},</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: {<span class="st">"run"</span>: i <span class="op">==</span> <span class="dv">0</span>, <span class="st">"second_norm"</span>: <span class="st">"L1_INF"</span>,</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"constraint_type"</span>: <span class="st">"unit"</span>, <span class="st">"fit_intercept"</span>: <span class="va">False</span>, <span class="st">"alpha"</span>: <span class="dv">0</span>}</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    config <span class="op">=</span> {</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">"df"</span>: data,</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>        <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>        <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>        <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>        <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>        <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>, <span class="st">"red"</span>],</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>        <span class="st">"models_to_run"</span>: models_to_run</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    arco <span class="op">=</span> RESCM(config).fit()</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># RELAXED results</span></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    relax_results <span class="op">=</span> {</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>base_config <span class="op">=</span> {</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: data,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: data.columns[<span class="dv">2</span>],</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: data.columns[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: data.columns[<span class="dv">0</span>],</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: data.columns[<span class="dv">1</span>],</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">False</span>,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>, <span class="st">"red"</span>]</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>relax_types <span class="op">=</span> [<span class="st">"l2"</span>, <span class="st">"entropy"</span>, <span class="st">"el"</span>]</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {}</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rtype <span class="kw">in</span> relax_types:</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    config <span class="op">=</span> {</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="op">**</span>base_config,</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"models_to_run"</span>: {</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>            <span class="st">"RELAXED"</span>: {</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>                <span class="st">"run"</span>: <span class="va">True</span>,</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>                <span class="st">"relaxation"</span>: rtype,</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>                <span class="st">"tau"</span>: <span class="va">None</span>,</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>                <span class="st">"n_taus"</span>: <span class="dv">100</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    arco <span class="op">=</span> RESCM(config).fit()</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    results[<span class="ss">f"RELAXED_</span><span class="sc">{</span>rtype<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {</span>
 <span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>        <span class="st">"counterfactual"</span>: arco.relax.time_series.counterfactual_outcome,</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        <span class="st">"method_name"</span>: arco.relax.method_details.method_name,</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>        <span class="st">"donor_weights"</span>: arco.relax.weights.donor_weights</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        <span class="st">"weights"</span>: arco.relax.weights.donor_weights,</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>        <span class="st">"method"</span>: arco.relax.method_details.method_name</span>
 <span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ELASTIC results (only if run)</span></span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">hasattr</span>(arco, <span class="st">"elastic"</span>) <span class="kw">and</span> <span class="bu">getattr</span>(arco.elastic, <span class="st">"time_series"</span>, <span class="va">None</span>):</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>        elastic_results <span class="op">=</span> {</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>            <span class="st">"counterfactual"</span>: arco.elastic.time_series.counterfactual_outcome,</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>            <span class="st">"method_name"</span>: arco.elastic.method_details.method_name,</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>            <span class="st">"donor_weights"</span>: arco.elastic.weights.donor_weights</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>        elastic_results <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    results[rtype] <span class="op">=</span> {</span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RELAXED"</span>: relax_results,</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: elastic_results</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>weights_dict <span class="op">=</span> {}</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> relax_type, models <span class="kw">in</span> results.items():</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> model_name, output <span class="kw">in</span> models.items():</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> output <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> <span class="st">"donor_weights"</span> <span class="kw">in</span> output:</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>            col_name <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>relax_type<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>            weights_dict[col_name] <span class="op">=</span> pd.Series(output[<span class="st">"donor_weights"</span>])</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>weights_df <span class="op">=</span> pd.DataFrame(weights_dict).<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Display as Markdown ----------------</span></span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>markdown_table <span class="op">=</span> weights_df.to_markdown()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Fitting Relaxed SCM with relaxation_type='l2'...</code></pre>
-</div>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>config_l1l2 <span class="op">=</span> {</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>base_config,</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"models_to_run"</span>: {</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: {</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>            <span class="st">"run"</span>: <span class="va">True</span>,</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>            <span class="st">"affine"</span>: <span class="va">True</span>,      <span class="co"># sum-to-one, signed</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>            <span class="st">"intercept"</span>: <span class="va">False</span>,</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>            <span class="st">"enet_type"</span>: <span class="st">"L1_L2"</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>arco_l1l2 <span class="op">=</span> RESCM(config_l1l2).fit()</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>results[<span class="st">"ELASTIC_L1_L2"</span>] <span class="op">=</span> {</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual"</span>: arco_l1l2.elastic.time_series.counterfactual_outcome,</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    <span class="st">"weights"</span>: arco_l1l2.elastic.weights.donor_weights,</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="st">"method"</span>: arco_l1l2.elastic.method_details.method_name</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>config_l1linf <span class="op">=</span> {</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>base_config,</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>    <span class="st">"models_to_run"</span>: {</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ELASTIC"</span>: {</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>            <span class="st">"run"</span>: <span class="va">True</span>,</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>            <span class="st">"affine"</span>: <span class="va">True</span>,</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>            <span class="st">"intercept"</span>: <span class="va">False</span>,</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>            <span class="st">"enet_type"</span>: <span class="st">"L1_INF"</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>arco_l1linf <span class="op">=</span> RESCM(config_l1linf).fit()</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>results[<span class="st">"ELASTIC_L1_LINF"</span>] <span class="op">=</span> {</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual"</span>: arco_l1linf.elastic.time_series.counterfactual_outcome,</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    <span class="st">"weights"</span>: arco_l1linf.elastic.weights.donor_weights,</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    <span class="st">"method"</span>: arco_l1linf.elastic.method_details.method_name</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>weights_df <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    name: pd.Series(res[<span class="st">"weights"</span>])</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, res <span class="kw">in</span> results.items()</span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>}).<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Display as Markdown ----------------</span></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>markdown_table <span class="op">=</span> weights_df.to_markdown()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/cvxpy/problems/problem.py:1539: UserWarning:
 
 Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
-</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Fitting Relaxed SCM with relaxation_type='entropy'...
-Fitting Relaxed SCM with relaxation_type='el'...</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/cvxpy/problems/problem.py:1539: UserWarning:
+
+/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/cvxpy/problems/problem.py:1539: UserWarning:
 
 Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
 </code></pre>
 </div>
 </div>
-<p>and then I plot the model predictions:</p>
-<div id="3f7b13d6" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Plotting ----------------</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed trajectory (from any iteration, all identical)</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> arco.relax.time_series.observed_outcome</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>time_points <span class="op">=</span> <span class="bu">range</span>(<span class="bu">len</span>(observed))</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>plt.plot(time_points, observed, label<span class="op">=</span><span class="st">"Observed"</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot RELAXED counterfactuals</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> {<span class="st">"l2"</span>: <span class="st">"blue"</span>, <span class="st">"entropy"</span>: <span class="st">"green"</span>, <span class="st">"el"</span>: <span class="st">"orange"</span>}</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>norm_labels <span class="op">=</span> {<span class="st">"l2"</span>: <span class="vs">r"$\ell_2$"</span>, <span class="st">"entropy"</span>: <span class="vs">r"$\ell_\infty^{\rm Entropy}$"</span>, <span class="st">"el"</span>: <span class="vs">r"$\ell_\infty^{\rm EL}$"</span>}</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> rtype <span class="kw">in</span> relax_types:</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    cf <span class="op">=</span> results[rtype][<span class="st">"RELAXED"</span>][<span class="st">"counterfactual"</span>]</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    plt.plot(time_points, cf, label<span class="op">=</span><span class="ss">f"RELAXED (</span><span class="sc">{</span>norm_labels[rtype]<span class="sc">}</span><span class="ss">)"</span>, color<span class="op">=</span>colors[rtype], linestyle<span class="op">=</span><span class="st">"--"</span>)</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ELASTIC counterfactual only once (from first iteration)</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>elastic_cf <span class="op">=</span> results[<span class="st">"l2"</span>][<span class="st">"ELASTIC"</span>]</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> elastic_cf <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    plt.plot(time_points, elastic_cf[<span class="st">"counterfactual"</span>], label<span class="op">=</span><span class="vs">r"ELASTIC ($\ell_1$-$\ell_\infty$)"</span>, color<span class="op">=</span><span class="st">"red"</span>, linestyle<span class="op">=</span><span class="st">"-"</span>)</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Time Periods"</span>)</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"GDP per Capita"</span>)</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Machine Learning Synthetic Controls, Basque Predictions"</span>)</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The synthetic control hyper-parameters (tau, alpha, and lambda) were tuned via time-series cross validation. For the elastic net methods, two variants were considered: <span class="math inline">\(\alpha \ell_1 + (1-\alpha) \ell_\infty\)</span> and <span class="math inline">\(\alpha \ell_1 + (1-\alpha) \ell_2\)</span>. Both employed 4-fold time series cross-validation with standardized donor predictors. As we eiscussed above for the elastic net models, the alpha parameter governs the trade-off between sparsity and the secondary norm. For both variants, this was was approximately 0.554, while the lambda parameter controlling overall regularization strength was around 0.084 for the <span class="math inline">\(\ell_1+\ell_\infty\)</span> variant and 0.128 for the <span class="math inline">\(\ell_1+\ell_2\)</span> variant. I used affine weights for both of these. For the relaxed balanced synthetic control variants—<span class="math inline">\(\ell_2\)</span> relaxation, empirical likelihood, and entropy relaxation—the slack parameter <span class="math inline">\(\tau\)</span> was set to approximately 0.00262 for all three. This small value enforces tight balance, encouraging the synthetic control to match pre-treatment outcomes closely while allowing minimal flexibility to stabilize the optimization and prevent extreme weight concentration. This was also tuned by the same cross validation method as above, and you can see <a href="https://github.com/jgreathouse9/mlsynth/blob/main/mlsynth/utils/crossval.py">my Python code</a> for the sklearn details.</p>
+<div id="5753cd88" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------- Plotting ----------------</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> arco_l1linf.elastic.time_series.observed_outcome</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> <span class="bu">range</span>(<span class="bu">len</span>(observed))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>plt.plot(t, observed, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">"Observed"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>styles <span class="op">=</span> {</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RELAXED_l2"</span>: <span class="st">"--"</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RELAXED_entropy"</span>: <span class="st">"--"</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RELAXED_el"</span>: <span class="st">"--"</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ELASTIC_L1_L2"</span>: <span class="st">"-"</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ELASTIC_L1_LINF"</span>: <span class="st">":"</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, res <span class="kw">in</span> results.items():</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    plt.plot(t, res[<span class="st">"counterfactual"</span>], linestyle<span class="op">=</span>styles[name], label<span class="op">=</span>res[<span class="st">"method"</span>])</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Basque Country — Synthetic Controls"</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Time"</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"GDP per Capita"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -621,24 +625,26 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 </div>
 </div>
 <p>Here are the weights:</p>
-<div id="aa45d947" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>display(Markdown(markdown_table))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="c616b6eb" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>display(Markdown(markdown_table))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 32%">
+<col style="width: 26%">
+<col style="width: 12%">
+<col style="width: 16%">
+<col style="width: 12%">
 <col style="width: 15%">
-<col style="width: 15%">
-<col style="width: 20%">
-<col style="width: 15%">
+<col style="width: 16%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;"></th>
-<th style="text-align: right;">l2_RELAXED</th>
-<th style="text-align: right;">l2_ELASTIC</th>
-<th style="text-align: right;">entropy_RELAXED</th>
-<th style="text-align: right;">el_RELAXED</th>
+<th style="text-align: right;">RELAXED_l2</th>
+<th style="text-align: right;">RELAXED_entropy</th>
+<th style="text-align: right;">RELAXED_el</th>
+<th style="text-align: right;">ELASTIC_L1_L2</th>
+<th style="text-align: right;">ELASTIC_L1_LINF</th>
 </tr>
 </thead>
 <tbody>
@@ -646,119 +652,137 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 <td style="text-align: left;">Andalucia</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.012</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Aragon</td>
 <td style="text-align: right;">0.176</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.132</td>
 <td style="text-align: right;">0.047</td>
+<td style="text-align: right;">0.199</td>
+<td style="text-align: right;">0.199</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Baleares (Islas)</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.005</td>
 <td style="text-align: right;">0.009</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Canarias</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.007</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Cantabria</td>
 <td style="text-align: right;">0.127</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.087</td>
 <td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Castilla Y Leon</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.007</td>
 <td style="text-align: right;">0.016</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Castilla-La Mancha</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.008</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Cataluna</td>
 <td style="text-align: right;">0.289</td>
-<td style="text-align: right;">0.528</td>
 <td style="text-align: right;">0.387</td>
 <td style="text-align: right;">0.621</td>
+<td style="text-align: right;">0.288</td>
+<td style="text-align: right;">0.288</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Comunidad Valenciana</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.004</td>
 <td style="text-align: right;">0.015</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Extremadura</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.013</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Galicia</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.01</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Madrid (Comunidad De)</td>
 <td style="text-align: right;">0.206</td>
-<td style="text-align: right;">0.068</td>
 <td style="text-align: right;">0.177</td>
 <td style="text-align: right;">0.107</td>
+<td style="text-align: right;">0.135</td>
+<td style="text-align: right;">0.135</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Murcia (Region de)</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.01</td>
 <td style="text-align: right;">0.015</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Navarra (Comunidad Foral De)</td>
 <td style="text-align: right;">0.037</td>
-<td style="text-align: right;">0</td>
 <td style="text-align: right;">0.04</td>
 <td style="text-align: right;">0.024</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: right;">0.014</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Principado De Asturias</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">0.115</td>
 <td style="text-align: right;">0.028</td>
 <td style="text-align: right;">0.022</td>
+<td style="text-align: right;">0.123</td>
+<td style="text-align: right;">0.123</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rioja (La)</td>
 <td style="text-align: right;">0.166</td>
-<td style="text-align: right;">0.289</td>
 <td style="text-align: right;">0.121</td>
 <td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.242</td>
+<td style="text-align: right;">0.242</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>we can see that Catalonia dominates across all specifications</p>
+<p>Across all model variants (elastic net and relaxed balanced synthetic control alike) the donor weights exhibit a high degree of stability in which regions matter, even though the regularization structure changes how weight mass is distributed. In particular, Catalonia consistently receives the largest or among the largest weights, regardless of whether the method emphasizes sparsity (<span class="math inline">\(\ell_1\)</span>-based elastic nets), smoothness (<span class="math inline">\(\ell_2\)</span> relaxation), or dispersion (entropy relaxation). This is intuitive: Catalonia shares a closely related political and economic trajectory with the Basque Country, including early industrialization, strong regional identity, and similar exposure to national and international economic forces. In the outcome space, it is therefore unsurprising that Catalonia emerges as the closest synthetic analog. Beyond Catalonia, a recurring set of regions (La Rioja, Cantabria, and Navarre) also receive nontrivial weights across specifications. These regions are literal geographic neighbors of the Basque Country, sharing labor markets, trade linkages, and historical development patterns. Their repeated appearance across models suggests that geographic proximity aligns well with similarity in pre-treatment outcomes, reinforcing the idea that the optimization is recovering economically meaningful structure rather than exploiting numerical artifacts. Aragon also consistently enters the synthetic control, despite not bordering the Basque Country directly. Its location in northern Spain and its intermediate economic profile make it a plausible contributor, particularly under methods that allow moderate dispersion of weights. Finally, Madrid receives a positive—though typically smaller—weight across most specifications. While geographically distant, Madrid’s role as the national capital and its high level of wealth and development make it a natural partial comparator, especially in models that permit signed or less restrictive weighting schemes.</p>
+<p>In the original SC solution, the donor weights were highly concentrated, with weights of 0.8508 and 0.1492 of Catalonia and Madrid respectively. This extreme concentration is a well-known feature of canonical SCM: when the feasible set is restricted to the simplex and no explicit regularization is imposed, the optimizer is free to place nearly all mass on the single donor that best matches the treated unit in the pre-treatment outcome space. In this sense, the original weights represent a <em>corner solution</em> driven almost entirely by fit, with little incentive to distribute weight more broadly across similar regions. Introducing a max-norm–based component (either explicitly via an <span class="math inline">\(\ell_\infty\)</span> penalty or implicitly through relaxed balance constraints) fundamentally changes this behavior. The <span class="math inline">\(\ell_\infty\)</span> norm directly penalizes the <em>largest</em> coefficient, which has the effect of tempering the size of dominant weights. Rather than allowing Catalonia to absorb nearly all the mass, the optimization trades a small amount of fit for a substantial reduction in the maximum weight. As a result, weight is redistributed toward nearby or economically similar regions—such as La Rioja, Cantabria, Navarre, and Aragon—while still preserving Catalonia’s central role. Importantly, this redistribution is not arbitrary: it occurs along economically meaningful dimensions already latent in the data. This tempering effect operates in both the <em>fit space</em> and the <em>balance space</em>. In the fit space, the max norm discourages over-reliance on a single donor to track pre-treatment outcomes perfectly, leading to a smoother approximation that averages across multiple close matches. In the balance space, the <span class="math inline">\(\ell_\infty\)</span> constraint limits the extent to which any single donor can shoulder the burden of matching outcomes, thereby encouraging broader participation in satisfying the balance conditions. The result is a synthetic control that is less brittle and less sensitive to idiosyncratic noise in any one donor unit.</p>
+<p>Crucially, this moderation does not overturn the substantive story. Catalonia remains the dominant contributor across specifications, reflecting its strong historical, political, and economic similarity to the Basque Country. Madrid continues to receive a positive but secondary weight, consistent with its role as the national capital and a benchmark for economic development. What changes under the max norm is not <em>who matters</em>, but <em>how much any single region is allowed to matter</em>. In this way, the authors frame their resepctive <span class="math inline">\(\ell_\infty\)</span> norm strucures as a principled mechanisms for controlling concentration of weights in high-dimensional setting—yielding weights that are more evenly distributed, more stable, and arguably more credible, while still preserving the core economic relationships identified by the original SCM.</p>
 
 
 
@@ -766,7 +790,7 @@ Solution may be inaccurate. Try another solver, adjusting the solver settings, o
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1767187798085" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1767535581022" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -790,7 +814,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1767187798085" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1767535581023" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -814,7 +838,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1767187798085" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1767535581023" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -838,7 +862,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1767187798091" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1767535581027" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -862,7 +886,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1767187798092" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1767535581028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -886,7 +910,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1767187798088" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1767535581025" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -908,7 +932,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1767187798088" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="6" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1767535581025" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -932,7 +956,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1767187798091" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1767535581028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -954,7 +978,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1767187798091" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1767535581028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -976,7 +1000,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1767187798091" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1767535581028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1000,7 +1024,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1767187798085" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="10" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1767535581023" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -1024,7 +1048,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1767187798088" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="11" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1767535581025" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -1041,7 +1065,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1767187798090" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="12" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1767535581027" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -1065,7 +1089,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1767187798091" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="13" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1767535581028" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -1082,7 +1106,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1767187798085" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="14" data-listing-file-modified-sort="1767535581023" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -1093,10 +1117,10 @@ Sep 22, 2025
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1767187858481" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1767535581023" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
+<a href="./index.html" class="no-external">Posts</a>
 </h3>
 </div>
 <div class="metadata">

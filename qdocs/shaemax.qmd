@@ -253,9 +253,6 @@ discourages zero weights. In all cases, the constraint enforces relaxed balance,
 
 This contrasts with classical SCM and elastic net approaches. There, fit is minimized in the objective and the weights absorb all discrepancies. In the relaxed balance method, fit is a constraint, the objective imposes an $\ell_2$ (or other) penalty on the weights, and $\gamma$ allows controlled relaxation—analogous to portfolio optimization with position limits, where constraints cap exposure to any single asset while the objective encourages diversification or avoidance of zero positions. This separation is particularly useful in high-dimensional donor pools or when robustness to over-reliance on any single donor is desired.
 
-
-
-
 ## An Example in ```mlsynth```
 
 As usual, these may be implemented in ```mlsynth```, using the ```RESCM``` class. To install ```mlsynth```, you must have Github on your machine and and do
@@ -270,7 +267,7 @@ from the command line or within your virtual Python environment. To run the mode
 
 Modeling options are controlled via the `models_to_run` dictionary, where a `run: bool` specifies whether the model is estimated. Relaxed SCM estimators are specified by the `"RELAXED"` key, with the type of relaxation chosen through the `relaxation` parameter. Options include `l2` for standard Euclidean relaxation, `entropy` for entropy-based relaxation, and `el` for empirical likelihood relaxation. The relaxation strength is controlled by the `tau` parameter, which can be provided explicitly (in which case no cross-validation is performed) or selected via cross-validation over a grid of candidate values. The number of candidate taus is controlled by `n_taus`, and the number of cross-validation folds by `n_splits`.
 
-Elastic Net SCM estimators are specified by the `"ELASTIC"` key and combine L1 with either $\ell_2$ or $\ell_\infty$ penalties on donor weights via `enet_type="L1_L2"` or `second_norm="L1_INF"`. The `alpha` parameter controls the mixture between L1 and the second norm, while `lambda` controls the overall penalty strength. If `lambda` is zero, no cross-validation is performed. If `lambda` is provided but `alpha` is not, cross-validation is performed over `alpha`, and vice versa. An optional intercept can be added via `fit_intercept`.
+Elastic Net SCM estimators are specified by the `"ELASTIC"` key and combine L1 with either $\ell_2$ or $\ell_\infty$ penalties on donor weights via `enet_type="L1_L2"` or `enet_type="L1_INF"`. The `alpha` parameter controls the mixture between L1 and the second norm, while `lambda` controls the overall penalty strength. If `lambda` is zero, no cross-validation is performed. If `lambda` is provided but `alpha` is not, cross-validation is performed over `alpha`, and vice versa. An optional intercept can be added via `fit_intercept`.
 
 
 The feasible set for the donor weights is specified via the `constraint_type` parameter. Users may select `unit`, `simplex`, `affine`, `nonneg`, or `unconstrained`. These are defined as follows:
@@ -322,7 +319,6 @@ relax_types = ["l2", "entropy", "el"]
 results = {}
 
 for rtype in relax_types:
-    print(f"Running RELAXED SCM ({rtype})")
 
     config = {
         **base_config,
@@ -345,10 +341,6 @@ for rtype in relax_types:
         "tau": arco.relax.method_details.parameters_used['tau_used']
     }
 
-
-
-print("Running Elastic Net ℓ1–ℓ2")
-
 config_l1l2 = {
     **base_config,
     "models_to_run": {
@@ -368,9 +360,6 @@ results["ELASTIC_L1_L2"] = {
     "weights": arco_l1l2.elastic.weights.donor_weights,
     "method": arco_l1l2.elastic.method_details.method_name
 }
-
-
-print("Running Elastic Net ℓ1–ℓ∞")
 
 config_l1linf = {
     **base_config,
@@ -427,7 +416,7 @@ styles = {
 for name, res in results.items():
     plt.plot(t, res["counterfactual"], linestyle=styles[name], label=res["method"])
 
-plt.title("Basque Country — Synthetic Controls")
+plt.title("Basque Country, Synthetic Controls")
 plt.xlabel("Time")
 plt.ylabel("GDP per Capita")
 plt.legend()

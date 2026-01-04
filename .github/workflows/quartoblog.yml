@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       qmd_path:
-        description: "Optional: Path to a specific .qmd file to render (e.g. qdocs/posts/my-post.qmd)"
+        description: "Optional: Path or filename of a specific .qmd file to render (e.g. shaemax.qmd or qdocs/posts/my-post.qmd)"
         required: false
         default: ""
 
@@ -41,7 +41,7 @@ jobs:
       run: |
         if [ -z "${{ github.event.inputs.qmd_path }}" ]; then
           echo "Rendering all files. Removing existing docs/ directory..."
-          if [ -d docs ]; then rm -rf docs; fi
+          if [ -d docs ]; then rm -rf docs/; fi
         else
           echo "Rendering single file only. Keeping existing docs/ directory."
         fi
@@ -60,8 +60,13 @@ jobs:
     - name: Conditionally Render Quarto File(s)
       run: |
         if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
-          echo "Rendering only: ${{ github.event.inputs.qmd_path }}"
-          quarto render "${{ github.event.inputs.qmd_path }}"
+          FILE_PATH="${{ github.event.inputs.qmd_path }}"
+          # Prepend qdocs/ if only a filename is provided
+          if [[ ! "$FILE_PATH" == qdocs/* ]]; then
+            FILE_PATH="qdocs/$FILE_PATH"
+          fi
+          echo "Rendering only: $FILE_PATH"
+          quarto render "$FILE_PATH"
         else
           echo "Rendering all .qmd files in qdocs/"
           for file in qdocs/*.qmd; do
@@ -91,4 +96,3 @@ jobs:
           git push
         else
           echo "No changes to commit."
-        fi

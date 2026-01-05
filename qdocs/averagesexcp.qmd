@@ -7,11 +7,9 @@ categories: [Econometric Theory]
 
 # Averaging in Statistics
 
-The average is, for most people, an ontological concept rather than the solution to a decision problem. It is more akin, mentally, to facts like "the sun rises" or "Spain is in Europe" than something to be derived or solved for.
+Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. The arithmetic average is, for most people, more of an ontological concept than the solution to a decision problem. For the average person, even the average data scientist, is mentally more akin, to facts like "the sun rises" or "Spain is in Europe" instead of something to be derived, solved for, or even justified from first principles. Indeed (at least in the United States), the arithmetic mean is taught with almost a childlike innocence of simple addition and division. Regularly, people use phrases like "on average" in casual conversation to denote frequency. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.
 
-Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.
-
-To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number, $\mu$ (m-you), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a potential candidate for the "best" summary value. We do not know what it is in advance, and it is something we must solve for. This becomes our very first optimization problem.
+But what is an average anyways? Is there anything more to it? The point of this post is to show that the arithmetic average is the solution to an optimization problem, and connect it to how we think about averages in the context of causal inference.
 
 ## Definitions
 
@@ -56,8 +54,6 @@ $$
 $$
 :::
 
-[ … rest of your content exactly as-is … ]
-
 ::: {#def-objective-function}
 ## Objective Function
 
@@ -76,56 +72,61 @@ $$
 
 ## Deriving the Arithmetic Mean
 
-Let our observed values be $x_i$ and the number that "is as close as possible to all the values" be the Greek letter $\mu$ (m-yoo). Because we are looking for the value that minimizes the distance, we can write $x_i - \mu$ as a shorthand for this deviation. To minimize the total deviation across all points, we sum over each element of the sequence $i$: $\sum_{i=1}^{n} (x_i - \mu)$. Finally, to penalize values of $\mu$ that are further away from the observed data, we square each term. This gives us the optimization problem:
+To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number, $\mu$ (pronounced "m-you"), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a candidate for the "best" summary value, which we must solve for. For each observed value $x_i$, the deviation from $\mu$ is $x_i - \mu$. However, we do not want to minimize the distance to a single number, we want a number that minimizes the discrepancy to all of the numbers. To measure the overall discrepancy across all points, we sum these deviations. 
 
 $$
-\min_{\mu} \sum_{i=1}^{n} (x_i - \mu)^2.
+\sum_{i=1}^{n} (x_i - \mu)^2
 $$
 
-
-This function is convex and differentiable. We can optimize this function by taking the derivative with respect to $\mu$. We begin by applying the chain rule term by term. For each term $(x_i - \mu)^2$, there are two parts to consider: the outer function and the inner function. The outer function is $f(u) = u^2$, where $u = x_i - \mu$. Its derivative (by the power rule) is
-
-$$
-\frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u = 2(x_i - \mu)
-$$
-
-The inner function is $u(\mu) = x_i - \mu$. Its derivative with respect to $\mu$ is
+However, even $\sum_{i=1}^{n} (x_i - \mu)^2$ is not enough because positive and negative deviations could cancel each other out. To penalize deviations regardless of sign, we square each term, giving the objective function:
 
 $$
-\frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu) = -1
+\mu = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2
+$$
+
+This function is convex and differentiable, so we can find its minimum by taking the derivative with respect to $\mu$. The function $(x_i - \mu)^2$ is a composition of two functions, so we apply the chain rule. The outer function is $f(u) = u^2$, where $u = x_i - \mu$, and its derivative is 
+
+$$
+\frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u = 2(x_i - \mu).
+$$
+
+The inner function is $u(\mu) = x_i - \mu$, with derivative
+
+$$
+\frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu) = -1.
 $$
 
 Multiplying the outer and inner derivatives gives the derivative of a single term:
+
 $$
-\frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu)^2 = 2(x_i - \mu) \cdot (-1) = -2(x_i - \mu)
+\frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu)^2 = 2(x_i - \mu) \cdot (-1) = -2(x_i - \mu).
 $$
 
 Summing over all $i$ gives the derivative of the entire objective function:
 
 $$
-\frac{\mathrm{d}}{\mathrm{d}\mu} \sum_{i=1}^{n} (x_i - \mu)^2 = \sum_{i=1}^{n} [-2(x_i - \mu)] = -2 \sum_{i=1}^{n} (x_i - \mu)
+\frac{\mathrm{d}}{\mathrm{d}\mu} \sum_{i=1}^{n} (x_i - \mu)^2 = \sum_{i=1}^{n} [-2(x_i - \mu)] = -2 \sum_{i=1}^{n} (x_i - \mu),
 $$
 
-Setting this derivative equal to zero gives the first-order condition for the minimum
+where we factor out the constant -2 from the summation. Setting this derivative equal to zero gives the first-order condition:
 
 $$
--2 \sum_{i=1}^{n} (x_i - \mu)=0.
+-2 \sum_{i=1}^{n} (x_i - \mu) = 0.
 $$
 
-
-We now solve for $\mu$. First, just divide both sides by $-2$:
+Now we solve for the decision variable. Dividing both sides by -2 simplifies the equation to
 
 $$
 \sum_{i=1}^{n} (x_i - \mu) = 0.
 $$
 
-Next, split the sum into two parts:
+Next, we split the sum into two parts to isolate $\mu$:
 
 $$
 \sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0.
 $$
 
-Here $\mu$ is the same number for every term in the sum and it does not depend on $i$. Why? That is exactly what we seek: *one single value* that is as close as possible to **all** the data points at once. Because $\mu$ is constant with respect to the index $i$, the second sum is simply $\mu$ added to itself $n$ times, what we call "multiplication" in the business:
+Here $\mu$ is the same number for every term in the sum and does not depend on $i$. Why? That is exactly what we seek: *one single value* that is as close as possible to **all** the data points at once. Because $\mu$ is constant with respect to the index $i$, the second sum is simply $\mu$ added to itself $n$ times, which is equivalent to multiplying $\mu$ by $n$:
 
 $$
 \sum_{i=1}^{n} \mu = n \mu
@@ -137,18 +138,18 @@ $$
 \sum_{i=1}^{n} x_i - n\mu = 0.
 $$
 
-Now we add $n\mu$ to both sides:
+Rearranging the equation to isolate $\mu$, add $n\mu$ to the right hand side, giving us:
 
 $$
 \sum_{i=1}^{n} x_i = n \mu.
 $$
 
-
-Finally, divide both sides by $n$ to isolate $\mu$:
+Finally, we arrive at the arithmetic mean:
 
 $$
-\mu = \frac{1}{n} \sum_{i=1}^{n} x_i.
+\boxed{\mu = \frac{1}{n} \sum_{i=1}^{n} x_i}
 $$
+
 
 
 ::: {#def-aravg}
@@ -157,19 +158,35 @@ $$
 For some $(x_1, x_2, \dots, x_n) \in \mathbb{R}^n$, the arithmetic average is: $\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i$ where $n$ is the length of the sequence and $\frac{1}{n}$ is the weight.
 :::
 
-Thus, the value of $\mu$ that minimizes the total squared deviation is the arithmetic mean of the data. The arithmetic mean is thus not an arbitrary formula: it is the unique value that minimizes the total squared distance between itself and the data. Suppose we have the data points $x = (2, 5, 7, 10)$. The arithmetic average is
+Thus, the value of $\mu$ that minimizes the total squared deviation is the arithmetic mean of the data. The arithmetic mean is not an arbitrary formula: it is the unique value that minimizes the total squared distance between itself and the data.
+
+Another way to think about this result is geometrically, using the language of Hilbert spaces. Consider the vector of data points 
 
 $$
-\bar{x} = \frac{1}{4} (2 + 5 + 7 + 10) = \frac{24}{4} = 6.
+\mathbf{x} = (x_1, x_2, \dots, x_n) \in \mathbb{R}^n
 $$
 
-This means that $\mu = 6$ is the single value that minimizes the total squared deviation
+equipped with the standard inner product
 
 $$
-\sum_{i=1}^4 (x_i - \mu)^2 = (2-6)^2 + (5-6)^2 + (7-6)^2 + (10-6)^2 = 16 + 1 + 1 + 16 = 34.
+\langle \mathbf{a}, \mathbf{b} \rangle = \sum_{i=1}^{n} a_i b_i.
 $$
 
-No other single number would produce a smaller total squared deviation, which illustrates why the arithmetic mean is the unique "best-fitting" constant.
+Minimizing the sum of squared deviations
+
+$$
+\sum_{i=1}^{n} (x_i - \mu)^2
+$$
+
+is equivalent to finding the *orthogonal projection* of $\mathbf{x}$ onto the one-dimensional subspace spanned by the vector $\mathbf{1} = (1, 1, \dots, 1)$. The solution $\mu$ is exactly the scalar that defines this projection:
+
+$$
+\boxed{\mu = \frac{1}{n} \sum_{i=1}^{n} x_i}.
+$$
+
+From this perspective, the arithmetic mean is the vector in the direction of $\mathbf{1}$ that is *closest in Euclidean distance* to the data vector $\mathbf{x}$.
+
+
 
 ### So What?
 
@@ -182,7 +199,7 @@ The reason I dedicate a chapter to the arithmetic average is simple: I want to m
 For example, [Haus](https://haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments) and [Meta scientists](https://medium.com/@mansisharma.8.k/when-a-b-testing-isnt-an-option-real-world-lessons-from-meta-aaf246014d05) have used these kinds of analogies to frame synthetic control methods. Other descriptions present a variation of this argument. Some descriptions of synthetic control call it a "[fake control group](https://someunpleasant.substack.com/p/mini-post-6-touch-of-evil) when no single suitable control exists. This phrasing is misleading: every unit in the donor pool is real, observed data. Synthetic control predictions (like any average!!!!) does not fabricate data, it simply assigns weights subject to some constraint set. These metaphors, though vivid, can give the impression that something exotic or mysterious is happening than it truly is. In reality, the method is a natural extension of the concept you already know: the arithmetic mean. Consider the humble average  
 
 $$
-\bar{x} = \frac{1}{n} \sum_{i=1}^n y_i,
+\bar{y} = \frac{1}{n} \sum_{i=1}^n y_i,
 $$  
 
 which is simply a weighted average with *uniform weights* $w_i = 1/n$ for all $i$. It is never described as a Frankenstein or a mash-up in the same way that SCM is. In fact, this description of SCM is even more puzzling when you notice that the arithmetic mean already satisfies the classic SCM constraints: the weights are non-negative and sum to exactly 1. The simple average, thus, is the special case of SCM where every weight is $w_i = 1/n$. So when we say "SCM builds a counterfactual as a weighted average of controls with non-negative weights that sum to 1", we're describing the same mathematical structure as computing a plain old mean. The only difference is that classic SCM does not impose the uniformity of the weights. But, for some reason, the moment we allow *non-uniform weights* $w_i$ with $\sum_i w_i = 1$, the same operation suddenly is described as sophisticated or complex. If a client asked me to compute the average of sales across markets over time and I replied, “You mean you want me to make a mashed-up Frankenstein monster of your sales data?” they would rightly think I had lost the plot. Consider the simple Difference-in-Differences estimator with block assignment, which [is just](https://arxiv.org/pdf/1610.07748) the mean of controls adjusted by the baseline difference between the target cohort and control cohorts. Doudchenko and Imbens show that DID is simply 

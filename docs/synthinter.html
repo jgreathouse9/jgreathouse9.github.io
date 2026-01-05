@@ -134,6 +134,108 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   })
   </script>
+</head><body class="nav-fixed">window.MathJax = {
+  tex: {
+    macros: {
+      defeq: "\\mathrel{\\mathop:}= ",
+      // Add more macros below as needed
+      // R: "\\mathbb{R}",
+      // E: "\\mathbb{E}",
+      // Var: "\\operatorname{Var}",
+    }
+  }
+};
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const blockTypes = [
+    {selector: 'div.assumption', label: 'Assumption', linkClass: 'assumption-link'},
+    {selector: 'div.proof', label: 'Proof', linkClass: 'proof-link'},
+    {selector: 'div.problem', label: 'Problem', linkClass: 'problem-link'}
+  ];
+
+  blockTypes.forEach(({selector, label, linkClass}) => {
+    document.querySelectorAll(selector).forEach((block) => {
+      const titleText = block.getAttribute('title');
+      const linkUrl = block.getAttribute('data-link') || "#"; 
+      const targetUrl = block.getAttribute('data-target'); // link to related statement
+
+      // --- Find closest chapter number ---
+      let chapter = 0;
+      let prev = block.previousElementSibling;
+      while (prev) {
+        const chapterSpan = prev.querySelector?.('.chapter-number');
+        if (chapterSpan) { chapter = chapterSpan.textContent.trim(); break; }
+        prev = prev.previousElementSibling;
+      }
+      if (chapter == 0) {
+        let parent = block.parentElement;
+        while (parent) {
+          const chapterSpan = parent.querySelector?.('h1 .chapter-number');
+          if (chapterSpan) { chapter = chapterSpan.textContent.trim(); break; }
+          parent = parent.parentElement;
+        }
+      }
+
+      // --- Count all blocks of this type in the same chapter ---
+      const blocksInChapter = Array.from(document.querySelectorAll(selector)).filter(b => {
+        let chap = 0;
+        let p = b.previousElementSibling;
+        while (p) {
+          const cs = p.querySelector?.('.chapter-number');
+          if (cs) { chap = cs.textContent.trim(); break; }
+          p = p.previousElementSibling;
+        }
+        if (chap == 0) {
+          let parent = b.parentElement;
+          while (parent) {
+            const cs = parent.querySelector?.('h1 .chapter-number');
+            if (cs) { chap = cs.textContent.trim(); break; }
+            parent = parent.parentElement;
+          }
+        }
+        return chap == chapter;
+      });
+
+      const blockNum = blocksInChapter.indexOf(block) + 1;
+
+      // --- Assign a unique ID to every block ---
+      if (!block.id) {
+        if (targetUrl) {
+          block.id = targetUrl.replace(/^#/, ''); // use data-target if present
+        } else {
+          // fallback: generate ID from type, chapter, and block number
+          block.id = `${label.toLowerCase()}-${chapter}-${blockNum}`;
+        }
+      }
+
+      // --- Create the main link element ---
+      const link = document.createElement('a');
+      link.className = linkClass;
+      link.href = linkUrl;
+      link.textContent = titleText
+        ? `${label} ${chapter}.${blockNum} (${titleText})`
+        : `${label} ${chapter}.${blockNum}`;
+
+      // --- Optional target link (e.g., "[RESULT]") ---
+      let targetLink;
+      if (targetUrl) {
+        targetLink = document.createElement('a');
+        targetLink.className = 'statement-link';
+        targetLink.href = targetUrl;
+        targetLink.textContent = '[RESULT]';
+        targetLink.style.marginLeft = '0.5em';
+        targetLink.style.fontStyle = 'italic';
+        targetLink.style.fontWeight = '400';
+        targetLink.style.color = '#555';
+      }
+
+      // --- Insert links at the top of the block ---
+      block.insertBefore(link, block.firstChild);
+      if (targetLink) block.insertBefore(targetLink, block.firstChild.nextSibling);
+    });
+  });
+});
+</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -166,9 +268,9 @@ window.Quarto = {
 </script>
 
 <link rel="stylesheet" href="styles.css">
-</head>
 
-<body class="nav-fixed">
+
+
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -289,7 +391,7 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 <p>Now I will give an example of how to use SI for your own applied work. As ususal, in order to properly implement this, we begin by installing <code>mlsynth</code> from my Github</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Next we load <a href="https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf">the Proposition 99 data</a>, using the dataset that has all of the states in the United States.</p>
-<div id="5790d3fc" class="cell" data-execution_count="1">
+<div id="f2f0e733" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SI</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -320,7 +422,7 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 <span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.rename(columns<span class="op">=</span>{<span class="st">"Data_Value"</span>: <span class="st">"cigsale"</span>, <span class="st">"LocationDesc"</span>: <span class="st">"State"</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We begin with simple data cleaning. All we do is keep the relevant metrics, setting a treatment variable “SynthInter” to be 1 if the year is greater than or equal to 1992 and the unit of interest is Louisiana. I choose 1992 because this is the year Massachusetts passed its anti tobacco policy. Note that no policy in fact happened in Louisiana, so we will see the effect of keeping the status quo of no tobacco control policy at all. We then define as an indicator which states did the taxes. <a href="https://economics.mit.edu/sites/default/files/publications/Synthetic%20Control%20Methods.pdf">According to Abadie’s 2010 paper</a> those states are Massachusetts, Arizona, Oregon, and Florida. We also define an indicator for states that did an anti-tobacco statewide program. This way, we can see how per capita smoking would have evolved under either policy. Under the hood, we just loop through each of the different policies the user specifies.</p>
-<div id="1ab4d98b" class="cell" data-execution_count="2">
+<div id="1c35ff48" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="op">=</span> df_filtered.rename(columns<span class="op">=</span>{<span class="st">"Data_Value"</span>: <span class="st">"cigsale"</span>, <span class="st">"LocationDesc"</span>: <span class="st">"State"</span>})</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
@@ -359,299 +461,46 @@ y_{t j d}^{\ast} = \mathbf{l}_t^\top \mathbf{f}_j^{(d)} + \varepsilon_{t j d},
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1767576988955" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1767577932639" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
+<a href="./consulting.html" class="no-external">👋 Welcome</a>
 </h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('V2ViJTIwU2NyYXBpbmc='); return false;">Web Scraping</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('UHl0aG9u'); return false;">Python</div>
-
-</div>
 </div>
 <div class="metadata">
-<a href="./aaascrape.html" class="no-external">
-<div class="listing-date">
-Jan 29, 2025
+<a href="./consulting.html" class="no-external">
+</a>
 </div>
+</div>
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1767577993845" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./index.html" class="no-external"></a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./index.html" class="no-external">
 <div class="listing-author">
 Jared Greathouse
 </div>
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1767576988956" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1767577932646" data-listing-reading-time-sort="1" data-listing-word-count-sort="3">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
+<a href="./testpost.html" class="no-external">A Test Post</a>
 </h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('R2l0aHVi'); return false;">Github</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('QXV0b21hdGlvbg=='); return false;">Automation</div>
-
-</div>
 </div>
 <div class="metadata">
-<a href="./gitact.html" class="no-external">
-<div class="listing-date">
-Jan 31, 2025
-</div>
+<a href="./testpost.html" class="no-external">
 <div class="listing-author">
 Jared Greathouse
 </div>
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1767576988956" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('TWFjaGluZSUyMExlYXJuaW5n'); return false;">Machine Learning</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./fscm.html" class="no-external">
-<div class="listing-date">
-Apr 2, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1767576988961" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./scmo.html" class="no-external">
-<div class="listing-date">
-Apr 16, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1767576988959" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./sccare.html" class="no-external">
-<div class="listing-date">
-May 12, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="5" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1767576988959" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./nsc.html" class="no-external">
-<div class="listing-date">
-May 19, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1767576988962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./spillsynth.html" class="no-external">
-<div class="listing-date">
-Jul 9, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="7" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1767576988962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./shc.html" class="no-external">
-<div class="listing-date">
-Jul 17, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1767576988962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./sparsdens.html" class="no-external">
-<div class="listing-date">
-Aug 12, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="9" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1767576988956" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./fasc.html" class="no-external">
-<div class="listing-date">
-Aug 17, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="10" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1767576988959" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
-</h3>
-</div>
-<div class="metadata">
-<a href="./lfe1.html" class="no-external">
-<div class="listing-date">
-Sep 9, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="11" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1767576988961" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RXhwZXJpbWVudHM='); return false;">Experiments</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./scexp.html" class="no-external">
-<div class="listing-date">
-Sep 20, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="12" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1767576988962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
-</h3>
-</div>
-<div class="metadata">
-<a href="./stella1.html" class="no-external">
-<div class="listing-date">
-Sep 22, 2025
-</div>
-</a><div class="listing-author"><a href="./stella1.html" class="no-external">
-</a><a href="https://www.stellaheystella.com/blog/a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing">Stella Hey Stella</a>
-</div>
-
-</div>
-</div>
-<div class="quarto-post image-right" data-index="13" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1767576988962" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3189">
+<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1767577932646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3189">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -675,7 +524,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1767576988955" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="838">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1767577932639" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="872">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What is An Average?</a>
@@ -697,39 +546,292 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-listing-file-modified-sort="1767576988956" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="5" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1767577932646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./consulting.html" class="no-external">👋 Welcome</a>
+<a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
 </h3>
 </div>
 <div class="metadata">
-<a href="./consulting.html" class="no-external">
-</a>
+<a href="./stella1.html" class="no-external">
+<div class="listing-date">
+Sep 22, 2025
+</div>
+</a><div class="listing-author"><a href="./stella1.html" class="no-external">
+</a><a href="https://www.stellaheystella.com/blog/a-practitioners-guide-to-weighted-synthetic-control-methods-for-incrementality-testing">Stella Hey Stella</a>
+</div>
+
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-listing-file-modified-sort="1767577055915" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="6" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1767577932644" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./index.html" class="no-external">Policy Analysis, Data Science, and Causal Inference</a>
+<a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
 </h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RXhwZXJpbWVudHM='); return false;">Experiments</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
 </div>
 <div class="metadata">
-<a href="./index.html" class="no-external">
+<a href="./scexp.html" class="no-external">
+<div class="listing-date">
+Sep 20, 2025
+</div>
 <div class="listing-author">
 Jared Greathouse
 </div>
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-listing-file-modified-sort="1767576988963" data-listing-reading-time-sort="1" data-listing-word-count-sort="3">
+<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1767577932642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./testpost.html" class="no-external">A Test Post</a>
+<a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
 </h3>
 </div>
 <div class="metadata">
-<a href="./testpost.html" class="no-external">
+<a href="./lfe1.html" class="no-external">
+<div class="listing-date">
+Sep 9, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1767577932639" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./fasc.html" class="no-external">
+<div class="listing-date">
+Aug 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1767577932646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./sparsdens.html" class="no-external">
+<div class="listing-date">
+Aug 12, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1767577932646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./shc.html" class="no-external">
+<div class="listing-date">
+Jul 17, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1767577932646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./spillsynth.html" class="no-external">
+<div class="listing-date">
+Jul 9, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1767577932642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./nsc.html" class="no-external">
+<div class="listing-date">
+May 19, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1767577932642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./sccare.html" class="no-external">
+<div class="listing-date">
+May 12, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1767577932644" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scmo.html" class="no-external">
+<div class="listing-date">
+Apr 16, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1767577932639" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('TWFjaGluZSUyMExlYXJuaW5n'); return false;">Machine Learning</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./fscm.html" class="no-external">
+<div class="listing-date">
+Apr 2, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1767577932639" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('R2l0aHVi'); return false;">Github</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('QXV0b21hdGlvbg=='); return false;">Automation</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./gitact.html" class="no-external">
+<div class="listing-date">
+Jan 31, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1767577932638" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('V2ViJTIwU2NyYXBpbmc='); return false;">Web Scraping</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('UHl0aG9u'); return false;">Python</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./aaascrape.html" class="no-external">
+<div class="listing-date">
+Jan 29, 2025
+</div>
 <div class="listing-author">
 Jared Greathouse
 </div>
@@ -829,7 +931,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
     var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
     var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/jgreathouse9\.github\.io\/docs\/");
+      var filterRegex = new RegExp("https:\/\/jgreathouse9\.github\.io\/");
     var isInternal = (href) => {
         return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
     }

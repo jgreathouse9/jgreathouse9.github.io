@@ -3,11 +3,11 @@ name: Quarto Blog
 on:
   push:
     paths:
-      - 'qdocs/**'  # Trigger on any file change within the qdocs directory
+      - 'qdocs/**'
   workflow_dispatch:
     inputs:
       qmd_path:
-        description: "Optional: Path to a specific .qmd file to render (e.g. qdocs/posts/my-post.qmd)"
+        description: "Optional: Path to a specific .qmd file (e.g. qdocs/posts/my-post.qmd)"
         required: false
         default: ""
 
@@ -19,135 +19,92 @@ jobs:
       contents: write
 
     steps:
-    - name: Checkout the repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.13'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
 
-    - name: Set up Quarto
-      uses: quarto-dev/quarto-actions/setup@v2
-      with:
-        version: "1.7.8"
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: "1.7.8"
 
-    - name: Install required Python packages
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install -r qdocs/requirements.txt
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r qdocs/requirements.txt
 
-    - name: Log and Delete Existing Docs Directory
-      run: |
-        echo "Checking if docs/ directory exists before deletion..."
-        if [ -d docs ]; then
-          echo "docs/ directory found. Deleting..."
+      # ------------------------------------------------------------------
+      # Full-site renders: remove docs/ so output is fully regenerated
+      # ------------------------------------------------------------------
+      - name: Remove existing docs/ (full render only)
+        if: ${{ github.event.inputs.qmd_path == '' }}
+        run: |
+          echo "Full render requested — removing docs/"
           rm -rf docs
-          echo "docs/ directory deleted."
-        else
-          echo "No existing docs/ directory found. Skipping deletion."
-        fi
 
-    - name: Verify docs Directory Removal
-      run: |
-        if [ -d docs ]; then
-          echo "ERROR: docs/ directory still exists after deletion attempt."
-          exit 1
-        else
-          echo "docs/ directory successfully removed."
-        fi
+      # ------------------------------------------------------------------
+      # Generate index.qmd (full render only)
+      # ------------------------------------------------------------------
+      - name: Generate index.qmd
+        if: ${{ github.event.inputs.qmd_path == '' }}
+        run: |
+          cat <<EOF > qdocs/index.qmd
+          ---
+          format: html
+          ---
+          
+          Here are my blog posts that cover causal inference, econometrics,
+          machine learning, and other data science topics.
+          EOF
 
-    - name: Generate index.qmd (excluding landing.qmd)
-      run: |
-        echo "---" > qdocs/index.qmd
-        echo "format: html" >> qdocs/index.qmd
-        echo "---" >> qdocs/index.qmd
-        echo "" >> qdocs/index.qmd
-        echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
-        echo "" >> qdocs/index.qmd
-
-    - name: Conditionally Render Quarto File(s)
-      run: |
-        if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
-          echo "Rendering only: ${{ github.event.inputs.qmd_path }}"
-          quarto render "${{ github.event.inputs.qmd_path }}"
-        else
-          echo "Rendering all .qmd files in qdocs/"
-          for file in qdocs/*.qmd; do
-            echo "Rendering $file..."
-            quarto render "$file"
-          done
-        fi
-
-    - name: Check rendered output
-      run: |
-        ls -l docs/
-
-    - name: Commit rendered output
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        git add docs/
-        git diff --cached --exit-code || (git commit -m "Render Quarto site with updated index" && git push)        python -m pip install --upgrade pip setuptools wheel
-        pip install -r qdocs/requirements.txt
-
-    - name: Conditionally Remove docs/ Directory
-      run: |
-        if [ -z "${{ github.event.inputs.qmd_path }}" ]; then
-          echo "Rendering all files. Removing existing docs/ directory..."
-          if [ -d docs ]; then rm -rf docs/; fi
-        else
-          echo "Rendering single file only. Keeping existing docs/ directory."
-        fi
-
-    - name: Conditionally Generate index.qmd
-      run: |
-        if [ -z "${{ github.event.inputs.qmd_path }}" ]; then
-          echo "---" > qdocs/index.qmd
-          echo "format: html" >> qdocs/index.qmd
-          echo "---" >> qdocs/index.qmd
-          echo "" >> qdocs/index.qmd
-          echo "Here are my blog posts that cover causal inference, econometrics, machine learning, and other data science topics." >> qdocs/index.qmd
-          echo "" >> qdocs/index.qmd
-        fi
-
-    - name: Conditionally Render Quarto File(s)
-      run: |
-        if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
-          FILE_PATH="${{ github.event.inputs.qmd_path }}"
-          # Prepend qdocs/ if only a filename is provided
-          if [[ ! "$FILE_PATH" == qdocs/* ]]; then
-            FILE_PATH="qdocs/$FILE_PATH"
-          fi
-          echo "Rendering only: $FILE_PATH"
-          quarto render "$FILE_PATH"
-        else
-          echo "Rendering all .qmd files in qdocs/"
-          for file in qdocs/*.qmd; do
-            echo "Rendering $file..."
-            quarto render "$file"
-          done
-        fi
-
-    - name: Check rendered output
-      run: ls -l docs/
-
-    - name: Commit rendered output
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-
-        # Add only changed files in docs/
-        git add -u docs/
-
-        # Commit if there are changes
-        if ! git diff --cached --quiet; then
+      # ------------------------------------------------------------------
+      # Render Quarto content
+      # ------------------------------------------------------------------
+      - name: Render Quarto files
+        run: |
           if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
-            git commit -m "Render Quarto site for updated file ${{ github.event.inputs.qmd_path }}"
+            FILE="${{ github.event.inputs.qmd_path }}"
+
+            # Prepend qdocs/ if user passed only a filename
+            if [[ ! "$FILE" == qdocs/* ]]; then
+              FILE="qdocs/$FILE"
+            fi
+
+            echo "Rendering single file: $FILE"
+            quarto render "$FILE"
           else
-            git commit -m "Render Quarto site with updated index and all posts"
+            echo "Rendering full site"
+            quarto render qdocs
           fi
+
+      - name: Verify rendered output
+        run: |
+          echo "Rendered docs/:"
+          ls -l docs/
+
+      # ------------------------------------------------------------------
+      # Commit rendered output (only if changed)
+      # ------------------------------------------------------------------
+      - name: Commit rendered output
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+          git add -u docs/
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          if [ -n "${{ github.event.inputs.qmd_path }}" ]; then
+            git commit -m "Render Quarto: ${{ github.event.inputs.qmd_path }}"
+          else
+            git commit -m "Render Quarto site (full rebuild)"
+          fi
+
           git push
-        else
-          echo "No changes to commit."
-        fi

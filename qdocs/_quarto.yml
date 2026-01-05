@@ -1,50 +1,35 @@
-# Project configuration for Quarto blog
 project:
   type: website
-  output-dir: ../docs  # Output directory for GitHub Pages
+  output-dir: ../docs          # renders to repo-root/docs/ → perfect for GitHub Pages
 
 author: "Jared Greathouse"
 
-# Website configuration
 website:
-  site-url: https://jgreathouse9.github.io/docs/
+  site-url: https://jgreathouse9.github.io/      # note: no /docs/ at end — GitHub Pages serves from root or /docs/
   title: "Policy Analysis, Data Science, and Causal Inference"
   navbar:
     left:
       - text: About Jared
-        href: https://jgreathouse9.github.io
-
-  # Blog post listing configuration
+        href: https://jgreathouse9.github.io     # external or adjust if About page is in this site
   page-footer: "© 2025 Jared Greathouse"
   page-navigation: true
+  search: true                                   # optional but useful — auto-generates search.json
 
-# Configure automatic blog listing
 listing:
-  contents: .  # Look for articles in the qdocs directory
-  sort: "date"
+  contents: .                                    # looks for .qmd files in qdocs/ and subfolders
+  sort: "date desc"
   type: default
   categories: true
   fields: [date, title, author, categories]
 
-# Output JSON metadata for blog search
-metadata-files:
-  - metadata.json
-
-# Custom metadata extraction (for search functionality)
-execute:
-  output-file: metadata.json
-
-# Unified metadata section
-metadata:
-  title: "Policy Analysis, Data Science, and Causal Inference"
-  canonical: "https://jgreathouse9.github.io/docs/"
-  url: "{{ output-file }}"
-  content: "{{ abstract | truncate(150) }}"
-
-# HTML format configuration
 format:
   html:
     theme: flatly
     toc: true
     anchor-links: true
-    css: styles.css
+    css:
+      - styles.css
+    mathjax: true
+    include-in-header:
+      - js/mathjax-macros.js
+      - js/assumptions.js

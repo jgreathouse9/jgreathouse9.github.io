@@ -7,7 +7,121 @@ categories: [Econometric Theory]
 
 # Averaging in Statistics
 
-Averages arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye old days, Egyptians and Babylonians used  summary statistics construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.  To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number $\mu$ that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a potential candidate for the ‘best’ summary value; we will later find that the minimizing value, denoted $\bar{x}$, is the arithmetic mean. Because we seek a single number as close as possible to all values, this becomes our first example of an optimization problem—minimizing a function with respect to a variable. Recalling the definition of an objective function, let our observed values be $x_i$ and the number that "is as close as possible to all the values" be the Greek letter $\mu$ (m-yoo). Because we are looking for the value that minimizes the distance, we can write $x_i - \mu$ as a shorthand for this deviation. To minimize the total deviation across all points, we sum over each element of the sequence $i$: $\sum_{i=1}^{n} (x_i - \mu)$. Finally, to penalize values of $\mu$ that are further away from the observed data, we square each term. This gives us the optimization problem:
+Averages arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye old days, Egyptians and Babylonians used  summary statistics construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.  To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number $\mu$ that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a potential candidate for the "best" summary value. Because we seek a single number as close as possible to all values, this becomes our first proper use of calculus for solving an an optimization problem.
+
+## Definitions
+
+In doing so, we will require a few rules. in the book I have a whole chapter for the math needed, so I repeat the definitions here for convenience.
+
+
+::: {#def-derivative}
+##  The Derivative
+
+For a scalar function $f : \mathbb{R} \to \mathbb{R}$, the *derivative* measures the instantaneous rate of change:
+$$
+\frac{\mathrm{d}f(x)}{\mathrm{d}x} = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}.
+$$
+
+**Intuition:** How $f(x)$ changes for an infinitesimal change in $x$.
+:::
+
+
+Derivatives have rules attached to them. For example, one is the power rule:
+
+::: {#def-power-rule}
+##  The Power Rule
+
+If $f(x) = x^n$ for $n \in \mathbb{R}$:
+$$
+\frac{\mathrm{d}f(x)}{\mathrm{d}x} = n x^{n-1}.
+$$
+
+**Worked example:** $\frac{\mathrm{d}}{\mathrm{d}x} x^3 = 3x^2$.
+:::
+
+
+Pretty straightforward. The derivative of $x^2$ is just $2x$. For $4q^5$ it's $20q^4$. Another important rule is the chain rule.
+
+::: {#def-chain-rule}
+##  The Chain Rule
+
+For $y = f(g(x))$:
+$$
+\frac{\mathrm{d}y}{\mathrm{d}x} = \frac{\mathrm{d}f}{\mathrm{d}g} \cdot \frac{\mathrm{d}g}{\mathrm{d}x}.
+$$
+:::
+
+Consider a firm's profit function, which is simply revenue minus cost:
+
+$$
+\Pi(x) = r(x) - c(x) = 75x - \Big[0.25(x+6)^2 + 191\Big].
+$$
+
+The cost term $\Big[0.25(x+6)^2 + 191\Big]$ can be viewed as a composition of functions. Let the outer function be 
+
+$$
+f(u) = 0.25 u^2 + 191
+$$
+
+and the inner function be 
+
+$$
+g(x) = x + 6,
+$$
+
+so that 
+
+$$
+c(x) = f(g(x)).
+$$
+
+Applying the chain rule, the derivative of cost with respect to $x$ is
+
+$$
+\frac{\mathrm{d}c}{\mathrm{d}x} = \frac{\mathrm{d}f}{\mathrm{d}u} \cdot \frac{\mathrm{d}g}{\mathrm{d}x} = 0.5 (x+6) \cdot 1 = 0.5(x+6).
+$$
+
+The derivative of profit with respect to $x$ is then
+
+$$
+\frac{\mathrm{d}\Pi}{\mathrm{d}x} = \frac{\mathrm{d}r}{\mathrm{d}x} - \frac{\mathrm{d}c}{\mathrm{d}x} = 75 - 0.5(x+6).
+$$
+
+Setting this derivative equal to zero to find the maximum gives
+
+$$
+75 - 0.5(x+6) = 0 \quad \Rightarrow \quad x^* = 144.
+$$
+
+The maximum profit is
+
+$$
+\Pi(144) = 75(144) - 0.25(150^2) - 191 = 10800 - 5625 - 191 = 4984.
+$$
+
+The inner function is $g(x) = x+6$, the outer function is $f(u) = 0.25 u^2 + 191$, and the derivative of the cost term using the chain rule is $\frac{\mathrm{d}c}{\mathrm{d}x} = 0.5(x+6)$. The optimal quantity is $x^\ast = 144$ and the maximum profit is $\Pi_{\max} = 4984$. To visualize this another way, consider the profit function as depending on revenue and costs, where costs depends on an inner function and outer function.
+
+
+Derivatives are tools we use to minimize *objective functions*. An objective function is
+
+::: {#def-objective-function}
+##  Objective Function
+
+A scalar-valued function we aim to minimize or maximize:
+
+$$
+f : \mathbb{R}^n \to \mathbb{R},
+$$
+
+
+$$
+\min_{\mathbf{x}} f(\mathbf{x}) \quad \text{or} \quad \max_{\mathbf{x}} f(\mathbf{x}).
+$$
+:::
+
+
+
+Let our observed values be $x_i$ and the number that "is as close as possible to all the values" be the Greek letter $\mu$ (m-yoo). Because we are looking for the value that minimizes the distance, we can write $x_i - \mu$ as a shorthand for this deviation. To minimize the total deviation across all points, we sum over each element of the sequence $i$: $\sum_{i=1}^{n} (x_i - \mu)$. Finally, to penalize values of $\mu$ that are further away from the observed data, we square each term. This gives us the optimization problem:
 
 $$
 \min_{\mu} \sum_{i=1}^{n} (x_i - \mu)^2.
@@ -56,7 +170,13 @@ $$
 \sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0.
 $$
 
-Since $\mu$ is constant with respect to the index $i$, the second sum simplifies to multiplication:
+Here $\mu$ is the same number for every term in the sum and it does not depend on $i$. Why? That is exactly what we seek: *one single value* that is as close as possible to **all** the data points at once. Because $\mu$ is constant with respect to the index $i$, the second sum is simply $\mu$ added to itself $n$ times, what we call "multiplication" in the business:
+
+$$
+\sum_{i=1}^{n} \mu = n \mu
+$$
+
+So the equation simplifies to:
 
 $$
 \sum_{i=1}^{n} x_i - n\mu = 0.
@@ -100,4 +220,4 @@ which we call the population variance. The variance measures how far the data te
 
 ### So What?
 
-Now, you may be saying "Hey Jared, this is overkill. Why bother doing all of this for something as simple as an average?" The derivation shows us that the average is the solution to an optimization problem. That single insight connects simple statistics to the machinery of modern econometrics. Variance, standard deviation, mean squared error, regression coefficients, and the synthetic control weights are all built on the same principle: finding a number/set of numbers that minimizes some measure of error. The arithmetic mean is the simplest, most familiar instance of this principle. Every estimator in this book is an application of averaging, and this fact will become crucial in later chapters when we take more sophisticated averages.
+Now, you may be saying "Hey Jared, this is overkill. Why bother doing all of this for something as simple as an average?" The derivation shows us that the average is the solution to an optimization problem. That single insight connects simple statistics to the machinery of modern econometrics. Variance, standard deviation, mean squared error, regression coefficients, and the synthetic control weights are all built on the same principle: finding a number/set of numbers that minimizes some measure of error. The arithmetic mean is the simplest, most familiar instance of this principle. Every estimator in this book is an application of averaging, and this fact will become crucial in later chapters when we take more sophisticated averages, including the weighted averages that power synthetic control methods.

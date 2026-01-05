@@ -7,11 +7,11 @@ categories: [Econometric Theory]
 
 # Averaging in Statistics
 
-Averages arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye old days, Egyptians and Babylonians used  summary statistics construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.  To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number $\mu$ that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a potential candidate for the "best" summary value. Because we seek a single number as close as possible to all values, this becomes our first proper use of calculus for solving an an optimization problem.
+Averages arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye old days, Egyptians and Babylonians used  summary statistics construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.  To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number $\mu$ that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a potential candidate for the "best" summary value. Because we seek a single number as close as possible to all values, this becomes our first proper use of calculus for solving an optimization problem.
 
 ## Definitions
 
-In doing so, we will require a few rules. in the book I have a whole chapter for the math needed, so I repeat the definitions here for convenience.
+In doing so, we will require a few rules. In the book I have a dedicated chapter on the required mathematics, but I repeat the definitions here for convenience.
 
 
 ::: {#def-derivative}
@@ -223,19 +223,13 @@ which we call the population variance. The variance measures how far the data te
 Now, you may be saying "Hey Jared, this is overkill. Why bother doing all of this for something as simple as an average?" The derivation shows us that the average is the solution to an optimization problem. That single insight connects simple statistics to the machinery of modern econometrics. Variance, standard deviation, mean squared error, regression coefficients, and the synthetic control weights are all built on the same principle: finding a number/set of numbers that minimizes some measure of error. The arithmetic mean is the simplest, most familiar instance of this principle. Every estimator in this book is an application of averaging, and this fact will become crucial in later chapters when we take more sophisticated averages, including the weighted averages that power synthetic control methods.
 
 
-The other reason I dedicate a chapter to this is to not get off on the wrong foot, so to speak. A common description of synthetic control methods (not to pick on any of the following people or organizations, necessarily) is that it's a Frankenstein's monster; people from [Haus](https://haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments) to [marketing platforms](https://zissou.pacific.co/) have used the analogy. [Meta scientists](https://medium.com/@mansisharma.8.k/when-a-b-testing-isnt-an-option-real-world-lessons-from-meta-aaf246014d05) use phrases such as "Let’s build a fake version of what would’ve happened" and "Imagine creating a “Franken-country” made of Malaysia (30%), Brazil (40%), and Indonesia (30%) to mimic India’s pre-launch behavior." Marketing measurement vendors, like [Aryma Labs](https://www.linkedin.com/posts/aryma-labs_the-ultimate-test-for-synthetic-control-method-activity-7376484972360077312-Mfxe?utm_source=share&utm_medium=member_android&rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw), complain that "SCM's design ensures it never gives a pure control. It builds a mash-up [of controls]", and that methods like SCM have mathematical "sophistication" but are impractical to use.
+The other reason I dedicate a chapter to this is to not get off on the wrong foot, so to speak. A common description of synthetic control methods (not to pick on any of the following people or organizations, necessarily) is that it's a Frankenstein's monster; people from [Haus](https://haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments) to [marketing platforms](https://zissou.pacific.co/) have used the analogy. [Meta scientists](https://medium.com/@mansisharma.8.k/when-a-b-testing-isnt-an-option-real-world-lessons-from-meta-aaf246014d05) use phrases such as "Let’s build a fake version of what would’ve happened" and "Imagine creating a “Franken-country” made of Malaysia (30%), Brazil (40%), and Indonesia (30%) to mimic India’s pre-launch behavior." Marketing measurement vendors, like [Aryma Labs](https://www.linkedin.com/posts/aryma-labs_the-ultimate-test-for-synthetic-control-method-activity-7376484972360077312-Mfxe?utm_source=share&utm_medium=member_android&rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw), complain that "SCM's design ensures it never gives a pure control. It builds a mash-up [of controls]", and that methods like SCM have mathematical "sophistication" but are impractical to use. Reading some of these, you might even get the impression that you are haphazardly grafting together unexposed units without much of a reason to.
 
 
-However, ask yourself: why is
-
-$$
-\bar{x} = \frac{1}{n} \sum_{i=1}^n y_i,
-$$
-
-the humble arithmetic average, *not* described as a "Frankenstein" or as a "mash up", but
+However, ask yourself: why is the humble arithmetic average
 
 $$
-\bar{x} = \frac{1}{w_i} \sum_{i=2}^N y_i,
+\bar{x} = \frac{1}{n} \sum_{i=1}^n y_i
 $$
 
-or a weighted average, it's suddenly sophisticated and complex?
+(which is just a weighted average with *uniform weights* $w_i = \frac{1}{n} \: \forall i$) never described as a "Frankenstein" or a "mash-up", but the moment we allow *non-uniform weights* $w_i$ (with $\sum w_i = 1$), it suddenly becomes a sophisticated, complex, or even impractical monster? If a client asks me to compute the average of sales across markets over time, and I responded with "You mean you want me to make a mashed-up Frankenstein monster of all your sales across time?", people would likely look at me like I'm kind of crazy. The point I am making here, is that you are always working with weighted averages. The arithmetic mean is the simplest case of weighted averages, but that is what it is.

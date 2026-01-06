@@ -1,15 +1,17 @@
 ---
 title: 'What is An Average?'
 date: 2026-01-04
-categories: [Econometric Theory]
+categories: [Econometric Theory, Statistics]
 ---
 
 
 # Averaging in Statistics
 
-Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. The arithmetic average is, for most people, more of an ontological concept than the solution to a decision problem. For the average person, even the average data scientist, is mentally more akin, to facts like "the sun rises" or "Spain is in Europe" instead of something to be derived, solved for, or even justified from first principles. Indeed (at least in the United States), the arithmetic mean is taught with almost a childlike innocence of simple addition and division. Regularly, people use phrases like "on average" in casual conversation to denote frequency. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.
+Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.
 
-But what is an average anyways? Is there anything more to it? The point of this post is to show that the arithmetic average is the solution to an optimization problem, and connect it to how we think about averages in the context of causal inference.
+Even still, the arithmetic average is, for most people, more of an ontological concept than a problem that must be solved for. For the average person/data scientist, the arithmetic average is mentally more akin, to *facts* like "the sun rises" or "Spain is in Europe" instead of something to be derived, *solved for*, or even justified from first principles. Indeed (at least in the United States), the arithmetic mean is taught with almost a childlike innocence of simple addition and division. Regularly, people use phrases like "on average" in casual conversation to denote frequency. But what is an average anyways?
+
+The point of this post is to show that the arithmetic average is the solution to an optimization problem, and connect it to how we think about effect size existing for causal inference.
 
 ## Definitions
 
@@ -72,10 +74,16 @@ $$
 
 ## Deriving the Arithmetic Mean
 
-To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number, $\mu$ (pronounced "m-you"), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a candidate for the "best" summary value, which we must solve for. For each observed value $x_i$, the deviation from $\mu$ is $x_i - \mu$. However, we do not want to minimize the distance to a single number, we want a number that minimizes the discrepancy to all of the numbers. To measure the overall discrepancy across all points, we sum these deviations. 
+To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number, $\mu$ (pronounced "m-you"), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a candidate for the "best" summary value, which we must solve for. For each observed value $x_i$, the deviation from $\mu$ is
 
 $$
-\sum_{i=1}^{n} (x_i - \mu)^2
+x_i - \mu.
+$$
+
+However, we do not want to minimize the distance to a single number, we want a number that minimizes the discrepancy to all of the numbers. To measure the overall discrepancy across all points, we sum these deviations
+
+$$
+\sum_{i=1}^{n} (x_i - \mu)^2.
 $$
 
 However, even $\sum_{i=1}^{n} (x_i - \mu)^2$ is not enough because positive and negative deviations could cancel each other out. To penalize deviations regardless of sign, we square each term, giving the objective function:

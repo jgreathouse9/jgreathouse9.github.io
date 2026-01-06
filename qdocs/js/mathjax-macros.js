@@ -1,11 +1,13 @@
+<script>
 window.MathJax = {
   tex: {
     macros: {
-      defeq: "\\mathrel{\\mathop:}= ",
+      defeq: "\\mathrel{\\mathop:}=",
       // Add more macros below as needed
       // R: "\\mathbb{R}",
       // E: "\\mathbb{E}",
-      // Var: "\\operatorname{Var}",
+      // Var: "\\operatorname{Var}"
     }
   }
 };
+</script>

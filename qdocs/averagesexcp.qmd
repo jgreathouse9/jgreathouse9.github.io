@@ -74,91 +74,107 @@ $$
 
 ## Deriving the Arithmetic Mean
 
-To formalize this, suppose we have a sequence of data points $(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number, $\mu$ (pronounced "m-you"), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a candidate for the "best" summary value, which we must solve for. For each observed value $x_i$, the deviation from $\mu$ is
+To formalize this, suppose we have a sequence of data points  
+$(x_1, x_2, \ldots, x_n)$ of length $n$. We want to choose a single number, $\mu$ (pronounced “m-you”), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a candidate for the “best” summary value, which we must solve for. For each observed value $x_i$, the deviation from $\mu$ is
 
 $$
 x_i - \mu.
 $$
 
-However, we do not want to minimize the distance to a single number, we want a number that minimizes the discrepancy to all of the numbers. To measure the overall discrepancy across all points, we sum these deviations
+However, we do not want to minimize the distance to a single number; we want a number that minimizes the discrepancy to **all** of the numbers. To measure the overall discrepancy across all points, we sum these deviations:
 
 $$
 \sum_{i=1}^{n} (x_i - \mu).
 $$
 
-However, even $\sum_{i=1}^{n} (x_i - \mu)$ is not enough because positive and negative deviations could cancel each other out. To penalize deviations regardless of sign, we square each term, giving the objective function:
+This quantity alone is not sufficient because positive and negative deviations could cancel each other out. To penalize deviations regardless of sign, we square each term, giving the objective function:
 
 $$
-\mu = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2
+\hat{\mu} = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2.
 $$
 
-This function is convex and differentiable, so we can find its minimum by taking the derivative with respect to $\mu$. The function $(x_i - \mu)^2$ is a composition of two functions, so we apply the chain rule. The outer function is $f(u) = u^2$, where $u = x_i - \mu$, and its derivative (by the power rule) is 
+This function is convex and differentiable, so we can find its minimum by taking the derivative with respect to $\mu$. The function $(x_i - \mu)^2$ is a composition of two functions, so we apply the chain rule. The outer function is $f(u) = u^2$, where $u = x_i - \mu$, and its derivative (by the power rule) is
 
 $$
-\frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u = 2(x_i - \mu).
+\frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u.
 $$
 
-The inner function is $u(\mu) = x_i - \mu$. From the derivative of a constant, we have:
+The inner function is $u(\mu) = x_i - \mu$. Since $x_i$ is constant with respect to $\mu$,
 
 $$
 \frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu) = -1.
 $$
 
-By the chain rule, multiplying the outer and inner derivatives gives:
+By the chain rule, multiplying the outer and inner derivatives gives
 
 $$
-\frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu)^2 = 2(x_i - \mu) \cdot (-1) = -2(x_i - \mu).
+\frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu)^2
+= 2(x_i - \mu)\cdot(-1)
+= -2(x_i - \mu).
 $$
 
-Finalky, summing over all $i$ gives the derivative of the entire objective function:
+Finally, summing over all $i$ gives the derivative of the entire objective function:
 
 $$
-\frac{\mathrm{d}}{\mathrm{d}\mu} \sum_{i=1}^{n} (x_i - \mu)^2 = \sum_{i=1}^{n} [-2(x_i - \mu)] = -2 \sum_{i=1}^{n} (x_i - \mu),
+\frac{\mathrm{d}}{\mathrm{d}\mu} \sum_{i=1}^{n} (x_i - \mu)^2
+= \sum_{i=1}^{n} [-2(x_i - \mu)]
+= -2 \sum_{i=1}^{n} (x_i - \mu),
 $$
 
-where we factor out the constant -2 from the summation. As usual, setting this derivative equal to zero gives us the first-order condition we need to find the minimum point:
+where we factor out the constant $-2$. Setting this derivative equal to zero gives the first-order condition for a minimum:
 
 $$
 -2 \sum_{i=1}^{n} (x_i - \mu) = 0.
 $$
 
-Now we solve for the decision variable. We begin by dividing both sides by -2. This simplifies the equation to
+Dividing both sides by $-2$ simplifies the equation to
 
 $$
 \sum_{i=1}^{n} (x_i - \mu) = 0.
 $$
 
-Next, we may split the sum into two parts to isolate $\mu$:
+Next, we split the sum into two parts to isolate $\mu$:
 
 $$
 \sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0.
 $$
 
-Here $\mu$ is the same number for every term in the sum and does not depend on $i$. Why? That is exactly what we seek: *one single value* that is as close as possible to **all** the data points at once. Because $\mu$ is constant with respect to the index $i$, the second sum is simply $\mu$ added to itself $n$ times, which is equivalent to multiplying $\mu$ by $n$:
+Here, $\mu$ is the same value for every term in the sum and does not depend on $i$. This is exactly what we seek: **one single value** that is as close as possible to all the data points simultaneously. Because $\mu$ is constant with respect to the index $i$, the second sum is simply $\mu$ added to itself $n$ times:
 
 $$
-\sum_{i=1}^{n} \mu = n \mu
+\sum_{i=1}^{n} \mu = n\mu.
 $$
 
-So the equation simplifies to:
+Substituting this result gives
 
 $$
 \sum_{i=1}^{n} x_i - n\mu = 0.
 $$
 
-Rearranging the equation to isolate $\mu$, add $n\mu$ to the right hand side. That gives us this result:
+Rearranging the equation yields
 
 $$
-\sum_{i=1}^{n} x_i = n \mu.
+\sum_{i=1}^{n} x_i = n\mu.
 $$
 
-Finally, we arrive at the arithmetic mean by dividing the right hand side by $n$. This gives us the definition of the arithmetic mean:
+Finally, dividing both sides by $n$ gives
 
+$$
+\mu = \frac{1}{n} \sum_{i=1}^{n} x_i.
+$$
+
+Since the second derivative of the objective function is $2n > 0$, this critical point is a global minimum.
 
 ::: {#def-aravg}
 ## Arithmetic Average
 
-For some $(x_1, x_2, \dots, x_n) \in \mathbb{R}^n$, the arithmetic average is: $\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i$ where $n$ is the length of the sequence and $\frac{1}{n}$ is the weight.
+For some $(x_1, x_2, \dots, x_n) \in \mathbb{R}^n$, the arithmetic average is
+
+$$
+\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i,
+$$
+
+where $n$ is the length of the sequence and each observation receives equal weight $1/n$.
 :::
 
 As we can see, the value of $\mu$ that minimizes the total squared deviation in this instance is the arithmetic mean of the data. Another way to think about this result is geometrically, using the language of Hilbert spaces. Consider the vector of data points 

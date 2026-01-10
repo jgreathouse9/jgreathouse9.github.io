@@ -9,7 +9,7 @@
 <meta name="author" content="Jared Greathouse">
 <meta name="dcterms.date" content="2026-01-04">
 
-<title>You Are Taking An Average – Policy Analysis, Data Science, and Causal Inference</title>
+<title>What Is An Average? – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -198,7 +198,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">You Are Taking An Average</h1>
+<h1 class="title">What Is An Average?</h1>
   <div class="quarto-categories">
     <div class="quarto-category">Econometric Theory</div>
     <div class="quarto-category">Statistics</div>
@@ -234,6 +234,12 @@ window.Quarto = {
 <p>This is an excerpt from my forthcoming book on synthetic control methods.</p>
 <section id="averaging-in-statistics" class="level1">
 <h1>Averaging in Statistics</h1>
+<div class="epigraph">
+<blockquote class="blockquote">
+<p>“I’m too profound to go back and forth, with no average dork”<br>
+— <a href="https://genius.com/Sza-forgiveless-lyrics"><em>Solana Imani Rowe</em></a></p>
+</blockquote>
+</div>
 <p>Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.</p>
 <p>Even still, the arithmetic average is, for most people, more of an ontological concept than a problem that must be solved for. For the average person/data scientist, the arithmetic average is mentally more akin, to <em>facts</em> like “the sun rises” or “Spain is in Europe” instead of something to be derived, <em>solved for</em>, or even justified from first principles. Indeed (at least in the United States), the arithmetic mean is taught with almost a childlike innocence of simple addition and division. Regularly, people use phrases like “on average” in casual conversation to denote frequency. But what is an average anyways?</p>
 <p>The point of this post is to show that the arithmetic average is the solution to an optimization problem. I will connect it to how we think about counterfactual estimation.</p>
@@ -349,25 +355,18 @@ x_i - \mu.
 <p>where <span class="math inline">\(n\)</span> is the length of the sequence and each observation receives equal weight <span class="math inline">\(1/n\)</span>.</p>
 </div>
 <p>As we can see, the value of <span class="math inline">\(\mu\)</span> that minimizes the total squared deviation in this instance is the arithmetic mean of the data.</p>
-<p>The above argument formalizes an intuition we already have in one dimension. If we observe the numbers 6 and 7, we rarely hesitate to say that the number closest to both, under squared distance, is 6.5. Moving slightly to the left of 6.5 increases the distance to 7 more than it decreases the distance to 6; moving slightly to the right does the opposite. At 6.5, these forces exactly balance. The derivative simply encodes this balance condition.</p>
-<p>What changes when we move from the numbers <span class="math inline">\((6,7]\)</span> to the vector <span class="math inline">\((6,7)\)</span> is not the logic, but the bookkeeping (we will see this later). We are still choosing one scalar, <span class="math inline">\(\mu\)</span>, and measuring how far it is from each observation. Writing the data as a vector does not introduce a new problem. From this perspective, the condition</p>
-<p><span class="math display">\[
-\sum_{i=1}^n (x_i - \mu) = 0
-\]</span></p>
-<p>has a simple interpretation: at the optimal value of <span class="math inline">\(\mu\)</span>, the upward and downward pulls from the data cancel exactly. Any small change in <span class="math inline">\(\mu\)</span> increases the total squared error, because it moves us away from this point of balance. For me anyways, the calculus derivation really helped me understand this idea better. It reassures us that averaging is not an arbitrary convention. In higher dimensions, where we can no longer “see” this balance by inspection, the same idea will reappear in geometric form as a projection onto a lower-dimensional space.</p>
+<p>The above argument formalizes an intuition we already have in one dimension. If we observe the numbers 6 and 7, we rarely hesitate to say that the number closest to both, under squared distance, is 6.5. Moving slightly to the left of 6.5 increases the distance to 7 more than it decreases the distance to 6; moving slightly to the right does the opposite. At 6.5, these forces exactly balance. The derivative simply encodes this balance condition. For me anyways, the calculus derivation really helped me understand this idea better.</p>
 </section>
 <section id="so-what" class="level2">
 <h2 class="anchored" data-anchor-id="so-what">So What?</h2>
 <p>Now, you may be saying, “Hey Jared, this is overkill. Why even bother doing all of this for something as simple as an average?” Well, the derivation shows us that the average is the solution to an optimization problem. This fact connects simple statistics to the machinery of modern econometrics. Variance, mean squared error, and regression coefficients are all built on the same principle: finding a number, or set of numbers, that minimizes some measure of error. The arithmetic mean is simply the most familiar and elementary instance of this idea. Every estimator in this book is, at its core, an application of averaging. This fact will become crucial in later chapters, when we move from simple averages to more sophisticated ones, including the weighted averages that power synthetic control methods. Whatever method you choose, you’re never <em>not</em> averaging.</p>
 <p>The reason I dedicate a chapter to the arithmetic mean is also to make sure we start on the right footing. For some reason, synthetic control methods are often described in dramatic terms: as a Frankenstein’s monster, <a href="https://www.linkedin.com/posts/aryma-labs_the-ultimate-test-for-synthetic-control-method-activity-7376484972360077312-Mfxe?utm_source=share&amp;utm_medium=member_android&amp;rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw">a mash-up of controls</a>, or a “fake version” of the treated unit. For example, <a href="https://haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments">Haus</a> and <a href="https://medium.com/@mansisharma.8.k/when-a-b-testing-isnt-an-option-real-world-lessons-from-meta-aaf246014d05">Meta scientists</a> have used these kinds of analogies to frame SCM. Other descriptions present variations of the same idea, including the claim that SCM constructs a “<a href="https://someunpleasant.substack.com/p/mini-post-6-touch-of-evil">fake control group</a>.”</p>
-<p>While I understand the intent behind this phrasing, I believe it is, and at the very least has a high potential to be, misleading. As we have just seen, the arithmetic mean is itself a special case of a weighted average, one in which all units receive equal weight. Yet we do not describe the national average income as “Franken-Income,” nor the weekly mean of basket size as a “Franken-Basket.” Likewise, the idea of a “fake control group” obscures the fact that every unit in the donor pool is real, observed data. Synthetic control predictions, like any other average, do not fabricate data at all. They simply assign weights, subject to constraints, in exactly the same spirit as more familiar averages. The arithmetic mean feels objective only because the optimization problem that defines it has been hidden by centuries of pedagogy, feeling natural because we have collectively forgotten the optimization problem it solves.</p>
-<p>In fact, these descriptions become even more puzzling once we notice that the arithmetic mean already satisfies the classic SCM constraints. Recall the formula</p>
+<p>While I understand the intent behind this phrasing, I believe it is, or at the very least has a high potential to be, misleading. When we use works like “fake” or “Frankenstein”, these are loaded terms that suggest deception or haphazardly grafting together data points. However as we have just seen, the arithmetic mean does exactly this. The national mean income over time? Takes all incomes across individuals and time points, assigns each person a weight, and computes the weighted sum. If we’re in online retail and we care about the mean basket size, we’re taking the size of each basket and computing a sum where each basket is given the same weight. Yet we do not describe the national average income as “Franken-Income,” nor the weekly mean of basket size as a “Franken-Basket.” Likewise, the idea of a “fake control group” obscures the fact that every unit in the donor pool is a real, observed unit. Synthetic control predictions, like any other average, do not fabricate data at all. They simply weight units/observations in exactly the same spirit as more familiar averages. The arithmetic mean <em>feels</em> objective only because the optimization problem that defines it has been hidden by decades of pedagogy. In other words, the SCM weights may provoke uncertainty in users because the weights may vary, and this variance suggests some kind of Decision at work. In contrast, the arithmetic mean weights are trivial, so they are implicitly framed as Not a Decision, just a pure computational fact.</p>
+<p>These descriptions become even more puzzling, however, once we notice that the arithmetic mean already satisfies the classic SCM constraints. Recall the formula</p>
 <p><span class="math display">\[
 \bar{y} = \frac{1}{n} \sum_{i=1}^n y_i.
 \]</span></p>
-<p>We can rewrite this as a weighted sum by setting <span class="math inline">\(w_i = 1/n\)</span> for all <span class="math inline">\(i\)</span>, yielding <span class="math inline">\(\sum_{i=1}^n y_i w_i\)</span>. These weights are non-negative and sum to one, which is precisely the defining constraints of the synthetic control method which operates over multiple vectors/units instead of a single vector. The arithmetic mean of the donor pool, therefore, is a special case of SCM in which all weights are uniform. The only meaningful difference is that classic SCM does not impose uniformity.</p>
-<p>Yet the moment we allow non-uniform weights with <span class="math inline">\(\sum_i w_i = 1\)</span>, the same operation is suddenly described as sophisticated or different or complex, even though the weights from SCM, like the arithmetic mean, are also byproduct of an optimization problem. The key difference is that the arithmetic average is trivially closed form and the SCM weights are not. If a client asked me to compute the average of sales across markets over time and I replied, “You mean you want me to make a mashed-up Frankenstein monster of your sales data?” they would rightly think I had lost the plot.</p>
-<p>I think part of the reason for this anxiety around weighted averages with SCM is that the simple arithmetic average of some subset of controls is framed implicitly as <strong>Not a Decision</strong>. The arithmetic average weights just are what they are by construction, so much so that many people (I suspect) do not even see it as a decision they are making. Presumably this is also why the uniform weights (as in, say, <a href="https://arxiv.org/abs/1610.07748">Difference-in-Differences</a>) are never questioned, but the weights from SCM are met with suspicion. In contrast, weights that are not uniform, and who up front come from an optimization, are met with more suspicion because then, when framed openly as a decision, it becomes a thing we may attack or defend.</p>
+<p>for the average of some outcome variable. We can rewrite this as a weighted sum by setting <span class="math inline">\(w_i = 1/n \: \forall \, i\)</span>, yielding <span class="math inline">\(\sum_{i=1}^n y_i w_i\)</span>. Given that <span class="math inline">\(n\)</span> is a positive integer, these weights are non-negative sum to one. This precisely the defining constraint set of the original SCM. We do not talk about it like it is, but that’s the case. The arithmetic mean of the donor pool, therefore, is a special case of SCM. If a client asked me to compute the average of sales across markets over time and I replied, “You mean you want me to make a Frankenstein monster of your sales data?” they would rightly think I had lost the plot. Presumably this is also why the uniform weights (as in, say, <a href="https://arxiv.org/abs/1610.07748">Difference-in-Differences</a>) are never questioned, but the weights from SCM are met with suspicion. When the weights are framed openly as a decision, it becomes a thing we may attack or defend, I guess.</p>
 <p>The point of this post is simple: every single estimator in this book uses a weighted average of controls which is derived from an optimization problem, whether we are discussing Difference-in-Differences or SCM. It is the task of the econometrician or data scientist to know when which flavor of weights are called for and why. In the remainder of the chapter, we generalize this idea from scalars to vectors and matrices. What matters is not whether we average, but how the weights are chosen.</p>
 
 
@@ -377,7 +376,7 @@ x_i - \mu.
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1767961031832" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1768060720557" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -388,7 +387,7 @@ x_i - \mu.
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1767961091760" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1768060787618" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external"></a>
@@ -402,7 +401,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1767961031839" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1768060720564" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -416,7 +415,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1767961031838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3189">
+<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1768060720563" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3189">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -440,7 +439,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1767961031839" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="4" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1768060720564" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -457,7 +456,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1767961031837" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="5" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1768060720563" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -481,7 +480,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1767961031835" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1768060720560" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -498,7 +497,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1767961031832" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1768060720557" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -522,7 +521,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1767961031838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1768060720563" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -546,7 +545,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1767961031838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1768060720563" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -568,7 +567,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1767961031838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1768060720563" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -590,7 +589,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1767961031835" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="11" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1768060720560" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -614,7 +613,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1767961031835" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1768060720560" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -636,7 +635,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1767961031839" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1768060720564" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -660,7 +659,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1767961031838" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1768060720563" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -684,7 +683,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1767961031832" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1768060720558" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -708,7 +707,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1767961031832" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1768060720558" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -732,7 +731,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1767961031831" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1768060720556" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>

@@ -18,14 +18,31 @@ Jared Amani Greathouse
 - Advisor: Jason Coupet  
 ---
 
-## Motivation
+## Policy Challenges Motivation
 
 - Public policy increasingly relies on causal inference to evaluate complex interventions  
 - Many high-stakes policies create data environments where:
-  - Treatments are nationwide or isolated
-  - Adoption is staggered
+  - Donor pools/sets of untreated units are high dimensional
+  - Spillovers are present, or
   - Valid geographic controls do not exist
-- These settings strain or invalidate traditional empirical tools
+- These settings strain or invalidate traditional empirical tools, which relax one or many of these constraints.
+
+**Thesis:**  
+Machine learning augmentations of traditional causal methods (e.g., ITS, SCM) can **overcome these challenges**, providing more credible inference in high-stakes policy settings
+
+## Technical Challenges/Motivation
+
+- Many cutting-edge causal inference methods (e.g., SHC, RESCM, augmented SCM) do not have ready-to-use software
+
+- Existing tools (SCM packages in R/Stata/Python) are limited in scope and cannot implement novel designs.  
+
+- To fill this gap, I developed **`mlsynth`**, an open-source Python package  
+
+**`mlsynth` enables:**
+
+- Synthetic control methods and panel data approaches in a simple and flexbile manner
+
+- Implements machine learning methods to address spillovers/SUTVA violations, high-dimensional donor pools, etc.
 
 ## Paper 1: Hawaii’s COVID-19 Quarantine
 
@@ -44,7 +61,7 @@ Synthetic Historical Control (SHC)
 ## Why Hawaii?
 
 - Most extreme U.S. COVID containment policy
-- Mandatory 14-day quarantine on *all* arrivals (March 26, 2020)
+- Introduced a mandatory 14-day quarantine on *all* arrivals (March 26, 2020)
 - Effectively sealed borders and shut down tourism
 - No comparable U.S. state intervention
 
@@ -60,16 +77,19 @@ Synthetic Historical Control (SHC)
   - Climate shocks
   - Geopolitical disruptions
 
+- A key question is the degree to which the intervention impacted the economy, in contrast to places like Florida who did not such restrictions.
 
-
-## Why This Hasn’t Been Studied
+## Difficulty in studying this case
 
 - Hawaii is:
+
   - Geographically isolated
+
   - Highly tourism-dependent
+
   - Economically distinct
-- No credible untreated comparison units
-- Standard DiD and SCM designs fail
+
+- No credible untreated comparison units, meaning standard DiD and SCM designs fail
 
 
 
@@ -98,8 +118,8 @@ Synthetic Historical Control (SHC)
 
 - Match the *last pre-treatment window*
 - Using weighted combinations of:
-  - Earlier historical segments
-- Learn how Hawaii typically evolves
+  - Earlier historical segments where intervention was not active.
+- Learn how Hawaii typically evolves, absent either pandemic or lockdown
 - Extrapolate forward absent treatment
 
 
@@ -119,7 +139,7 @@ All measured as:
 ## Data
 
 - Monthly time series
-- ~30 years of pre-treatment data
+- ~30 years of pre-treatment data (1990 to 2020).
 - Sources:
   - Hawaii DBEDT
   - FRED
@@ -130,7 +150,7 @@ All measured as:
 1. Smooth pre-treatment series
 2. Construct historical donor segments
 3. Match evaluation window
-4. Predict post-treatment counterfactual
+4. Predict post-treatment counterfactual, under no lockdown
 5. Compare observed outcomes to predictions
 
 
@@ -266,6 +286,7 @@ All measured as:
 - No viable untreated donor pool  
 - Parallel trends assumptions are implausible  
 - Covariates cannot fully capture meteorology
+- Trditionally, practitioners would do t-tests/simpler methods.
 
 
 
@@ -274,14 +295,43 @@ All measured as:
 - Few credible causal designs for national-scale interventions  
 - Existing tools struggle when:
   - Treatment is universal  
-  - Controls do not exist  
+  - Meaningful geographic controls do not exist  
 - Limits inference for major policy shocks
+
+
+## Data
+
+- *Source:* SHRUG – Socioeconomic High-resolution Rural-Urban Geographic Data Platform for India
+- *Spatial coverage:* 635 districts across India  
+- *Temporal coverage:* Jan 1999 – Dec 2020 (monthly observations)  
+- *Outcome:* PM2.5 concentrations, population-weighted at district level  
+
+**National-level analysis:**
+- Population-weighted average across all districts → single monthly time series
+
+*Treated districts (city-level analysis):*
+- Delhi, Mumbai, Bangalore, Kolkata (major tech hubs/metropolitan areas).
+- Aggregated subdistricts to district-level averages
+
+## Data Transformation
+
+- Compute year-over-year (YoY) growth rates of PM2.5:  
+
+  - Compares each month to same month in previous year  
+  - Controls for seasonality, via the annualization
+
+- Final outcome series for analysis:  
+  - **National:** YoY growth of PM2.5 across India  
+  - **Cities:** YoY growth for each treated district  
+
+- Restricts analysis to 1999–2020, months 13–312 of the dataset
+
 
 
 ## Contribution of This Chapter
 
 - First causal evaluation of India’s nationwide lockdown on PM2.5  
-- Uses Synthetic Historical Control (SHC):
+- Uses SHC:
   - No contemporaneous control units  
   - Counterfactual built from historical patterns  
 - Extends SHC to an augmented framework
@@ -336,7 +386,7 @@ How did city-level vaccine mandates affect restaurant employment?
 - New Orleans  
 - Los Angeles  
 
-Each implemented vaccine mandates for indoor dining in 2021.
+Each implemented vaccine mandates for indoor dining in 2021. Other cities (i.e., [Chicago](https://ogletree.com/insights-resources/blog-posts/chicago-issues-proof-of-covid-19-vaccination-requirement-for-restaurants-gyms-and-indoor-concerts/)) did too, but they did so when a new COVID variant (Omicron) became viral, a critical confounder for clean identification.
 
 ## Why These Cities Matter
 

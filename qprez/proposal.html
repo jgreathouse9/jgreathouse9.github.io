@@ -147,18 +147,33 @@ Jared Greathouse
 - Advisor: Jason Coupet<br>
 —</p>
 </section>
-<section id="motivation" class="slide level2">
-<h2>Motivation</h2>
+<section id="policy-challenges-motivation" class="slide level2">
+<h2>Policy Challenges Motivation</h2>
 <ul>
 <li>Public policy increasingly relies on causal inference to evaluate complex interventions<br>
 </li>
 <li>Many high-stakes policies create data environments where:
 <ul>
-<li>Treatments are nationwide or isolated</li>
-<li>Adoption is staggered</li>
+<li>Donor pools/sets of untreated units are high dimensional</li>
+<li>Spillovers are present, or</li>
 <li>Valid geographic controls do not exist</li>
 </ul></li>
-<li>These settings strain or invalidate traditional empirical tools</li>
+<li>These settings strain or invalidate traditional empirical tools, which relax one or many of these constraints.</li>
+</ul>
+<p><strong>Thesis:</strong><br>
+Machine learning augmentations of traditional causal methods (e.g., ITS, SCM) can <strong>overcome these challenges</strong>, providing more credible inference in high-stakes policy settings</p>
+</section>
+<section id="technical-challengesmotivation" class="slide level2">
+<h2>Technical Challenges/Motivation</h2>
+<ul>
+<li><p>Many cutting-edge causal inference methods (e.g., SHC, RESCM, augmented SCM) do not have ready-to-use software</p></li>
+<li><p>Existing tools (SCM packages in R/Stata/Python) are limited in scope and cannot implement novel designs.</p></li>
+<li><p>To fill this gap, I developed <strong><code>mlsynth</code></strong>, an open-source Python package</p></li>
+</ul>
+<p><strong><code>mlsynth</code> enables:</strong></p>
+<ul>
+<li><p>Synthetic control methods and panel data approaches in a simple and flexbile manner</p></li>
+<li><p>Implements machine learning methods to address spillovers/SUTVA violations, high-dimensional donor pools, etc.</p></li>
 </ul>
 </section>
 <section id="paper-1-hawaiis-covid-19-quarantine" class="slide level2">
@@ -176,7 +191,7 @@ Synthetic Historical Control (SHC)</p>
 <h2>Why Hawaii?</h2>
 <ul>
 <li>Most extreme U.S. COVID containment policy</li>
-<li>Mandatory 14-day quarantine on <em>all</em> arrivals (March 26, 2020)</li>
+<li>Introduced a mandatory 14-day quarantine on <em>all</em> arrivals (March 26, 2020)</li>
 <li>Effectively sealed borders and shut down tourism</li>
 <li>No comparable U.S. state intervention</li>
 </ul>
@@ -193,19 +208,19 @@ Synthetic Historical Control (SHC)</p>
 <li>Climate shocks</li>
 <li>Geopolitical disruptions</li>
 </ul></li>
+<li>A key question is the degree to which the intervention impacted the economy, in contrast to places like Florida who did not such restrictions.</li>
 </ul>
 </section>
-<section id="why-this-hasnt-been-studied" class="slide level2">
-<h2>Why This Hasn’t Been Studied</h2>
+<section id="difficulty-in-studying-this-case" class="slide level2">
+<h2>Difficulty in studying this case</h2>
 <ul>
-<li>Hawaii is:
+<li><p>Hawaii is:</p>
 <ul>
-<li>Geographically isolated</li>
-<li>Highly tourism-dependent</li>
-<li>Economically distinct</li>
+<li><p>Geographically isolated</p></li>
+<li><p>Highly tourism-dependent</p></li>
+<li><p>Economically distinct</p></li>
 </ul></li>
-<li>No credible untreated comparison units</li>
-<li>Standard DiD and SCM designs fail</li>
+<li><p>No credible untreated comparison units, meaning standard DiD and SCM designs fail</p></li>
 </ul>
 </section>
 <section id="the-identification-problem" class="slide level2">
@@ -237,9 +252,9 @@ Synthetic Historical Control (SHC)</p>
 <li>Match the <em>last pre-treatment window</em></li>
 <li>Using weighted combinations of:
 <ul>
-<li>Earlier historical segments</li>
+<li>Earlier historical segments where intervention was not active.</li>
 </ul></li>
-<li>Learn how Hawaii typically evolves</li>
+<li>Learn how Hawaii typically evolves, absent either pandemic or lockdown</li>
 <li>Extrapolate forward absent treatment</li>
 </ul>
 </section>
@@ -253,7 +268,7 @@ Synthetic Historical Control (SHC)</p>
 <h2>Data</h2>
 <ul>
 <li>Monthly time series</li>
-<li>~30 years of pre-treatment data</li>
+<li>~30 years of pre-treatment data (1990 to 2020).</li>
 <li>Sources:
 <ul>
 <li>Hawaii DBEDT</li>
@@ -268,7 +283,7 @@ Synthetic Historical Control (SHC)</p>
 <li>Smooth pre-treatment series</li>
 <li>Construct historical donor segments</li>
 <li>Match evaluation window</li>
-<li>Predict post-treatment counterfactual</li>
+<li>Predict post-treatment counterfactual, under no lockdown</li>
 <li>Compare observed outcomes to predictions</li>
 </ol>
 </section>
@@ -293,7 +308,7 @@ Synthetic Historical Control (SHC)</p>
 <section id="paper-2-impact-of-national-lockdown-on-air-quality-in-india" class="slide level2">
 <h2>Paper 2: Impact of National Lockdown on Air Quality in India</h2>
 </section>
-<section id="motivation-1" class="slide level2">
+<section id="motivation" class="slide level2">
 <h2>Motivation</h2>
 <ul>
 <li>Air pollution is one of India’s most severe public health challenges<br>
@@ -473,6 +488,7 @@ Synthetic Historical Control (SHC)</p>
 <li>Parallel trends assumptions are implausible<br>
 </li>
 <li>Covariates cannot fully capture meteorology</li>
+<li>Trditionally, practitioners would do t-tests/simpler methods.</li>
 </ul>
 </section>
 <section id="methodological-gap" class="slide level2">
@@ -484,10 +500,41 @@ Synthetic Historical Control (SHC)</p>
 <ul>
 <li>Treatment is universal<br>
 </li>
-<li>Controls do not exist<br>
+<li>Meaningful geographic controls do not exist<br>
 </li>
 </ul></li>
 <li>Limits inference for major policy shocks</li>
+</ul>
+</section>
+<section id="data-1" class="slide level2">
+<h2>Data</h2>
+<ul>
+<li><em>Source:</em> SHRUG – Socioeconomic High-resolution Rural-Urban Geographic Data Platform for India</li>
+<li><em>Spatial coverage:</em> 635 districts across India<br>
+</li>
+<li><em>Temporal coverage:</em> Jan 1999 – Dec 2020 (monthly observations)<br>
+</li>
+<li><em>Outcome:</em> PM2.5 concentrations, population-weighted at district level</li>
+</ul>
+<p><strong>National-level analysis:</strong> - Population-weighted average across all districts → single monthly time series</p>
+<p><em>Treated districts (city-level analysis):</em> - Delhi, Mumbai, Bangalore, Kolkata (major tech hubs/metropolitan areas). - Aggregated subdistricts to district-level averages</p>
+</section>
+<section id="data-transformation" class="slide level2">
+<h2>Data Transformation</h2>
+<ul>
+<li><p>Compute year-over-year (YoY) growth rates of PM2.5:</p>
+<ul>
+<li>Compares each month to same month in previous year<br>
+</li>
+<li>Controls for seasonality, via the annualization</li>
+</ul></li>
+<li><p>Final outcome series for analysis:</p>
+<ul>
+<li><strong>National:</strong> YoY growth of PM2.5 across India<br>
+</li>
+<li><strong>Cities:</strong> YoY growth for each treated district</li>
+</ul></li>
+<li><p>Restricts analysis to 1999–2020, months 13–312 of the dataset</p></li>
 </ul>
 </section>
 <section id="contribution-of-this-chapter" class="slide level2">
@@ -495,7 +542,7 @@ Synthetic Historical Control (SHC)</p>
 <ul>
 <li>First causal evaluation of India’s nationwide lockdown on PM2.5<br>
 </li>
-<li>Uses Synthetic Historical Control (SHC):
+<li>Uses SHC:
 <ul>
 <li>No contemporaneous control units<br>
 </li>
@@ -516,7 +563,7 @@ Synthetic Historical Control (SHC)</p>
 <section id="paper-3-locking-away-prosperity-evaluating-the-labor-impacts-of-vaccine-mandates" class="slide level2">
 <h2>Paper 3: Locking Away Prosperity? Evaluating the Labor Impacts of Vaccine Mandates</h2>
 </section>
-<section id="motivation-2" class="slide level2">
+<section id="motivation-1" class="slide level2">
 <h2>Motivation</h2>
 <ul>
 <li>COVID-19 NPIs initially focused on lockdowns and masks<br>
@@ -574,7 +621,7 @@ Synthetic Historical Control (SHC)</p>
 </li>
 <li>Los Angeles</li>
 </ul>
-<p>Each implemented vaccine mandates for indoor dining in 2021.</p>
+<p>Each implemented vaccine mandates for indoor dining in 2021. Other cities (i.e., <a href="https://ogletree.com/insights-resources/blog-posts/chicago-issues-proof-of-covid-19-vaccination-requirement-for-restaurants-gyms-and-indoor-concerts/">Chicago</a>) did too, but they did so when a new COVID variant (Omicron) became viral, a critical confounder for clean identification.</p>
 </section>
 <section id="why-these-cities-matter" class="slide level2">
 <h2>Why These Cities Matter</h2>
@@ -629,7 +676,7 @@ Synthetic Historical Control (SHC)</p>
 <li>Separate analysis by city</li>
 </ul>
 </section>
-<section id="data-1" class="slide level2">
+<section id="data-2" class="slide level2">
 <h2>Data</h2>
 <ul>
 <li>Monthly MSA-level employment data<br>

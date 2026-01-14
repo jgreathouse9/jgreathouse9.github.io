@@ -57,18 +57,18 @@ Jared Amani Greathouse
 
 ## Why Identification Is Especially Hard in Pandemics
 
-- Pandemics generate **system-wide shocks**
+- Pandemics generate system-wide shocks
 - Economic, social, and behavioral responses are intertwined
 - Effects propagate through:
   - Travel networks
   - Supply chains
   - Information and expectations
 
-- This creates **widespread spillovers** across units
+- This creates widespread spillovers across units
 
 ## The Spillover Problem
 
-- Policies in one location affect outcomes elsewhere:
+- Events in one location affect outcomes elsewhere:
   - Mobility restrictions
   - Border controls
   - National or global behavioral responses
@@ -76,7 +76,7 @@ Jared Amani Greathouse
 - Spillovers violate core assumptions of:
   - Difference-in-differences
   - Synthetic control methods
-  - Panel data designs relying on isolation
+  - Panel data designs relying on cross-sectional groups of controls
 
 - Units cannot be treated as independent
 
@@ -89,11 +89,8 @@ Jared Amani Greathouse
 
 - But during COVID-19:
   - Nearly all units experienced some degree of exposure
-  - Treatment is not binary — it is pervasive
 
-- The issue is not *which* controls to use, but whether **any exist**
-
----
+- The issue is not *which* controls to use, but whether any valid ones exist
 
 ## Why Non-Geographic Controls Still Fail
 
@@ -124,23 +121,13 @@ Jared Amani Greathouse
 ## Implications for Causal Inference
 
 - When exposure is ubiquitous:
-  - Contemporaneous control groups are not credible
-  - Spillovers cannot be differenced away
+  - Contemporaneous control groups are likely not credible
+  - Spillovers cannot be instrumental for
   - Standard designs lose interpretability
 
-- Credible inference must:
+- Credible inference must (where appropriate):
   - Abandon reliance on untreated units
-  - Rely on **pre-treatment information only**
-
-## Motivation for Historical Counterfactuals
-
-- If no contemporaneous controls exist:
-  - The only credible comparison is to the unit’s own past
-
-- Historical patterns encode:
-  - Seasonality
-  - Long-run trends
-  - Typical responses to shocks
+  - Rely on pre-treatment information only
 
 ## Role of Machine Learning
 
@@ -154,8 +141,6 @@ Jared Amani Greathouse
   - Credible inference under system-wide interventions
 
 - These tools are essential for pandemic-era policy evaluation
-
-
 
 ## Technical Challenges/Motivation
 
@@ -224,7 +209,7 @@ Synthetic Historical Control (SHC)
 
 - COVID-19 is a *global* shock
 - Nearly all regions experienced treatment
-- No clean donor pool exists
+- No clean donor pool of nations of even other economic metrics exist
 - Cross-sectional comparisons break down
 
 
@@ -250,14 +235,11 @@ Synthetic Historical Control (SHC)
 - Extrapolate forward absent treatment
 
 
-## Outcomes
+## Economic Outcomes
 
 **Tourism Demand**
 - Visitor Days
 - Hotel Occupancy
-
-**Economic Conditions**
-- Accommodation Employment
 
 All measured as:
 - Annualized year-over-year growth rates
@@ -266,21 +248,18 @@ All measured as:
 ## Data
 
 - Monthly time series
-- ~30 years of pre-treatment data (1990 to 2020).
+- 30 years of pre-treatment data (1990 to 2020).
 - Sources:
-  - Hawaii DBEDT
-  - FRED
+  - Hawaii Department of Business Economic Developmemt and Tourism
 - Treatment begins: March 2020
 
 ## Empirical Design
 
 1. Smooth pre-treatment series
-2. Construct historical donor segments
-3. Match evaluation window
+2. Construct historical donor segments (of length 60, or 5 years)
+3. Match evaluation window (5 years before the policy intervention)
 4. Predict post-treatment counterfactual, under no lockdown
 5. Compare observed outcomes to predictions
-
-
 
 ## Inference
 
@@ -299,6 +278,15 @@ All measured as:
 
 ## Paper 2: Impact of National Lockdown on Air Quality in India
 
+## The COVID-19 Lockdown
+
+- On March 25, 2020, India began a strict lockdown to combat the spread of COVID-19.
+- Among the strictest globally  
+- Sudden halt to:
+  - Transportation  
+  - Industrial activity  
+  - Construction  
+- While the first order indicator is spread of the virus, there was also a large carbon emissions shock
 
 ## Motivation
 
@@ -343,18 +331,6 @@ All measured as:
 - Estimated costs ≈ 1–1.5% of GDP annually  
 - Policy response: National Clean Air Programme (NCAP)
 
-
-## The COVID-19 Lockdown
-
-- Nationwide lockdown began March 25, 2020  
-- Among the strictest globally  
-- Sudden halt to:
-  - Transportation  
-  - Industrial activity  
-  - Construction  
-- A large, abrupt emissions shock
-
-
 ## Lockdown as a Natural Experiment
 
 - Policy applied uniformly across the country  
@@ -369,8 +345,6 @@ All measured as:
 - Reductions often in the range of 30–50%  
 - Major metros experienced large AQI improvements  
 - Effects strongest in early lockdown phases
-
-
 
 ## What Existing Studies Show
 
@@ -407,30 +381,16 @@ All measured as:
 - Mixed findings across contexts
 
 
-## Why National Causal Inference Is Hard
-
-- Lockdowns affect all units simultaneously  
-- No viable untreated donor pool  
-- Parallel trends assumptions are implausible  
-- Covariates cannot fully capture meteorology
-- Trditionally, practitioners would do t-tests/simpler methods.
-
-
-
 ## Methodological Gap
 
 - Few credible causal designs for national-scale interventions  
-- Existing tools struggle when:
-  - Treatment is universal  
-  - Meaningful geographic controls do not exist  
-- Limits inference for major policy shocks
-
+- Makes the SHC method a natural candidate
 
 ## Data
 
 - *Source:* SHRUG – Socioeconomic High-resolution Rural-Urban Geographic Data Platform for India
 - *Spatial coverage:* 635 districts across India  
-- *Temporal coverage:* Jan 1999 – Dec 2020 (monthly observations)  
+- *Temporal coverage:* Jan 1998 – Dec 2020 (monthly observations)  
 - *Outcome:* PM2.5 concentrations, population-weighted at district level  
 
 **National-level analysis:**
@@ -444,8 +404,7 @@ All measured as:
 
 - Compute year-over-year (YoY) growth rates of PM2.5:  
 
-  - Compares each month to same month in previous year  
-  - Controls for seasonality, via the annualization
+  - Compares each month to same month in previous year
 
 - Final outcome series for analysis:  
   - **National:** YoY growth of PM2.5 across India  
@@ -457,18 +416,8 @@ All measured as:
 
 ## Contribution of This Chapter
 
-- First causal evaluation of India’s nationwide lockdown on PM2.5  
-- Uses SHC:
-  - No contemporaneous control units  
-  - Counterfactual built from historical patterns  
-- Extends SHC to an augmented framework
-
-
-## What This Enables
-
-- National-level causal estimates  
-- Policy-relevant counterfactual inference
-
+- First causal evaluation of India’s nationwide lockdown on PM2.5.
+- If successful, illustrates how government action like this can significantly mitigate emissions in the short term.
 
 ## Paper 3: Locking Away Prosperity? Evaluating the Labor Impacts of Vaccine Mandates
 

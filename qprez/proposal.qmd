@@ -14,16 +14,17 @@ highlight-style: github
 # Introduction
 
 Jared Amani Greathouse  
-- PhD Candidate, Public Policy, Georgia State University  
-- Advisor: Jason Coupet
+- PhD Candidate, Public Policy, Georgia State University
 
 ## A World Where Policy Cannot Be Avoided
 
-- Pandemics are not individual-level risks
+- Pandemics are not individual-level events. Unlike epidemics which are more localized,
+
 - Exposure is:
   - Non-optional
   - Non-local
   - (Generally) Non-isolable
+
 - Outcomes depend heavily on:
   - Government action
   - Collective behavior
@@ -31,13 +32,24 @@ Jared Amani Greathouse
 
 ## The Central Policy Tension During COVID-19
 
-- Policymakers faced a fundamental tradeoff:
-  - Mitigating public health risks
-  - Preserving economic and social well-being
-- Non-pharmaceutical interventions (NPIs) aimed to:
-  - Reduce transmission and health system strain
+- At the time, the debate (especially in the United States) was framed around a proposed tradeoff:
 
-- But also imposed:
+  - On one hand, lawmakers could mitigate public health risks by passing widespread policies to prevent viral spread
+
+  - For example, large scale lockdowns such as the kind done in China were one option.
+
+
+  - On the other hand, preserving economic and social well-being by not doing the above.
+
+  - For example, it was planned to send out 600 million masks to American hoseholds, but [this was killed](https://www.cnn.com/2020/09/18/politics/postal-service-face-masks-coronavirus-trump-administration) by the White House to not cause panic.
+
+## Non-pharmaceutical Interventions
+
+- Non-pharmaceutical interventions (NPIs) aimed to:
+
+  - Reduce transmission and health system strain via measures such as shelter in place mandates or closure of large scale events such as stadiums
+
+- NPIs also imposed:
   - Employment and income losses
   - Tourism and service-sector disruptions
   - Broader economic consequences
@@ -45,19 +57,24 @@ Jared Amani Greathouse
 
 ## Current Literature
 
-- Existing literature emphasizes health impacts (e.g., case growth, hospitalizations)
-- For example, researchers [studied](https://doi.org/10.1073/pnas.2114226119) how opening of NFL stadiums impacted the spread of the virus or how [lockdowns](https://arxiv.org/pdf/2005.00072) affected case rates.
+- Much existing econometric literature on the effect of COVID policy emphasizes health impacts (e.g., case growth, hospitalizations) and whether NPIs mitigated the spread of the virus.
+
+- For example, researchers [studied](https://doi.org/10.1073/pnas.2114226119) how opening of NFL stadiums impacted the spread of the virus or how [earlier lockdowns](https://arxiv.org/pdf/2005.00072) affected case rates in hte United States.
+
 - Far less is known about secondary outcomes:
+
   - Economic activity, labor markets, environmental outcomes
-- Key question:  
-  *Can policies protect public health without causing large economic or social harms?*
+
+- A key question remains then:  
+  *Can policies protect public health without causing large economic or other social harms?*
 
 ## Why Identification Is Hard
 
-- Pandemics create a latent, system-wide “background treatment”:
+- Pandemics create a latent, system-wide "background treatment":
   - All units are exposed in some way
   - Policies respond to this background risk
   - Spillovers and network effects are pervasive
+
 - Implications for evaluation:
   - SUTVA is often violated
   - Untreated control units are hard to identify
@@ -66,41 +83,34 @@ Jared Amani Greathouse
 
 ## Implications for Policy Analysis
 
-- Traditional evaluation strategies struggle to isolate policy impacts
-- Challenges for applied policy studies:
-  - Assessing effectiveness under universal exposure
-  - Distinguishing policy-driven changes from collective behavioral responses
-  - Translating empirical findings into actionable guidance
+- If standard econometric techniques cannot provide satisfactory answers to these problems, this limits our ability to measure the broader impact of COVID policy
 
-- Solutions require:
-  - Careful construction of counterfactuals
-  - Methods that account for spillovers and shared shocks
+- If we have limited knowledge of this, then we stand less prepared for future pandemics.
 
 ## Role of Machine Learning
 
 - Enhances counterfactual estimation by:
-  - Flexibly modeling complex dynamics (such as, low rank matrix estimation)
-  - Selecting relevant control groups
-  - Mitigating spillover effects
-- Essential for pandemic-era policy evaluation
+  - Flexibly modeling complex dynamics (such as, low rank matrix estimation to denoise outcome data)
+  - Selecting relevant control groups via formalized algorithms such as k-means or the $\ell_1$ norm for variable selection
+  - Mitigating spillover effects using proximal causal inference methods
 
 ## Technical Motivation
 
-- Many modern causal inference methods lack ready-to-use software
-- Existing SCM tools in R, Stata, and Python:
-  - Very limited in scope
-  - Cannot easily implement novel identification strategies
-- To address this gap, [I developed](https://mlsynth.readthedocs.io/en/latest/) **`mlsynth`**, an open-source Python package
+- However, many modern causal inference methods lack ready-to-use software
 
-**`mlsynth` enables:**
+- Existing SCM tools in R, Stata:
+  - Can be very limited in scope
+  - Cannot easily implement or extend novel identification strategies
+  - Are not free.
 
-- Flexible synthetic control and panel data methods
-- Machine learning tools to address spillovers, high-dimensional donor pools, and SUTVA violations
+- To address this gap, [I developed](https://mlsynth.readthedocs.io/en/latest/) **`mlsynth`** (machine learning synthetic control), an open-source Python package
+
+- `mlsynth` allows analysts to use modern machine learning tools from the synthetic control literature to address spillover effects, mitigate the arbitrarity of donor pool selection, and perform annalysis when no donors are present.
 
 ## Paper 1: Hawaii’s COVID-19 Quarantine
 
 **Question:**  
-What were the short-run economic costs of Hawaii’s March 2020 mandatory quarantine?
+What were the economic costs of Hawaii’s March 2020 mandatory quarantine?
 
 **Method:**  
 Synthetic Historical Control (SHC)
@@ -124,11 +134,6 @@ Synthetic Historical Control (SHC)
 **What are the economic costs of decisive early action under uncertainty?**
 
 - Early containment may prevent long-run damage
-- But imposes large short-run economic losses
-- Critical for future crises:
-  - Pandemics
-  - Climate shocks
-  - Geopolitical disruptions
 
 - A key question is the degree to which the intervention impacted the economy, in contrast to places like Florida who did not such restrictions.
 
@@ -138,35 +143,11 @@ Synthetic Historical Control (SHC)
 
   - Geographically isolated
 
-  - Highly tourism-dependent
+  - Highly tourism-dependent, making it economically distinct from most states
 
-  - Economically distinct from most states, being heavily tourism dependent
+- Furthermore, because not every state collects tourism data, no credible untreated comparison units
 
-- No credible untreated comparison units, meaning standard DiD and SCM designs will fail
-
-## The Identification Problem
-
-- COVID-19 is a *global* shock
-- Nearly all regions experienced treatment
-- No clean donor pool of nations of even other economic metrics exist
-- Cross-sectional comparisons break down
-
-## Economic Outcomes
-
-**Tourism Demand**
-- Visitor Days
-- Hotel Occupancy
-
-All measured as:
-- Annualized year-over-year growth rates
-
-## Data
-
-- Monthly time series
-- 30 years of pre-treatment data (1990 to 2020).
-- Sources:
-  - Hawaii Department of Business Economic Developmemt and Tourism
-- Treatment begins: March 2020
+- Standard DiD and SCM designs will fail
 
 ## Methodological Solution
 
@@ -187,6 +168,24 @@ All measured as:
 - Learn how Hawaii typically evolves, absent either pandemic or lockdown
 - Extrapolate forward absent treatment
 
+## Economic Outcomes
+
+**Tourism Demand**
+
+- Visitor Days
+
+- Hotel Occupancy
+
+All measured as:
+- Annualized year-over-year growth rates
+
+## Data
+
+- Monthly time series
+- 30 years of pre-treatment data (1990 to 2020).
+- Sources:
+  - Hawaii Department of Business Economic Developmemt and Tourism
+- Treatment begins: March 2020
 
 ## Inference
 
@@ -375,21 +374,14 @@ All measured as:
 
 ## Policy Question
 
-How did city-level vaccine mandates affect restaurant employment?
-
-- Did mandates slow employment recovery?  
-- Or did they support demand by improving perceived safety?  
-- Are effects consistent across cities?
-
-
-## Treated Cities
+- How did city-level vaccine mandates affect restaurant employment?
 
 - New York City (August 2021)
 - San Francisco (August 2021)
 - New Orleans (August 2021)
 - Los Angeles (November 2021)
 
-Each implemented vaccine mandates for indoor dining in 2021. Other cities (i.e., [Chicago](https://ogletree.com/insights-resources/blog-posts/chicago-issues-proof-of-covid-19-vaccination-requirement-for-restaurants-gyms-and-indoor-concerts/)) did too, but they did so when a new COVID variant (Omicron) became viral, a critical confounder for identification.
+Each implemented strict vaccine mandates for indoor dining and other public venues in 2021. Other cities (i.e., [Chicago](https://ogletree.com/insights-resources/blog-posts/chicago-issues-proof-of-covid-19-vaccination-requirement-for-restaurants-gyms-and-indoor-concerts/)) did too, but they did so when a new COVID variant (Omicron) became viral, a critical confounder for identification.
 
 ## Why These Cities Matter
 
@@ -407,7 +399,7 @@ Each implemented vaccine mandates for indoor dining in 2021. Other cities (i.e.,
   - Consumer confidence  
   - Willingness to dine indoors  
 
-Net effects are theoretically ambiguous.
+Net effects are theoretically ambiguous. Whatever the theoretical relationship, the question that remains unanswered is the degree to which these mandates affected employment.
 
 
 ## Contribution of This Chapter
@@ -434,7 +426,7 @@ Net effects are theoretically ambiguous.
   - Both as Year on Year Growth rates
 
 
-## Why These Outcomes Matter for Policy
+## What this Dissertation Adds
 
 - Pandemic policy is, in principle, a joint health–economic decision problem
   - Governments do not choose policies based on epidemiological outcomes alone

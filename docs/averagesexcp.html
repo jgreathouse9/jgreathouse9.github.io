@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2026-01-04">
+<meta name="dcterms.date" content="2026-01-20">
 
 <title>What Is An Average? – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
@@ -217,7 +217,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">January 4, 2026</p>
+      <p class="date">January 20, 2026</p>
     </div>
   </div>
   
@@ -236,12 +236,13 @@ window.Quarto = {
 — <a href="https://genius.com/Sza-forgiveless-lyrics"><em>Solana Imani Rowe</em></a></p>
 </blockquote>
 </div>
-<p>Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.</p>
+<hr>
+<p>Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, the <a href="https://meancalculator.com/history-of-means.html">Egyptians and Babylonians</a> used summary statistics to aid in decisionmakimg for astronomy, agriculture, construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.</p>
 <p>Even still, the arithmetic average is, for most people, more of an ontological concept than a problem that must be solved for. For the average person/data scientist, the arithmetic average is mentally more akin, to <em>facts</em> like “the sun rises” or “Spain is in Europe” instead of something to be derived, <em>solved for</em>, or even justified from first principles. Indeed (at least in the United States), the arithmetic mean is taught with almost a childlike innocence of simple addition and division. Regularly, people use phrases like “on average” in casual conversation to denote frequency. But what is an average anyways?</p>
-<p>The point of this post is to show that the arithmetic average is the solution to an optimization problem. I will connect it to how we think about counterfactual estimation.</p>
+<p>The point of this post is to show that the arithmetic average is actually the solution to an optimization problem. I will connect it to how we think about counterfactual estimation in econometrics and marketing science.</p>
 <section id="definitions" class="level2">
 <h2 class="anchored" data-anchor-id="definitions">Definitions</h2>
-<p>In doing so, we will require a few rules. In the book I have a dedicated chapter on the required mathematics, but I repeat the definitions here for convenience.</p>
+<p>We will require a few rules. In the book I have a dedicated chapter on the required mathematics, but I repeat the relevant definitions here for convenience.</p>
 <details>
 <summary>
 <strong>(optional mathematical background)</strong>
@@ -278,27 +279,29 @@ f : \mathbb{R}^n \to \mathbb{R},
 </section>
 <section id="deriving-the-arithmetic-mean" class="level2">
 <h2 class="anchored" data-anchor-id="deriving-the-arithmetic-mean">Deriving the Arithmetic Mean</h2>
-<p>To formalize this, suppose we have a sequence of data points <span class="math inline">\((x_i)_{i=1}^n \subset \mathbb{R}, \quad n \in \mathbb{Z}^+\)</span>. We want to choose a single number, <span class="math inline">\(\mu\)</span> (pronounced “m-you”), that is as close as possible to all of them. Here, <span class="math inline">\(\mu\)</span> is a placeholder variable representing a candidate for the “best” summary value, which we must solve for. For each observed value <span class="math inline">\(x_i\)</span>, the deviation from <span class="math inline">\(\mu\)</span> is</p>
+<p>To begin, suppose we have some sequence of data points <span class="math inline">\((x_i)_{i=1}^n \subset \mathbb{R}, \quad n \in \mathbb{Z}^+\)</span>. We want to choose a <em>single</em> number, <span class="math inline">\(\mu\)</span> (pronounced “m-you”), that is as close as possible to all of the numbers in the sequence. Here, <span class="math inline">\(\mu\)</span> is a placeholder variable representing a candidate for the “best” summary value. We do not know its value a priori, so we must solve for. First, for each observed value of the sequence <span class="math inline">\(x_i\)</span>, define the deviation from <span class="math inline">\(\mu\)</span> as</p>
 <p><span class="math display">\[
 x_i - \mu.
 \]</span></p>
-<p>However, we do not want to minimize the distance to a single number; we want a number that minimizes the discrepancy to <strong>all</strong> of the numbers. To measure the overall discrepancy across all points, we sum these deviations:</p>
+<p>Simple enough, this is just subtracting one value from the other value. However, we do not want to minimize the distance to a single number in the sequence; we want a single number that minimizes the distance to <strong>all</strong> of the numbers in the sequence at once. To measure the overall discrepancy across all points, we can now sum these deviations:</p>
 <p><span class="math display">\[
-\sum_{i=1}^{n} (x_i - \mu).
+\sum_{i=1}^{n} (x_i - \mu),
 \]</span></p>
-<p>This quantity alone is not sufficient because positive and negative deviations could cancel each other out. The sum of deviations is always zero when evaluated at the mean, so it provides no discrimination power at the optimum, since it vanishes at the mean. To penalize deviations regardless of sign, we square each term, giving the objective function:</p>
+<p>giving us the total deviation from any given data point. However, even this quantity alone is not sufficient because positive and negative deviations could cancel each other out- if one deviation is negative 2 and the next is positive 2, adding these up gives a total deviation of 0, which makes no sense. Furthermore, it assumes that deviations of 2 and -2v should be treated the same as deviations of 400.</p>
+<p>To penalize our deviations regardless of sign, we square each deviation, giving the objective function:</p>
 <p><span class="math display">\[
-\hat{\mu} = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2.
+\hat{\mu} = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2,
 \]</span></p>
-<p>This function is strictly convex and differentiable, so we can find its minimum by taking the derivative with respect to <span class="math inline">\(\mu\)</span>. The function <span class="math inline">\((x_i - \mu)^2\)</span> is a composition of two functions, so we apply the chain rule. The outer function is <span class="math inline">\(f(u) = u^2\)</span>, where <span class="math inline">\(u = x_i - \mu\)</span>, and its derivative (by the power rule) is</p>
+<p>returning the sum of the squared deviations. Now this is something we can begin to work with.</p>
+<p>This function of the residuals is strictly convex and differentiable. We can find its minimum by taking the derivative of the function with respect to <span class="math inline">\(\mu\)</span>. The function <span class="math inline">\((x_i - \mu)^2\)</span> is a composition of two functions, so we apply the chain rule. The outer function is <span class="math inline">\(f(u) = u^2\)</span>, where <span class="math inline">\(u = x_i - \mu\)</span>. Its derivative (by the power rule) is</p>
 <p><span class="math display">\[
 \frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u.
 \]</span></p>
-<p>The inner function is <span class="math inline">\(u(\mu) = x_i - \mu\)</span>. Since <span class="math inline">\(x_i\)</span> is constant with respect to <span class="math inline">\(\mu\)</span>,</p>
+<p>The inner function is <span class="math inline">\(u(\mu) = x_i - \mu\)</span>, or the deviation that we spoke of above. Since <span class="math inline">\(x_i\)</span> is constant with respect to <span class="math inline">\(\mu\)</span>,</p>
 <p><span class="math display">\[
 \frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu) = -1.
 \]</span></p>
-<p>By the chain rule, multiplying the outer and inner derivatives gives</p>
+<p>By the chain rule, multiplying the outer and inner derivatives gives us</p>
 <p><span class="math display">\[
 \frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu)^2
 = 2(x_i - \mu)\cdot(-1)
@@ -308,21 +311,21 @@ x_i - \mu.
 <p><span class="math display">\[
 \frac{\mathrm{d}}{\mathrm{d}\mu} \sum_{i=1}^{n} (x_i - \mu)^2
 = \sum_{i=1}^{n} [-2(x_i - \mu)]
-= -2 \sum_{i=1}^{n} (x_i - \mu),
+= -2 \sum_{i=1}^{n} (x_i - \mu).
 \]</span></p>
-<p>where we factor out the constant <span class="math inline">\(-2\)</span>. Setting this derivative equal to zero gives the first-order condition for a minimum:</p>
+<p>Above, we factor out the constant <span class="math inline">\(-2\)</span>. Setting this derivative equal to zero gives us the first-order conditions for a minimum:</p>
 <p><span class="math display">\[
 -2 \sum_{i=1}^{n} (x_i - \mu) = 0.
 \]</span></p>
-<p>Dividing both sides by <span class="math inline">\(-2\)</span> simplifies the equation to</p>
+<p>Now we must solve for the unknown. Dividing both sides by <span class="math inline">\(-2\)</span> simplifies the equation to</p>
 <p><span class="math display">\[
 \sum_{i=1}^{n} (x_i - \mu) = 0.
 \]</span></p>
-<p>Next, we split the sum into two parts using the linearity of summation.</p>
+<p>Next, we split the sum into two parts using the linearity of summation</p>
 <p><span class="math display">\[
-\sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0,
+\sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0.
 \]</span></p>
-<p>Exploiting the fact that summation is a linear operator, it distributes over addition and allows constants to factor out. Since <span class="math inline">\(\mu\)</span> does not at all depend on <span class="math inline">\(i\)</span>, it appears identically in every term of the sum. Beyond, this is exactly what we seek: one single value that is as close as possible to all the data points simultaneously</p>
+<p>Here we are exploiting the fact that summation is a linear operator. Summation distributes over addition and allows constants to factor out. Since <span class="math inline">\(\mu\)</span> does not depend on <span class="math inline">\(i\)</span>, it appears identically in every term of the sum. Beyond, this is exactly what we seek: one single value that is as close as possible to all the data points simultaneously</p>
 <p><span class="math display">\[
 \sum_{i=1}^{n} \mu
 \;\defeq\;
@@ -330,7 +333,7 @@ x_i - \mu.
 \;=\;
 n\mu.
 \]</span></p>
-<p>Now we substitute this result into the second term on the LHS. That gives us this result:</p>
+<p>Now we substitute this result into the second term on the left hand side. That gives us this result:</p>
 <p><span class="math display">\[
 \sum_{i=1}^{n} x_i - n\mu = 0.
 \]</span></p>
@@ -435,7 +438,7 @@ C = \{ \mu \mathbf{1} : \mu \in \mathbb{R} \}
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1768224274186" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1768834066535" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -446,7 +449,7 @@ C = \{ \mu \mathbf{1} : \mu \in \mathbb{R} \}
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1768224342303" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1768834129397" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external"></a>
@@ -460,7 +463,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1768224274194" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1768834066542" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -474,7 +477,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1768224274193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3189">
+<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1767484800000" data-listing-file-modified-sort="1768834066541" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3189">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -498,7 +501,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1768224274193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="4" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1768834066542" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -515,7 +518,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1768224274192" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="5" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1768834066541" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -539,7 +542,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1768224274190" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1768834066538" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -556,7 +559,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1768224274186" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="7" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1768834066535" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -580,7 +583,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1768224274193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="8" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1768834066542" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -604,7 +607,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1768224274193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1768834066542" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -626,7 +629,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1768224274193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1768834066542" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -648,7 +651,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1768224274190" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="11" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1768834066538" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -672,7 +675,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1768224274190" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1768834066539" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -694,7 +697,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1768224274193" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1768834066542" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -718,7 +721,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1768224274192" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1768834066541" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -742,7 +745,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1768224274187" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1768834066536" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -766,7 +769,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1768224274187" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1768834066536" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -790,7 +793,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1768224274186" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1768834066535" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>

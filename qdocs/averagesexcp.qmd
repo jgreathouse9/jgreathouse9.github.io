@@ -1,6 +1,6 @@
 ---
 title: 'What Is An Average?'
-date: 2026-01-04
+date: 2026-01-20
 categories: [Econometric Theory, Statistics]
 ---
 
@@ -11,15 +11,17 @@ This is an excerpt from my forthcoming book on synthetic control methods.
 > — [*Solana Imani Rowe*](https://genius.com/Sza-forgiveless-lyrics)
 :::
 
-Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, Egyptians and Babylonians used summary statistics in construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.
+---
+
+Averages are the most basic summary statistic we are taught, aside from (I suppose) summation, and they arise quite naturally when we try to find a single value that best represents a collection of numbers. In ye olden days, the [Egyptians and Babylonians](https://meancalculator.com/history-of-means.html) used summary statistics to aid in decisionmakimg for astronomy, agriculture, construction and financial matters. In modern times, we use averages to summarize things like test grades, incomes, and other variables we care about.
 
 Even still, the arithmetic average is, for most people, more of an ontological concept than a problem that must be solved for. For the average person/data scientist, the arithmetic average is mentally more akin, to *facts* like "the sun rises" or "Spain is in Europe" instead of something to be derived, *solved for*, or even justified from first principles. Indeed (at least in the United States), the arithmetic mean is taught with almost a childlike innocence of simple addition and division. Regularly, people use phrases like "on average" in casual conversation to denote frequency. But what is an average anyways?
 
-The point of this post is to show that the arithmetic average is the solution to an optimization problem. I will connect it to how we think about counterfactual estimation.
+The point of this post is to show that the arithmetic average is actually the solution to an optimization problem. I will connect it to how we think about counterfactual estimation in econometrics and marketing science.
 
 ## Definitions
 
-In doing so, we will require a few rules. In the book I have a dedicated chapter on the required mathematics, but I repeat the definitions here for convenience.
+We will require a few rules. In the book I have a dedicated chapter on the required mathematics, but I repeat the relevant definitions here for convenience.
 
 
 <details>
@@ -78,37 +80,41 @@ $$
 
 ## Deriving the Arithmetic Mean
 
-To formalize this, suppose we have a sequence of data points $(x_i)_{i=1}^n \subset \mathbb{R}, \quad n \in \mathbb{Z}^+$. We want to choose a single number, $\mu$ (pronounced “m-you”), that is as close as possible to all of them. Here, $\mu$ is a placeholder variable representing a candidate for the “best” summary value, which we must solve for. For each observed value $x_i$, the deviation from $\mu$ is
+To begin, suppose we have some sequence of data points $(x_i)_{i=1}^n \subset \mathbb{R}, \quad n \in \mathbb{Z}^+$. We want to choose a *single* number, $\mu$ (pronounced “m-you”), that is as close as possible to all of the numbers in the sequence. Here, $\mu$ is a placeholder variable representing a candidate for the "best" summary value. We do not know its value a priori, so we must solve for. First, for each observed value of the sequence $x_i$, define the deviation from $\mu$ as
 
 $$
 x_i - \mu.
 $$
 
-However, we do not want to minimize the distance to a single number; we want a number that minimizes the discrepancy to **all** of the numbers. To measure the overall discrepancy across all points, we sum these deviations:
+Simple enough, this is just subtracting one value from the other value. However, we do not want to minimize the distance to a single number in the sequence; we want a single number that minimizes the distance to **all** of the numbers in the sequence at once. To measure the overall discrepancy across all points, we can now sum these deviations:
 
 $$
-\sum_{i=1}^{n} (x_i - \mu).
+\sum_{i=1}^{n} (x_i - \mu),
 $$
 
-This quantity alone is not sufficient because positive and negative deviations could cancel each other out. The sum of deviations is always zero when evaluated at the mean, so it provides no discrimination power at the optimum, since it vanishes at the mean. To penalize deviations regardless of sign, we square each term, giving the objective function:
+giving us the total deviation from any given data point. However, even this quantity alone is not sufficient because positive and negative deviations could cancel each other out- if one deviation is negative 2 and the next is positive 2, adding these up gives a total deviation of 0, which makes no sense. Furthermore, it assumes that deviations of 2 and -2v should be treated the same as deviations of 400.
+
+To penalize our deviations regardless of sign, we square each deviation, giving the objective function:
 
 $$
-\hat{\mu} = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2.
+\hat{\mu} = \operatorname*{argmin}_{\mu \in \mathbb{R}} \sum_{i=1}^{n} (x_i - \mu)^2,
 $$
 
-This function is strictly convex and differentiable, so we can find its minimum by taking the derivative with respect to $\mu$. The function $(x_i - \mu)^2$ is a composition of two functions, so we apply the chain rule. The outer function is $f(u) = u^2$, where $u = x_i - \mu$, and its derivative (by the power rule) is
+returning the sum of the squared deviations. Now this is something we can begin to work with.
+
+This function of the residuals is strictly convex and differentiable. We can find its minimum by taking the derivative of the function with respect to $\mu$. The function $(x_i - \mu)^2$ is a composition of two functions, so we apply the chain rule. The outer function is $f(u) = u^2$, where $u = x_i - \mu$. Its derivative (by the power rule) is
 
 $$
 \frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u.
 $$
 
-The inner function is $u(\mu) = x_i - \mu$. Since $x_i$ is constant with respect to $\mu$,
+The inner function is $u(\mu) = x_i - \mu$, or the deviation that we spoke of above. Since $x_i$ is constant with respect to $\mu$,
 
 $$
 \frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu) = -1.
 $$
 
-By the chain rule, multiplying the outer and inner derivatives gives
+By the chain rule, multiplying the outer and inner derivatives gives us
 
 $$
 \frac{\mathrm{d}}{\mathrm{d}\mu} (x_i - \mu)^2
@@ -121,28 +127,28 @@ Finally, summing over all $i$ gives the derivative of the entire objective funct
 $$
 \frac{\mathrm{d}}{\mathrm{d}\mu} \sum_{i=1}^{n} (x_i - \mu)^2
 = \sum_{i=1}^{n} [-2(x_i - \mu)]
-= -2 \sum_{i=1}^{n} (x_i - \mu),
+= -2 \sum_{i=1}^{n} (x_i - \mu).
 $$
 
-where we factor out the constant $-2$. Setting this derivative equal to zero gives the first-order condition for a minimum:
+Above, we factor out the constant $-2$. Setting this derivative equal to zero gives us the first-order conditions for a minimum:
 
 $$
 -2 \sum_{i=1}^{n} (x_i - \mu) = 0.
 $$
 
-Dividing both sides by $-2$ simplifies the equation to
+Now we must solve for the unknown. Dividing both sides by $-2$ simplifies the equation to
 
 $$
 \sum_{i=1}^{n} (x_i - \mu) = 0.
 $$
 
-Next, we split the sum into two parts using the linearity of summation.
+Next, we split the sum into two parts using the linearity of summation
 
 $$
-\sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0,
+\sum_{i=1}^{n} x_i - \sum_{i=1}^{n} \mu = 0.
 $$
 
-Exploiting the fact that summation is a linear operator, it distributes over addition and allows constants to factor out. Since $\mu$ does not at all depend on $i$, it appears identically in every term of the sum. Beyond, this is exactly what we seek: one single value that is as close as possible to all the data points simultaneously
+Here we are exploiting the fact that summation is a linear operator. Summation distributes over addition and allows constants to factor out. Since $\mu$ does not depend on $i$, it appears identically in every term of the sum. Beyond, this is exactly what we seek: one single value that is as close as possible to all the data points simultaneously
 
 $$
 \sum_{i=1}^{n} \mu
@@ -152,7 +158,7 @@ $$
 n\mu.
 $$
 
-Now we substitute this result into the second term on the LHS. That gives us this result:
+Now we substitute this result into the second term on the left hand side. That gives us this result:
 
 $$
 \sum_{i=1}^{n} x_i - n\mu = 0.

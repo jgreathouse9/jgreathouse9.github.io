@@ -199,103 +199,137 @@ $$
 Since the second derivative is strictly positive, the objective function is strictly convex in $\mu$, and the critical point is a global minimum. Thus, the value of $\mu$ that minimizes the total squared deviation from the data is the arithmetic mean. Seen through this lens, the mean is not a primitive concept but the solution to a well-defined optimization problem, and its familiar form arises naturally from basic algebra applied to the first-order condition.
 
 
-## The Arithmetic Mean as a Projection
+## The Time-Period Average in Panel Data
 
-We can also understand the arithmetic mean entirely through geometry. Instead of viewing each observation $x_i$ as a separate number, collect the data into a vector
+Let's graduate to panel data. Suppose we observe panel data for some outcome of interest 
+$(x_{it})_{i=1,\dots,N;\; t=1,\dots,T} \subset \mathbb{R}$,  
+where $i$ indexes markets and $t$ indexes time periods. For concreteness, think of $x_{it}$ as clicks per million impressions from a CTV campaign in market $i$ during period $t$.
 
-$$
-\mathbf{x} =
-\begin{pmatrix}
-x_1 \\
-x_2 \\
-\vdots \\
-x_n
-\end{pmatrix} \in \mathbb{R}^n.
-$$
+Now, our goal is (likely) not to choose a single number that summarizes the entire dataset at once. Instead, we want to choose one number per time period that best represents the cross section of markets observed in that period. Denote this number by $\gamma_t$. As before, $\gamma_t$ is a placeholder variable representing a candidate for the best summary value at time $t$. We do not know its value a priori, and we will solve for it.
 
-Now consider vectors of the form
+Fix a particular time period $t$. For each market $i$, define the deviation from $\gamma_t$ as
 
 $$
-\mu \mathbf{1} =
-\begin{pmatrix}
-\mu \\
-\mu \\
-\vdots \\
-\mu
-\end{pmatrix},
+x_{it} - \gamma_t.
 $$
 
-where $\mathbf{1} = (1,1,\dots,1)^\top$. Each such vector corresponds to choosing a single number and repeating it across all observations. The set of all such vectors
+This is simply the difference between the observed value in market $i$ and the candidate summary value for period $t$. However, we do not want a number that is close to a single market’s value; we want a number that is close to all markets’ values *at that time*. To measure the overall discrepancy within period $t$, we sum these deviations across markets:
 
 $$
-C = \{ \mu \mathbf{1} : \mu \in \mathbb{R} \}
+\sum_{i=1}^N (x_{it} - \gamma_t).
 $$
 
-forms a one-dimensional subspace of $\mathbb{R}^n$, spanned by $\mathbf{1}$. Geometrically, this is a line through the origin in the direction of $\mathbf{1}$. The problem of finding the arithmetic mean is equivalent to asking which point on this line is closest to the data vector $\mathbf{x}$ in Euclidean distance. Closeness is measured by squared distance, which gives exactly the same objective function as before:
+As above, to penalize deviations regardless of sign, and to place greater weight on larger discrepancies, we square each deviation. This yields the objective function
 
 $$
-\|\mathbf{x} - \mu \mathbf{1}\|^2 = \sum_{i=1}^n (x_i - \mu)^2.
+\hat{\gamma}_t
+=
+\operatorname*{argmin}_{\gamma_t \in \mathbb{R}}
+\sum_{i=1}^N (x_{it} - \gamma_t)^2.
 $$
 
-One way to think about this intuitively is to imagine the vector of data points as a small cloud in $n$-dimensional space. The subspace $C$ is a line running through the origin, and the projection onto this line is the point on the line that comes closest to the entire cloud if data points simultaneously. A basic fact from linear algebra is that the closest point in a subspace to a given vector is obtained by orthogonal projection. This means that at the optimal value $\mu$, the residual vector
+This objective function measures the total squared deviation between $\gamma_t$ and all markets’ outcomes in period $t$. Importantly, this problem is solved separately for each time period, which is why in real life we use SQL or ```numpy``` to do it for us.
+
+The objective function is strictly convex and differentiable in $\gamma_t$, so we can find its minimum by taking the derivative with respect to $\gamma_t$. The function $(x_{it} - \gamma_t)^2$ is a composition of two functions. The outer function is $f(u) = u^2$, whose derivative is
 
 $$
-\mathbf{x} - \mu \mathbf{1}
+\frac{\mathrm{d}}{\mathrm{d}u} u^2 = 2u.
 $$
 
-is perpendicular to the subspace $C$, which is spanned by $\mathbf{1}$. Orthogonality can be expressed as
+The inner function is $u(\gamma_t) = x_{it} - \gamma_t$. Since $x_{it}$ is constant with respect to $\gamma_t$,
 
 $$
-\mathbf{1}^\top (\mathbf{x} - \mu \mathbf{1}) = 0.
+\frac{\mathrm{d}}{\mathrm{d}\gamma_t}(x_{it} - \gamma_t) = -1.
 $$
 
-Expanding this gives
+Applying the chain rule yields
 
 $$
-\mathbf{1}^\top \mathbf{x} - \mu \mathbf{1}^\top \mathbf{1} = 0.
+\frac{\mathrm{d}}{\mathrm{d}\gamma_t}(x_{it} - \gamma_t)^2
+=
+2(x_{it} - \gamma_t)(-1)
+=
+-2(x_{it} - \gamma_t).
 $$
 
-The two inner products are
+Summing over all markets $i$, the derivative of the full objective function is
 
 $$
-\mathbf{1}^\top \mathbf{x} = \sum_{i=1}^n x_i, \quad \mathbf{1}^\top \mathbf{1} = n,
+\frac{\mathrm{d}}{\mathrm{d}\gamma_t}
+\sum_{i=1}^N (x_{it} - \gamma_t)^2
+=
+-2 \sum_{i=1}^N (x_{it} - \gamma_t).
 $$
 
-so we obtain
+Setting this derivative equal to zero gives the first-order condition for a minimum:
 
 $$
-\sum_{i=1}^n x_i - n \mu = 0,
+-2 \sum_{i=1}^N (x_{it} - \gamma_t) = 0.
 $$
 
-which, following the calculus argument above, gives
+Dividing both sides by $-2$ simplifies the expression to
 
 $$
-\mu = \frac{1}{n} \sum_{i=1}^n x_i.
+\sum_{i=1}^N (x_{it} - \gamma_t) = 0.
 $$
 
-Thus the arithmetic mean is the projection of the data vector onto the subspace of constant vectors. The derivative-based condition from the calculus approach is equivalent to this orthogonality condition, however it is expressed componentwise.
+Following the above argument, we split the sum into two parts:
 
+$$
+\sum_{i=1}^N x_{it}
+-
+\sum_{i=1}^N \gamma_t
+= 0.
+$$
 
-The above argument formalizes an intuition we already have in one dimension. If we observe the numbers 6 and 7, we rarely hesitate to say that the number closest to both, under squared distance, is 6.5. Moving slightly to the left of 6.5 increases the distance to 7 more than it decreases the distance to 6; moving slightly to the right does the opposite. At 6.5, these forces exactly balance. The derivative simply encodes this balance condition. For me anyways, the calculus derivation and the geometry really helped me understand this idea better.
+Thus, we have
 
-Either way, the arithmetic mean may *feel* objective when we're comparing one time series to another (say, when comparing a data markets in a region to a national average), but that is only because the optimization problem that defines it has been hidden by decades of pedagogy. 
+$$
+\sum_{i=1}^N \gamma_t
+=
+\underbrace{\gamma_t + \gamma_t + \cdots + \gamma_t}_{N\ \text{terms}}
+=
+N \gamma_t.
+$$
+
+Substituting this result yields
+
+$$
+\sum_{i=1}^N x_{it} - N \gamma_t = 0.
+$$
+
+To isolate $\gamma_t$, add $N \gamma_t$ to both sides:
+
+$$
+\sum_{i=1}^N x_{it} = N \gamma_t.
+$$
+
+Dividing both sides by $N$ gives
+
+$$
+\gamma_t = \frac{1}{N} \sum_{i=1}^N x_{it}.
+$$
+
+Thus, for each time period $t$, the value $\gamma_t$ that minimizes the total squared deviation from all markets’ outcomes is the arithmetic mean of those outcomes. This is the exact same quantity as the national/state/regional average at time $t$, but here it arises directly as the solution to a scalar optimization problem applied separately in each period.
 
 
 ## So What?
 
-Now, you may be saying, "Hey Jared, this is overkill. Why even bother doing all of this for something as simple as an average?" Well, the derivation shows us that the average is the solution to an optimization problem. This fact connects simple statistics to the machinery of modern econometrics. Variance, mean squared error, and regression coefficients are all built on the same principle: finding a number, or set of numbers, that minimizes some measure of error. The arithmetic mean is simply the most familiar and elementary instance of this idea. Every estimator in this book is, at its core, an application of averaging. This fact will become crucial in later chapters, when we move from simple averages to more sophisticated ones, including the weighted averages that power synthetic control methods. Whatever method you choose, you're never *not* averaging.
+Now, you may be saying, "Hey Jared, this is overkill. Why even bother doing all of this for something as simple as an average?" Well, the derivation shows us that the average is the solution to an optimization problem. This fact connects simple statistics to the machinery of modern econometrics. Variance, mean squared error, and regression coefficients are all built on the same principle: finding a number, or set of numbers, that minimizes some measure of error. The arithmetic mean is simply the most familiar and elementary instance of this idea. Every estimator in this book is, at its core, an application of averaging. This fact will become crucial in later chapters, when we move from simple averages to more sophisticated ones, including the weighted averages that power synthetic control methods. These derivations show that while the arithmetic mean may *feel* objective, it is at the end of the day an optimization problem such we all do not treat as one.
 
-The reason I dedicate a chapter to the arithmetic mean is also to make sure we start on the right footing. For some reason, synthetic control methods are often described in dramatic terms: as a Frankenstein's monster, [a mash-up of controls](https://www.linkedin.com/posts/aryma-labs_the-ultimate-test-for-synthetic-control-method-activity-7376484972360077312-Mfxe?utm_source=share&utm_medium=member_android&rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw), or a “fake version” of the treated unit. For example, [Haus](https://haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments) and [Meta scientists](https://medium.com/@mansisharma.8.k/when-a-b-testing-isnt-an-option-real-world-lessons-from-meta-aaf246014d05) have used these kinds of analogies to frame SCM. Other descriptions present variations of the same idea, including the claim that SCM constructs a “[fake control group](https://someunpleasant.substack.com/p/mini-post-6-touch-of-evil).”
+The reason I dedicate the third chapter to the arithmetic mean is also to make sure we start on the right footing. For some reason, synthetic control methods are often described in dramatic terms: as a Frankenstein's monster, [a mash-up of controls](https://www.linkedin.com/posts/aryma-labs_the-ultimate-test-for-synthetic-control-method-activity-7376484972360077312-Mfxe?utm_source=share&utm_medium=member_android&rcm=ACoAAB2Q8asBlsCYlwKJgJ488VWbcV1CX14FdOw), or a "fake version" of the treated unit. For example, [Haus](https://haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments) and [Meta scientists](https://medium.com/@mansisharma.8.k/when-a-b-testing-isnt-an-option-real-world-lessons-from-meta-aaf246014d05) have used these kinds of analogies to frame SCM for marketers. Other descriptions present variations of the same idea, including the claim that SCM constructs a "[fake control group](https://someunpleasant.substack.com/p/mini-post-6-touch-of-evil)."
 
-While I understand the intent behind this phrasing, I believe it is, or at the very least has a high potential to be, misleading. When we use works like "fake" or "Frankenstein", these are loaded terms that suggest deception or haphazardly grafting together data points. However as we have just seen, the arithmetic mean does exactly this. The national mean income over time? Takes all incomes across individuals and time points, assigns each person a weight, and computes the weighted sum. If we're in online retail and we care about the mean basket size, we're taking the size of each basket and computing a sum where each basket is given the same weight. Yet we do not describe the national average income as "Franken-Income," nor the weekly mean of basket size as a "Franken-Basket." If a client asked me to compute the average of sales across markets over time and I replied, "You mean you want me to make a Frankenstein monster of your sales data?" they would rightly think I had lost the plot.
+While I understand the intent behind this phrasing, presumably to avoid all the math we just went through for business people, I believe it is, or at the very least has a high potential to be, misleading to use these kinds of analogies. When we use works like "fake" or "Frankenstein", these to me come off as loaded terms that suggest deception or haphazardly grafting together data points. However as we have just seen, the arithmetic mean does exactly this. The national mean income over time? Takes all incomes across individuals and time points, assigns each person/market a weight, and computes the weighted sum across time. If we're in online retail and we care about the mean basket size to show to the client later on versus some other metric, we're taking the size of each basket we have and computing a sum where each basket is given the same weight. Yet, we do not describe the national average income as "Franken-Income," nor the weekly mean of basket size as a "Franken-Basket." If a client asked me to compute the average of impressions to their website across markets over time and I replied, "You mean you want me to make a Frankenstein monster of your website traffic data?" they would rightly think I had lost the plot.
 
 
-Likewise, the idea of a "[fake](https://discord.com/blog/measuring-product-impact-without-a-b-testing-how-discord-used-the-synthetic-control-method-for-voice-messages) control group" obscures the fact that every unit in the donor pool is a real control unit. Synthetic control predictions, like any other kind of average, do not fabricate data, they but summarize data by weighting observations per some loss function. Actually, these description become even more puzzling once we notice that the arithmetic mean already satisfies the classic SCM constraints. Recall the formula
+Likewise, the idea of a "[fake](https://discord.com/blog/measuring-product-impact-without-a-b-testing-how-discord-used-the-synthetic-control-method-for-voice-messages) control group" obscures the fact that every unit in the donor pool is a real control unit. Synthetic control predictions, like any other kind of average, do not fabricate data at all. They but summarize data by weighting observations per some loss function. Actually, these descriptions become even more puzzling once we notice that the arithmetic mean already satisfies the classic SCM constraints. Recall the formula
 
 $$
 \bar{y} = \frac{1}{n} \sum_{i=1}^n y_i.
 $$
 
-for some outcome variable $y$. We can rewrite this as a weighted sum by setting $w_i$ equal to $1/n \: \forall \, i$, yielding $\sum_{i=1}^n y_i w_i$. Notice these weights are non-negative sum to one. This precisely the defining constraint set of the original SCM. The arithmetic mean of the donor pool, therefore, is a special case of SCM. The SCM weights may provoke uncertainty in users because the weights may vary, and this variance suggests some kind of Decision at work. When the weights are framed more openly as a decision, it becomes a thing we may attack or defend, I guess. In contrast, the arithmetic mean weights are trivial, so they are implicitly framed as Not a Decision, just a pure computational fact. Presumably this is also why the uniform weights (as in, say, [Difference-in-Differences](https://arxiv.org/abs/1610.07748)) are never questioned, but the weights from SCM are met with suspicion.
+for some outcome variable $y$. We can rewrite this as a weighted sum by setting $w_i$ equal to $1/n \: \forall \, i$, yielding $\sum_{i=1}^n y_i w_i$. Notice these weights are non-negative (positive, technically) and sum to one. This precisely the defining constraint set of the original SCM. The arithmetic mean of the donor pool, therefore, is a very special case of SCM, where the mean matches to one control unit optimally.
+
+Of course, this is rarely true, so control units for SCM tend to get different weights, some more than others, which I have noticed skepticism around. I think the fact that the weights are 1) explicit and 2) non-uniform makes some people uncomfortable because it suggests some kind of Decision at work. When the weights are obscured by the arithmetic mean, nobody sees the weights because they are accepted as axiom, almost. framed more openly as a decision, it becomes a thing we may attack or defend, I guess. In contrast, the arithmetic mean weights are trivial, so they are implicitly framed as Not a Decision, just a pure computational fact. Presumably this is also why the uniform weights (as in, say, [Difference-in-Differences](https://arxiv.org/abs/1610.07748)) are never questioned, but the weights from SCM are met with suspicion.
 
 The point of this post is simple: every single estimator in this book uses a weighted average of controls which is derived from an optimization problem. It is the task of the econometrician to know when which flavor of weights are called for and why. In the remainder of the chapter, we generalize this idea from scalars to vectors and matrices.

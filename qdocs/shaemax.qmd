@@ -146,7 +146,7 @@ $$
 \mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_2^2 \Big), \qquad \alpha \in [0,1],
 $$
 
-with $\mathcal{C} = \left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|}, b_0 \in \mathbb{R} \right\}$ (relaxing non-negativity and sum-to-one). The $\ell_1$ term encourages sparsity (SC supported on few donors), while the $\ell_2^2$ term stabilizes against collinearity. Intermediate $\alpha \in (0,1)$ yields the elastic net; special cases are $\alpha = 1$ (pure LASSO) and $\alpha = 0$ (pure Ridge).
+with $\mathcal{C} = \left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|}, b_0 \in \mathbb{R} \right\}$ (relaxing non-negativity and sum-to-one). The $\ell_1$ term encourages sparsity (SC supported on few donors). Intermediate $\alpha \in (0,1)$ yields the elastic net; special cases are $\alpha = 1$ (pure LASSO) and $\alpha = 0$ (pure Ridge).
 
 Alternatively, as studied by [Wang, Xing, and Ye (2025)](https://doi.org/10.48550/arXiv.2510.26053), one may replace the $\ell_2$ term with the $\ell_\infty$ norm:
 
@@ -154,7 +154,7 @@ $$
 \mathcal{P}(\mathbf{w}) = \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_\infty \Big), \qquad \alpha \in [0,1],
 $$
 
-again with $\mathcal{C} = \left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|}, b_0 \in \mathbb{R} \right\}$. The $\ell_\infty$ component caps the maximum absolute weight, producing a “balanced sparsity” effect: a small number of donors may be selected, but none dominates. When using the $\ell_\infty$ variant of the elastic net, $\alpha = 0$ corresponds to the pure max-norm penalty. For a graphical example, see the plot below.
+again with $\mathcal{C} = \left\{ \mathbf{w} \in \mathbb{R}^{|\mathcal{N}_0|}, b_0 \in \mathbb{R} \right\}$. The $\ell_\infty$ component caps the maximum absolute weight, producing a "balanced sparsity" effect: a small number of donors may be selected, but none dominates. When using the $\ell_\infty$ variant of the elastic net, $\alpha = 0$ corresponds to the pure max-norm penalty.
 
 Geometrically, the $\ell_1$–$\ell_\infty$ penalty replaces the circular ridge ball with a hyper-rectangular region, reflecting the analyst’s preference for bounding donor influence rather than merely smoothing it. These special cases highlight how the elastic net family interpolates continuously between sparsity and smoothness (or maximum weight control). Within the general framework, the optimization problem becomes:
 
@@ -167,7 +167,7 @@ $$
 \lambda \Big( \alpha \lVert \mathbf{w} \rVert_1 + (1 - \alpha) \lVert \mathbf{w} \rVert_q \Big),
 $$
 
-where $q = 2$ recovers the standard elastic net (with $\lVert \mathbf{w} \rVert_2^2$) and $q = \infty$ recovers the max-norm variant. Conceptually, the $\ell_2$ term spreads weights smoothly, stabilizing against collinearity, while the $\ell_\infty$ term limits any single donor's dominance. This is analogous to a portfolio with position limits: no single donor can dominate the synthetic control, while overall weight distribution can be controlled via $\alpha$ and $\lambda$.  
+where $q = 2$ recovers the standard elastic net (with $\lVert \mathbf{w} \rVert_2^2$) and $q = \infty$ recovers the max-norm variant. Conceptually, the $\ell_2$ term spreads weights smoothly while the $\ell_\infty$ term limits any single donor's dominance. This is analogous to a portfolio with position limits: no single donor can dominate the synthetic control, while overall weight distribution can be controlled via $\alpha$ and $\lambda$.  
 
 In practice, this can be important: in [the original 2003 SCM paper](https://www.aeaweb.org/articles?id=10.1257/000282803321455188), the donors Catalonia and Madrid received weights of 0.8508 and 0.1492, respectively. While this allocation makes sense economically, there are settings where analysts may wish to reduce the influence of any single donor.
 

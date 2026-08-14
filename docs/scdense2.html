@@ -375,7 +375,7 @@ Note
 <p>The total number of distinct playlists your music has ever been on.</p>
 </blockquote>
 <p>These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.</p>
-<div id="4247a50a" class="cell" data-execution_count="1">
+<div id="babb0c83" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-stderr">
 <pre><code>findfont: Failed to find font weight medium, now using 400.
 findfont: Failed to find font weight medium, now using 400.
@@ -393,34 +393,22 @@ findfont: Failed to find font weight medium, now using 400.</code></pre>
 </section>
 <section id="songstats-spotify" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-spotify">Songstats Spotify</h3>
-<p>I begin with the Spotify data. When we estimate <span class="math inline">\(\ell_2\)</span>-PDA, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :</p>
-<div id="585cc30d" class="cell" data-execution_count="2">
-<div class="cell-output cell-output-stderr">
-<pre><code>findfont: Failed to find font weight medium, now using 400.</code></pre>
-</div>
+<p>I begin with the Spotify data. When we estimate <span class="math inline">\(\ell_2\)</span>-PDA, comparing Tyla to her 59 controls, we get the following plot. The red line is the counterfactual Tyla, how her Playlist Reach would look absent her going viral, and the shaded red band around it is a 95% prediction interval for that counterfactual on each post-treatment day. The band is new to <code>mlsynth</code> and it is what the <a href="#prediction-intervals-when-did-water-actually-hit">last section</a> is about; for now, read it as the range of untreated outcomes the model considers plausible on that day. Where the black line leaves the band, the effect on that day is significant on its own.</p>
+<div id="64367b2f" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="scdense2_files/figure-html/cell-3-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="scdense2_files/figure-html/cell-3-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>|    | Metric              | Value                                   |
-|---:|:--------------------|:----------------------------------------|
-|  0 | ATT                 | 1218.370030364562                       |
-|  1 | Standard Error      | 67.69917862412356                       |
-|  2 | t-stat              | 17.99682145523719                       |
-|  3 | Confidence Interval | (1085.6820784783358, 1351.057982250788) |
-|  4 | RMSE (T0)           | 6.473632180712768                       |
-|  5 | p-value             | 0.0                                     |</code></pre>
 </div>
-</div>
+<p>Over the 289 post-treatment days the average effect is 1,218 index points of playlist reach, with a standard error of 67.7, a <span class="math inline">\(t\)</span> of 18.0, a 95% confidence interval of [1,086, 1,351], and a <span class="math inline">\(p\)</span>-value below 0.001. The single largest daily effect is 1,692 on March 26, 2024. The pre-treatment fit that all of this rests on has a root mean squared error of 6.5 against a series normalized to 100, so the counterfactual tracks the pre-period closely.</p>
 </section>
 <section id="songstats-apple" class="level3">
 <h3 class="anchored" data-anchor-id="songstats-apple">Songstats Apple</h3>
 <p>Here is the same plot with the Apple data, where the outcome is Playlist Count:</p>
-<div id="a804d851" class="cell" data-execution_count="3">
+<div id="8b6975bc" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -428,51 +416,21 @@ findfont: Failed to find font weight medium, now using 400.</code></pre>
 </figure>
 </div>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>|    | Metric              | Value                                  |
-|---:|:--------------------|:---------------------------------------|
-|  0 | ATT                 | 392.0078475484079                      |
-|  1 | Standard Error      | 21.989262033596585                     |
-|  2 | t-stat              | 17.827239811389465                     |
-|  3 | Confidence Interval | (348.9096859159446, 435.1060091808712) |
-|  4 | RMSE (T0)           | 13.519374629811985                     |
-|  5 | p-value             | 0.0                                    |</code></pre>
 </div>
-</div>
+<p>Here the average effect over the 289 post-treatment days is 392 index points of playlist count, standard error 22.0, <span class="math inline">\(t\)</span> of 17.8, 95% confidence interval [349, 435], <span class="math inline">\(p\)</span>-value below 0.001, peaking at 544 on March 29, 2024, on a pre-treatment fit with a root mean squared error of 13.5. The Apple pre-period is much longer than the Spotify one, 594 days against 229, and the donor pools differ too: 55 artists here against 59 there.</p>
 <p>This is unsurprising, and the practical results speak for themselves. Going viral clearly contributed a lot to Tyla’s success across both platforms, as the estimated counterfactuals spell out very plainly that her reach would be a lot flatter compared to what it in fact was/is. This method can also be used with multiple treated units, as we see in the paper, but I haven’t written this for <code>mlsynth</code> just yet.</p>
 </section>
 </section>
 <section id="prediction-intervals-when-did-water-actually-hit" class="level1">
 <h1>Prediction Intervals: When Did <em>Water</em> Actually Hit?</h1>
 <p>Everything above reports one number per platform, the ATT, with a confidence interval around it. That interval answers a question about an <em>average</em>: across the whole post-period, how precisely do we know the mean effect? It is silent on the question you probably care about more, which is what happened on any <em>particular</em> day. Going viral is not a light switch that flips once and holds. It builds, peaks, and decays, and an average over ten months hides all of that.</p>
-<p><code>mlsynth</code> now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set <code>prediction_intervals=True</code> and you get a band around each period’s effect. The confidence interval and the prediction interval are not the same object, and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only <em>estimation</em> error, the uncertainty in the weights we fit. A prediction interval also carries <em>out-of-sample</em> error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed <span class="math inline">\(\tau\)</span> on each draw, and reading quantiles of the self-normalized statistic <span class="math inline">\(\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}\)</span>. The two variance pieces in that denominator are exactly the two sources of error.</p>
-<div id="2dccdecb" class="cell" data-execution_count="4">
-<div class="cell-output cell-output-stdout">
-<pre><code>|                              | Spotify             | Apple Music       |
-|:-----------------------------|:--------------------|:------------------|
-| Studentization               | sandwich            | sandwich          |
-| First day the PI clears zero | 2023-09-05 (t+19)   | 2023-09-05 (t+19) |
-| Peak effect                  | 1,692 on 2024-03-26 | 544 on 2024-03-29 |
-| Days spanning zero           | 11 of 289           | 18 of 289         |
-| PI width, first vs last      | 45 to 234           | 53 to 55          |</code></pre>
-</div>
-</div>
-<p>The table is the summary, but the shape is the point, so here is the whole thing. Each panel is one platform’s per-period effect with its 95% band around it. The two are drawn separately on purpose: Playlist Reach and Playlist Count are different quantities on different scales, and putting them on one pair of axes would invite a comparison of heights that means nothing.</p>
-<div id="59816d2a" class="cell" data-execution_count="5">
-<div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="scdense2_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></p>
-<figcaption>Per-period effect with 95% bootstrap prediction intervals. The band is the interval; the dot marks the first day it clears zero.</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<p>Two things fall out of this, and neither is visible in the ATT.</p>
-<p>The first is the onset date. On both platforms, the first day whose 95% interval sits entirely above zero is September 5, 2023, nineteen days after the normalization date. These are two separate panels with different donor pools, different outcome metrics, and pre-periods of very different lengths (229 days for Spotify against 594 for Apple), fit independently. That they agree to the day is the sort of corroboration a single averaged number cannot give you. It also lines up with the story: the Kigali performance is the spark, but the effect on playlist behavior takes a couple of weeks to show up above the noise.</p>
-<p>The second is that the <em>shape</em> of the uncertainty differs sharply across platforms, which I did not expect. Apple’s bands are essentially flat, opening around 53 units wide and ending around 55. Spotify’s more than quintuple, from about 45 to 234. The counterfactual Tyla on Spotify becomes progressively harder to predict the further we extrapolate from the pre-period, while the Apple counterfactual stays about as predictable in June 2024 as it was in August 2023. If you were using this to make a decision, that difference matters more than the ATT does: the same headline effect is a much shakier claim on one platform than the other, and only the per-period bands say so.</p>
-<p>Worth flagging one honest wrinkle. On the Spotify panel the first week of post-treatment effects is <em>negative</em>, and significantly so, with seven days whose interval lies entirely below zero before the effect turns positive and stays there. I would not read much into it, but I would not hide it either. It is the kind of thing that an ATT of <span class="math inline">\(+1218\)</span> papers over completely.</p>
-<p>One implementation note: both panels here report <code>sandwich</code> studentization, meaning the post-selection OLS HAC variance was available. The <span class="math inline">\(\ell_2\)</span> relaxation falls back to a <span class="math inline">\(\sigma^2\)</span>-only studentization when the controls outnumber the pre-periods, which is the genuinely dense regime this estimator is built for. That is not the case here (59 donors against 229 pre-periods on Spotify), so we get the sandwich. If you scale this up to the “4 or 500 artists” I complain about not having below, expect the fallback instead.</p>
+<p><code>mlsynth</code> now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set <code>prediction_intervals=True</code> and you get a band around each period’s counterfactual and around each period’s effect; the two are the same object, since the effect is the observed outcome minus the counterfactual and the observed outcome is not random. The shaded bands in the two plots above are the counterfactual version, which is why the day the black line leaves the band is also the day the effect interval clears zero.</p>
+<p>The confidence interval and the prediction interval are not the same object, and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only <em>estimation</em> error, the uncertainty in the weights we fit. A prediction interval also carries <em>out-of-sample</em> error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed <span class="math inline">\(\tau\)</span> on each draw, and reading quantiles of the self-normalized statistic <span class="math inline">\(\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}\)</span>. The two variance pieces in that denominator are exactly the two sources of error.</p>
+<p>Three things fall out of the bands, and none of them is visible in the ATT.</p>
+<p>The first is the onset date. On Spotify the black line leaves the band on September 5, 2023, day 19 of the post-period; on Apple Music it is September 5, 2023, day 19. These are two separate fits with different donor pools, different outcome metrics, and pre-periods of very different lengths, 229 days against 594. That they agree to the day is the sort of corroboration a single averaged number cannot give you. It also lines up with the story: the Kigali performance is the spark, but the effect on playlist behavior takes a couple of weeks to show up above the noise. Before that day the two lines are tangled together, and the band is where you can see why: on Spotify 11 of the 289 post-treatment days have an interval that still contains zero, and on Apple 18 of 289.</p>
+<p>The second is that the <em>shape</em> of the uncertainty differs sharply across platforms, which I did not expect. Apple’s band is essentially a constant width, opening at 53 index points and ending at 55. Spotify’s opens at 45 and ends at 234, so it fans out as the post-period runs on. The counterfactual Tyla on Spotify becomes progressively harder to predict the further we extrapolate from the pre-period, while the Apple counterfactual stays about as predictable in June 2024 as it was in August 2023. If you were using this to make a decision, that difference matters more than the ATT does: the same headline effect is a much shakier claim on one platform than the other, and only the per-period bands say so.</p>
+<p>The third is an honest wrinkle. On Spotify the first 7 days of the post-period sit entirely <em>below</em> the band, a significantly negative effect, before the line crosses over and stays above. I would not read much into it, but I would not hide it either. It is the kind of thing that an average effect of 1,218 papers over completely.</p>
+<p>One implementation note: both fits here report sandwich studentization, meaning the post-selection OLS HAC variance was available. The <span class="math inline">\(\ell_2\)</span> relaxation falls back to a <span class="math inline">\(\sigma^2\)</span>-only studentization when the controls outnumber the pre-periods, which is the genuinely dense regime this estimator is built for. That is not the case here (59 donors against 229 pre-periods on Spotify), so we get the sandwich. If you scale this up to the “4 or 500 artists” I complain about not having below, expect the fallback instead.</p>
 </section>
 <section id="caveats" class="level1">
 <h1>Caveats</h1>
@@ -489,7 +447,7 @@ findfont: Failed to find font weight medium, now using 400.</code></pre>
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1786750813873" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1786751736297" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>
@@ -503,7 +461,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1786750813879" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1786751736304" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -517,7 +475,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1786750813872" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1786751736296" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -528,7 +486,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1786750813879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="17" data-listing-word-count-sort="3242">
+<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1786751736303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="17" data-listing-word-count-sort="3242">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -552,7 +510,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1786750813871" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1786751736295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -576,7 +534,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1786750813879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="5" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1786751736303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -593,7 +551,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1786750813878" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="6" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1786751736301" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -617,7 +575,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1786750813875" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1786751736299" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -634,7 +592,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1786750813872" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
+<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1786751736296" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
@@ -658,7 +616,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1786750813879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1786751736303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -682,7 +640,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1786750813879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1786751736303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -704,7 +662,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1786750813879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1786751736303" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1159">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -726,7 +684,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1786750813875" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1786751736299" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -750,7 +708,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1786750813875" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1786751736299" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -772,7 +730,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1786750813879" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1786751736304" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -796,7 +754,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1786750813878" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1786751736302" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -820,7 +778,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1786750813873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1786751736296" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -844,7 +802,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1786750813873" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1786751736297" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -868,7 +826,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1786750813871" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1786751736295" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -892,7 +850,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1786750813875" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1786751736299" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>

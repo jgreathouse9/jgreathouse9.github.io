@@ -155,7 +155,7 @@ def plot_donors_and_treated(donor_matrix, treated_vector, pre_periods, title, ax
     ax.plot(treated_vector, color='black', linewidth=2, label='Treated Unit')
     average_controls = donor_matrix.mean(axis=1)
     ax.plot(average_controls, color='red', linewidth=2, label='Normalized Average of Controls')
-    ax.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Water')
+    ax.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=0.9, label='Water')
     ax.set_title(title)
     ax.set_xlabel('Time Periods')
 
@@ -385,7 +385,7 @@ This is unsurprising, and the practical results speak for themselves. Going vira
 
 Everything above reports one number per platform, the ATT, with a confidence interval around it. That interval answers a question about an *average*: across the whole post-period, how precisely do we know the mean effect? It is silent on the question you probably care about more, which is what happened on any *particular* day. Going viral is not a light switch that flips once and holds. It builds, peaks, and decays, and an average over ten months hides all of that.
 
-``mlsynth`` now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set ``prediction_intervals=True`` and you get a band around each period's effect. The distinction from the confidence interval is worth being clear about, because they are not the same object and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only *estimation* error, the uncertainty in the weights we fit. A prediction interval also carries *out-of-sample* error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed $\tau$ on each draw, and reading quantiles of the self-normalized statistic $\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}$. The two variance pieces in that denominator are exactly the two sources of error.
+``mlsynth`` now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set ``prediction_intervals=True`` and you get a band around each period's effect. The confidence interval and the prediction interval are not the same object, and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only *estimation* error, the uncertainty in the weights we fit. A prediction interval also carries *out-of-sample* error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed $\tau$ on each draw, and reading quantiles of the self-normalized statistic $\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}$. The two variance pieces in that denominator are exactly the two sources of error.
 
 ```{python}
 #| echo: false
@@ -393,7 +393,13 @@ Everything above reports one number per platform, the ATT, with a confidence int
 
 import numpy as np
 
+# The table below and the figure after it read the same two fits, and each fit
+# runs 199 bootstrap draws, so keep them.
+_fits = {}
+
 def with_intervals(df, outcome_col):
+    if outcome_col in _fits:
+        return _fits[outcome_col]
     config = {
         "df": df,
         "treat": "Water",
@@ -412,7 +418,8 @@ def with_intervals(df, outcome_col):
     fit = results.fits["l2"]
     effect = fit.prediction_intervals["effect"]
     dates = np.sort(df.loc[df["Water"] == 1, "Date"].unique())
-    return results, fit, effect, dates
+    _fits[outcome_col] = (results, fit, effect, dates)
+    return _fits[outcome_col]
 
 
 def onset_row(label, df, outcome_col):
@@ -437,6 +444,47 @@ onset = pd.DataFrame([
 ])
 
 print(onset.set_index("Platform").T.to_markdown())
+```
+
+The table is the summary, but the shape is the point, so here is the whole thing. Each panel is one platform's per-period effect with its 95% band around it. The two are drawn separately on purpose: Playlist Reach and Playlist Count are different quantities on different scales, and putting them on one pair of axes would invite a comparison of heights that means nothing.
+
+```{python}
+#| echo: false
+#| fig-align: center
+#| fig-cap: "Per-period effect with 95% bootstrap prediction intervals. The band is the interval; the dot marks the first day it clears zero."
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
+
+panels = [("Spotify: Playlist Reach", spotify_df, outcome, "Effect on playlist reach", axes[0]),
+          ("Apple Music: Playlist Count", apple_df, "Playlists", "Effect on playlist count", axes[1])]
+
+for title, frame, outcome_col, ylab, ax in panels:
+    _, _, effect, dates = with_intervals(frame, outcome_col)
+    lower = np.asarray(effect["eq_lower"])
+    upper = np.asarray(effect["eq_upper"])
+    point = np.asarray(effect["point"])
+    days = pd.to_datetime(dates)
+
+    ax.fill_between(days, lower, upper, color="red", alpha=0.16, linewidth=0,
+                    label="95% prediction interval")
+    ax.plot(days, point, color="black", linewidth=1.2, label="Estimated effect")
+    ax.axhline(0, color="grey", linestyle="--", linewidth=0.9)
+
+    first = int(np.flatnonzero(lower > 0)[0])
+    ax.plot(days[first], point[first], marker="o", markersize=6, color="black",
+            zorder=5, label="_nolegend_")
+    ax.annotate(f"first day above zero\n{pd.Timestamp(dates[first]).date()}",
+                xy=(days[first], point[first]), xytext=(34, -6),
+                textcoords="offset points", fontsize=10, va="top",
+                arrowprops=dict(arrowstyle="-", color="grey", linewidth=0.7))
+
+    ax.set_title(title)
+    ax.set_ylabel(ylab)
+    ax.tick_params(axis="x", rotation=30)
+
+axes[0].legend(loc="upper left")
+fig.tight_layout()
+plt.show()
 ```
 
 Two things fall out of this, and neither is visible in the ATT.

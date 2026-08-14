@@ -217,7 +217,7 @@ I normalized all the metrics to 100 at August 17, 2023, a few days before the tr
 
 ### Songstats Spotify
 
-I begin with the Spotify data. When we estimate $\ell_2$-PDA, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :
+I begin with the Spotify data. When we estimate $\ell_2$-PDA, comparing Tyla to her 59 controls, we get the following plot. The red line is the counterfactual Tyla, how her Playlist Reach would look absent her going viral, and the shaded red band around it is a 95% prediction interval for that counterfactual on each post-treatment day. The band is new to ``mlsynth`` and it is what the [last section](#prediction-intervals-when-did-water-actually-hit) is about; for now, read it as the range of untreated outcomes the model considers plausible on that day. Where the black line leaves the band, the effect on that day is significant on its own.
 
 
 ```{python}
@@ -225,6 +225,7 @@ I begin with the Spotify data. When we estimate $\ell_2$-PDA, comparing Tyla to 
 #| echo: false
 #| fig-align: center
 
+import numpy as np
 import pandas as pd
 from mlsynth import PDA
 import matplotlib
@@ -287,39 +288,105 @@ spotify_df = preprocess_data(
     reference_date='2023-08-17'
 )
 
-spotify_config = {
-    "df": spotify_df,
-    "treat": "Water",
-    "time": "Date",
-    "outcome": outcome,
-    "unitid": "Artist",
-    "counterfactual_color": ["red"],
-    "treated_color": "black",
-    "display_graphs": True,
-    "method": "l2"
-}
+def fit_pda(df, outcome_col):
+    """Fit the l2 relaxation with the Jiang et al. (2025) intervals attached."""
+    config = {
+        "df": df,
+        "treat": "Water",
+        "time": "Date",
+        "outcome": outcome_col,
+        "unitid": "Artist",
+        "counterfactual_color": ["red"],
+        "treated_color": "black",
+        "display_graphs": False,
+        "method": "l2",
+        "prediction_intervals": True,
+        "pi_n_boot": 199,
+        "pi_seed": 0,
+    }
+    results = PDA(config).fit()
+    return results, results.fits["l2"]
 
-spotify_model = PDA(spotify_config)
-ARCO_results = spotify_model.fit()
 
-att = ARCO_results.effects.att
-se = ARCO_results.effects.att_std_err
+def banded_plot(df, outcome_col, fit, title, ylabel):
+    """Tyla against her counterfactual, with the counterfactual's own band."""
+    unit = df[df["Artist"] == "Tyla"].sort_values("Date")
+    days = pd.to_datetime(unit["Date"].to_numpy())
+    observed = unit[outcome_col].to_numpy(dtype=float)
+    counterfactual = np.asarray(fit.counterfactual, dtype=float)
+    post = unit["Water"].to_numpy() == 1
+    band = fit.prediction_intervals["counterfactual"]
+    lower, upper = np.asarray(band["eq_lower"]), np.asarray(band["eq_upper"])
 
-required_data = {
-    "ATT": att,
-    "Standard Error": se,
-    "t-stat": att / se,
-    "Confidence Interval": (ARCO_results.inference.ci_lower, ARCO_results.inference.ci_upper),
-    "RMSE (T0)": ARCO_results.fit_diagnostics.rmse_pre,
-    "p-value": ARCO_results.inference.p_value
-}
+    fig, ax = plt.subplots(figsize=(11, 5))
+    ax.fill_between(days[post], lower, upper, color="red", alpha=0.20, linewidth=0,
+                    label="95% prediction interval")
+    ax.plot(days, counterfactual, color="red", linewidth=1.6, label="Counterfactual Tyla")
+    ax.plot(days, observed, color="black", linewidth=1.6, label="Tyla")
+    ax.axvline(days[post][0], color="blue", linestyle="--", linewidth=0.9, label="Water")
 
-# Convert the filtered data into a DataFrame
-table_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
+    above = np.flatnonzero(observed[post] > upper)
+    if above.size:
+        i = int(above[0])
+        ax.plot(days[post][i], observed[post][i], marker="o", markersize=6,
+                color="black", zorder=5, label="_nolegend_")
+        ax.annotate(f"leaves the band\n{pd.Timestamp(days[post][i]).date()}",
+                    xy=(days[post][i], observed[post][i]), xytext=(-24, 88),
+                    textcoords="offset points", fontsize=10, ha="right",
+                    arrowprops=dict(arrowstyle="-", color="grey", linewidth=0.7))
 
-print(table_df.to_markdown())
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.legend(loc="upper left")
+    ax.tick_params(axis="x", rotation=30)
+    fig.tight_layout()
+    plt.show()
 
+
+def summarize(results, fit, df, outcome_col):
+    """Every number the prose quotes, so none of them is typed by hand."""
+    eff = fit.prediction_intervals["effect"]
+    lower, upper = np.asarray(eff["eq_lower"]), np.asarray(eff["eq_upper"])
+    point = np.asarray(eff["point"])
+    dates = pd.to_datetime(np.sort(df.loc[df["Water"] == 1, "Date"].unique()))
+    att, se = results.effects.att, results.effects.att_std_err
+
+    def first(mask, default=None):
+        hit = np.flatnonzero(mask)
+        return int(hit[0]) if hit.size else default
+
+    onset = first(lower > 0)
+    return {
+        "att": f"{att:,.0f}",
+        "se": f"{se:,.1f}",
+        "t": f"{att / se:,.1f}",
+        "ci": f"[{results.inference.ci_lower:,.0f}, {results.inference.ci_upper:,.0f}]",
+        "rmse": f"{results.fit_diagnostics.rmse_pre:,.1f}",
+        "p": ("below 0.001" if results.inference.p_value < 0.001
+              else f"{results.inference.p_value:.3f}"),
+        "studentization": fit.prediction_intervals["studentization"],
+        "onset": "never" if onset is None else f"{dates[onset]:%B %-d, %Y}",
+        "onset_t": "-" if onset is None else f"{onset + 1}",
+        "peak": f"{point.max():,.0f}",
+        "peak_day": f"{dates[int(point.argmax())]:%B %-d, %Y}",
+        "spanning": f"{int(((lower <= 0) & (upper >= 0)).sum())}",
+        "n_post": f"{point.size}",
+        "width_first": f"{upper[0] - lower[0]:,.0f}",
+        "width_last": f"{upper[-1] - lower[-1]:,.0f}",
+        "n_below": f"{first(upper >= 0, point.size)}",
+        "n_pre": f"{int((df[df.Artist == 'Tyla'].Water == 0).sum()):,}",
+        "n_donors": f"{df.Artist.nunique() - 1}",
+    }
+
+
+spotify_results, spotify_fit = fit_pda(spotify_df, outcome)
+banded_plot(spotify_df, outcome, spotify_fit,
+            "Spotify: Tyla's Playlist Reach against her counterfactual",
+            "Playlist reach (100 = August 17, 2023)")
+sp = summarize(spotify_results, spotify_fit, spotify_df, outcome)
 ```
+
+Over the `{python} sp['n_post']` post-treatment days the average effect is `{python} sp['att']` index points of playlist reach, with a standard error of `{python} sp['se']`, a $t$ of `{python} sp['t']`, a 95% confidence interval of `{python} sp['ci']`, and a $p$-value `{python} sp['p']`. The single largest daily effect is `{python} sp['peak']` on `{python} sp['peak_day']`. The pre-treatment fit that all of this rests on has a root mean squared error of `{python} sp['rmse']` against a series normalized to 100, so the counterfactual tracks the pre-period closely.
 
 ### Songstats Apple
 
@@ -342,160 +409,35 @@ apple_df = preprocess_data(
 )
 appleoutcome = 'Playlists'
 
-apple_config = {
-    "df": apple_df,
-    "treat": "Water",
-    "time": "Date",
-    "outcome": "Playlists",
-    "unitid": "Artist",
-    "counterfactual_color": ["red"],
-    "treated_color": "black",
-    "display_graphs": True,
-    "method": "l2"
-}
-
-apple_model = PDA(apple_config)
-apple_results = apple_model.fit()
-
-
-# Extracting only the required values: ATT, SE, t-stat, CI, RMSE, p-value
-apple_att = apple_results.effects.att
-apple_se = apple_results.effects.att_std_err
-
-required_data = {
-    "ATT": apple_att,
-    "Standard Error": apple_se,
-    "t-stat": apple_att / apple_se,
-    "Confidence Interval": (apple_results.inference.ci_lower, apple_results.inference.ci_upper),
-    "RMSE (T0)": apple_results.fit_diagnostics.rmse_pre,
-    "p-value": apple_results.inference.p_value
-}
-
-# Convert the filtered data into a DataFrame
-appletable_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
-
-print(appletable_df.to_markdown())
-
+apple_results, apple_fit = fit_pda(apple_df, appleoutcome)
+banded_plot(apple_df, appleoutcome, apple_fit,
+            "Apple Music: Tyla's Playlist Count against her counterfactual",
+            "Playlist count (100 = August 17, 2023)")
+ap = summarize(apple_results, apple_fit, apple_df, appleoutcome)
 ```
 
 
-This is unsurprising, and the practical results speak for themselves. Going viral clearly contributed a lot to Tyla's success across both platforms, as the estimated counterfactuals spell out very plainly that her reach would be a lot flatter compared to what it in fact was/is. This method can also be used with multiple treated units, as we see in the paper, but I haven't written this for ``mlsynth`` just yet. 
+Here the average effect over the `{python} ap['n_post']` post-treatment days is `{python} ap['att']` index points of playlist count, standard error `{python} ap['se']`, $t$ of `{python} ap['t']`, 95% confidence interval `{python} ap['ci']`, $p$-value `{python} ap['p']`, peaking at `{python} ap['peak']` on `{python} ap['peak_day']`, on a pre-treatment fit with a root mean squared error of `{python} ap['rmse']`. The Apple pre-period is much longer than the Spotify one, `{python} ap['n_pre']` days against `{python} sp['n_pre']`, and the donor pools differ too: `{python} ap['n_donors']` artists here against `{python} sp['n_donors']` there.
+
+This is unsurprising, and the practical results speak for themselves. Going viral clearly contributed a lot to Tyla's success across both platforms, as the estimated counterfactuals spell out very plainly that her reach would be a lot flatter compared to what it in fact was/is. This method can also be used with multiple treated units, as we see in the paper, but I haven't written this for ``mlsynth`` just yet.
 
 # Prediction Intervals: When Did *Water* Actually Hit?
 
 Everything above reports one number per platform, the ATT, with a confidence interval around it. That interval answers a question about an *average*: across the whole post-period, how precisely do we know the mean effect? It is silent on the question you probably care about more, which is what happened on any *particular* day. Going viral is not a light switch that flips once and holds. It builds, peaks, and decays, and an average over ten months hides all of that.
 
-``mlsynth`` now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set ``prediction_intervals=True`` and you get a band around each period's effect. The confidence interval and the prediction interval are not the same object, and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only *estimation* error, the uncertainty in the weights we fit. A prediction interval also carries *out-of-sample* error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed $\tau$ on each draw, and reading quantiles of the self-normalized statistic $\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}$. The two variance pieces in that denominator are exactly the two sources of error.
+``mlsynth`` now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set ``prediction_intervals=True`` and you get a band around each period's counterfactual and around each period's effect; the two are the same object, since the effect is the observed outcome minus the counterfactual and the observed outcome is not random. The shaded bands in the two plots above are the counterfactual version, which is why the day the black line leaves the band is also the day the effect interval clears zero.
 
-```{python}
-#| echo: false
-#| fig-align: center
+The confidence interval and the prediction interval are not the same object, and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only *estimation* error, the uncertainty in the weights we fit. A prediction interval also carries *out-of-sample* error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed $\tau$ on each draw, and reading quantiles of the self-normalized statistic $\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}$. The two variance pieces in that denominator are exactly the two sources of error.
 
-import numpy as np
+Three things fall out of the bands, and none of them is visible in the ATT.
 
-# The table below and the figure after it read the same two fits, and each fit
-# runs 199 bootstrap draws, so keep them.
-_fits = {}
+The first is the onset date. On Spotify the black line leaves the band on `{python} sp['onset']`, day `{python} sp['onset_t']` of the post-period; on Apple Music it is `{python} ap['onset']`, day `{python} ap['onset_t']`. These are two separate fits with different donor pools, different outcome metrics, and pre-periods of very different lengths, `{python} sp['n_pre']` days against `{python} ap['n_pre']`. That they agree to the day is the sort of corroboration a single averaged number cannot give you. It also lines up with the story: the Kigali performance is the spark, but the effect on playlist behavior takes a couple of weeks to show up above the noise. Before that day the two lines are tangled together, and the band is where you can see why: on Spotify `{python} sp['spanning']` of the `{python} sp['n_post']` post-treatment days have an interval that still contains zero, and on Apple `{python} ap['spanning']` of `{python} ap['n_post']`.
 
-def with_intervals(df, outcome_col):
-    if outcome_col in _fits:
-        return _fits[outcome_col]
-    config = {
-        "df": df,
-        "treat": "Water",
-        "time": "Date",
-        "outcome": outcome_col,
-        "unitid": "Artist",
-        "counterfactual_color": ["red"],
-        "treated_color": "black",
-        "display_graphs": False,
-        "method": "l2",
-        "prediction_intervals": True,
-        "pi_n_boot": 199,
-        "pi_seed": 0
-    }
-    results = PDA(config).fit()
-    fit = results.fits["l2"]
-    effect = fit.prediction_intervals["effect"]
-    dates = np.sort(df.loc[df["Water"] == 1, "Date"].unique())
-    _fits[outcome_col] = (results, fit, effect, dates)
-    return _fits[outcome_col]
+The second is that the *shape* of the uncertainty differs sharply across platforms, which I did not expect. Apple's band is essentially a constant width, opening at `{python} ap['width_first']` index points and ending at `{python} ap['width_last']`. Spotify's opens at `{python} sp['width_first']` and ends at `{python} sp['width_last']`, so it fans out as the post-period runs on. The counterfactual Tyla on Spotify becomes progressively harder to predict the further we extrapolate from the pre-period, while the Apple counterfactual stays about as predictable in June 2024 as it was in August 2023. If you were using this to make a decision, that difference matters more than the ATT does: the same headline effect is a much shakier claim on one platform than the other, and only the per-period bands say so.
 
+The third is an honest wrinkle. On Spotify the first `{python} sp['n_below']` days of the post-period sit entirely *below* the band, a significantly negative effect, before the line crosses over and stays above. I would not read much into it, but I would not hide it either. It is the kind of thing that an average effect of `{python} sp['att']` papers over completely.
 
-def onset_row(label, df, outcome_col):
-    results, fit, effect, dates = with_intervals(df, outcome_col)
-    lower = np.asarray(effect["eq_lower"])
-    upper = np.asarray(effect["eq_upper"])
-    point = np.asarray(effect["point"])
-    first = int(np.flatnonzero(lower > 0)[0])
-    peak = int(point.argmax())
-    return {
-        "Platform": label,
-        "Studentization": fit.prediction_intervals["studentization"],
-        "First day the PI clears zero": f"{pd.Timestamp(dates[first]).date()} (t+{first + 1})",
-        "Peak effect": f"{point[peak]:,.0f} on {pd.Timestamp(dates[peak]).date()}",
-        "Days spanning zero": f"{int(((lower <= 0) & (upper >= 0)).sum())} of {len(point)}",
-        "PI width, first vs last": f"{upper[0] - lower[0]:,.0f} to {upper[-1] - lower[-1]:,.0f}"
-    }
-
-onset = pd.DataFrame([
-    onset_row("Spotify", spotify_df, outcome),
-    onset_row("Apple Music", apple_df, "Playlists")
-])
-
-print(onset.set_index("Platform").T.to_markdown())
-```
-
-The table is the summary, but the shape is the point, so here is the whole thing. Each panel is one platform's per-period effect with its 95% band around it. The two are drawn separately on purpose: Playlist Reach and Playlist Count are different quantities on different scales, and putting them on one pair of axes would invite a comparison of heights that means nothing.
-
-```{python}
-#| echo: false
-#| fig-align: center
-#| fig-cap: "Per-period effect with 95% bootstrap prediction intervals. The band is the interval; the dot marks the first day it clears zero."
-
-fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
-
-panels = [("Spotify: Playlist Reach", spotify_df, outcome, "Effect on playlist reach", axes[0]),
-          ("Apple Music: Playlist Count", apple_df, "Playlists", "Effect on playlist count", axes[1])]
-
-for title, frame, outcome_col, ylab, ax in panels:
-    _, _, effect, dates = with_intervals(frame, outcome_col)
-    lower = np.asarray(effect["eq_lower"])
-    upper = np.asarray(effect["eq_upper"])
-    point = np.asarray(effect["point"])
-    days = pd.to_datetime(dates)
-
-    ax.fill_between(days, lower, upper, color="red", alpha=0.16, linewidth=0,
-                    label="95% prediction interval")
-    ax.plot(days, point, color="black", linewidth=1.2, label="Estimated effect")
-    ax.axhline(0, color="grey", linestyle="--", linewidth=0.9)
-
-    first = int(np.flatnonzero(lower > 0)[0])
-    ax.plot(days[first], point[first], marker="o", markersize=6, color="black",
-            zorder=5, label="_nolegend_")
-    ax.annotate(f"first day above zero\n{pd.Timestamp(dates[first]).date()}",
-                xy=(days[first], point[first]), xytext=(34, -6),
-                textcoords="offset points", fontsize=10, va="top",
-                arrowprops=dict(arrowstyle="-", color="grey", linewidth=0.7))
-
-    ax.set_title(title)
-    ax.set_ylabel(ylab)
-    ax.tick_params(axis="x", rotation=30)
-
-axes[0].legend(loc="upper left")
-fig.tight_layout()
-plt.show()
-```
-
-Two things fall out of this, and neither is visible in the ATT.
-
-The first is the onset date. On both platforms, the first day whose 95% interval sits entirely above zero is September 5, 2023, nineteen days after the normalization date. These are two separate panels with different donor pools, different outcome metrics, and pre-periods of very different lengths (229 days for Spotify against 594 for Apple), fit independently. That they agree to the day is the sort of corroboration a single averaged number cannot give you. It also lines up with the story: the Kigali performance is the spark, but the effect on playlist behavior takes a couple of weeks to show up above the noise.
-
-The second is that the *shape* of the uncertainty differs sharply across platforms, which I did not expect. Apple's bands are essentially flat, opening around 53 units wide and ending around 55. Spotify's more than quintuple, from about 45 to 234. The counterfactual Tyla on Spotify becomes progressively harder to predict the further we extrapolate from the pre-period, while the Apple counterfactual stays about as predictable in June 2024 as it was in August 2023. If you were using this to make a decision, that difference matters more than the ATT does: the same headline effect is a much shakier claim on one platform than the other, and only the per-period bands say so.
-
-Worth flagging one honest wrinkle. On the Spotify panel the first week of post-treatment effects is *negative*, and significantly so, with seven days whose interval lies entirely below zero before the effect turns positive and stays there. I would not read much into it, but I would not hide it either. It is the kind of thing that an ATT of $+1218$ papers over completely.
-
-One implementation note: both panels here report ``sandwich`` studentization, meaning the post-selection OLS HAC variance was available. The $\ell_2$ relaxation falls back to a $\sigma^2$-only studentization when the controls outnumber the pre-periods, which is the genuinely dense regime this estimator is built for. That is not the case here (59 donors against 229 pre-periods on Spotify), so we get the sandwich. If you scale this up to the "4 or 500 artists" I complain about not having below, expect the fallback instead.
+One implementation note: both fits here report `{python} sp['studentization']` studentization, meaning the post-selection OLS HAC variance was available. The $\ell_2$ relaxation falls back to a $\sigma^2$-only studentization when the controls outnumber the pre-periods, which is the genuinely dense regime this estimator is built for. That is not the case here (`{python} sp['n_donors']` donors against `{python} sp['n_pre']` pre-periods on Spotify), so we get the sandwich. If you scale this up to the "4 or 500 artists" I complain about not having below, expect the fallback instead.
 
 # Caveats
 

@@ -1,5 +1,5 @@
 import pandas as pd
-from mlsynth.mlsynth import PDA
+from mlsynth import PDA
 import matplotlib
 import os
 import matplotlib.pyplot as plt
@@ -107,7 +107,7 @@ spotify_config = {
     "time": "Date",
     "outcome": outcome,
     "unitid": "Artist",
-    "counterfactual_color": "red",
+    "counterfactual_color": ["red"],
     "treated_color": "black",
     "display_graphs": True,
     "method": "l2",
@@ -117,13 +117,16 @@ spotify_config = {
 spotify_model = PDA(spotify_config)
 ARCO_results = spotify_model.fit()
 
+att = ARCO_results.effects.att
+se = ARCO_results.effects.att_std_err
+
 required_data = {
-    "ATT": ARCO_results["Effects"]["ATT"],
-    "Standard Error": ARCO_results["Inference"]["standard_error"],
-    "t-stat": ARCO_results["Inference"]["t_stat"],
-    "Confidence Interval": ARCO_results["Inference"]["confidence_interval"],
-    "RMSE (T0)": ARCO_results["Fit"]["T0 RMSE"],
-    "R-Squared": ARCO_results["Fit"]["R-Squared"]
+    "ATT": att,
+    "Standard Error": se,
+    "t-stat": att / se,
+    "Confidence Interval": (ARCO_results.inference.ci_lower, ARCO_results.inference.ci_upper),
+    "RMSE (T0)": ARCO_results.fit_diagnostics.rmse_pre,
+    "p-value": ARCO_results.inference.p_value
 }
 
 # Convert the filtered data into a DataFrame
@@ -163,7 +166,7 @@ apple_config = {
     "time": "Date",
     "outcome": "Playlists",
     "unitid": "Artist",
-    "counterfactual_color": "red",
+    "counterfactual_color": ["red"],
     "treated_color": "black",
     "display_graphs": True,
     "method": "l2",
@@ -175,13 +178,16 @@ apple_results = apple_model.fit()
 
 
 # Extracting only the required values: ATT, SE, t-stat, CI, RMSE, R-squared
+apple_att = apple_results.effects.att
+apple_se = apple_results.effects.att_std_err
+
 required_data = {
-    "ATT": apple_results["Effects"]["ATT"],
-    "Standard Error": apple_results["Inference"]["standard_error"],
-    "t-stat": apple_results["Inference"]["t_stat"],
-    "Confidence Interval": apple_results["Inference"]["confidence_interval"],
-    "RMSE (T0)": apple_results["Fit"]["T0 RMSE"],
-    "R-Squared": apple_results["Fit"]["R-Squared"]
+    "ATT": apple_att,
+    "Standard Error": apple_se,
+    "t-stat": apple_att / apple_se,
+    "Confidence Interval": (apple_results.inference.ci_lower, apple_results.inference.ci_upper),
+    "RMSE (T0)": apple_results.fit_diagnostics.rmse_pre,
+    "p-value": apple_results.inference.p_value
 }
 
 # Convert the filtered data into a DataFrame

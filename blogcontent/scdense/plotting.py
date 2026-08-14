@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
-from mlsynth.mlsynth import dataprep
+from mlsynth.utils.datautils import dataprep
 import os
 
 # Set up theme for Matplotlib

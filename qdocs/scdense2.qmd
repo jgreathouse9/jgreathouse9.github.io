@@ -1,0 +1,459 @@
+---
+title: 'Artificial Counterfactuals in Dense Settings: now with prediction intervals'
+date: 2026-08-14
+categories: [Causal Inference, Econometrics]
+---
+
+Plenty of posts have been done in the last decade on [the synthetic control method](https://doi.org/10.1198/jasa.2009.ap08746) and related approaches. It is a flavor of artificial counterfactual estimator for the panel data setting. Folks from [Microsoft](https://medium.com/data-science-at-microsoft/causal-inference-using-synthetic-controls-d96a890c83a7), [Databricks](https://towardsdatascience.com/how-to-do-causal-inference-using-synthetic-controls-ab435e0228f1), [Uber](https://youtu.be/j5DoJV5S2Ao?si=RWUYFjFEWpvkl8x1), [Amazon](https://towardsdatascience.com/causal-inference-with-synthetic-control-in-python-4a79ee636325), [Netflix](https://netflixtechblog.com/round-2-a-survey-of-causal-inference-applications-at-netflix-fd78328ee0bb), [Gainwell Technologies](https://andrewpwheeler.com/2019/12/06/using-regularization-to-generate-synthetic-controls-and-conformal-prediction-for-significance-tests/), and [else](https://rudrendupaul.medium.com/causal-inference-part-7-synthetic-control-methods-a-powerful-technique-for-inferring-causality-in-3ec5dbe26038)[where](https://henamsingla.medium.com/synthetic-control-method-a-z-d28099c56edb) have written about/covered it, detailing its implementation, use cases, and econometric theory.
+
+Many ([not all](https://peerunreviewed.blogspot.com/2019/11/a-short-tutorial-on-robust-synthetic.html)) of these cover the standard SCM, developed originally to study terrorism in the Basque Country and conduct comparative case studies more broadly. Standard SCM tends to favor, under certain technical conditions, a _sparse_ set of control units being assigned weights. These weights aim to reconstruct the factor loadings/observed values of the treated unit, pre-intervention. Sparsity, or the true coefficient vector being mostly 0, has appealing properties; for example, a sparse vector allows us to interpret the synthetic control a lot easier, facilitating the estimation of [leave-one-out placebos](https://doi.org/10.1111/ecpo.12131) and other sensitivity checks. [In some cases](https://ceistorvergata.it/public/files/RFCS/Giannone_illusion4-2.pdf) though, the sparsity notion is [unfounded](https://doi.org/10.1080/01621459.2023.2206082). 
+
+The [the $\ell_2$ panel data approach](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) is an econometric methodology [developed](http://dx.doi.org/10.13140/RG.2.2.11670.97609) by [Zhentao Shi](https://zhentaoshi.github.io/) and [Yishu Wang](https://ishwang1.github.io/). The $\ell_2$-PDA is a form of synthetic control estimation that accommodates sparse or dense data generation processes. A dense DGP is when the true vector of coefficients is mostly not zero. Sometimes, a sparse model is too simplistic, especially in settings where we have very many predictors. This is especially true when we have lots of multicollinearity among our predictors, which may be very plausible in settings with a lot of control units. The LASSO and the convex hull SCM (for different reasons and in different cases) generally struggle with this, whereas the Ridge or $\ell_2$-PDA accomodate multicollinearity as a feature.  In this post, I demonstrate the method as implemented in my library ``mlsynth``. The Python code for these results may be found [here](https://github.com/jgreathouse9/jgreathouse9.github.io/edit/master/qdocs/scdense2.qmd).
+
+::: {.callout-note}
+This post goes over an extended empirical example. To see the simple and fast way to use this method, you can go to [my Python documentation](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) from my package ``mlsynth``.
+:::
+
+::: {.callout-tip}
+## What is new here
+This revisits [the original $\ell_2$ post](https://jgreathouse9.github.io/docs/scdense.html) with one addition: ``mlsynth`` now attaches per-period prediction intervals to the panel data approach. The original post could tell you that Tyla's virality moved her metrics on average. It could not tell you *when* the effect turned on, or how confident we should be about any single day. That is what the new [section](#prediction-intervals-when-did-water-actually-hit) below is for, and the answer on both platforms lands on the same date.
+:::
+
+## A Review of Synthetic Controls
+
+Let $\mathbb{R}$ denote the set of real numbers. Denote the natural numbers and unit interval respectively as 
+$$
+\mathbb{N} \coloneqq \{1, 2, 3, \dots\}, \quad \mathbb{I} \coloneqq \{ w \in \mathbb{R} : 0 \leq w \leq 1 \}.
+$$
+Let a caligraphic letter, say $\mathcal A$, denote a descrete set whose cardinality is $A=|\mathcal{A}|$. The sup norm of a vector $\mathbf{y} \in \mathbb{R}^N$ is defined as the maximum absolute value of its components, $\|\mathbf{y}\|_\infty = \max_{j = 1, \ldots, N} |y_j|$. The floor function of a real number $x \in \mathbb{R}$, denoted as $\lfloor x \rfloor$, returns $\lfloor x \rfloor = \max \{k \in \mathbb{N} : k \leq x\}$. Let $t \in \mathbb{N}$ and $i \in \mathbb{N}$, represent the indices for $T$ time periods and  $N$ units. The pre-treatment period consists of consecutive time periods $\mathcal{T}_1 = \{1, 2, \ldots, T_0\}$ (cardinality $T_1$), while the post-treatment period is given by $\mathcal{T}_2 = \{T_0 + 1, \ldots, T\}$ (cardinality $T_2$). The treated unit is indexed by $i = 1$, while the remaining set of units, $\mathcal{N}_0 \coloneqq \{2, \ldots, N_0 + 1\}$ (cardinality $N_0$), forms the control group. Each outcome for all units is denoted by $y_{it}$. Denote the outcome vector for the treated unit as $\mathbf{y}_1 \coloneqq \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1T} \end{bmatrix}^\top \in \mathbb{R}^T$, where each entry corresponds to the outcome of the treated unit at time $t$. The donor pool matrix, similarly, is defined as  
+$$
+\mathbf{Y}_0 = \begin{bmatrix}
+    y_{21} & y_{22} & \cdots & y_{2T} \\
+    y_{31} & y_{32} & \cdots & y_{3T} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    y_{(N_0+1)1} & y_{(N_0+1)2} & \cdots & y_{(N_0+1)T}
+  \end{bmatrix} \in \mathbb{R}^{N_0 \times T}.
+$$  
+The key challenge of causal inference is that we only observe the factual/realized outcome, expressed as:  
+$$
+y_{it} = y_{it}^1 d_{it} + \left(1 - d_{it}\right)y_{it}^0.
+$$
+Outcomes in this framework are a function of treatment status, $d_{it} \in \{0, 1\}$. While $d_{it} = 1$, a unit is treated and while $d_{it} = 0$ a unit is untreated. Thus, $y_{it}^1$ is the potential outcome under treatment, $y_{it}^0$ is the counterfactual (or potential) outcome under no treatment. The objective is to estimate the counterfactual outcomes $y_{1t}^0$. SCMs and panel data approaches are weighting based estimators. In this setup, some weight vector
+$$
+\mathbf{w} \coloneqq \begin{bmatrix} w_2 & w_3 & \cdots & w_{N_0+1} \end{bmatrix}^\top, \: \text{where } w_i \: \forall \: i \in \mathcal{N}_0.
+$$ 
+is assigned across the $N_0$ control units to approximate the treated unit's pre-intervention outcome. SCM solves for $\mathbf{w}$ via the optimization:  
+$$
+\underset{\mathbf{w} \in \mathbb{I}^{N_0}}{\operatorname*{argmin}} \lVert \mathbf{y}_1 - \mathbf{w}^\top \mathbf{Y}_0 \rVert_2^2,  \: \forall \: t \in \mathcal{T}_{1}, \: \text{subject to } \lVert \mathbf{w} \rVert_1 = 1.
+$$  
+
+Here, $\mathbf{w}^\top \mathbf{Y}_0$ represents the dot product of predictions, also known as a weighted average. The constraint of the convex hull disallows extrapolation of any form. SCMs are predicated on good pretreatment fit, such that $\mathbf{w}^\top \mathbf{Y}_0 \approx \mathbf{y}_1$. [Speaking](https://doi.org/10.3982/QE1596) [generally](https://doi.org/10.1080/01621459.2021.1965613), the better pre-treatment fit we have over a long time series, the better the out-of-sample predictions will be for the synthetic control.
+
+#  $\ell_2$-PDA
+
+$\ell_2$-PDA estimates the model $\mathbf{y}_1 = \boldsymbol{\alpha}+ \mathbf{Y}_0\mathbf{w}+\mathbf{\epsilon}$, where $\boldsymbol{\alpha}$ is some unconstrained intercept we estimate after solving for the weights. The intercept is simply the average time-based difference between the treated unit and the control group (as with normal regression, it is what we would get if all our weights were 0). The main innovation with  $\ell_2$-PDA is the way Zhentao and Yishu propose to estimate the weights, which I think is pretty ingenious. They essentially advocate to literally exploit the pre-treatment relationships between the treated unit and donor pool, and the relationships between the donors themselves.  $\ell_2$-PDA, unlike standard SCM, allows for extrapolation outside the convex hull. Here is the optimization for  $\ell_2$-PDA:
+
+\begin{split}
+\begin{aligned}
+&\underset{\mathbf{w} \in \mathbb{R}^{N_0}}{\operatorname*{argmin}} \frac{1}{2} \|\mathbf{w}\|_2^{2}, \: \forall \: t \: \in \mathcal{T}_{1}, \: \text{subject to } \|\boldsymbol{\eta} - \mathbf{\Sigma} \mathbf{w}\|_\infty \leq \tau
+\end{aligned}
+\end{split}
+
+
+For our purposes, three terms matter. The first is _eta_, computed like $\boldsymbol{\eta} \in \mathbb{R}^{N_0 \times 1}=\frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{y}_1$, the second is _Sigma_, computed like $\boldsymbol{\Sigma}\in \mathbb{R}^{N_0 \times N_0} = \frac{1}{T_1} \mathbf{Y}_0^\top \mathbf{Y}_0$, and the final one is _tau_, $\tau$. $\boldsymbol{\eta}$ simply is [a projection](https://youtu.be/27vT-NWuw0M?si=2BTp4dKyQCz63P-C) which measures the relation between treated unit and each of the control units over the pre-treatment period. The greater the absolute value of the number, the more/less similar the donor is to the treated unit. $\boldsymbol{\Sigma}$ is what we call a [Gram matrix](https://www.youtube.com/watch?v=nokLWUK9dwM). This term captures how similar the control units are to each other over the pre-treatment period. The optimization seeks to use the donor-to-donor relationships to reconstruct the values of the treated unit in the pre-intervention period. While  $\ell_2$-PDA extrapolates, the extrapolation bias is bounded by the infinity norm (or, the maximum absolute value) of the difference between these two constructs I just discussed. Effectively, we are bounding the worst-case error to be no greater than some nonnegative constant. This constant is $\tau$, and I discuss how I tune it in the next section.
+
+## Selecting $\tau$
+
+Critical to  $\ell_2$-PDA is the selection of tau. The reason for this is because while $\tau \to 0$, the estimator converges to OLS, which we know will overfit to the pre-intervention data in most cases [unless](https://doi.org/10.1080/01621459.2021.1928513) the data are exactly low-rank and fully observed. Too high a value of $\tau$ results in drastic underfitting (_trust me_) of the pre-treatment data. The way ``mlsynth`` tunes tau is by cross-validation over the pre-treatment period. ``mlsynth`` invokes a log-space over the interval $\tau \in \left[ 10^{-4}, \tau_{\text{init}} \right]$, where $\tau_{\text{init}} = \|\boldsymbol{\eta}\|_\infty$. These correspond to the values of tau we supply. We first create a training and validation period, $\mathcal{T}_1 = \mathcal{T}_1^{\text{train}} \cup \mathcal{T}_1^{\text{val}}, \quad
+\mathcal{T}_1^{\text{train}} \cap \mathcal{T}_1^{\text{val}} = \emptyset.$ Denote the training series as $\mathcal{T}_1^{\text{train}} = \{1, 2, \ldots, k\}$. Denote the validation series as $\mathcal{T}_1^{\text{val}} = \{k+1, \ldots, T_0\}$, where $k = \left\lfloor \frac{T_1}{2} \right\rfloor$. We then estimate the model for the training period, and compute our predictions from $\{k+1, \ldots, T_0\}$. The tau we select is
+\begin{aligned}
+\tau^{\ast} = \operatorname*{argmin}_{\tau} \left( \frac{1}{|\mathcal{T}_1^{\text{val}}|} \| \mathbf{y}^{\ell_2} - \mathbf{y}_1 \|_2^2 \right),
+\end{aligned}
+or the one that minimizes the validation Root Mean Squared Error. The performance is pretty close to what Zhentao and Yishu do for their empirical example (see [the code](https://mlsynth.readthedocs.io/en/latest/pda.html#ell-2-relaxation) at the documentation). In the original paper, they do a 70-30 train test split over the pre-intervention period, where they take the first 70% of the pre-treatment data and supply some values of tau. 
+
+Okay hard part done. Let's apply this to a real-life example, shall we?
+
+# Implementing  $\ell_2$-PDA in ``mlsynth``.
+
+In order to get these results, you need Python (3.9 or greater) and ``mlsynth``, which you may install from the Github repo.
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+I taught Policy Data Analysis last semester at Georgia State. It was an undergrad course, but I still wanted to cover a little bit of causal inference, not because they will all go on to be grad students or policy researchers, but because the causal mindset is _such an important part_ of how we think about and interact with the world. We managed to get through Difference-in-Differences, after we covered regression and basic stats. The very final topic we covered on the very last day of class was SCM. I prepared for class as I usually do, by [playing music](https://genius.com/Tyla-shake-ah-lyrics). The lyics were in Zulu, so I did not expect anybody who was not South African or a fan of Tyla to know the song, which they did not when I asked them. I then played Tyla's song "Water", [the one](https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1) that went viral in 2023, which everybody knew about when I asked.
+
+I used this to transition into the lecture for the day. "Oftentimes," I began, "we are concerned about the impact of specific events or interventions. As we've discussed, the DID method does this on a parallel trends assumption, or that absent the intevention, the trends of the treated group would, on average, move the same as the control group. But what do we do if this breaks down? What if we cannot  get parallel trends to hold, for some reason? All semester, we've discussed academic examples, but I want to show you how this may look in a semi-real life setting. So the causal question we wish to answer here is "How would Tyla's musical success have looked absent her going viral?" Maybe she would've made it big anyways, but how can we tell?" To walk them through this (using standard SCM), I used a dataset I scraped together. The daily data come from [Songstats](https://songstats.com/welcome), a platform which attempts to keep data on Spotify and Apple (and lots of other sources) music/interaction trends. For example, here is Tyla's [Apple performance](https://songstats.com/artist/7ln14gwj/tyla?source=apple_music) and the same for [Spotify](https://songstats.com/artist/7ln14gwj/tyla?source=spotify). 
+
+### Plotting Our Data
+
+::: {.callout-note}
+These [Spotify](https://github.com/jgreathouse9/jgreathouse9.github.io/tree/master/Spotify) and [Apple](https://github.com/jgreathouse9/jgreathouse9.github.io/tree/master/Apple%20Music) data are freely available from my Github and can be viewed at [a dashboard](https://jgreathouse9appio-fhawgwmdsdz8h3rhdss5sx.streamlit.app/) on Streamlit. They were scraped together using Python- the code for this scrape is private though. Someday, I may do a blog post employing a simple example of how I scraped it together, since public policy scholars can take advantage of scraping for their own purposes.
+:::
+
+Before we get into the fancy estimation though, let's just plot our data. For Spotify, the outcome metric of interest is "Playlist Reach" which Songstats defines as
+
+> The combined follower number of all Spotify playlists with 200+ followers your music is currently on.
+
+I keep the data from Janaury 1 2023 to June 1 2024. There are 59 donors in the Spotify data, after we drop artists with unbalanced panel/missing data. For Apple, our outcome metric is "Playlists", which Songstats defines as
+
+> The total number of distinct playlists your music has ever been on.
+
+These data are collected from January 1 of 2022 to June 1 2024. Also, not all artists had complete data, so I kept only the artist who were fully observed over the course of the time series. This means there are 24 donors for Apple, yet this could easily change assuming I began the training period with the same time point as the Spotify data.
+
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+from mlsynth.utils.datautils import dataprep
+from mlsynth.utils.plotting import apply_mlsynth_style
+
+# mlsynth's house plot style, instead of hand-rolling one here.
+apply_mlsynth_style()
+matplotlib.rcParams["figure.figsize"] = (11, 5)
+
+
+# Function to normalize data
+def normalize(group, column_name, reference_date):
+    data = group.copy()
+    reference_value = data.loc[data['Date'] == pd.Timestamp(reference_date), column_name]
+    if not reference_value.empty:
+        data[column_name] = data[column_name] / reference_value.values[0] * 100
+    return data
+
+
+# Function to preprocess data
+def preprocess_data(url, date_range, column_name, treat_artist, reference_date):
+    df = pd.read_csv(url)
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df = df[(df['Date'] >= date_range[0]) & (df['Date'] <= date_range[1])]
+    df['Water'] = df.apply(
+        lambda row: 1 if row['Artist'] == treat_artist and row['Date'] > pd.to_datetime(reference_date) else 0,
+        axis=1,
+    )
+    tyla_observations = df[df['Artist'] == treat_artist].shape[0]
+    artist_counts = df['Artist'].value_counts()
+    artists_to_keep = artist_counts[artist_counts >= tyla_observations].index
+    df = df[df['Artist'].isin(artists_to_keep)]
+    df = df[df['Artist'] != 'Lisa Oduor-Noah']
+    grouped = df.groupby('Artist')
+    normalized_groups = [
+        normalize(group.copy(), column_name=column_name, reference_date=reference_date)
+        for artist, group in grouped
+    ]
+    return pd.concat(normalized_groups, ignore_index=True)
+
+
+# Plot treated unit and donors with average controls
+def plot_donors_and_treated(donor_matrix, treated_vector, pre_periods, title, ax):
+    for i in range(donor_matrix.shape[1]):
+        ax.plot(donor_matrix[:, i], color='gray', linewidth=0.5, alpha=0.8, label='_nolegend_')
+    ax.plot(treated_vector, color='black', linewidth=2, label='Treated Unit')
+    average_controls = donor_matrix.mean(axis=1)
+    ax.plot(average_controls, color='red', linewidth=2, label='Normalized Average of Controls')
+    ax.axvline(x=pre_periods, color='blue', linestyle='--', linewidth=1.5, label='Water')
+    ax.set_title(title)
+    ax.set_xlabel('Time Periods')
+
+
+# Main plotting routine
+def main():
+
+    # Spotify Data
+    spotify_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Spotify/Merged_Spotify_Data.csv"
+    spotify_date_range = ['2023-01-01', '2024-06-01']
+    outcome = 'Playlist Reach'
+    spotify_df = preprocess_data(
+        url=spotify_url,
+        date_range=spotify_date_range,
+        column_name=outcome,
+        treat_artist='Tyla',
+        reference_date='2023-08-17'
+    )
+    spotify_prepped = dataprep(spotify_df, 'Artist', 'Date', outcome, 'Water')
+
+    # Apple Music Data
+    apple_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Apple%20Music/AppleMusic.csv"
+    apple_date_range = ['2022-01-01', '2024-06-01']
+    apple_outcome = 'Playlists'
+    apple_df = preprocess_data(
+        url=apple_url,
+        date_range=apple_date_range,
+        column_name=apple_outcome,
+        treat_artist='Tyla',
+        reference_date='2023-08-17'
+    )
+    apple_prepped = dataprep(apple_df, 'Artist', 'Date', apple_outcome, 'Water')
+
+    # Create two-plot figure
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+    plot_donors_and_treated(
+        spotify_prepped["donor_matrix"], spotify_prepped["y"], spotify_prepped["pre_periods"],
+        "Spotify: Tyla's Playlist Reach vs Controls", axes[0]
+    )
+    axes[0].set_ylabel('Outcome')
+    plot_donors_and_treated(
+        apple_prepped["donor_matrix"], apple_prepped["y"], apple_prepped["pre_periods"],
+        "Apple Music: Tyla's Playlist Count vs Controls", axes[1]
+    )
+
+    axes[1].legend()
+    plt.tight_layout()
+    
+    # Save the plot
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
+I normalized all the metrics to 100 at August 17, 2023, a few days before the treatment [occured](https://www.gq.co.za/culture/entertainment/a-timeline-tracking-tylas-water-from-the-streets-of-johannesburg-to-global-domination-657bad00-e7dc-4823-aea2-9529b335c2d1) (Tyla performing in Kigali, Rwanda). Zhentao and Yishu recommend mean-standardization and then backing out the coefficients in the paper; ``mlsynth`` now does this by default for the $\ell_2$ PDA (``l2_standardize=True``), since the penalty is scale-sensitive, and you can set it to ``False`` for the raw-scale variant. Either way, I think it helps us to see what's going on in better detail when we normalize the outcome trends as we see here, since now we're practically comparing everybody in terms of relative trends.  The plot says that Tyla generally had less relative popularity compared to the donors for the majority of the time seies pre treatment. We can see both her metrics balloon in the post-intervention period. We can also see quite clearly that parallel trends with respect to the donor pool likely does not hold; the trend of the average of controls is quite flat relatve to Tyla's. 
+
+### Songstats Spotify
+
+I begin with the Spotify data. When we estimate $\ell_2$-PDA, comparing Tyla to her 59 controls, we get the following plot (note the red line is the counterfactual Tyla, or how her Playlist Reach would look absent her going viral) :
+
+
+```{python}
+
+#| echo: false
+#| fig-align: center
+
+import pandas as pd
+from mlsynth import PDA
+import matplotlib
+import os
+import matplotlib.pyplot as plt
+
+# Function to normalize data
+def normalize(group, column_name, reference_date):
+    # Work only with the relevant columns
+    data = group.copy()
+    reference_value = data.loc[data['Date'] == pd.Timestamp(reference_date), column_name]
+    if not reference_value.empty:
+        data[column_name] = data[column_name] / reference_value.values[0] * 100
+    return data
+
+
+def preprocess_data(url, date_range, column_name, treat_artist, reference_date):
+    # Load the data
+    df = pd.read_csv(url)
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+    # Filter by date range
+    df = df[(df['Date'] >= date_range[0]) & (df['Date'] <= date_range[1])]
+
+    # Add treatment column
+    df['Water'] = df.apply(
+        lambda row: 1 if row['Artist'] == treat_artist and row['Date'] > pd.to_datetime(reference_date) else 0,
+        axis=1,
+    )
+
+    # Get the number of observations for the treated artist
+    tyla_observations = df[df['Artist'] == treat_artist].shape[0]
+
+    # Filter artists with at least as many observations as the treated artist
+    artist_counts = df['Artist'].value_counts()
+    artists_to_keep = artist_counts[artist_counts >= tyla_observations].index
+    df = df[df['Artist'].isin(artists_to_keep)]
+    df = df[df['Artist'] != 'Lisa Oduor-Noah']
+    # Group by Artist, normalize each group, and combine into a single DataFrame
+    grouped = df.groupby('Artist')
+    normalized_groups = [
+        normalize(group.copy(), column_name=column_name, reference_date=reference_date)
+        for artist, group in grouped
+    ]
+    df = pd.concat(normalized_groups, ignore_index=True)
+
+    return df
+
+
+outcome = 'Playlist Reach'
+
+# Spotify Data
+spotify_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Spotify/Merged_Spotify_Data.csv"
+spotify_date_range = ['2023-01-01', '2024-06-01']
+spotify_df = preprocess_data(
+    url=spotify_url,
+    date_range=spotify_date_range,
+    column_name=outcome,
+    treat_artist='Tyla',
+    reference_date='2023-08-17'
+)
+
+spotify_config = {
+    "df": spotify_df,
+    "treat": "Water",
+    "time": "Date",
+    "outcome": outcome,
+    "unitid": "Artist",
+    "counterfactual_color": ["red"],
+    "treated_color": "black",
+    "display_graphs": True,
+    "method": "l2"
+}
+
+spotify_model = PDA(spotify_config)
+ARCO_results = spotify_model.fit()
+
+att = ARCO_results.effects.att
+se = ARCO_results.effects.att_std_err
+
+required_data = {
+    "ATT": att,
+    "Standard Error": se,
+    "t-stat": att / se,
+    "Confidence Interval": (ARCO_results.inference.ci_lower, ARCO_results.inference.ci_upper),
+    "RMSE (T0)": ARCO_results.fit_diagnostics.rmse_pre,
+    "p-value": ARCO_results.inference.p_value
+}
+
+# Convert the filtered data into a DataFrame
+table_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
+
+print(table_df.to_markdown())
+
+```
+
+### Songstats Apple
+
+Here is the same plot with the Apple data, where the outcome is Playlist Count:
+
+
+```{python}
+#| echo: false
+#| fig-align: center
+# Apple Music Data
+
+apple_url = "https://raw.githubusercontent.com/jgreathouse9/jgreathouse9.github.io/refs/heads/master/Apple%20Music/AppleMusic.csv"
+apple_date_range = ['2022-01-01', '2024-06-01']
+apple_df = preprocess_data(
+    url=apple_url,
+    date_range=apple_date_range,
+    column_name='Playlists',
+    treat_artist='Tyla',
+    reference_date='2023-08-17'
+)
+appleoutcome = 'Playlists'
+
+apple_config = {
+    "df": apple_df,
+    "treat": "Water",
+    "time": "Date",
+    "outcome": "Playlists",
+    "unitid": "Artist",
+    "counterfactual_color": ["red"],
+    "treated_color": "black",
+    "display_graphs": True,
+    "method": "l2"
+}
+
+apple_model = PDA(apple_config)
+apple_results = apple_model.fit()
+
+
+# Extracting only the required values: ATT, SE, t-stat, CI, RMSE, p-value
+apple_att = apple_results.effects.att
+apple_se = apple_results.effects.att_std_err
+
+required_data = {
+    "ATT": apple_att,
+    "Standard Error": apple_se,
+    "t-stat": apple_att / apple_se,
+    "Confidence Interval": (apple_results.inference.ci_lower, apple_results.inference.ci_upper),
+    "RMSE (T0)": apple_results.fit_diagnostics.rmse_pre,
+    "p-value": apple_results.inference.p_value
+}
+
+# Convert the filtered data into a DataFrame
+appletable_df = pd.DataFrame(list(required_data.items()), columns=["Metric", "Value"])
+
+print(appletable_df.to_markdown())
+
+```
+
+
+This is unsurprising, and the practical results speak for themselves. Going viral clearly contributed a lot to Tyla's success across both platforms, as the estimated counterfactuals spell out very plainly that her reach would be a lot flatter compared to what it in fact was/is. This method can also be used with multiple treated units, as we see in the paper, but I haven't written this for ``mlsynth`` just yet. 
+
+# Prediction Intervals: When Did *Water* Actually Hit?
+
+Everything above reports one number per platform, the ATT, with a confidence interval around it. That interval answers a question about an *average*: across the whole post-period, how precisely do we know the mean effect? It is silent on the question you probably care about more, which is what happened on any *particular* day. Going viral is not a light switch that flips once and holds. It builds, peaks, and decays, and an average over ten months hides all of that.
+
+``mlsynth`` now attaches the bootstrap prediction intervals of Jiang, Li, Shen and Zhou (2025) to every fitted PDA variant. Set ``prediction_intervals=True`` and you get a band around each period's effect. The distinction from the confidence interval is worth being clear about, because they are not the same object and the prediction interval is always the wider of the two. A confidence interval for the ATT carries only *estimation* error, the uncertainty in the weights we fit. A prediction interval also carries *out-of-sample* error, the fact that even with the true weights in hand, the counterfactual on any given day is a random draw we never observe. Their Algorithm 2.1 gets at this by resampling the pre-period prediction error with a dependent wild bootstrap and the post-period error with a residual bootstrap, refitting at the fixed $\tau$ on each draw, and reading quantiles of the self-normalized statistic $\widehat e_t / \sqrt{\widehat V_t + \widehat \sigma^2}$. The two variance pieces in that denominator are exactly the two sources of error.
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+import numpy as np
+
+def with_intervals(df, outcome_col):
+    config = {
+        "df": df,
+        "treat": "Water",
+        "time": "Date",
+        "outcome": outcome_col,
+        "unitid": "Artist",
+        "counterfactual_color": ["red"],
+        "treated_color": "black",
+        "display_graphs": False,
+        "method": "l2",
+        "prediction_intervals": True,
+        "pi_n_boot": 199,
+        "pi_seed": 0
+    }
+    results = PDA(config).fit()
+    fit = results.fits["l2"]
+    effect = fit.prediction_intervals["effect"]
+    dates = np.sort(df.loc[df["Water"] == 1, "Date"].unique())
+    return results, fit, effect, dates
+
+
+def onset_row(label, df, outcome_col):
+    results, fit, effect, dates = with_intervals(df, outcome_col)
+    lower = np.asarray(effect["eq_lower"])
+    upper = np.asarray(effect["eq_upper"])
+    point = np.asarray(effect["point"])
+    first = int(np.flatnonzero(lower > 0)[0])
+    peak = int(point.argmax())
+    return {
+        "Platform": label,
+        "Studentization": fit.prediction_intervals["studentization"],
+        "First day the PI clears zero": f"{pd.Timestamp(dates[first]).date()} (t+{first + 1})",
+        "Peak effect": f"{point[peak]:,.0f} on {pd.Timestamp(dates[peak]).date()}",
+        "Days spanning zero": f"{int(((lower <= 0) & (upper >= 0)).sum())} of {len(point)}",
+        "PI width, first vs last": f"{upper[0] - lower[0]:,.0f} to {upper[-1] - lower[-1]:,.0f}"
+    }
+
+onset = pd.DataFrame([
+    onset_row("Spotify", spotify_df, outcome),
+    onset_row("Apple Music", apple_df, "Playlists")
+])
+
+print(onset.set_index("Platform").T.to_markdown())
+```
+
+Two things fall out of this, and neither is visible in the ATT.
+
+The first is the onset date. On both platforms, the first day whose 95% interval sits entirely above zero is September 5, 2023, nineteen days after the normalization date. These are two separate panels with different donor pools, different outcome metrics, and pre-periods of very different lengths (229 days for Spotify against 594 for Apple), fit independently. That they agree to the day is the sort of corroboration a single averaged number cannot give you. It also lines up with the story: the Kigali performance is the spark, but the effect on playlist behavior takes a couple of weeks to show up above the noise.
+
+The second is that the *shape* of the uncertainty differs sharply across platforms, which I did not expect. Apple's bands are essentially flat, opening around 53 units wide and ending around 55. Spotify's more than quintuple, from about 45 to 234. The counterfactual Tyla on Spotify becomes progressively harder to predict the further we extrapolate from the pre-period, while the Apple counterfactual stays about as predictable in June 2024 as it was in August 2023. If you were using this to make a decision, that difference matters more than the ATT does: the same headline effect is a much shakier claim on one platform than the other, and only the per-period bands say so.
+
+Worth flagging one honest wrinkle. On the Spotify panel the first week of post-treatment effects is *negative*, and significantly so, with seven days whose interval lies entirely below zero before the effect turns positive and stays there. I would not read much into it, but I would not hide it either. It is the kind of thing that an ATT of $+1218$ papers over completely.
+
+One implementation note: both panels here report ``sandwich`` studentization, meaning the post-selection OLS HAC variance was available. The $\ell_2$ relaxation falls back to a $\sigma^2$-only studentization when the controls outnumber the pre-periods, which is the genuinely dense regime this estimator is built for. That is not the case here (59 donors against 229 pre-periods on Spotify), so we get the sandwich. If you scale this up to the "4 or 500 artists" I complain about not having below, expect the fallback instead.
+
+# Caveats
+
+There are a few caveats to this, though:
+
+- For one, these **aren't** raw Spotify or Apple data, so there's certainly measurement error in these metrics. For some reason, Songstats aggregates their data funny, only having, for example, Playlist Reach data for [Rihanna](https://songstats.com/artist/p3uwqx2a/rihanna?source=spotify) going back to 2023, which is unusual given how popular an artist Rihanna is. Presumably, there's plenty of noise and corruption in these metrics, so it would be cool to see how this model would play with real Spotify data (or other streaming metric quasi-experiments).
+- Secondly, the donor pool is kind of small. Songstats' latent API that I used to collect these metrics isn't really built to grab many artists en masse; I'm sure it's possible with a little Selenium work to get data on a substantial number of artists (all of it rests on collecting the unique artist ID's, for example Tyla's is: 7ln14gwj), but I was much too lazy to do that. So in theory, it would be possible to add many more artists to this dataset to see how the estimator behaves when there are 4 or 500 artists to work with.
+
+Either way, this is how to use $\ell_2$-PDA to estimate causal impacts. Check our Zhentao and Yishu's paper for the technical econometric theory and justification. And, you know [where to find me](https://jgreathouse9.github.io/) should you have questions.

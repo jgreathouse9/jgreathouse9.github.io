@@ -236,13 +236,13 @@ Here for the controls, Piscadera Bay exerts heavy influence on the synthetic con
 from mlsynth import MAREX
 import pandas as pd
 
-df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
+df = pd.read_csv("Data/Curacao_EXP_922.csv")
 
 config = {"df": df,
           "unitid": "town",
           "time": "time",
           "outcome": "Y_obs",
-          "design": "eq11",
+          "design": "penalized",
           "T0": 128,
           "m_min": 1,
           "m_max": 3,
@@ -283,7 +283,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-df = pd.read_csv("https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/Curacao_EXP_922.csv")
+df = pd.read_csv("Data/Curacao_EXP_922.csv")
 df_pre = df[df["time"] <= 120].copy()
 df["Region"]=0
 
@@ -291,11 +291,12 @@ config = {"df": df,
           "unitid": "town",
           "time": "time",
           "outcome": "Y_obs",
+          "design": "penalized",
           "T0": 128,
           "m_min": 1,
           "m_max": 5,
           "cluster": "Region",
-          "program_type": "MIQP", "blank_periods": 28, "inference": True, "display_graph": True}
+          "program_type": "MIQP", "blank_periods": 28, "inference": True, "display_graph": True, "lambda1": 0.02, "lambda2": 0.02}
 
 design = MAREX(config).fit()
 

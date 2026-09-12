@@ -8,7 +8,7 @@ This will be a short blog post. I've spent the last two months doing a little in
 
 Chances are if you're reading this, you know what I mean by the notion of SUTVA, or the stable unit treatment value assumption. It is the idea that if we care about the causal impact of a treatment on one unit, but other units are affected by the treatment or otherwise experience a similar treatment, that this exposure confounds our treatment effect with respect to the original unit we do care about. Say we wish to study the impact of German Reunification on West Germany's GDP. We know West Germany was exposed, but what about neighboring nations like Austria or France? What if the reunification had regional effects? Analysts therefore have a problem: Austria and France may be very similar to West Germany, and therefore informative of West Germany's counterfactual, but we are concerned they are exposed or affected by the main treatment of interest. What do we do? Before, researchers would need to drop these units or argue for their inclusion/exclusion, despite them being treated. Now, we do not need to do that, as SCM has a few approaches that deal with spillovers (this post covers just [one](https://arxiv.org/abs/2405.01645)). The approach, called iterative synthetic controls, is deceptively simple.
 
-Suppose Austria and France are partly treated. Step one of iSCM is to estimate a synthetic control for Austria, including France as a donor but excluding West Germany. Which SCM flavor you ask? Any one you like! For the purposes of this post, we will be using the Robsut SCM and the Robust PCA SCM methods from ```mlsynth```. The precise details are not really important, but you may [read the docs](https://mlsynth.readthedocs.io/en/latest/clustersc.html) should you like.  We then take the model predictions for Austria across the full pre and post period and replace the original Austria with the synthetic control values that the model predicts for Austria.
+Suppose Austria and France are partly treated. Step one of iSCM is to estimate a synthetic control for Austria, including France as a donor but excluding West Germany. The SCM that does the cleaning is handled internally by ```mlsynth```'s spillover-aware estimator; the precise details are not really important here, but you may [read the docs](https://mlsynth.readthedocs.io/en/latest/spillsynth.html) should you like. We then take the model's prediction for Austria and replace Austria's contaminated post-treatment outcomes with the synthetic values the model expects absent any spillover.
 
 Next, we do France: **using the cleaned up Austria as a donor**, we estimate the synthetic control for France, using the now-cleaned up Austria and the remaining donor pool units. As before, we replace the values for the original France (in the original dataset) with the new synthetic France. We now have cleaned up our two donors that may be exposed to the treatment.
 
@@ -22,7 +22,7 @@ Now, with these two cleaned donors, we estimate the counterfactual for West Germ
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 ```
 
-First we estimate the orignal model. You will find our handy-dandy util function ```iterative_scm``` is now imported.
+First we estimate the original model with ```CLUSTERSC```, the baseline that treats Austria and France as ordinary donors.
 
 ```{python}
 
@@ -31,7 +31,6 @@ First we estimate the orignal model. You will find our handy-dandy util function
 
 import pandas as pd
 from mlsynth import CLUSTERSC
-from mlsynth.utils.spillover import iterative_scm
 
 # Load the reunification dataset
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/german_reunification.csv"
@@ -53,40 +52,48 @@ config = {
 originalresult = CLUSTERSC(config).fit()
 
 ```
-These are the original results., You may check them against [my coworker's dissertation](https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&context=gc_etds) if you wish. Now we see how sensitive the results are to adjusting for spillover effects.
+These are the original results. Now we see how sensitive the results are to adjusting for spillover effects. For that we hand the same problem to ```SPILLSYNTH```, the spillover-aware estimator, and ask it for the iterative method.
 
 ```{python}
 
 #| fig-align: center
 
+from mlsynth import SPILLSYNTH
 from IPython.display import display, Markdown
 
-iSCM_result = iterative_scm(CLUSTERSC(config), spillover_unit_identifiers=["Austria", "France"], method="BOTH")
+spill_config = {
+    "df": df,
+    "outcome": "gdp",
+    "treat": "Reunification",
+    "unitid": "country",
+    "time": "year",
+    "method": "iterative",                 # the waterfall donor-cleaning method
+    "affected_units": ["Austria", "France"],  # units we suspect are partly treated
+    "display_graphs": True,
+}
 
-def summarize_att_rmse_markdown(iSCM_result):
-    rows = []
-    for method in ['PCR', 'RPCA']:
-        sub = iSCM_result[method].sub_method_results[method]
-        att = sub.effects.additional_effects['ATT']
-        percent_att = sub.effects.additional_effects.get('Percent ATT', None)
-        t0_rmse = sub.fit_diagnostics.additional_metrics['T0 RMSE']
+iSCM = SPILLSYNTH(spill_config).fit()
+fit = iSCM.iterative
 
-        rows.append({
-            "Method": method,
-            "ATT": f"{att:,.0f}",
-            "Percent ATT": f"{percent_att:.2f}%" if percent_att is not None else "—",
-            "T0 RMSE": f"{t0_rmse:,.1f}",
-        })
+effects = pd.DataFrame(
+    [
+        {"Quantity": "Naive SCM ATT",          "Value": f"{iSCM.att_scm:,.0f}"},
+        {"Quantity": "Spillover-adjusted ATT", "Value": f"{iSCM.att:,.0f}"},
+        {"Quantity": "Pre-treatment RMSE",     "Value": f"{fit.pre_rmspe:,.1f}"},
+    ]
+)
+spillovers = pd.DataFrame(
+    [{"Cleaned donor": u, "Spillover effect": f"{v:,.0f}"}
+     for u, v in fit.spillover_att.items()]
+)
 
-    df = pd.DataFrame(rows)
-    md_table = df.to_markdown(index=False)
-    display(Markdown(f"### Iterative SCM \n\n{md_table}"))
-
-summarize_att_rmse_markdown(iSCM_result)
+display(Markdown("### Iterative SCM\n\n" + effects.to_markdown(index=False)))
+display(Markdown("#### Post-period spillover carried by each cleaned donor\n\n"
+                 + spillovers.to_markdown(index=False)))
 
 ```
 
-You pass the original ```config``` to the util function, and you pass a list of strings that denote which units we believe are partly treated. Form there, the algorithm under the hood handles the donor cleaning, and returns back the results of the final SCM run with both donors cleaned. Note that if you want both PCR and RPCA cleaning, we pass it as ```method="BOTH"``` to ```iterative_scm```. We can see that the results are very similar to the original SCM. The pre-treatment fits degrade only very slightly (even more so with the Robust PCA method, highlighting its robustness to tiny tweaks in the model). Speaking of RPCA, the new weights are 'Belgium': 0.271, 'Norway': 0.552, 'New Zealand': 0.34, whereas before they were 'Austria': 0.023, 'France': 0.354, 'Norway': 0.485, 'New Zealand': 0.296. Austria goes away as a weighed donor, but there's not very much change in the pre-treatment fit or the practical conclusions we draw from the analysis. When we use only Austria as the cleaned unit, RPCA's weights are 'UK': 0.237, 'France': 0.607, 'Norway': 0.191, 'New Zealand': 0.12 with an ATT of -1536.355. When we use only France, the ATT is -1490.636 and the weights are 'Austria': 0.262, 'Denmark': 0.004, 'Norway': 0.517, 'New Zealand': 0.378. Of course, the key aspect of this procedure is knowing which units are likely to have spillover effects
+You pass the same ```config``` you would give any ```mlsynth``` estimator, set ```method="iterative"```, and hand it a list of the units you believe are partly treated through ```affected_units```. From there the algorithm handles the donor cleaning under the hood and returns a single spillover-adjusted fit, with the naive synthetic control kept alongside for comparison. The naive fit — the one that trusts Austria and France as ordinary donors — puts the ATT at about -1,306. Once we clean both donors, the adjusted ATT moves to about -1,384: a slightly larger drop, not a smaller one. The reason is in the per-donor spillover column. Austria carried a negative post-reunification spillover of roughly -261 and France a positive one of about +172, so netting them out leaves West Germany looking a little worse off than the naive fit suggested, not better. Clean only Austria and the ATT is about -1,390; clean only France and it is about -1,295. The pre-treatment RMSE sits at about 61 either way, because this waterfall reuses the pre-period weights and only rewrites the affected donors' post-treatment values — the fit you validated before the intervention is the fit you keep, so the donor weights do not move; what moves is the counterfactual after 1990. Either way the headline is unchanged: reunification cost West German per-capita GDP a great deal, and that conclusion survives the spillover adjustment. Of course, the key aspect of this procedure is still knowing which units are likely to have spillover effects in the first place.
 
 
 # Comments

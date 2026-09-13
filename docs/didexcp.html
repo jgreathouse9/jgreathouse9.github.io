@@ -570,7 +570,7 @@ g_t = y_{1t} - \sum_{j\in\mathcal N_0} w_j\, y_{jt},
 <p>Let me show the weights and the intercept in the flesh. I will use Abadie, Diamond and Hainmueller’s canonical Proposition 99 setup: California is treated by the 1989 anti-tobacco law, there are 38 control states, and we observe per-capita cigarette sales from 1970 to 2000. To follow along you’ll want the <code>dataprep</code> helper from my <code>mlsynth</code> package:</p>
 <pre class="{shell}"><code>pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
 <p>We load the panel and hand it to <code>dataprep</code>, which returns the treated vector <code>y</code>, the <code>donor_matrix</code> of the 38 controls, and the number of pre-treatment periods.</p>
-<div id="409348cc" class="cell" data-execution_count="2">
+<div id="1b9fdde6" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.datautils <span class="im">import</span> dataprep</span>
@@ -588,7 +588,7 @@ g_t = y_{1t} - \sum_{j\in\mathcal N_0} w_j\, y_{jt},
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now the estimator, exactly as the algebra prescribes. The uniform weights <span class="math inline">\(1/N_0\)</span> are applied by averaging the donor matrix across its columns; the intercept <span class="math inline">\(\beta^\ast\)</span> is the mean pre-treatment gap; the counterfactual is the shifted donor mean; and the ATT is the average post-treatment gap between California and that counterfactual.</p>
-<div id="a962266f" class="cell" data-execution_count="3">
+<div id="4d7a5380" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y      <span class="op">=</span> prepped[<span class="st">"y"</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>T0     <span class="op">=</span> prepped[<span class="st">"pre_periods"</span>]</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> prepped[<span class="st">"donor_matrix"</span>]</span>
@@ -631,7 +631,7 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 </div>
 <p>The counterfactual does not hug California especially well before 1989 — it undershoots for the first few years and overshoots later. That misfit is the whole reason SCM exists, and it is parallel trends failing in front of you. The uniform weights force the counterfactual to be the <em>average</em> control state, shifted to California’s level; the intercept can only slide that line up and down, it cannot bend it. If California’s pre-period gap is not flat, no choice of <span class="math inline">\(\beta\)</span> will make it flat, and the gap you see before 1989 is a preview of the bias you cannot see after it.</p>
 <p>None of this hangs on my hand-rolled arithmetic. The <a href="https://github.com/igerber/diff-diff"><code>diff-diff</code></a> package — a small, dedicated DID estimator, a cousin to my own <code>mlsynth</code> — computes the same effect from the plain <span class="math inline">\(2 \times 2\)</span> table, once we hand it the two indicators DID actually runs on: a treated-group flag (California, every year) and a post flag (every state, 1989 on).</p>
-<div id="86ab1011" class="cell" data-execution_count="5">
+<div id="4da40900" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> diff_diff <span class="im">import</span> DifferenceInDifferences</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DID's two indicators, rebuilt from the panel: a treated-group flag</span></span>
@@ -665,7 +665,7 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789308426363" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789309385259" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external"></a>
@@ -679,7 +679,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789308354393" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789309310280" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -693,7 +693,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789308354385" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789309310272" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -704,7 +704,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789309310276" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
@@ -728,7 +728,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
+<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789309310279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -752,7 +752,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789308354384" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789309310271" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -776,7 +776,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789309310280" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -793,7 +793,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789308354390" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
+<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789309310278" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -817,7 +817,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789309310276" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -834,7 +834,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789309310279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -858,7 +858,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789309310279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -880,7 +880,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789309310279" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -902,7 +902,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789309310276" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -926,7 +926,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789309310276" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -948,7 +948,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789308354393" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789309310280" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -972,7 +972,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789308354391" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789309310278" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -996,7 +996,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789308354386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789309310273" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1020,7 +1020,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789308354386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789309310273" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -1044,7 +1044,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789308354384" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789309310271" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -1068,7 +1068,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789309310276" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>

@@ -219,8 +219,22 @@ window.Quarto = {
    
   <ul>
   <li><a href="#start-with-parallel-trends" id="toc-start-with-parallel-trends" class="nav-link active" data-scroll-target="#start-with-parallel-trends">Start with parallel trends</a></li>
-  <li><a href="#the-same-story-in-optimization-language" id="toc-the-same-story-in-optimization-language" class="nav-link" data-scroll-target="#the-same-story-in-optimization-language">The same story in optimization language</a></li>
-  <li><a href="#where-synthetic-control-comes-in" id="toc-where-synthetic-control-comes-in" class="nav-link" data-scroll-target="#where-synthetic-control-comes-in">Where synthetic control comes in</a></li>
+  <li><a href="#first-principles-the-closest-number-to-a-sequence" id="toc-first-principles-the-closest-number-to-a-sequence" class="nav-link" data-scroll-target="#first-principles-the-closest-number-to-a-sequence">First principles: the closest number to a sequence</a></li>
+  <li><a href="#more-than-one-sequence-and-what-to-call-them" id="toc-more-than-one-sequence-and-what-to-call-them" class="nav-link" data-scroll-target="#more-than-one-sequence-and-what-to-call-them">More than one sequence, and what to call them</a>
+  <ul class="collapse">
+  <li><a href="#averaging-down-a-column" id="toc-averaging-down-a-column" class="nav-link" data-scroll-target="#averaging-down-a-column">Averaging down a column</a></li>
+  </ul></li>
+  <li><a href="#the-gap-and-the-average-difference" id="toc-the-gap-and-the-average-difference" class="nav-link" data-scroll-target="#the-gap-and-the-average-difference">The gap, and the average difference</a>
+  <ul class="collapse">
+  <li><a href="#where-day-1-comes-in" id="toc-where-day-1-comes-in" class="nav-link" data-scroll-target="#where-day-1-comes-in">Where day 1 comes in</a></li>
+  </ul></li>
+  <li><a href="#the-weights-were-hiding-in-the-control-average" id="toc-the-weights-were-hiding-in-the-control-average" class="nav-link" data-scroll-target="#the-weights-were-hiding-in-the-control-average">The weights were hiding in the control average</a></li>
+  <li><a href="#one-problem-two-knobs" id="toc-one-problem-two-knobs" class="nav-link" data-scroll-target="#one-problem-two-knobs">One problem, two knobs</a>
+  <ul class="collapse">
+  <li><a href="#what-parallel-trends-is-doing-in-this-picture" id="toc-what-parallel-trends-is-doing-in-this-picture" class="nav-link" data-scroll-target="#what-parallel-trends-is-doing-in-this-picture">What parallel trends is doing in this picture</a></li>
+  <li><a href="#solving-it-both-ways" id="toc-solving-it-both-ways" class="nav-link" data-scroll-target="#solving-it-both-ways">Solving it, both ways</a></li>
+  <li><a href="#why-one-wins-so-badly-here" id="toc-why-one-wins-so-badly-here" class="nav-link" data-scroll-target="#why-one-wins-so-badly-here">Why one wins so badly here</a></li>
+  </ul></li>
   <li><a href="#proposition-99-with-uniform-weights-and-an-intercept" id="toc-proposition-99-with-uniform-weights-and-an-intercept" class="nav-link" data-scroll-target="#proposition-99-with-uniform-weights-and-an-intercept">Proposition 99, with uniform weights and an intercept</a></li>
   <li><a href="#so-what" id="toc-so-what" class="nav-link" data-scroll-target="#so-what">So what?</a></li>
   </ul>
@@ -272,12 +286,12 @@ window.Quarto = {
 </div>
 <hr>
 <p>After the <a href="averagesexcp.html">last post</a>, where I showed that the arithmetic mean is really the solution to an optimization problem, somebody asked me a good question: <em>why do people keep saying difference-in-differences (DID) is just synthetic control (SCM) with uniform weights?</em> It is a fair thing to be confused about. The two are usually taught in different classes, with different notation, and DID in particular is almost never presented as an optimization problem at all — it is presented as a table with four cells and a subtraction, justified by parallel trends.</p>
-<p>So let me start where everyone already is, with parallel trends. Then I will translate that familiar story into the same optimization problem we solved for the mean last time — only now with the weights held fixed — and show that, told this way, the link to synthetic control is a line of algebra rather than a slogan. At the end I will run the whole thing on Proposition 99 in Python, so you can watch the weights and the intercept do their jobs.</p>
+<p>So let me start where everyone already is, with parallel trends. Then I will rebuild the whole thing from one axiom — the closest number to a sequence — until DID and synthetic control fall out as the <em>same</em> optimization problem asked under two different restrictions. At the end I will run it on Proposition 99 in Python, so you can watch the weights and the intercept do their jobs.</p>
 <section id="start-with-parallel-trends" class="level2">
 <h2 class="anchored" data-anchor-id="start-with-parallel-trends">Start with parallel trends</h2>
 <p>Almost everyone who has met DID has met parallel trends. The setup is two groups, one treated and one not, observed before and after some intervention. DID takes the <em>change</em> in the treated group’s outcome and subtracts the <em>change</em> in the control group’s outcome. If, absent treatment, the two groups’ average outcomes would have moved in parallel, then the control group’s change stands in for the change the treated group would have had anyway, and the leftover — the difference of the two differences — is the treatment effect.</p>
 <p>What is parallel trends really saying, though? Set the formula aside for a second. Suppose that on the very first day we look, our treated unit sits about 5 units above the control average. Not because of treatment — nothing has happened yet — but simply because that is where it starts: maybe it is a richer state, a bigger market, a heavier-smoking population. Parallel trends is the claim that this gap of 5 is <em>sticky</em>. On the next day, absent treatment, the treated unit is again about 5 above the controls, in expectation. Ten periods later, still about 5. The two lines may climb, fall, and zig-zag with the business cycle however they like — but the <em>distance between them</em> stays parked at 5, period after period, for as long as no treatment intervenes.</p>
-<p>Sit with what that does and does not allow. It does not ask the treated and control groups to be at the same level — they are 5 apart the entire time, and that is fine. It asks only that the 5 never moves. So the treatment, when it finally arrives, is whatever makes the gap <em>depart</em> from 5. If the gap opens up to 32 after the policy, the treatment did the extra 27; the 5 was always going to be there. That one sticky number is the whole ballgame — and, as we are about to see, it is exactly the number the optimization solves for.</p>
+<p>Sit with what that does and does not allow. It does not ask the treated and control groups to be at the same level — they are 5 apart the entire time, and that is fine. It asks only that the 5 never moves. So the treatment, when it finally arrives, is whatever makes the gap <em>depart</em> from 5. If the gap opens up to 11 after the policy, the treatment did the extra 6; the 5 was always going to be there. That one sticky number is the whole ballgame — and, as we are about to see, it is exactly the number the optimization solves for.</p>
 <p><a href="#fig-pta-cartoon" class="quarto-xref">Figure&nbsp;1</a> draws both worlds. On the left, the two lines wander all over — up, down, with the cycle — but the distance between them never leaves 5. That is parallel trends. On the right, the two start 5 apart and then drift; the gap grows to 15 for reasons that have nothing to do with any treatment. Both panels are the untreated world, before anyone has been treated. DID is only trustworthy in the world on the left.</p>
 <div id="cell-fig-pta-cartoon" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
@@ -300,84 +314,263 @@ Figure&nbsp;1: What parallel trends assumes, absent treatment: the gap between t
 <p>the same <span class="math inline">\(\beta\)</span> before <em>and</em> after the intervention. This is the assumption that the average untreated outcome evolves in parallel for the two groups; everything DID reports is downstream of it.</p>
 <p>Here is the thing I want to flag before we go further, because it is the crux of the question I was asked. In the way DID is almost always taught and applied, this is a <strong>large-<span class="math inline">\(N\)</span></strong> statement. You have many controls, and <span class="math inline">\(\bar{y}_{0t}\)</span> is not really “38 states averaged with weight <span class="math inline">\(1/38\)</span>” in anyone’s mind — it is a sample estimate of a population expectation, <span class="math inline">\(\mathbb{E}[y_t(0) \mid D = 0]\)</span>, the untreated mean in the control population. As the control group grows, the sample average converges to that expectation, and nobody stops to notice that an expectation is itself a weighting. In the <a href="https://doi.org/10.1257/jel.20251650">Baker, Callaway, Cunningham, Goodman-Bacon and Sant’Anna (2026)</a> practitioner’s guide the point is explicit from the first equations: the DID estimand is written with a <em>weighted</em> expectation <span class="math inline">\(\mathbb{E}_\omega[\cdot]\)</span>, and the weights, they note, enter “as part of the definition of the causal parameter” — before you have estimated anything. Large-<span class="math inline">\(N\)</span> asymptotics just let you fold them into the word “expectation” and stop looking. We do not usually need to treat the weights as objects. That does not mean they are not there.</p>
 </section>
-<section id="the-same-story-in-optimization-language" class="level2">
-<h2 class="anchored" data-anchor-id="the-same-story-in-optimization-language">The same story in optimization language</h2>
-<p>Now let me translate all of that into the language of the <a href="averagesexcp.html">last post</a>, where every summary statistic turned out to be an argmin. The bridge is one identity we proved there: a (weighted) mean is the constant that minimizes (weighted) squared error. In the population,</p>
+<section id="first-principles-the-closest-number-to-a-sequence" class="level2">
+<h2 class="anchored" data-anchor-id="first-principles-the-closest-number-to-a-sequence">First principles: the closest number to a sequence</h2>
+<p>Everything below is built out of one idea, and it is the idea from the <a href="averagesexcp.html">last post</a>. Given a list of numbers, which <em>single</em> number best stands in for the whole list?</p>
+<p>We have to say what “best” means, and the answer is <em>distance</em>: the best stand-in is the number sitting closest to all of them at once, where the cost of being far away is the squared difference. Written down, that is</p>
 <p><span class="math display">\[
-\mathbb{E}_\omega[X] = \operatorname*{argmin}_{c \in \mathbb{R}} \; \mathbb{E}_\omega\!\big[(X - c)^2\big] ,
+\operatorname{mean}(x_1,\dots,x_n)
+\defeq \operatorname*{argmin}_{c\,\in\,\mathbb{R}} \sum_{i=1}^n (x_i - c)^2
+= \frac{1}{n}\sum_{i=1}^n x_i .
 \]</span></p>
-<p>and in a sample,</p>
-<p><span class="math display">\[
-\sum_i \omega_i \, x_i = \operatorname*{argmin}_{c \in \mathbb{R}} \; \sum_i \omega_i \, (x_i - c)^2 .
-\]</span></p>
-<p>So the weighted expectation the practitioner’s guide puts at the center of DID <em>is</em> an argmin, and the <span class="math inline">\(\omega\)</span> riding on the expectation is the same <span class="math inline">\(\omega\)</span> that weights the squared errors. Translating the notation, the control-group counterfactual is the expectation-side name for a one-parameter least-squares fit:</p>
-<p><span class="math display">\[
-\underbrace{\mathbb{E}_\omega[\,y_t(0) \mid D = 0\,]}_{\text{expectation notation}}
-\;=\;
-\underbrace{\operatorname*{argmin}_{c \in \mathbb{R}} \sum_{j \in \mathcal{N}_0} \omega_j \, (y_{jt} - c)^2}_{\text{optimization notation}}
-\;\overset{\omega \,=\, 1/N_0}{=}\;
-\bar{y}_{0t} .
-\]</span></p>
-<p>Read left to right it is a population expectation; read right to left it is a weighted mean, which is a weighted argmin, which — at uniform weights — is the plain control average <span class="math inline">\(\bar{y}_{0t}\)</span>. The weights that large-<span class="math inline">\(N\)</span> hid inside the word “expectation” are now out in the open as the coefficients <span class="math inline">\(\omega_j\)</span>. What is left is to put the treated unit and a level back in.</p>
-</section>
-<section id="where-synthetic-control-comes-in" class="level2">
-<h2 class="anchored" data-anchor-id="where-synthetic-control-comes-in">Where synthetic control comes in</h2>
-<p>Both methods minimize one and the same object: the least-squares fit of the treated unit’s pre-treatment path to the donors, with an intercept for the level, over weights on the simplex.</p>
-<p><span class="math display">\[
-\min_{\mathbf{w}, \, \beta} \; \big\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \beta \mathbf{1} \big\|_2^2
-\qquad \text{subject to} \qquad
-w_j \ge 0, \quad \textstyle\sum_{j \in \mathcal{N}_0} w_j = 1 .
-\]</span></p>
-<p>Here <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T_0}\)</span> is the treated unit over the <span class="math inline">\(T_0\)</span> pre-treatment periods, <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times N_0}\)</span> the donor matrix, <span class="math inline">\(\mathbf{w}\)</span> the donor weights, and <span class="math inline">\(\beta\)</span> an intercept — a level shift, the “5” from the top of the post. This is ordinary least squares with an intercept, over the probability simplex — the same non-negative, sum-to-one constraint the arithmetic mean’s own weights <span class="math inline">\(1/n\)</span> satisfy. Deriving DID from it takes two steps: handle the intercept, then set the weights.</p>
-<p><strong>The intercept is a demeaning operator.</strong> The intercept never has to be searched over. For any fixed <span class="math inline">\(\mathbf{w}\)</span>, the best <span class="math inline">\(\beta\)</span> is the one-parameter fit of a single constant to the residual series <span class="math inline">\(\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\)</span>, and by the identity above that constant is the residual’s pre-period average, <span class="math inline">\(\beta^\ast(\mathbf{w}) = \tfrac{1}{T_0} \sum_{t \in \mathcal{T}_1} \big( y_{1t} - (\mathbf{Y}_0 \mathbf{w})_t \big)\)</span>. Substitute it back and <span class="math inline">\(\beta\)</span> disappears into a <em>centering</em> of both sides. Let the demeaning operator be</p>
-<p><span class="math display">\[
-\mathbf{M} \defeq \mathbf{I}_{T_0} - \tfrac{1}{T_0}\, \mathbf{1}\mathbf{1}^\top ,
-\]</span></p>
-<p>the <span class="math inline">\(T_0 \times T_0\)</span> matrix that subtracts a vector’s pre-period time-average from each of its entries. Profiling the intercept out of the objective leaves</p>
-<p><span class="math display">\[
-\min_{\beta} \big\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \beta \mathbf{1} \big\|_2^2
-= \big\| \mathbf{M}\mathbf{y}_1 - \mathbf{M}\mathbf{Y}_0 \mathbf{w} \big\|_2^2 .
-\]</span></p>
-<p>Adding an intercept and demeaning the data are the same operation: <span class="math inline">\(\beta\)</span> absorbs the common level and <span class="math inline">\(\mathbf{M}\)</span> removes it. What remains is a fit of the treated unit to the donors, both in deviations from their pre-period means, over <span class="math inline">\(\mathbf{w}\)</span> on the simplex. Synthetic control solves exactly this — it <em>searches</em> the simplex for the weights that fit best.</p>
-<p><strong>Set the weights to <span class="math inline">\(1/N_0\)</span>, and you have DID.</strong> Difference-in-differences does not search. It plants <span class="math inline">\(\mathbf{w}\)</span> at the centroid of the simplex, <span class="math inline">\(w_j = 1/N_0\)</span> for every donor, so <span class="math inline">\(\mathbf{Y}_0 \mathbf{w}\)</span> collapses to the plain control average <span class="math inline">\(\bar{\mathbf{y}}_0\)</span> and only the intercept is left. Write the per-period gap as</p>
-<p><span class="math display">\[
-g_t \defeq y_{1t} - \bar{y}_{0t}.
-\]</span></p>
-<p>Its pre-treatment average is DID’s intercept — the same one-parameter least-squares fit as before, with the “data points” now the gaps <span class="math inline">\(g_t\)</span>:</p>
-<p><span class="math display">\[
-\beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}} \sum_{t \in \mathcal{T}_1} (g_t - \beta)^2.
-\]</span></p>
-<p>The minimizer is the mean derivation all over again. With <span class="math inline">\(u_t(\beta) = g_t - \beta\)</span>, the chain rule gives each term’s derivative as <span class="math inline">\(2 u_t(\beta) \cdot (-1) = -2(g_t - \beta)\)</span>; summing and setting to zero,</p>
-<p><span class="math display">\[
--2 \sum_{t \in \mathcal{T}_1} (g_t - \beta) = 0
-\;\;\Longrightarrow\;\;
-\sum_{t \in \mathcal{T}_1} g_t - T_0 \beta = 0
-\;\;\Longrightarrow\;\;
-\beta^\ast = \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} g_t,
-\]</span></p>
-<p>and the second derivative <span class="math inline">\(2 T_0 &gt; 0\)</span> confirms it is a minimum. So <span class="math inline">\(\beta^\ast\)</span> is just the average pre-treatment gap — the sticky “5” from the top of the post, now estimated from the data — and the counterfactual is the control mean shifted by this one number, <span class="math inline">\(\hat{y}_{1t}(0) = \bar{y}_{0t} + \beta^\ast\)</span>.</p>
-<p>That least-squares fit is a <em>model</em> of the gap: it says the gap is one constant plus noise. And this is where parallel trends drops into the same lens. In expectation notation it reads <span class="math inline">\(\mathbb{E}[g_t] = \beta\)</span> for all <span class="math inline">\(t\)</span>; translated, that is the statement that the intercept is stable across the treatment date — the constant that best fits the pre-period gap is the same constant that best fits the post-period gap:</p>
-<p><span class="math display">\[
-\underbrace{\mathbb{E}[g_t] = \beta \;\; \forall \, t}_{\text{expectation notation}}
-\qquad\Longrightarrow\qquad
-\underbrace{\operatorname*{argmin}_{\beta} \, \mathbb{E}\!\!\sum_{t \in \mathcal{T}_1} (g_t - \beta)^2
-\;=\;
-\operatorname*{argmin}_{\beta} \, \mathbb{E}\!\!\sum_{t \in \mathcal{T}_2} (g_t - \beta)^2}_{\text{optimization notation}} .
-\]</span></p>
-<p>We only ever get to <em>solve</em> the left-hand problem — the post-period gaps <span class="math inline">\(g_t\)</span> for <span class="math inline">\(t \in \mathcal{T}_2\)</span> are unobserved, since they contain the counterfactual we are after. Parallel trends is precisely the license to carry the pre-period solution across the treatment date and use it on the right. This is the “5 never moves” claim written as an optimization: the single constant that minimizes the pre-period squared gap is the same constant that minimizes it afterward. Equivalently, the residual <span class="math inline">\(r_t = g_t - \beta^\ast\)</span> is mean-zero with no time structure — the gap is a flat line at <span class="math inline">\(\beta^\ast\)</span> in expectation, that same sticky number, pre and post alike.</p>
-<p>And now the weights and parallel trends are visibly the same conversation. The gap <span class="math inline">\(g_t = y_{1t} - \sum_j w_j y_{jt}\)</span> carries the weights inside it, so whether <span class="math inline">\(\mathbb{E}[g_t]\)</span> is flat is a fact about <span class="math inline">\(\mathbf{w}\)</span>, not about “California and the controls” in the abstract. Change <span class="math inline">\(\mathbf{w}\)</span> and you change the gap, and you change whether its expectation is a constant. The two methods make opposite bets with that lever:</p>
+<p>Read the middle piece out loud: “the value of <span class="math inline">\(c\)</span> that makes the total squared distance as small as possible.” Solving it is one derivative, <span class="math inline">\(-2\sum_i (x_i-c)=0\)</span>, so <span class="math inline">\(c=\frac1n\sum_i x_i\)</span>, and since the second derivative <span class="math inline">\(2n\)</span> is positive, that really is the bottom of the bowl.</p>
+<p>Two special cases carry the rest of this post:</p>
 <ul>
-<li><strong>DID</strong> fixes <span class="math inline">\(\mathbf{w} = 1/N_0\)</span> and then <em>assumes</em> the resulting gap is flat in expectation. Parallel trends is a hope about a gap you never got to shape.</li>
-<li><strong>SCM</strong> <em>chooses</em> <span class="math inline">\(\mathbf{w}\)</span> on the simplex to make the pre-period gap as flat as it can. It buys parallel pre-trends in-sample, by construction, instead of assuming it.</li>
+<li><span class="math inline">\(n=1\)</span>, the law of identity. The closest number to the one-item list <span class="math inline">\((x)\)</span> is <span class="math inline">\(x\)</span> itself. There is nothing to compromise between.</li>
+<li><span class="math inline">\(n=2\)</span>. The closest number to <span class="math inline">\((2,4)\)</span> is <span class="math inline">\(3\)</span>.</li>
 </ul>
-<p>So the weights were never a side issue that large-<span class="math inline">\(N\)</span> was right to hide. They are the one lever that decides whether parallel trends is even plausible, and DID’s choice to leave that lever parked at the center of the simplex <em>is</em> its identifying content.</p>
+<p>And notice what the mean already is: a <em>weighted sum</em>, <span class="math inline">\(\sum_i w_i x_i\)</span>, with every weight equal to <span class="math inline">\(w_i = 1/n\)</span>. The weights are there from the very beginning, even in the humblest average. That will matter.</p>
+</section>
+<section id="more-than-one-sequence-and-what-to-call-them" class="level2">
+<h2 class="anchored" data-anchor-id="more-than-one-sequence-and-what-to-call-them">More than one sequence, and what to call them</h2>
+<p>Last time we had one list of numbers. Now we have several, and they need names before we can do anything with them.</p>
+<p>A <em>sequence</em> here just means one unit’s path over time: a row of numbers. We observe <span class="math inline">\(N\)</span> units over <span class="math inline">\(T\)</span> periods, and we write</p>
+<p><span class="math display">\[
+y_{jt} \;=\; \text{the outcome of unit } j \text{ at time } t .
+\]</span></p>
+<p>The first subscript says <em>which unit</em>, the second says <em>when</em>. Unit <span class="math inline">\(1\)</span> is the treated unit, and its sequence is</p>
+<p><span class="math display">\[
+\mathbf{y}_1 = (y_{11},\, y_{12},\, \dots,\, y_{1T}).
+\]</span></p>
+<p>Every other unit is a control. We collect their labels in the set <span class="math inline">\(\mathcal{N}_0\)</span>, which has <span class="math inline">\(N_0\)</span> members, and each control <span class="math inline">\(j \in \mathcal{N}_0\)</span> has a sequence of its very own,</p>
+<p><span class="math display">\[
+\mathbf{y}_j = (y_{j1},\, y_{j2},\, \dots,\, y_{jT}), \qquad j \in \mathcal{N}_0 .
+\]</span></p>
+<p>So there is not one sequence now; there are <span class="math inline">\(N_0 + 1\)</span> of them stacked on top of each other. Let us make that physical. Take three units and three periods, with unit <span class="math inline">\(1\)</span> treated and units <span class="math inline">\(2\)</span> and <span class="math inline">\(3\)</span> as controls:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: center;"><span class="math inline">\(t=1\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(t=2\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(t=3\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">treated <span class="math inline">\(\mathbf{y}_1\)</span></td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">19</td>
+<td style="text-align: center;">18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">control <span class="math inline">\(\mathbf{y}_2\)</span></td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">control <span class="math inline">\(\mathbf{y}_3\)</span></td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">15</td>
+</tr>
+</tbody>
+</table>
+<p>Here <span class="math inline">\(N_0 = 2\)</span>, <span class="math inline">\(\mathcal{N}_0 = \{2,3\}\)</span>, and <span class="math inline">\(T = 3\)</span>. Reading the table: <span class="math inline">\(y_{12} = 19\)</span> is the treated unit in period <span class="math inline">\(2\)</span>, and <span class="math inline">\(y_{31} = 12\)</span> is control <span class="math inline">\(3\)</span> in period <span class="math inline">\(1\)</span>. Each <em>row</em> is one of the sequences we just named.</p>
+<section id="averaging-down-a-column" class="level3">
+<h3 class="anchored" data-anchor-id="averaging-down-a-column">Averaging down a column</h3>
+<p>There are two directions you can average a table like this, and only one of them is what we want. Averaging <em>along a row</em> would summarize one unit across time. Averaging <em>down a column</em> summarizes the controls at one moment, and that is the object DID is built from.</p>
+<p>So freeze a time <span class="math inline">\(t\)</span> and look only at the controls in that column. That column is a little list of numbers, <span class="math inline">\((y_{jt})_{j \in \mathcal{N}_0}\)</span> — and a list of numbers is exactly what the axiom knows how to handle. Apply it:</p>
+<p><span class="math display">\[
+\bar y_{0t}
+= \operatorname*{argmin}_{c}\sum_{j\in\mathcal N_0}(y_{jt}-c)^2
+= \frac{1}{N_0}\sum_{j\in\mathcal N_0} y_{jt}.
+\]</span></p>
+<p>The bar means “averaged,” the <span class="math inline">\(0\)</span> means “over the controls,” and the <span class="math inline">\(t\)</span> says we did it at one particular time. Doing that to each column in turn gives <span class="math inline">\(\bar y_{01} = \frac{10+12}{2} = 11\)</span>, then <span class="math inline">\(\bar y_{02} = \frac{12+16}{2} = 14\)</span>, then <span class="math inline">\(\bar y_{03} = \frac{11+15}{2} = 13\)</span>. Those three numbers are themselves a sequence, so we name it like everything else:</p>
+<p><span class="math display">\[
+\bar{\mathbf{y}}_0 = (11,\, 14,\, 13).
+\]</span></p>
+<p>This is the <em>synthetic</em> stand-in for the control group: not a real unit, just the column-by-column closest number.</p>
+</section>
+</section>
+<section id="the-gap-and-the-average-difference" class="level2">
+<h2 class="anchored" data-anchor-id="the-gap-and-the-average-difference">The gap, and the average difference</h2>
+<p>We now have two sequences we care about, the treated path <span class="math inline">\(\mathbf{y}_1\)</span> and the control average <span class="math inline">\(\bar{\mathbf{y}}_0\)</span>. Subtract them period by period and you get a third sequence — the one this whole post is really about:</p>
+<p><span class="math display">\[
+g_t \defeq y_{1t} - \bar y_{0t}, \qquad
+\mathbf{g} = (g_1,\, g_2,\, \dots,\, g_T).
+\]</span></p>
+<p>On our numbers:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: center;"><span class="math inline">\(t=1\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(t=2\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(t=3\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">treated <span class="math inline">\(\mathbf{y}_1\)</span></td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">19</td>
+<td style="text-align: center;">18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">control average <span class="math inline">\(\bar{\mathbf{y}}_0\)</span></td>
+<td style="text-align: center;">11</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">gap <span class="math inline">\(\mathbf{g}\)</span></td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">5</td>
+</tr>
+</tbody>
+</table>
+<p>Look at what happened. Both lines move around — the controls go <span class="math inline">\(11 \to 14 \to 13\)</span>, up then down, and the treated unit follows them <span class="math inline">\(16 \to 19 \to 18\)</span>. Neither path is flat. But the <em>distance between them</em> never budges. It is <span class="math inline">\(5\)</span>, three times in a row. That is the sticky number from the top of this post, sitting in a table.</p>
+<p>Now ask the axiom one more time, of this new sequence. What single number best stands in for the gaps? Same question, same answer — their mean:</p>
+<p><span class="math display">\[
+\beta^\ast
+= \operatorname*{argmin}_{\beta\,\in\,\mathbb{R}} \sum_{t=1}^{T_0}(g_t-\beta)^2
+= \frac{1}{T_0}\sum_{t=1}^{T_0} g_t
+\;=\; \frac{5+5+5}{3} \;=\; 5 .
+\]</span></p>
+<p>Here <span class="math inline">\(T_0\)</span> counts the periods <em>before</em> any treatment; in the table all three are pre-treatment. So <span class="math inline">\(\beta^\ast\)</span> is “the average difference” between the treated unit and its control average: one number, standing in for a whole sequence of differences.</p>
+<section id="where-day-1-comes-in" class="level3">
+<h3 class="anchored" data-anchor-id="where-day-1-comes-in">Where day 1 comes in</h3>
+<p>Suppose you only ever got to see day 1. Then your gap sequence is the one-item list <span class="math inline">\((g_1) = (5)\)</span>, and by the law of identity its closest number is <span class="math inline">\(5\)</span> itself. The day-1 difference <em>is</em> the estimate, because with one observation there is nothing to average.</p>
+<p>Add more pre-treatment days and nothing changes in kind, only in degree: the closest number to the gap sequence generalizes from “the difference on day 1” to “the average difference across the days.” So <span class="math inline">\(\beta^\ast\)</span> is not new machinery. It is the same closest-number question, asked of the difference sequence, and it collapses back to the day-1 difference when there is only one day.</p>
+<p>That single number is the level — the “5.”</p>
+</section>
+</section>
+<section id="the-weights-were-hiding-in-the-control-average" class="level2">
+<h2 class="anchored" data-anchor-id="the-weights-were-hiding-in-the-control-average">The weights were hiding in the control average</h2>
+<p>Here is the part that connects all of this to synthetic control, and it has been sitting in plain sight. Look again at how we built the control average in the first column:</p>
+<p><span class="math display">\[
+\bar y_{01} = 11 = \tfrac12 (10) + \tfrac12 (12)
+= w_2\, y_{21} + w_3\, y_{31}, \qquad w_2 = w_3 = \tfrac12 = \tfrac{1}{N_0}.
+\]</span></p>
+<p>That is a weighted sum, exactly as the axiom warned. Taking “the average” was never a neutral act: it <em>chose</em> weights of <span class="math inline">\(1/N_0\)</span> for every control, and it chose them before anyone looked at the data. Put general weights in their place and the gap becomes</p>
+<p><span class="math display">\[
+g_t = y_{1t} - \sum_{j\in\mathcal N_0} w_j\, y_{jt},
+\qquad w_j \ge 0, \quad \sum_{j\in\mathcal N_0} w_j = 1 .
+\]</span></p>
+<p>The two constraints keep the result an honest average: no negative shares, and the shares add to one. That set of allowed weights has a name, the <em>simplex</em>, and it is the same set the arithmetic mean has been living on all along.</p>
+<p>Our three little sequences can already show why the choice matters. With equal weights the gap was <span class="math inline">\((5,5,5)\)</span>, flat as a board. Put <em>all</em> the weight on control <span class="math inline">\(2\)</span> instead, <span class="math inline">\(w_2=1, w_3=0\)</span>, and the control path becomes <span class="math inline">\((10,12,11)\)</span>, so the gap becomes</p>
+<p><span class="math display">\[
+(16-10,\; 19-12,\; 18-11) = (6,\, 7,\, 7),
+\]</span></p>
+<p>which is not flat. Put all the weight on control <span class="math inline">\(3\)</span> and the gap is <span class="math inline">\((4,3,3)\)</span> — also not flat. Hold onto that last one; we meet it again in a moment.</p>
+<p>So “the gap is constant” was never a fact about the data alone. It was a fact about <em>the weights we happened to use.</em></p>
+</section>
+<section id="one-problem-two-knobs" class="level2">
+<h2 class="anchored" data-anchor-id="one-problem-two-knobs">One problem, two knobs</h2>
+<p>Step back and look at what we have actually been doing all along. We are trying to reproduce the treated unit’s pre-treatment path out of two ingredients: a weighted combination of the controls, and a level shift. Written as one optimization problem, with both ingredients left as unknowns,</p>
+<p><span class="math display">\[
+\min_{\mathbf w \,\in\, \mathcal W,\;\; \beta \,\in\, \mathcal B}\;
+\sum_{t \le T_0}\Big(\, y_{1t} \;-\; \beta \;-\; \sum_{j\in\mathcal N_0} w_j\, y_{jt} \,\Big)^{2} .
+\]</span></p>
+<p>That is the whole apparatus. There are exactly two knobs: the weights <span class="math inline">\(\mathbf w\)</span>, and the intercept <span class="math inline">\(\beta\)</span>. And the two methods we have been talking about are nothing more than two different decisions about which knob you are allowed to turn:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">weights <span class="math inline">\(\mathcal W\)</span></th>
+<th style="text-align: left;">intercept <span class="math inline">\(\mathcal B\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">classic synthetic control</td>
+<td style="text-align: left;">the simplex: <span class="math inline">\(w_j \ge 0,\ \sum_j w_j = 1\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\{0\}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">difference-in-differences</td>
+<td style="text-align: left;">the single point <span class="math inline">\(w_j = 1/N_0\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\mathbb{R}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Read that table twice, because it is the punchline. Each method frees exactly what the other one freezes. Synthetic control hunts over every allowed weighting but forbids itself a level shift. Difference-in-differences refuses to hunt at all, fixing the weights at the dead centre of the simplex, but lets the level go wherever it likes. Nothing else separates them: same objective, same data, same donors — different permissions.</p>
+<section id="what-parallel-trends-is-doing-in-this-picture" class="level3">
+<h3 class="anchored" data-anchor-id="what-parallel-trends-is-doing-in-this-picture">What parallel trends is doing in this picture</h3>
+<p>Freezing the weights is cheap; the price is paid later, and parallel trends is the bill. Because DID never gets to shape the gap, it has to <em>assume</em> the gap it was handed behaves. In the language of this optimization, the assumption is that the constant fitting the pre-treatment gaps is the same constant that would fit the post-treatment gaps:</p>
+<p><span class="math display">\[
+\operatorname*{argmin}_{\beta}\; \mathbb{E}\!\left[\sum_{t\le T_0}(g_t-\beta)^2\right]
+= \operatorname*{argmin}_{\beta}\; \mathbb{E}\!\left[\sum_{t&gt;T_0}(g_t-\beta)^2\right]
+= \beta^\ast .
+\]</span></p>
+<p>We only ever get to <em>solve</em> the left-hand one. The gaps after treatment contain the very counterfactual we are trying to recover, so they are not ours to use. Parallel trends is precisely the permission slip that lets us carry <span class="math inline">\(\beta^\ast\)</span> across the treatment date and use it on the right.</p>
+<p>Grant it and the counterfactual writes itself — take the control average and lift it by that one number, <span class="math inline">\(\hat y_{1t}(0) = \bar y_{0t} + \beta^\ast\)</span> — and the treatment effect is however far the gap <em>departs</em> from its sticky level,</p>
+<p><span class="math display">\[
+\hat\tau_t = g_t - \beta^\ast = y_{1t} - \big(\bar y_{0t} + \beta^\ast\big).
+\]</span></p>
+<p>Let the policy land in a fourth period. Suppose the controls come in at <span class="math inline">\(y_{24} = 13\)</span> and <span class="math inline">\(y_{34} = 17\)</span>, so <span class="math inline">\(\bar y_{04} = 15\)</span>, while the treated unit is observed at <span class="math inline">\(y_{14} = 26\)</span>. The counterfactual is <span class="math inline">\(15 + 5 = 20\)</span>, the observed <span class="math inline">\(26\)</span> is <span class="math inline">\(6\)</span> above it, and equivalently the gap jumped from <span class="math inline">\(5\)</span> to <span class="math inline">\(11\)</span>: <span class="math inline">\(\hat\tau_4 = 11 - 5 = 6\)</span>. The <span class="math inline">\(5\)</span> was always going to be there. The <span class="math inline">\(6\)</span> is the treatment.</p>
+<p>And now you can see what the weights have to do with parallel trends, which is the question I was actually asked. The gap carries <span class="math inline">\(\mathbf w\)</span> inside it. Change the weights and you change the gap, and you change whether its expectation is constant. DID fixes <span class="math inline">\(\mathbf w = 1/N_0\)</span> and then <em>hopes</em> the resulting gap is flat — a hope about a gap it never got to shape. Synthetic control <em>chooses</em> <span class="math inline">\(\mathbf w\)</span> to make the pre-period gap as flat as it can, buying in-sample parallel trends by construction instead of assuming it.</p>
+</section>
+<section id="solving-it-both-ways" class="level3">
+<h3 class="anchored" data-anchor-id="solving-it-both-ways">Solving it, both ways</h3>
+<p>We can just solve the thing, on our own three sequences, and watch each restriction do its work.</p>
+<p>Difference-in-differences first. The weights are nailed down at <span class="math inline">\(w_2=w_3=\tfrac12\)</span>, so <span class="math inline">\(\sum_j w_j y_{jt}\)</span> is the control average <span class="math inline">\((11,14,13)\)</span> and the only unknown left is <span class="math inline">\(\beta\)</span>. The problem collapses to the one we already solved, <span class="math inline">\(\min_{\beta} \sum_{t\le T_0} (g_t - \beta)^2\)</span> with <span class="math inline">\(\mathbf g = (5,5,5)\)</span>, whose solution is <span class="math inline">\(\beta^\ast = 5\)</span> and whose minimized total is <span class="math inline">\(0\)</span>. A perfect fit: <span class="math inline">\((11,14,13) + 5 = (16,19,18)\)</span>, exactly the treated path.</p>
+<p>Now classic synthetic control. Here <span class="math inline">\(\beta\)</span> is pinned at <span class="math inline">\(0\)</span> and the weights are free on the simplex. With two donors the simplex is just a line segment, so there is only one unknown: put <span class="math inline">\(w_2 = w\)</span> and <span class="math inline">\(w_3 = 1-w\)</span> with <span class="math inline">\(0 \le w \le 1\)</span>. The synthetic path is <span class="math inline">\(w\,\mathbf y_2 + (1-w)\,\mathbf y_3\)</span>, which period by period is <span class="math inline">\((12 - 2w,\; 16 - 4w,\; 15 - 4w)\)</span>, and subtracting it from the treated path <span class="math inline">\((16,19,18)\)</span> leaves residuals <span class="math inline">\((4 + 2w,\; 3 + 4w,\; 3 + 4w)\)</span>. Square them and add:</p>
+<p><span class="math display">\[
+\text{SSE}(w) = (4+2w)^2 + 2\,(3+4w)^2 = 36w^2 + 64w + 34 .
+\]</span></p>
+<p>Its derivative is <span class="math inline">\(72w + 64\)</span>, positive everywhere on <span class="math inline">\([0,1]\)</span> — the function climbs the whole way — so the smallest value sits at the left-hand end, <span class="math inline">\(w=0\)</span>. Synthetic control therefore puts <em>all</em> the weight on control <span class="math inline">\(3\)</span>, and its best achievable error is <span class="math inline">\(\text{SSE}(0) = 34\)</span>, with residuals <span class="math inline">\((4,3,3)\)</span>. There is that <span class="math inline">\((4,3,3)\)</span> again, exactly as promised.</p>
+</section>
+<section id="why-one-wins-so-badly-here" class="level3">
+<h3 class="anchored" data-anchor-id="why-one-wins-so-badly-here">Why one wins so badly here</h3>
+<p>Line them up:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">best fit it can reach</th>
+<th style="text-align: center;">total squared error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">classic synthetic control (<span class="math inline">\(\beta = 0\)</span>)</td>
+<td style="text-align: left;"><span class="math inline">\(w = (0,1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(34\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">difference-in-differences (<span class="math inline">\(w = 1/N_0\)</span>)</td>
+<td style="text-align: left;"><span class="math inline">\(\beta^\ast = 5\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(0\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">neither knob freed</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: center;"><span class="math inline">\(75\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Synthetic control, allowed to search every weighting there is, cannot get its error below <span class="math inline">\(34\)</span>. Difference-in-differences, allowed to search nothing at all but handed one intercept, drives it to <span class="math inline">\(0\)</span>.</p>
+<p>The reason is visible in the original table. At every period the treated unit sits above <em>both</em> donors: <span class="math inline">\(16\)</span> over <span class="math inline">\((10,12)\)</span>, then <span class="math inline">\(19\)</span> over <span class="math inline">\((12,16)\)</span>, then <span class="math inline">\(18\)</span> over <span class="math inline">\((11,15)\)</span>. A weighted average with non-negative weights summing to one can never exceed the largest thing it is averaging, so no allowed <span class="math inline">\(\mathbf w\)</span> can ever reach the treated path. The treated unit lies outside the donors’ convex hull, and without an intercept synthetic control has no way to climb to it. Every weighting it tries is too low; the best it can manage is to pick the highest donor and eat the remaining gap as error.</p>
+<p>The intercept is exactly the tool for that job. It does not care about shape at all — it just lifts. And since the gap here was a constant <span class="math inline">\(5\)</span>, lifting by <span class="math inline">\(5\)</span> was all the fitting that was ever required.</p>
+<p>So the contest is not “which method is better.” It is which knob the data needs. When the treated unit sits outside the hull but drifts in parallel with it, you need the level, and DID hands it to you. When the treated unit sits inside the hull but drifts differently from the simple average, you need the weights, and synthetic control hands you those.</p>
+<p>Two honest caveats before we go to real data. This example was built so the gap is exactly constant, which is to say it was built with DID’s assumption true by construction — that is why it wins so cleanly. Real data is rarely so obliging, and we are about to watch California fail this exact test. And nothing stops you from freeing both knobs at once, weights on the simplex <em>and</em> an intercept in <span class="math inline">\(\mathbb{R}\)</span>, which is a real and useful estimator in its own right. The point of the table is not that two cells exhaust the world. It is that the two most famous estimators in this literature are one optimization problem, asked under two different sets of permissions.</p>
+</section>
 </section>
 <section id="proposition-99-with-uniform-weights-and-an-intercept" class="level2">
 <h2 class="anchored" data-anchor-id="proposition-99-with-uniform-weights-and-an-intercept">Proposition 99, with uniform weights and an intercept</h2>
 <p>Let me show the weights and the intercept in the flesh. I will use Abadie, Diamond and Hainmueller’s canonical Proposition 99 setup: California is treated by the 1989 anti-tobacco law, there are 38 control states, and we observe per-capita cigarette sales from 1970 to 2000. To follow along you’ll want the <code>dataprep</code> helper from my <code>mlsynth</code> package:</p>
 <pre class="{shell}"><code>pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
 <p>We load the panel and hand it to <code>dataprep</code>, which returns the treated vector <code>y</code>, the <code>donor_matrix</code> of the 38 controls, and the number of pre-treatment periods.</p>
-<div id="0c375c7b" class="cell" data-execution_count="2">
+<div id="409348cc" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.datautils <span class="im">import</span> dataprep</span>
@@ -395,7 +588,7 @@ g_t \defeq y_{1t} - \bar{y}_{0t}.
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now the estimator, exactly as the algebra prescribes. The uniform weights <span class="math inline">\(1/N_0\)</span> are applied by averaging the donor matrix across its columns; the intercept <span class="math inline">\(\beta^\ast\)</span> is the mean pre-treatment gap; the counterfactual is the shifted donor mean; and the ATT is the average post-treatment gap between California and that counterfactual.</p>
-<div id="6a0d25df" class="cell" data-execution_count="3">
+<div id="a962266f" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y      <span class="op">=</span> prepped[<span class="st">"y"</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>T0     <span class="op">=</span> prepped[<span class="st">"pre_periods"</span>]</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> prepped[<span class="st">"donor_matrix"</span>]</span>
@@ -438,7 +631,7 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 </div>
 <p>The counterfactual does not hug California especially well before 1989 — it undershoots for the first few years and overshoots later. That misfit is the whole reason SCM exists, and it is parallel trends failing in front of you. The uniform weights force the counterfactual to be the <em>average</em> control state, shifted to California’s level; the intercept can only slide that line up and down, it cannot bend it. If California’s pre-period gap is not flat, no choice of <span class="math inline">\(\beta\)</span> will make it flat, and the gap you see before 1989 is a preview of the bias you cannot see after it.</p>
 <p>None of this hangs on my hand-rolled arithmetic. The <a href="https://github.com/igerber/diff-diff"><code>diff-diff</code></a> package — a small, dedicated DID estimator, a cousin to my own <code>mlsynth</code> — computes the same effect from the plain <span class="math inline">\(2 \times 2\)</span> table, once we hand it the two indicators DID actually runs on: a treated-group flag (California, every year) and a post flag (every state, 1989 on).</p>
-<div id="156bd56d" class="cell" data-execution_count="5">
+<div id="86ab1011" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> diff_diff <span class="im">import</span> DifferenceInDifferences</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DID's two indicators, rebuilt from the panel: a treated-group flag</span></span>
@@ -461,10 +654,10 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 </section>
 <section id="so-what" class="level2">
 <h2 class="anchored" data-anchor-id="so-what">So what?</h2>
-<p>Now, you may be saying, “Hey Jared, this is a lot of algebra to conclude that a mean is a mean.” But the payoff is a clean way to see what you are actually assuming when you reach for DID, and why the choice between DID and SCM is a choice about weights and nothing else.</p>
+<p>Now, you may be saying, “Hey Jared, this is a lot of algebra to conclude that a mean is a mean.” But the payoff is a clean way to see what you are actually assuming when you reach for DID, and why the choice between DID and SCM is a choice about which knob you are allowed to turn.</p>
 <p>Both estimators answer the same question — what would California have done without Prop 99? — by averaging control states. DID commits to equal weights before it looks at the data; SCM lets the pre-treatment fit choose the weights. Neither fabricates a “fake” California or grafts together a “Frankenstein” unit, any more than the national average income fabricates a fake person. They both summarize real control units with weights that live on the same simplex. The difference is only whether those weights are handed to you as an axiom or estimated as a decision.</p>
 <p>And the reason that decision matters shows up the moment you write untreated outcomes as a factor model, <span class="math inline">\(y_{jt}(0) = a_j + \mathbf{b}_j^\top \mathbf{f}_t + u_{jt}\)</span>. Averaging the donor pool averages its factor loadings <span class="math inline">\(\bar{\mathbf{b}}_0\)</span>, and — as I show in the book — the DID counterfactual is unbiased exactly when the treated unit’s loading equals that average, <span class="math inline">\(\mathbf{b}_1 = \bar{\mathbf{b}}_0\)</span>. That is parallel trends restated one more time: the leftover gap is <span class="math inline">\((\mathbf{b}_1 - \bar{\mathbf{b}}_0)^\top (\mathbf{f}_t - \bar{\mathbf{f}})\)</span>, a term that <em>moves with <span class="math inline">\(t\)</span></em> whenever the treated loading differs from the donor average — a gap no intercept can flatten. Uniform weights only reach California’s factor exposure if California happens to sit at the donor pool’s center of gravity. When it does not — and a state with California’s tobacco culture usually does not — you want the freedom to move the weights off the centroid, toward the donors that actually share its exposure. That freedom <em>is</em> synthetic control, and DID is the center of it you get by refusing to use it.</p>
-<p>So the answer to the question I was asked is: DID is a synthetic control whose weight vector you filled in yourself, with <span class="math inline">\(1/N_0\)</span> in every slot, before the data had a chance to weigh in. Everything else — the loss, the simplex, the intercept, the counterfactual, and parallel trends itself — is shared. You are, as ever, never <em>not</em> averaging. The only question is who gets to pick the weights.</p>
+<p>So the answer to the question I was asked is: DID is a synthetic control whose weight vector you filled in yourself, with <span class="math inline">\(1/N_0\)</span> in every slot, before the data had a chance to weigh in — and which, having given up the weights, keeps the intercept that classic synthetic control throws away. Everything else — the loss, the simplex, the gap, the counterfactual, and parallel trends itself — is shared. You are, as ever, never <em>not</em> averaging. The only question is who gets to pick the weights.</p>
 
 
 
@@ -472,7 +665,7 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789302328580" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789308426363" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external"></a>
@@ -486,7 +679,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789302257135" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789308354393" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -500,7 +693,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789302257128" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789308354385" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -511,7 +704,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
@@ -535,7 +728,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
+<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -559,7 +752,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789302257127" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789308354384" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -583,7 +776,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -600,7 +793,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789302257134" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
+<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789308354390" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -624,7 +817,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -641,7 +834,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -665,7 +858,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -687,7 +880,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789308354392" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -709,7 +902,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -733,7 +926,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -755,7 +948,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789308354393" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -779,7 +972,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789302257134" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789308354391" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -803,7 +996,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789302257129" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789308354386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -827,7 +1020,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789302257129" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789308354386" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -851,7 +1044,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789302257127" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789308354384" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -875,7 +1068,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789308354388" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>

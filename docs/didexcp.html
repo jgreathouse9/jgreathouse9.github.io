@@ -302,26 +302,48 @@ Figure&nbsp;1: What parallel trends assumes, absent treatment: the gap between t
 </section>
 <section id="the-same-story-in-optimization-language" class="level2">
 <h2 class="anchored" data-anchor-id="the-same-story-in-optimization-language">The same story in optimization language</h2>
-<p>Now let me translate all of that into the language of the <a href="averagesexcp.html">last post</a>, where every summary statistic turned out to be an argmin. The bridge is a single identity, and we already proved it: <strong>a mean is the solution to a least-squares problem.</strong> Attaching weights changes only the bookkeeping,</p>
+<p>Now let me translate all of that into the language of the <a href="averagesexcp.html">last post</a>, where every summary statistic turned out to be an argmin. The bridge is one identity we proved there: a (weighted) mean is the constant that minimizes (weighted) squared error. In the population,</p>
 <p><span class="math display">\[
-\mathbb{E}_\omega[X] = \operatorname*{argmin}_{c \in \mathbb{R}} \; \mathbb{E}_\omega\!\big[(X - c)^2\big],
-\qquad\text{and in a sample,}\qquad
-\sum_i \omega_i x_i = \operatorname*{argmin}_{c \in \mathbb{R}} \sum_i \omega_i (x_i - c)^2.
+\mathbb{E}_\omega[X] = \operatorname*{argmin}_{c \in \mathbb{R}} \; \mathbb{E}_\omega\!\big[(X - c)^2\big] ,
 \]</span></p>
-<p>So the weighted expectation that the practitioner’s guide puts at the center of DID <em>is</em> an argmin, and the <span class="math inline">\(\omega\)</span> riding on the expectation is the very same <span class="math inline">\(\omega\)</span> that weights the squared errors. Quote-unquote translating the notation, the control-group counterfactual is nothing but the expectation-side name for a one-parameter least-squares fit:</p>
+<p>and in a sample,</p>
+<p><span class="math display">\[
+\sum_i \omega_i \, x_i = \operatorname*{argmin}_{c \in \mathbb{R}} \; \sum_i \omega_i \, (x_i - c)^2 .
+\]</span></p>
+<p>So the weighted expectation the practitioner’s guide puts at the center of DID <em>is</em> an argmin, and the <span class="math inline">\(\omega\)</span> riding on the expectation is the same <span class="math inline">\(\omega\)</span> that weights the squared errors. Translating the notation, the control-group counterfactual is the expectation-side name for a one-parameter least-squares fit:</p>
 <p><span class="math display">\[
 \underbrace{\mathbb{E}_\omega[\,y_t(0) \mid D = 0\,]}_{\text{expectation notation}}
 \;=\;
 \underbrace{\operatorname*{argmin}_{c \in \mathbb{R}} \sum_{j \in \mathcal{N}_0} \omega_j \, (y_{jt} - c)^2}_{\text{optimization notation}}
 \;\overset{\omega \,=\, 1/N_0}{=}\;
-\bar{y}_{0t}.
+\bar{y}_{0t} .
 \]</span></p>
-<p>Read left to right it is a population expectation; read right to left it is a weighted mean, which is a weighted argmin, which — at uniform weights — is the plain control average <span class="math inline">\(\bar{y}_{0t}\)</span>. Nothing is lost in the translation. The expectation was an optimization problem wearing different clothes, and the weights that were hidden inside it are now sitting in the open as the coefficients <span class="math inline">\(\omega_j\)</span>.</p>
-<p><strong>Parallel trends, translated.</strong> Write the per-period gap as</p>
+<p>Read left to right it is a population expectation; read right to left it is a weighted mean, which is a weighted argmin, which — at uniform weights — is the plain control average <span class="math inline">\(\bar{y}_{0t}\)</span>. The weights that large-<span class="math inline">\(N\)</span> hid inside the word “expectation” are now out in the open as the coefficients <span class="math inline">\(\omega_j\)</span>. What is left is to put the treated unit and a level back in.</p>
+</section>
+<section id="where-synthetic-control-comes-in" class="level2">
+<h2 class="anchored" data-anchor-id="where-synthetic-control-comes-in">Where synthetic control comes in</h2>
+<p>Both methods minimize one and the same object: the least-squares fit of the treated unit’s pre-treatment path to the donors, with an intercept for the level, over weights on the simplex.</p>
+<p><span class="math display">\[
+\min_{\mathbf{w}, \, \beta} \; \big\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \beta \mathbf{1} \big\|_2^2
+\qquad \text{subject to} \qquad
+w_j \ge 0, \quad \textstyle\sum_{j \in \mathcal{N}_0} w_j = 1 .
+\]</span></p>
+<p>Here <span class="math inline">\(\mathbf{y}_1 \in \mathbb{R}^{T_0}\)</span> is the treated unit over the <span class="math inline">\(T_0\)</span> pre-treatment periods, <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T_0 \times N_0}\)</span> the donor matrix, <span class="math inline">\(\mathbf{w}\)</span> the donor weights, and <span class="math inline">\(\beta\)</span> an intercept — a level shift, the “5” from the top of the post. This is ordinary least squares with an intercept, over the probability simplex — the same non-negative, sum-to-one constraint the arithmetic mean’s own weights <span class="math inline">\(1/n\)</span> satisfy. Deriving DID from it takes two steps: handle the intercept, then set the weights.</p>
+<p><strong>The intercept is a demeaning operator.</strong> The intercept never has to be searched over. For any fixed <span class="math inline">\(\mathbf{w}\)</span>, the best <span class="math inline">\(\beta\)</span> is the one-parameter fit of a single constant to the residual series <span class="math inline">\(\mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w}\)</span>, and by the identity above that constant is the residual’s pre-period average, <span class="math inline">\(\beta^\ast(\mathbf{w}) = \tfrac{1}{T_0} \sum_{t \in \mathcal{T}_1} \big( y_{1t} - (\mathbf{Y}_0 \mathbf{w})_t \big)\)</span>. Substitute it back and <span class="math inline">\(\beta\)</span> disappears into a <em>centering</em> of both sides. Let the demeaning operator be</p>
+<p><span class="math display">\[
+\mathbf{M} \defeq \mathbf{I}_{T_0} - \tfrac{1}{T_0}\, \mathbf{1}\mathbf{1}^\top ,
+\]</span></p>
+<p>the <span class="math inline">\(T_0 \times T_0\)</span> matrix that subtracts a vector’s pre-period time-average from each of its entries. Profiling the intercept out of the objective leaves</p>
+<p><span class="math display">\[
+\min_{\beta} \big\| \mathbf{y}_1 - \mathbf{Y}_0 \mathbf{w} - \beta \mathbf{1} \big\|_2^2
+= \big\| \mathbf{M}\mathbf{y}_1 - \mathbf{M}\mathbf{Y}_0 \mathbf{w} \big\|_2^2 .
+\]</span></p>
+<p>Adding an intercept and demeaning the data are the same operation: <span class="math inline">\(\beta\)</span> absorbs the common level and <span class="math inline">\(\mathbf{M}\)</span> removes it. What remains is a fit of the treated unit to the donors, both in deviations from their pre-period means, over <span class="math inline">\(\mathbf{w}\)</span> on the simplex. Synthetic control solves exactly this — it <em>searches</em> the simplex for the weights that fit best.</p>
+<p><strong>Set the weights to <span class="math inline">\(1/N_0\)</span>, and you have DID.</strong> Difference-in-differences does not search. It plants <span class="math inline">\(\mathbf{w}\)</span> at the centroid of the simplex, <span class="math inline">\(w_j = 1/N_0\)</span> for every donor, so <span class="math inline">\(\mathbf{Y}_0 \mathbf{w}\)</span> collapses to the plain control average <span class="math inline">\(\bar{\mathbf{y}}_0\)</span> and only the intercept is left. Write the per-period gap as</p>
 <p><span class="math display">\[
 g_t \defeq y_{1t} - \bar{y}_{0t}.
 \]</span></p>
-<p>DID’s intercept is what you get by fitting a <em>single constant</em> to the pre-treatment gaps by least squares — the exact problem from the mean post, with the “data points” now the gaps <span class="math inline">\(g_t\)</span>:</p>
+<p>Its pre-treatment average is DID’s intercept — the same one-parameter least-squares fit as before, with the “data points” now the gaps <span class="math inline">\(g_t\)</span>:</p>
 <p><span class="math display">\[
 \beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}} \sum_{t \in \mathcal{T}_1} (g_t - \beta)^2.
 \]</span></p>
@@ -343,19 +365,7 @@ g_t \defeq y_{1t} - \bar{y}_{0t}.
 \operatorname*{argmin}_{\beta} \, \mathbb{E}\!\!\sum_{t \in \mathcal{T}_2} (g_t - \beta)^2}_{\text{optimization notation}} .
 \]</span></p>
 <p>We only ever get to <em>solve</em> the left-hand problem — the post-period gaps <span class="math inline">\(g_t\)</span> for <span class="math inline">\(t \in \mathcal{T}_2\)</span> are unobserved, since they contain the counterfactual we are after. Parallel trends is precisely the license to carry the pre-period solution across the treatment date and use it on the right. This is the “5 never moves” claim written as an optimization: the single constant that minimizes the pre-period squared gap is the same constant that minimizes it afterward. Equivalently, the residual <span class="math inline">\(r_t = g_t - \beta^\ast\)</span> is mean-zero with no time structure — the gap is a flat line at <span class="math inline">\(\beta^\ast\)</span> in expectation, that same sticky number, pre and post alike.</p>
-</section>
-<section id="where-synthetic-control-comes-in" class="level2">
-<h2 class="anchored" data-anchor-id="where-synthetic-control-comes-in">Where synthetic control comes in</h2>
-<p>Step back and write what both DID and SCM are doing in a single line. Each builds the treated unit’s counterfactual from a weighted average of the controls, plus a level, chosen to fit the pre-treatment window:</p>
-<p><span class="math display">\[
-\min_{\mathbf{w}, \, \beta}
-\sum_{t \in \mathcal{T}_1}
-\Big( y_{1t} - \beta - \sum_{j \in \mathcal{N}_0} w_j \, y_{jt} \Big)^2
-\qquad \text{subject to} \qquad
-w_j \ge 0, \quad \sum_{j \in \mathcal{N}_0} w_j = 1.
-\]</span></p>
-<p>The constraint set — non-negative weights that sum to one — is the same simplex the arithmetic mean lives on. Recall from the <a href="averagesexcp.html">last post</a> that the mean’s weights <span class="math inline">\(w_j = 1/n\)</span> are non-negative and sum to one, which is exactly the classic synthetic-control constraint. Synthetic control searches over <span class="math inline">\(\mathbf{w}\)</span> on that simplex, letting the data decide which donors count. Difference-in-differences refuses to search: it plants <span class="math inline">\(\mathbf{w}\)</span> at the dead center of the simplex, <span class="math inline">\(w_j = 1/N_0\)</span> for every donor — the centroid — and solves only for <span class="math inline">\(\beta\)</span>. With the weights pinned, <span class="math inline">\(\sum_j w_j y_{jt}\)</span> collapses to <span class="math inline">\(\bar{y}_{0t}\)</span> and we are back to the one-parameter problem we just solved. That is the entire difference between the two methods: whether <span class="math inline">\(\mathbf{w}\)</span> is free or frozen.</p>
-<p>And now parallel trends and the weights are visibly the same conversation. The gap <span class="math inline">\(g_t = y_{1t} - \sum_j w_j y_{jt}\)</span> carries the weights inside it, so whether <span class="math inline">\(\mathbb{E}[g_t]\)</span> is flat is a fact about <span class="math inline">\(\mathbf{w}\)</span>, not about “California and the controls” in the abstract. Change <span class="math inline">\(\mathbf{w}\)</span> and you change the gap, and you change whether its expectation is a constant. The two methods make opposite bets with that lever:</p>
+<p>And now the weights and parallel trends are visibly the same conversation. The gap <span class="math inline">\(g_t = y_{1t} - \sum_j w_j y_{jt}\)</span> carries the weights inside it, so whether <span class="math inline">\(\mathbb{E}[g_t]\)</span> is flat is a fact about <span class="math inline">\(\mathbf{w}\)</span>, not about “California and the controls” in the abstract. Change <span class="math inline">\(\mathbf{w}\)</span> and you change the gap, and you change whether its expectation is a constant. The two methods make opposite bets with that lever:</p>
 <ul>
 <li><strong>DID</strong> fixes <span class="math inline">\(\mathbf{w} = 1/N_0\)</span> and then <em>assumes</em> the resulting gap is flat in expectation. Parallel trends is a hope about a gap you never got to shape.</li>
 <li><strong>SCM</strong> <em>chooses</em> <span class="math inline">\(\mathbf{w}\)</span> on the simplex to make the pre-period gap as flat as it can. It buys parallel pre-trends in-sample, by construction, instead of assuming it.</li>
@@ -367,7 +377,7 @@ w_j \ge 0, \quad \sum_{j \in \mathcal{N}_0} w_j = 1.
 <p>Let me show the weights and the intercept in the flesh. I will use Abadie, Diamond and Hainmueller’s canonical Proposition 99 setup: California is treated by the 1989 anti-tobacco law, there are 38 control states, and we observe per-capita cigarette sales from 1970 to 2000. To follow along you’ll want the <code>dataprep</code> helper from my <code>mlsynth</code> package:</p>
 <pre class="{shell}"><code>pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
 <p>We load the panel and hand it to <code>dataprep</code>, which returns the treated vector <code>y</code>, the <code>donor_matrix</code> of the 38 controls, and the number of pre-treatment periods.</p>
-<div id="0a441301" class="cell" data-execution_count="2">
+<div id="0c375c7b" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.datautils <span class="im">import</span> dataprep</span>
@@ -385,7 +395,7 @@ w_j \ge 0, \quad \sum_{j \in \mathcal{N}_0} w_j = 1.
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now the estimator, exactly as the algebra prescribes. The uniform weights <span class="math inline">\(1/N_0\)</span> are applied by averaging the donor matrix across its columns; the intercept <span class="math inline">\(\beta^\ast\)</span> is the mean pre-treatment gap; the counterfactual is the shifted donor mean; and the ATT is the average post-treatment gap between California and that counterfactual.</p>
-<div id="6f6634bb" class="cell" data-execution_count="3">
+<div id="6a0d25df" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y      <span class="op">=</span> prepped[<span class="st">"y"</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>T0     <span class="op">=</span> prepped[<span class="st">"pre_periods"</span>]</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> prepped[<span class="st">"donor_matrix"</span>]</span>
@@ -427,6 +437,27 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 </div>
 </div>
 <p>The counterfactual does not hug California especially well before 1989 — it undershoots for the first few years and overshoots later. That misfit is the whole reason SCM exists, and it is parallel trends failing in front of you. The uniform weights force the counterfactual to be the <em>average</em> control state, shifted to California’s level; the intercept can only slide that line up and down, it cannot bend it. If California’s pre-period gap is not flat, no choice of <span class="math inline">\(\beta\)</span> will make it flat, and the gap you see before 1989 is a preview of the bias you cannot see after it.</p>
+<p>None of this hangs on my hand-rolled arithmetic. The <a href="https://github.com/igerber/diff-diff"><code>diff-diff</code></a> package — a small, dedicated DID estimator, a cousin to my own <code>mlsynth</code> — computes the same effect from the plain <span class="math inline">\(2 \times 2\)</span> table, once we hand it the two indicators DID actually runs on: a treated-group flag (California, every year) and a post flag (every state, 1989 on).</p>
+<div id="156bd56d" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> diff_diff <span class="im">import</span> DifferenceInDifferences</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DID's two indicators, rebuilt from the panel: a treated-group flag</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># (California in every year) and a post flag (every state, 1989 on).</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>did_df <span class="op">=</span> data.copy()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>treated_states <span class="op">=</span> data.loc[data[<span class="st">"Proposition 99"</span>] <span class="op">==</span> <span class="dv">1</span>, <span class="st">"state"</span>].unique()</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>post_years     <span class="op">=</span> data.loc[data[<span class="st">"Proposition 99"</span>] <span class="op">==</span> <span class="dv">1</span>, <span class="st">"year"</span>].unique()</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>did_df[<span class="st">"treated"</span>] <span class="op">=</span> data[<span class="st">"state"</span>].isin(treated_states).astype(<span class="bu">int</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>did_df[<span class="st">"post"</span>]    <span class="op">=</span> data[<span class="st">"year"</span>].isin(post_years).astype(<span class="bu">int</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> DifferenceInDifferences().fit(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    did_df, outcome<span class="op">=</span><span class="st">"cigsale"</span>, treatment<span class="op">=</span><span class="st">"treated"</span>, post<span class="op">=</span><span class="st">"post"</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(result)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DiDResults(ATT=-27.3491***, SE=4.5522, p=0.0000)</code></pre>
+</div>
+</div>
+<p>Same ATT — about <span class="math inline">\(-27.35\)</span> — now carrying a standard error and a <span class="math inline">\(p\)</span>-value, from a routine that never heard of a weight vector or a simplex. It agrees because it is the same estimator under another name: the hand-rolled intercept <span class="math inline">\(\beta^\ast\)</span> is the average pre-period gap, and the <span class="math inline">\(2 \times 2\)</span> DID is that same gap differenced across the treatment date.</p>
 </section>
 <section id="so-what" class="level2">
 <h2 class="anchored" data-anchor-id="so-what">So what?</h2>
@@ -441,7 +472,7 @@ Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weight
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789261152057" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789302328580" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external"></a>
@@ -455,7 +486,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789261079774" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789302257135" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -469,7 +500,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789261079766" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789302257128" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -480,7 +511,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789261079770" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
@@ -504,7 +535,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
+<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -528,7 +559,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789261079766" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789302257127" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -552,7 +583,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789261079774" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -569,7 +600,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789261079772" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
+<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789302257134" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -593,7 +624,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -610,7 +641,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -634,7 +665,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -656,7 +687,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -678,7 +709,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -702,7 +733,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -724,7 +755,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789261079774" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789302257135" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -748,7 +779,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789261079772" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789302257134" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -772,7 +803,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789261079767" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="16" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789302257129" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -796,7 +827,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789261079767" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="17" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789302257129" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -820,7 +851,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789261079765" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="18" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789302257127" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -844,7 +875,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="quarto-post image-right" data-index="19" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789302257132" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>

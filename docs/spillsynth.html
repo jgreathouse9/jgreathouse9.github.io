@@ -77,7 +77,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-fae04a4dda57acfb7da1e58796bfa73f.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-a2e20254c26fbb8ff5ad1beb542c1b1b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-7e7f088023de72502c0008de511c2141.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -222,7 +222,7 @@ window.Quarto = {
   <li><a href="#comments" id="toc-comments" class="nav-link" data-scroll-target="#comments">Comments</a></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(18)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(5)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(9)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(2)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="U3RhdGlzdGljcw==">Statistics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(19)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(6)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(10)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(2)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="U3RhdGlzdGljcw==">Statistics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -262,82 +262,87 @@ window.Quarto = {
 
 <p>This will be a short blog post. I’ve spent the last two months doing a little industry work in the marketing realm, and in the meantime I made some substantial changes to <code>mlsynth</code>. This blog post simply shows one of the new key features I have implemented.</p>
 <p>Chances are if you’re reading this, you know what I mean by the notion of SUTVA, or the stable unit treatment value assumption. It is the idea that if we care about the causal impact of a treatment on one unit, but other units are affected by the treatment or otherwise experience a similar treatment, that this exposure confounds our treatment effect with respect to the original unit we do care about. Say we wish to study the impact of German Reunification on West Germany’s GDP. We know West Germany was exposed, but what about neighboring nations like Austria or France? What if the reunification had regional effects? Analysts therefore have a problem: Austria and France may be very similar to West Germany, and therefore informative of West Germany’s counterfactual, but we are concerned they are exposed or affected by the main treatment of interest. What do we do? Before, researchers would need to drop these units or argue for their inclusion/exclusion, despite them being treated. Now, we do not need to do that, as SCM has a few approaches that deal with spillovers (this post covers just <a href="https://arxiv.org/abs/2405.01645">one</a>). The approach, called iterative synthetic controls, is deceptively simple.</p>
-<p>Suppose Austria and France are partly treated. Step one of iSCM is to estimate a synthetic control for Austria, including France as a donor but excluding West Germany. Which SCM flavor you ask? Any one you like! For the purposes of this post, we will be using the Robsut SCM and the Robust PCA SCM methods from <code>mlsynth</code>. The precise details are not really important, but you may <a href="https://mlsynth.readthedocs.io/en/latest/clustersc.html">read the docs</a> should you like. We then take the model predictions for Austria across the full pre and post period and replace the original Austria with the synthetic control values that the model predicts for Austria.</p>
+<p>Suppose Austria and France are partly treated. Step one of iSCM is to estimate a synthetic control for Austria, including France as a donor but excluding West Germany. The SCM that does the cleaning is handled internally by <code>mlsynth</code>’s spillover-aware estimator; the precise details are not really important here, but you may <a href="https://mlsynth.readthedocs.io/en/latest/spillsynth.html">read the docs</a> should you like. We then take the model’s prediction for Austria and replace Austria’s contaminated post-treatment outcomes with the synthetic values the model expects absent any spillover.</p>
 <p>Next, we do France: <strong>using the cleaned up Austria as a donor</strong>, we estimate the synthetic control for France, using the now-cleaned up Austria and the remaining donor pool units. As before, we replace the values for the original France (in the original dataset) with the new synthetic France. We now have cleaned up our two donors that may be exposed to the treatment.</p>
 <p>Now, with these two cleaned donors, we estimate the counterfactual for West Germany, with our 14 totally unexposed donors and the two now cleaned up donors that were once partially exposed.</p>
 <section id="estimation-in-python" class="level1">
 <h1>Estimation in Python</h1>
 <p>“But Jared!”, you will say, this seems like a lot of looping and lots of donor tracking. Well fear not, that is what <code>mlsynth</code> is for. In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>First we estimate the orignal model. You will find our handy-dandy util function <code>iterative_scm</code> is now imported.</p>
-<div id="f51b0d30" class="cell" data-execution_count="1">
+<p>First we estimate the original model with <code>CLUSTERSC</code>, the baseline that treats Austria and France as ordinary donors.</p>
+<div id="c1dafd1c" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> CLUSTERSC</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.spillover <span class="im">import</span> iterative_scm</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the reunification dataset</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/german_reunification.csv"</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Define configuration for CLUSTERSC</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">"gdp"</span>,          <span class="co"># per capita GDP</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: <span class="st">"Reunification"</span>,     <span class="co"># binary treatment indicator</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"country"</span>,          <span class="co"># country name</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: <span class="st">"year"</span>,               <span class="co"># time variable</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,       <span class="co"># display counterfactual plots</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>, <span class="st">"blue"</span>],</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Frequentist"</span>: <span class="va">True</span>, <span class="st">"method"</span>: <span class="st">"BOTH"</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>originalresult <span class="op">=</span> CLUSTERSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the reunification dataset</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/main/basedata/german_reunification.csv"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Define configuration for CLUSTERSC</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">"gdp"</span>,          <span class="co"># per capita GDP</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: <span class="st">"Reunification"</span>,     <span class="co"># binary treatment indicator</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"country"</span>,          <span class="co"># country name</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: <span class="st">"year"</span>,               <span class="co"># time variable</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,       <span class="co"># display counterfactual plots</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"red"</span>, <span class="st">"blue"</span>],</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Frequentist"</span>: <span class="va">True</span>, <span class="st">"method"</span>: <span class="st">"BOTH"</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>originalresult <span class="op">=</span> CLUSTERSC(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>findfont: Failed to find font weight medium for DejaVu Sans, now using 400.
+findfont: Failed to find font weight medium for DejaVu Sans, now using 400.
+findfont: Failed to find font weight medium for DejaVu Sans, now using 400.</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="spillsynth_files/figure-html/cell-2-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="spillsynth_files/figure-html/cell-2-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>These are the original results., You may check them against <a href="https://academicworks.cuny.edu/cgi/viewcontent.cgi?article=6069&amp;context=gc_etds">my coworker’s dissertation</a> if you wish. Now we see how sensitive the results are to adjusting for spillover effects.</p>
-<div id="ab7a9a12" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>iSCM_result <span class="op">=</span> iterative_scm(CLUSTERSC(config), spillover_unit_identifiers<span class="op">=</span>[<span class="st">"Austria"</span>, <span class="st">"France"</span>], method<span class="op">=</span><span class="st">"BOTH"</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> summarize_att_rmse_markdown(iSCM_result):</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> method <span class="kw">in</span> [<span class="st">'PCR'</span>, <span class="st">'RPCA'</span>]:</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        sub <span class="op">=</span> iSCM_result[method].sub_method_results[method]</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> sub.effects.additional_effects[<span class="st">'ATT'</span>]</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        percent_att <span class="op">=</span> sub.effects.additional_effects.get(<span class="st">'Percent ATT'</span>, <span class="va">None</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        t0_rmse <span class="op">=</span> sub.fit_diagnostics.additional_metrics[<span class="st">'T0 RMSE'</span>]</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        rows.append({</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Method"</span>: method,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>            <span class="st">"ATT"</span>: <span class="ss">f"</span><span class="sc">{</span>att<span class="sc">:,.0f}</span><span class="ss">"</span>,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Percent ATT"</span>: <span class="ss">f"</span><span class="sc">{</span>percent_att<span class="sc">:.2f}</span><span class="ss">%"</span> <span class="cf">if</span> percent_att <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> <span class="st">"—"</span>,</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>            <span class="st">"T0 RMSE"</span>: <span class="ss">f"</span><span class="sc">{</span>t0_rmse<span class="sc">:,.1f}</span><span class="ss">"</span>,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        })</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.DataFrame(rows)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    md_table <span class="op">=</span> df.to_markdown(index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    display(Markdown(<span class="ss">f"### Iterative SCM </span><span class="ch">\n\n</span><span class="sc">{</span>md_table<span class="sc">}</span><span class="ss">"</span>))</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>summarize_att_rmse_markdown(iSCM_result)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>These are the original results. Now we see how sensitive the results are to adjusting for spillover effects. For that we hand the same problem to <code>SPILLSYNTH</code>, the spillover-aware estimator, and ask it for the iterative method.</p>
+<div id="47bbf9d5" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SPILLSYNTH</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display, Markdown</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>spill_config <span class="op">=</span> {</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">"gdp"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: <span class="st">"Reunification"</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">"country"</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: <span class="st">"year"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"method"</span>: <span class="st">"iterative"</span>,                 <span class="co"># the waterfall donor-cleaning method</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"affected_units"</span>: [<span class="st">"Austria"</span>, <span class="st">"France"</span>],  <span class="co"># units we suspect are partly treated</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>iSCM <span class="op">=</span> SPILLSYNTH(spill_config).fit()</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> iSCM.iterative</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>effects <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Quantity"</span>: <span class="st">"Naive SCM ATT"</span>,          <span class="st">"Value"</span>: <span class="ss">f"</span><span class="sc">{</span>iSCM<span class="sc">.</span>att_scm<span class="sc">:,.0f}</span><span class="ss">"</span>},</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Quantity"</span>: <span class="st">"Spillover-adjusted ATT"</span>, <span class="st">"Value"</span>: <span class="ss">f"</span><span class="sc">{</span>iSCM<span class="sc">.</span>att<span class="sc">:,.0f}</span><span class="ss">"</span>},</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"Quantity"</span>: <span class="st">"Pre-treatment RMSE"</span>,     <span class="st">"Value"</span>: <span class="ss">f"</span><span class="sc">{</span>fit<span class="sc">.</span>pre_rmspe<span class="sc">:,.1f}</span><span class="ss">"</span>},</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>spillovers <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    [{<span class="st">"Cleaned donor"</span>: u, <span class="st">"Spillover effect"</span>: <span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:,.0f}</span><span class="ss">"</span>}</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>     <span class="cf">for</span> u, v <span class="kw">in</span> fit.spillover_att.items()]</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="st">"### Iterative SCM</span><span class="ch">\n\n</span><span class="st">"</span> <span class="op">+</span> effects.to_markdown(index<span class="op">=</span><span class="va">False</span>)))</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>display(Markdown(<span class="st">"#### Post-period spillover carried by each cleaned donor</span><span class="ch">\n\n</span><span class="st">"</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>                 <span class="op">+</span> spillovers.to_markdown(index<span class="op">=</span><span class="va">False</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="spillsynth_files/figure-html/cell-3-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="spillsynth_files/figure-html/cell-3-output-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
@@ -346,30 +351,49 @@ window.Quarto = {
 <table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
-<th style="text-align: left;">Method</th>
-<th style="text-align: left;">ATT</th>
-<th style="text-align: left;">Percent ATT</th>
-<th style="text-align: right;">T0 RMSE</th>
+<th style="text-align: left;">Quantity</th>
+<th style="text-align: right;">Value</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">PCR</td>
-<td style="text-align: left;">-2,111</td>
-<td style="text-align: left;">-7.96%</td>
-<td style="text-align: right;">108.4</td>
+<td style="text-align: left;">Naive SCM ATT</td>
+<td style="text-align: right;">-1306</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">RPCA</td>
-<td style="text-align: left;">-1,477</td>
-<td style="text-align: left;">-5.71%</td>
-<td style="text-align: right;">88.1</td>
+<td style="text-align: left;">Spillover-adjusted ATT</td>
+<td style="text-align: right;">-1384</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pre-treatment RMSE</td>
+<td style="text-align: right;">60.9</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="post-period-spillover-carried-by-each-cleaned-donor" class="level4 cell-output cell-output-display cell-output-markdown">
+<h4 class="anchored" data-anchor-id="post-period-spillover-carried-by-each-cleaned-donor">Post-period spillover carried by each cleaned donor</h4>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Cleaned donor</th>
+<th style="text-align: right;">Spillover effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Austria</td>
+<td style="text-align: right;">-261</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">France</td>
+<td style="text-align: right;">172</td>
 </tr>
 </tbody>
 </table>
 </section>
 </div>
-<p>You pass the original <code>config</code> to the util function, and you pass a list of strings that denote which units we believe are partly treated. Form there, the algorithm under the hood handles the donor cleaning, and returns back the results of the final SCM run with both donors cleaned. Note that if you want both PCR and RPCA cleaning, we pass it as <code>method="BOTH"</code> to <code>iterative_scm</code>. We can see that the results are very similar to the original SCM. The pre-treatment fits degrade only very slightly (even more so with the Robust PCA method, highlighting its robustness to tiny tweaks in the model). Speaking of RPCA, the new weights are ‘Belgium’: 0.271, ‘Norway’: 0.552, ‘New Zealand’: 0.34, whereas before they were ‘Austria’: 0.023, ‘France’: 0.354, ‘Norway’: 0.485, ‘New Zealand’: 0.296. Austria goes away as a weighed donor, but there’s not very much change in the pre-treatment fit or the practical conclusions we draw from the analysis. When we use only Austria as the cleaned unit, RPCA’s weights are ‘UK’: 0.237, ‘France’: 0.607, ‘Norway’: 0.191, ‘New Zealand’: 0.12 with an ATT of -1536.355. When we use only France, the ATT is -1490.636 and the weights are ‘Austria’: 0.262, ‘Denmark’: 0.004, ‘Norway’: 0.517, ‘New Zealand’: 0.378. Of course, the key aspect of this procedure is knowing which units are likely to have spillover effects</p>
+<p>You pass the same <code>config</code> you would give any <code>mlsynth</code> estimator, set <code>method="iterative"</code>, and hand it a list of the units you believe are partly treated through <code>affected_units</code>. From there the algorithm handles the donor cleaning under the hood and returns a single spillover-adjusted fit, with the naive synthetic control kept alongside for comparison. The naive fit — the one that trusts Austria and France as ordinary donors — puts the ATT at about -1,306. Once we clean both donors, the adjusted ATT moves to about -1,384: a slightly larger drop, not a smaller one. The reason is in the per-donor spillover column. Austria carried a negative post-reunification spillover of roughly -261 and France a positive one of about +172, so netting them out leaves West Germany looking a little worse off than the naive fit suggested, not better. Clean only Austria and the ATT is about -1,390; clean only France and it is about -1,295. The pre-treatment RMSE sits at about 61 either way, because this waterfall reuses the pre-period weights and only rewrites the affected donors’ post-treatment values — the fit you validated before the intervention is the fit you keep, so the donor weights do not move; what moves is the counterfactual after 1990. Either way the headline is unchanged: reunification cost West German per-capita GDP a great deal, and that conclusion survives the spillover adjustment. Of course, the key aspect of this procedure is still knowing which units are likely to have spillover effects in the first place.</p>
 </section>
 <section id="comments" class="level1">
 <h1>Comments</h1>
@@ -381,7 +405,7 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1770990657519" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1789260683107" data-listing-reading-time-sort="1" data-listing-word-count-sort="16">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external"></a>
@@ -395,18 +419,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1770990599046" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./consulting.html" class="no-external">👋 Welcome</a>
-</h3>
-</div>
-<div class="metadata">
-<a href="./consulting.html" class="no-external">
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1770990599055" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1789260607642" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -420,7 +433,42 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1770990599054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="17" data-listing-word-count-sort="3242">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1789260607635" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./consulting.html" class="no-external">👋 Welcome</a>
+</h3>
+</div>
+<div class="metadata">
+<a href="./consulting.html" class="no-external">
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789260607638" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scdense2.html" class="no-external">
+<div class="listing-date">
+Aug 14, 2026
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789260607642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -444,7 +492,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1770990599046" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789260607634" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -468,7 +516,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1770990599055" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789260607642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -485,7 +533,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1770990599052" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3572">
+<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789260607640" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -509,7 +557,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1770990599050" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789260607638" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -526,31 +574,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1755388800000" data-listing-file-modified-sort="1770990599046" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="21" data-listing-word-count-sort="4193">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./fasc.html" class="no-external">Forward Augmented Synthetic Controls</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./fasc.html" class="no-external">
-<div class="listing-date">
-Aug 17, 2025
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1770990599054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789260607642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -574,7 +598,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1770990599054" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789260607642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -596,7 +620,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1770990599050" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="11" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789260607638" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -620,7 +644,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1770990599050" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789260607638" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -642,7 +666,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1770990599055" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789260607642" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -666,7 +690,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1770990599053" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789260607640" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -690,7 +714,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1770990599047" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="15" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1789260607636" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -714,7 +738,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1770990599047" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="16" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1789260607636" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -738,7 +762,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1770990599045" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="17" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1789260607634" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -755,6 +779,30 @@ Jared Greathouse
 <a href="./aaascrape.html" class="no-external">
 <div class="listing-date">
 Jan 29, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="18" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1789260607638" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scdense.html" class="no-external">
+<div class="listing-date">
+Jan 24, 2025
 </div>
 <div class="listing-author">
 Jared Greathouse

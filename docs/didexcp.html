@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jared Greathouse">
-<meta name="dcterms.date" content="2025-04-16">
+<meta name="dcterms.date" content="2026-09-12">
 
-<title>Synthetic Controls With More Than One Outcome – Policy Analysis, Data Science, and Causal Inference</title>
+<title>Difference-in-Differences Is a Synthetic Control With Uniform Weights – Policy Analysis, Data Science, and Causal Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -218,33 +218,23 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a>
-  <ul class="collapse">
-  <li><a href="#standard-synthetic-control" id="toc-standard-synthetic-control" class="nav-link" data-scroll-target="#standard-synthetic-control">Standard Synthetic Control</a></li>
-  </ul></li>
-  <li><a href="#stacked-scm-with-multiple-outcomes" id="toc-stacked-scm-with-multiple-outcomes" class="nav-link" data-scroll-target="#stacked-scm-with-multiple-outcomes">Stacked SCM with Multiple Outcomes</a>
-  <ul class="collapse">
-  <li><a href="#model-averaging" id="toc-model-averaging" class="nav-link" data-scroll-target="#model-averaging">Model Averaging</a></li>
-  <li><a href="#conformal-prediction-via-agnostic-means" id="toc-conformal-prediction-via-agnostic-means" class="nav-link" data-scroll-target="#conformal-prediction-via-agnostic-means">Conformal Prediction via Agnostic Means</a></li>
-  </ul></li>
-  <li><a href="#estimation-in-python" id="toc-estimation-in-python" class="nav-link" data-scroll-target="#estimation-in-python">Estimation in Python</a>
-  <ul class="collapse">
-  <li><a href="#simulation" id="toc-simulation" class="nav-link" data-scroll-target="#simulation">Simulation</a></li>
-  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
-  </ul></li>
-  <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
+  <li><a href="#start-with-parallel-trends" id="toc-start-with-parallel-trends" class="nav-link active" data-scroll-target="#start-with-parallel-trends">Start with parallel trends</a></li>
+  <li><a href="#the-same-story-in-optimization-language" id="toc-the-same-story-in-optimization-language" class="nav-link" data-scroll-target="#the-same-story-in-optimization-language">The same story in optimization language</a></li>
+  <li><a href="#where-synthetic-control-comes-in" id="toc-where-synthetic-control-comes-in" class="nav-link" data-scroll-target="#where-synthetic-control-comes-in">Where synthetic control comes in</a></li>
+  <li><a href="#proposition-99-with-uniform-weights-and-an-intercept" id="toc-proposition-99-with-uniform-weights-and-an-intercept" class="nav-link" data-scroll-target="#proposition-99-with-uniform-weights-and-an-intercept">Proposition 99, with uniform weights and an intercept</a></li>
+  <li><a href="#so-what" id="toc-so-what" class="nav-link" data-scroll-target="#so-what">So what?</a></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(20)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(6)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(3)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(10)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(2)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="U3RhdGlzdGljcw==">Statistics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(20)</span></div><div class="category" data-category="QXV0b21hdGlvbg==">Automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Q2F1c2FsJTIwSW5mZXJlbmNl">Causal Inference <span class="quarto-category-count">(6)</span></div><div class="category" data-category="RWNvbm9tZXRyaWMlMjBUaGVvcnk=">Econometric Theory <span class="quarto-category-count">(2)</span></div><div class="category" data-category="RWNvbm9tZXRyaWNz">Econometrics <span class="quarto-category-count">(11)</span></div><div class="category" data-category="RXhwZXJpbWVudHM=">Experiments <span class="quarto-category-count">(1)</span></div><div class="category" data-category="R2l0aHVi">Github <span class="quarto-category-count">(1)</span></div><div class="category" data-category="TWFjaGluZSUyMExlYXJuaW5n">Machine Learning <span class="quarto-category-count">(2)</span></div><div class="category" data-category="UHl0aG9u">Python <span class="quarto-category-count">(1)</span></div><div class="category" data-category="U3RhdGlzdGljcw==">Statistics <span class="quarto-category-count">(1)</span></div><div class="category" data-category="V2ViJTIwU2NyYXBpbmc=">Web Scraping <span class="quarto-category-count">(1)</span></div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Synthetic Controls With More Than One Outcome</h1>
+<h1 class="title">Difference-in-Differences Is a Synthetic Control With Uniform Weights</h1>
   <div class="quarto-categories">
+    <div class="quarto-category">Econometric Theory</div>
     <div class="quarto-category">Causal Inference</div>
-    <div class="quarto-category">Econometrics</div>
   </div>
   </div>
 
@@ -262,7 +252,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 16, 2025</p>
+      <p class="date">September 12, 2026</p>
     </div>
   </div>
   
@@ -274,170 +264,176 @@ window.Quarto = {
 </header>
 
 
-<p>Sometimes analysts have multiple different metrics at their disposal with which to estimate synthetic control models. That is, multiple relevant variables may possibly predict a target/outcome variable that we care about, and <a href="https://doi.org/10.1016/j.ecosta.2017.08.002">plenty</a> of other papers have commented on this fact before. Some analysts even argue for <a href="https://proceedings.mlr.press/v238/liu24a/liu24a.pdf">the surrogate approach</a>, where we treat other outcomes or affected units as a kind of instrument for the counterfactual trajcectory of the target unit.</p>
-<p>However, all of this is most uncommon. As it turns out, most people in academia and industry who use synthetic controls use only a single focal outcome in their analyses. Perhaps they will adjust their unit weights by some diagonal matrix, a diagonal matrix <span class="math inline">\(\mathbf{V}\)</span> in most applications. The point of this matrix is basically to assist the main optimization in choosing the unit weights. However, even this is limited by the number of pretreatment periods you have- if you have more covariates than you have pretreatment periods, you cannot estimate the regression. Recent papers by econometricians have tried to get around this, though. This blog post covers a few recent <a href="https://doi.org/10.48550/arXiv.2311.16260">recent</a> <a href="https://doi.org/10.48550/arXiv.2304.02272">papers</a> which have advocated for this. I explain the econometric method and apply it in a simulated setting.</p>
-<section id="notation" class="level1">
-<h1>Notation</h1>
-<p>I adopt the following notational conventions throughout. Scalars are denoted by lowercase italicized letters such as <span class="math inline">\(g\)</span>, vectors are denoted by bold lowercase letters such as <span class="math inline">\(\mathbf{v} \in \mathbb{R}^n\)</span>, and matrices are denoted by bold uppercase letters such as <span class="math inline">\(\mathbf{A} \in \mathbb{R}^{m \times n}\)</span>. Sets are denoted by calligraphic letters, such as <span class="math inline">\(\mathcal{N}\)</span> or <span class="math inline">\(\mathcal{T}\)</span>, and the cardinality of a finite set <span class="math inline">\(\mathcal{A}\)</span> is written <span class="math inline">\(|\mathcal{A}|\)</span>. For a matrix <span class="math inline">\(\mathbf{A}\)</span>, we write <span class="math inline">\(\| \mathbf{A} \|_F^2 = \sum_{i,j} A_{ij}^2\)</span> for the squared Frobenius norm and <span class="math inline">\(\| \mathbf{A} \|_2\)</span> for its spectral norm. For any <span class="math inline">\(n \in \mathbb{N}\)</span>, we define the <span class="math inline">\(n\)</span>-dimensional probability simplex by</p>
-<p><span class="math display">\[
-\Delta^{N_0 - 1} = \left\{ \mathbf{w} \in \mathbb{R}^{N_0} \mid w_j \geq 0 \: \forall j \in \mathcal{N}_0, \sum_{j \in \mathcal{N}_0} w_j = 1 \right\}.
-\]</span></p>
-<p>Matrix multiplication is written in the usual way; products like <span class="math inline">\(\mathbf{A}^\top \mathbf{b}\)</span>, <span class="math inline">\(\mathbf{A} \mathbf{B}\)</span>, or <span class="math inline">\(\mathbf{b}^\top \mathbf{c}\)</span> denote standard matrix-vector or matrix-matrix products. Let <span class="math inline">\(\mathcal{N} = \{1, 2, \dots, N\}\)</span> index the units in the panel, with unit <span class="math inline">\(1\)</span> denoting the treated unit and <span class="math inline">\(\mathcal{N}_0 = \{2, 3, \dots, N\}\)</span> denoting the set of control units. We write <span class="math inline">\(N_0 = |\mathcal{N}_0| = N - 1\)</span> for its cardinality. Let <span class="math inline">\(\mathcal{T} \subset \mathbb{N}\)</span> be a finite set of time periods with <span class="math inline">\(|\mathcal{T}| = T\)</span>. Let <span class="math inline">\(T_0 &lt; T\)</span> denote the final pre-treatment period. Define the pre-treatment period as <span class="math inline">\(\mathcal{T}_1 = \{1, 2, \dots, T_0\}\)</span> with <span class="math inline">\(|\mathcal{T}_1| = T_0\)</span> and the post-treatment period as <span class="math inline">\(\mathcal{T}_2 = \{T_0 + 1, \dots, T\}\)</span> with <span class="math inline">\(|\mathcal{T}_2| = T - T_0\)</span>. Let <span class="math inline">\(\mathbf{y}_j \in \mathbb{R}^{T}\)</span> denote the time series for our focal outcome of interest <span class="math inline">\(\forall \, j \in \mathcal{N}\)</span>. We write <span class="math inline">\(\mathbf{y}_1 = \begin{bmatrix} y_{1,1} &amp; \cdots &amp; y_{1,T} \end{bmatrix}^\top \in \mathbb{R}^T\)</span> for the treated unit’s outcome vector. Let <span class="math inline">\(\mathbf{Y}_0 \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix that stacks the outcome vectors for all control units <span class="math inline">\(j \in \mathcal{N}_0\)</span>. Each time series <span class="math inline">\(\mathbf{y}_j\)</span> is partitioned into a pre-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{pre}} \in \mathbb{R}^{T_0}\)</span> and a post-treatment vector <span class="math inline">\(\mathbf{y}_j^{\text{post}} \in \mathbb{R}^{T - T_0}\)</span>. Likewise, the control matrix <span class="math inline">\(\mathbf{Y}_0\)</span> is partitioned into <span class="math inline">\(\mathbf{Y}_0^{\text{pre}} \in \mathbb{R}^{T_0 \times N_0}\)</span> and <span class="math inline">\(\mathbf{Y}_0^{\text{post}} \in \mathbb{R}^{(T - T_0) \times N_0}\)</span>.</p>
-<p>Now, let <span class="math inline">\(K\)</span> denote the number of auxiliary outcomes (excluding the main one). For each outcome <span class="math inline">\(\ell \in \{1, 2, \dots, K\}\)</span>, let <span class="math inline">\(\mathbf{y}_j^{(\ell)} \in \mathbb{R}^T\)</span> denote the <span class="math inline">\(\ell\)</span>-th outcome vector for unit <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathbf{Y}_0^{(\ell)} \in \mathbb{R}^{T \times N_0}\)</span> denote the matrix collecting the <span class="math inline">\(\ell\)</span>-th outcome across all controls. These are also split into pre- and post-treatment periods. We define the “stacking” operation—denoted by a prime—as the vertical concatenation of multiple outcomes. Specifically, let <span class="math inline">\(\mathbf{Y}_0^{\prime} \in \mathbb{R}^{KT_{0} \times N_0}\)</span> denote the vertically stacked matrix (and vector):</p>
-<p><span class="math display">\[
-\mathbf{Y}_0^{\prime} = \begin{bmatrix}
-\mathbf{Y}_0^{(1), \text{pre}} \\
-\mathbf{Y}_0^{(2), \text{pre}} \\
-\vdots \\
-\mathbf{Y}_0^{(K), \text{pre}}
-\end{bmatrix},
-\quad
-\mathbf{y}_1^{\prime} = \begin{bmatrix}
-\mathbf{y}_1^{(1), \text{pre}} \\
-\mathbf{y}_1^{(2), \text{pre}} \\
-\vdots \\
-\mathbf{y}_1^{(K), \text{pre}}
-\end{bmatrix}.
-\]</span></p>
-<p>This is simply stacking the pre-intervention period metrics atop one another. If we have two metrics and 19 pretreatment periods, we have a vector of 38 rows. This is done for the matrices too: if we have 10 donors, 19 pretreatment periods, and two metrics (the main outcome and another one) we now have 10 columns and 38 rows for all the metrics across those same 19 pre-treatment periods.</p>
-<section id="standard-synthetic-control" class="level2">
-<h2 class="anchored" data-anchor-id="standard-synthetic-control">Standard Synthetic Control</h2>
-<p>Before introducing the stacked estimator however, I begin by reviewing the standard synthetic control method. Given pre-treatment data for a treated unit and a set of control units, the canonical synthetic control estimator minimizes</p>
-<p><span class="math display">\[
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\text{pre}} - \mathbf{Y}_0^{\text{pre}} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
-\]</span></p>
-<p>This is a constrained least squares program in which we regress the treated unit’s pre-treatment outcomes onto the control matrix under the constraint that <span class="math inline">\(\mathbf{w}\)</span> lies in the simplex <span class="math inline">\(\Delta^{N_0}\)</span>. For the purposes of this blog post, think of this as the solution to a single linear equation. Once the optimal weights <span class="math inline">\(\mathbf{w}^\ast\)</span> are estimated, the out-of-sample estimates are obtained by applying the same weights to the control matrix</p>
-<p><span class="math display">\[
-\mathbf{y}^{\text{SC}}_1 = \mathbf{Y}_0^{\text{post}} \mathbf{w}^\ast,
-\]</span></p>
-<p>with the concatenation between the in and out of sample vectors corresponding to the full predictions of the model. The estimated treatment effect at each post-treatment time point is then given by the difference between observed and out-of-sample outcomes: <span class="math inline">\(\hat{\tau}_{1t} = y_{1t} - \hat{y}_{1t}\)</span> for <span class="math inline">\(t \in \mathcal{T}_2\)</span>.</p>
-</section>
-</section>
-<section id="stacked-scm-with-multiple-outcomes" class="level1">
-<h1>Stacked SCM with Multiple Outcomes</h1>
-<p>When multiple outcomes are present, there are three choices we can make: do we use the concatenated approach, a demeaning/intercept adjusted approach, or do we combine them as a model average? The first approach stacks all the outcomes as we’ve discussed above into a big matrix/big vector. We then apply the standard SCM optimization problem to the stacked data. We minimize</p>
-<p><span class="math display">\[
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} \|_F^2 \quad \forall t \in \mathcal{T}_1.
-\]</span></p>
-<p>Here, the vector <span class="math inline">\(\mathbf{y}_1^{\prime}\)</span> is the stacked pre-treatment outcomes of the treated unit, including at least the outcome of the main target unit and auxilary outcomes. Similarly, <span class="math inline">\(\mathbf{Y}_0^{\prime}\)</span> is the stacked donor matrix including the focal outcome and the same set of auxilary outcomes. The weight vector <span class="math inline">\(\mathbf{w}^\ast\)</span> is found such that the in-sample fit is as close as possible to the weighted stacked combination of the control outcomes. The out-of-sample prediction for the treated unit is then estimated as</p>
-<p><span class="math display">\[
-\mathbf{y}_1^{\text{CAT}} = \mathbf{Y}_0 \mathbf{w}^\ast.
-\]</span></p>
-<p>The second approach involves including an intercept term for each outcome to control for differences in levels across outcomes. Instead of demeaning the outcomes ourselves, we add an intercept to the optimization. This approach <a href="https://doi.org/10.3982/QE1596">effectively</a> adjusts for any systematic differences between the target unit and the donor pool. The objective function in this case is</p>
-<p><span class="math display">\[
-\mathbf{w}^\ast = \underset{\mathbf{w} \in \Delta^{N_0}, \beta \in \mathbb{R}}{\operatorname*{argmin}} \|\mathbf{y}_1^{\prime} - \mathbf{Y}_0^{\prime} \mathbf{w} - \beta \|_F^2 \quad \forall t \in \mathcal{T}_1.
-\]</span></p>
-<p>Here, <span class="math inline">\(\beta\)</span> represents the unconstrained intercept term, and the unit weight vector retains its initial interpretation. Technically, this is the same as the MSCa estimator, discussed <a href="https://doi.org/10.1287/mnsc.2023.4878">here</a>. The out-of-sample prediction is estimated as</p>
-<p><span class="math display">\[
-\mathbf{y}_1^{\text{AVG}} = \mathbf{Y}_0 \mathbf{w}^\ast + \beta.
-\]</span></p>
-<p>I must admit, when I first read about this apporach, I was confused as to what was going on, until I considered them as the solution to a system of multiple equations. To have a better sense of what is going on, we typically consider our outcomes in data science or econoemtrics to be generated by some process that we never see. A common assumption is that they are generated by a <a href="https://jmlr.org/papers/volume19/17-777/17-777.pdf">low-rank model</a>, which essentially formulates our outcomes as a byproduct of the interaction between unit specific fixed effects that are idiosyncratic to each unit (that are not expected to change over time) and time effects that are common across all units of interest. Well, more than one outcome exists in the world that may plausibly have a similar factor structure to the metric that we care most about. When we stack these together, the hteoretical intuition is that we now allow the model to better capture the latent factors that influence the main outcome by solving for all of the outcomes at the same time, thereby improving the match of the synthetic control to those same latent factor loadings.</p>
-<p>Note that for estimation purposes, under the hood within <code>mlsynth</code>, both the outcome of interest and the auxiliary outcomes are normalized to 100 in the final pre-treatment period. This is to avoid the truly nasty solver issues we would get if we used the raw, untransformed outcomes that may be on different scales from the target outcome of interest. Note that this is a legal move because this is a linear transformation of the outcome, so it has no effect on the optimality conditions. But, this transformation does affect the feasability region. To emphasize, the user of <code>mlsynth</code> does not need to manually normalize their outcome metrics. This is taken care of under the hood.</p>
-<section id="model-averaging" class="level2">
-<h2 class="anchored" data-anchor-id="model-averaging">Model Averaging</h2>
-<p>We may also model average these models together, which sometimes results in better fit than using either model alone. Suppose we are given two distinct estimators of the counterfactual outcome for the treated unit. On one hand, we have <span class="math inline">\(\mathbf{y}_1^{\text{CAT}} \in \mathbb{R}^{T_0}\)</span>, which denotes the pre-treatment fit from the concatenated model by Tian, Lee, and Panchenko, and on the other hand, we have <span class="math inline">\(\mathbf{y}_1^{\text{AVG}} \in \mathbb{R}^{T_0}\)</span>, the corresponding fit from the demeaned model by Sun, Ben-Michael, and Feller. As before, we observe the treated unit’s pre-treatment trajectory, <span class="math inline">\(\mathbf{y}_1^{\text{pre}} \in \mathbb{R}^{T_0}\)</span>.</p>
-<p>To begin, we stack the two counterfactuals into a single matrix:</p>
-<p><span class="math display">\[
-\mathbf{Y}^{\text{MA}} = \begin{bmatrix}
-\mathbf{y}_1^{\text{CAT}} &amp; \mathbf{y}_1^{\text{AVG}}
-\end{bmatrix} \in \mathbb{R}^{T_0 \times 2}.
-\]</span></p>
-<p>We define the model-averaged pre-treatment fit as a convex combination of the two predictions</p>
-<p><span class="math display">\[
-\mathbf{y}_1^{\text{MA}}(\boldsymbol{\lambda}) = \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda},
-\]</span></p>
-<p>where <span class="math inline">\(\boldsymbol{\lambda} \in \Delta^2\)</span> is a 2-dimensional simplex weight vector</p>
-<p><span class="math display">\[
-\Delta^2 = \left\{ \boldsymbol{\lambda} \in \mathbb{R}_{\geq 0}^2 : \| \boldsymbol{\lambda} \|_1 = 1 \right\}.
-\]</span></p>
-<p>The model averaged objective function minimizes</p>
-<p><span class="math display">\[
-\boldsymbol{\lambda}^\ast = \underset{\boldsymbol{\lambda} \in \Delta^2}{\operatorname{argmin}} \left\| \mathbf{y}_1^{\text{pre}} - \mathbf{Y}^{\text{MA}} \boldsymbol{\lambda} \right\|_F^2 \quad \forall t \in \mathcal{T}_1.
-\]</span></p>
-<p>The interpretation of the convex hull remains the same as in the traditional SCM: for each time point in the pre-treatment period, the model-averaged prediction lies between the global minimum and maximum of the two individual estimators</p>
-<p><span class="math display">\[
-\mathbf{y}_1^{\text{MA}} \in \left[
-\min\left(\mathbf{y}_1^{\text{CAT}}, \mathbf{y}_1^{\text{AVG}}\right),
-\max\left(\mathbf{y}_1^{\text{CAT}}, \mathbf{y}_1^{\text{AVG}}\right)
-\right]
-\quad \forall t \in \mathcal{T}.
-\]</span></p>
-<p>Once <span class="math inline">\(\boldsymbol{\lambda}^\ast\)</span> is found, the model-averaged out-of-sample predictions are estimated like</p>
-<p><span class="math display">\[
-\mathbf{Y}^{\text{MA, post}} = \begin{bmatrix}
-\mathbf{y}_1^{\text{CAT, post}} &amp; \mathbf{y}_1^{\text{AVG, post}}
-\end{bmatrix},
-\quad
-\mathbf{y}_1^{\text{MA, post}} = \mathbf{Y}^{\text{MA, post}} \boldsymbol{\lambda}^\ast.
-\]</span></p>
-<p>Essentially, this is a mixture of both models.</p>
-</section>
-<section id="conformal-prediction-via-agnostic-means" class="level2">
-<h2 class="anchored" data-anchor-id="conformal-prediction-via-agnostic-means">Conformal Prediction via Agnostic Means</h2>
-<p>Now a final word on infernece. I use conformal prediction intervals to conduct inference here, developed in <a href="https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf">this paper</a>. Precisely, I use the agnostic approach (yes, I know <a href="https://doi.org/10.1080/01621459.2021.1920957">other approaches</a> exist; users of <code>mlsynth</code> will likely be given the option to choose which flavor of conformal prediction they desire as an option, in the future). Define the vector of residuals as <span class="math inline">\(\mathbf{u}_{\text{pre}} = \mathbf{y}_{1,\text{pre}} - \mathbf{y}^{\text{SC}}_{1,\text{pre}}\)</span>, or just the pretreatment difference betwixt the observed values and its counterfactual. Furthermore, let <span class="math inline">\(\hat{\sigma}^2 = \frac{1}{T_0 - 1} \left\| \mathbf{u}_{\text{pre}} - \bar{u} \mathbf{1} \right\|^2\)</span> be the unbiased estimator of the residual variance, where <span class="math inline">\(\bar{u} = \frac{1}{T_0} \sum_{t=1}^{T_0} u_t\)</span> is the mean residual.</p>
-<p>We aim to construct prediction intervals for the counterfactual outcomes in the post-treatment period <span class="math inline">\(\mathbf{y}^{\text{SC}}_{1,\text{post}} \in \mathbb{R}^{T_1}\)</span> be the post-treatment SC predictions for some generic estimator. Assuming that the out-of-sample error is sub-Gaussian given the history <span class="math inline">\(\mathscr{H}\)</span> (in plain English, this just means that large errors are unlikely, which makes sense given that SC is less biased in a well-fitting pre-intervention model), we obtain a valid non-asymptotic prediction interval via <a href="https://arxiv.org/pdf/1910.02884">concentration</a> inequalities. Specifically, we have <span class="math inline">\(\delta_\alpha = \sqrt{2 \hat{\sigma}^2 \log(2 / \alpha)}\)</span>. The conformal prediction intervals are then defined as <span class="math inline">\(\mathbf{p}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} - \delta_\alpha \mathbf{1}\)</span>, <span class="math inline">\(\mathbf{u}_{\text{post}} = \mathbf{y}^{\text{SC}}_{1,\text{post}} + \delta_\alpha \mathbf{1}\)</span>. These bounds provide uniform coverage guarantees under the sub-Gaussian assumption on the prediction error. In the paper, the authors also provide two more methods, and these will likely be incorporated in the future.</p>
-</section>
-</section>
-<section id="estimation-in-python" class="level1">
-<h1>Estimation in Python</h1>
-<p>In order to get these results, you need Python (3.9 or greater) and <code>mlsynth</code>, which you may install from the Github repo. You’ll need the most recent version which automatically computes the conformal prediciton.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>The format of the dataset is the same as we would expect for any other mlsynth dataset. The class expects: a long form dataset where we have one column for time, another for the unit, another dummy column for treatment, and some columns for the outcomes of interest, The way we import the class for this is by doing <code>from mlsynth.mlsynth import SCMO</code> at the top of one’s Python script.</p>
-<section id="simulation" class="level2">
-<h2 class="anchored" data-anchor-id="simulation">Simulation</h2>
-<p>Suppose we are working at Airbnb, and we wish to see the causal effect of the introduction of <a href="https://news.airbnb.com/airbnb-partners-with-art-basel-miami-beach/">Airbnb Experiences</a> on <a href="https://www.lodgify.com/encyclopedia/gross-booking-revenue/">Gross Booking Value</a> (GBV), a metric which is defined as ‘’the total revenue generated by room or property rentals before any costs or expenses are subtracted’’. Airbnb Experiences connects users of the platform to local tour guides or other local attractions. It serves as a kind of competition to Travelocity, Viator and other booking/ travel services. In other words, this program may make makes this city an attraction, and we may see an increase in GBV as a result.</p>
-<p>Well, all sorts of things may be related to GBV, such as local hotel prices, pre-existing level of tourist arrivals, average city-specific booking price, and other relevant metrics. The goal is to see how the GBV would have evolve absent the policy. The point of this simulation is to use the <code>SCMO</code> (synthetic control multiple outcomes) estimator to measure the causal impact.</p>
-<p>For each unit, the observed outcome <span class="math inline">\(\mathbf{Y}_{jtk}\)</span> evolves according to an autoregressive process with latent structure for time, place, and seasonality</p>
-<p><span class="math display">\[
-\mathbf{Y}_{jtk} =
-\rho_k \mathbf{Y}_{jt-1k} +
-(1 - \rho_k) \left(
-\alpha_{jk} + \beta_{tk} + \boldsymbol{\phi}_j^\top \boldsymbol{\mu}_{tk} + \mathbf{S}_{jt} + \delta_k
-\right) + \varepsilon_{jtk}, \quad \text{for } t &gt; 1,
-\]</span></p>
-<p>with initial condition</p>
-<p><span class="math display">\[
-\mathbf{Y}_{j1k} =
-\alpha_{jk} + \beta_{1k} + \boldsymbol{\phi}_j^\top \boldsymbol{\mu}_{1k} + \mathbf{S}_{j1} + \delta_k + \varepsilon_{j1k}.
-\]</span></p>
-<p>Here, <span class="math inline">\(\alpha_{jk} \sim \mathcal{N}(0, 1)\)</span> and <span class="math inline">\(\beta_{tk} \sim \mathcal{N}(0, 1)\)</span> represent unit-outcome and time-outcome fixed effects, respectively. Each unit <span class="math inline">\(j\)</span> possesses latent attributes <span class="math inline">\(\boldsymbol{\phi}_j \in \mathbb{R}^r \sim \mathcal{N}(0, \mathbf{I})\)</span>, while each time-outcome pair <span class="math inline">\((tk)\)</span> has associated latent loadings <span class="math inline">\(\boldsymbol{\mu}_{tk} \in \mathbb{R}^r \sim \mathcal{N}(0, \mathbf{I})\)</span>. The seasonal component <span class="math inline">\(\mathbf{S}_{jt}\)</span> captures unit-specific periodicity and is defined as <span class="math inline">\(\gamma_j \cos\left( \frac{4\pi(t - \tau_j)}{T_{\text{season}}} \right)\)</span>, with <span class="math inline">\(\gamma_j \sim \text{Unif}(0, \bar{\gamma})\)</span> representing the amplitude and <span class="math inline">\(\tau_j \sim \text{Unif}\{0, \dots, T_{\text{season}} - 1\}\)</span> the phase shift. Each outcome <span class="math inline">\(k\)</span> has a baseline shift <span class="math inline">\(\delta_k \sim \text{Unif}(200, 500)\)</span>, an autocorrelation parameter <span class="math inline">\(\rho_k \in (0, 1)\)</span>, and an idiosyncratic noise component <span class="math inline">\(\varepsilon_{jtk} \sim \mathcal{N}(0, \sigma^2)\)</span>. One unit (Iquique, Chile in this draw) is designated as treated. To introduce selection bias, the unit with the second-largest realization on the first latent factor dimension is treated, meaning methods like difference-in-differences or interrupted time series methods will not perform well. The target unit’s GBV receives an additive treatment effect of <span class="math inline">\(+5\)</span> during all post-treatment periods.</p>
-</section>
-<section id="results" class="level2">
-<h2 class="anchored" data-anchor-id="results">Results</h2>
-<p>When we run this estimator, we need to specify one of three estimators: <code>TLP</code>, <code>SBMF</code>, or <code>both</code>, where the abbreviations are obviouslyfor the surnames of the authors. We also need to supply a dictionary entry to <code>mlsynth</code> called <code>addout</code>. This is either a string or a list which lists the additional outcomes we care about in the dataframe. When we run the estimator, we get:</p>
-<div id="179533d6" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run simulation</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulate(seed<span class="op">=</span><span class="dv">10000</span>, r<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">'Gross Booking Value'</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"treat"</span>: <span class="st">'Experiences'</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"unitid"</span>: <span class="st">'Market'</span>,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"time"</span>: <span class="st">'Week'</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"display_graphs"</span>: <span class="va">True</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"save"</span>: <span class="va">False</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"counterfactual_color"</span>: [<span class="st">"blue"</span>], <span class="st">"addout"</span>: <span class="bu">list</span>(df.columns[<span class="dv">4</span>:]),</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"method"</span>: <span class="st">"BOTH"</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>arco <span class="op">=</span> SCMO(config).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This is a follow-up to my last excerpt, and (like that one) a preview of my forthcoming book on synthetic control methods.</p>
+<div class="epigraph">
+<blockquote class="blockquote">
+<p>“I think we may be In a different book, on a different page You said you are different but you’re the same” — <a href="https://genius.com/Jhene-aiko-stranger-lyrics"><em>Jhené Aiko</em></a>, “stranger”</p>
+</blockquote>
+</div>
+<hr>
+<p>After the <a href="averagesexcp.html">last post</a>, where I showed that the arithmetic mean is really the solution to an optimization problem, somebody asked me a good question: <em>why do people keep saying difference-in-differences (DID) is just synthetic control (SCM) with uniform weights?</em> It is a fair thing to be confused about. The two are usually taught in different classes, with different notation, and DID in particular is almost never presented as an optimization problem at all — it is presented as a table with four cells and a subtraction, justified by parallel trends.</p>
+<p>So let me start where everyone already is, with parallel trends. Then I will translate that familiar story into the same optimization problem we solved for the mean last time — only now with the weights held fixed — and show that, told this way, the link to synthetic control is a line of algebra rather than a slogan. At the end I will run the whole thing on Proposition 99 in Python, so you can watch the weights and the intercept do their jobs.</p>
+<section id="start-with-parallel-trends" class="level2">
+<h2 class="anchored" data-anchor-id="start-with-parallel-trends">Start with parallel trends</h2>
+<p>Almost everyone who has met DID has met parallel trends. The setup is two groups, one treated and one not, observed before and after some intervention. DID takes the <em>change</em> in the treated group’s outcome and subtracts the <em>change</em> in the control group’s outcome. If, absent treatment, the two groups’ average outcomes would have moved in parallel, then the control group’s change stands in for the change the treated group would have had anyway, and the leftover — the difference of the two differences — is the treatment effect.</p>
+<p>What is parallel trends really saying, though? Set the formula aside for a second. Suppose that on the very first day we look, our treated unit sits about 5 units above the control average. Not because of treatment — nothing has happened yet — but simply because that is where it starts: maybe it is a richer state, a bigger market, a heavier-smoking population. Parallel trends is the claim that this gap of 5 is <em>sticky</em>. On the next day, absent treatment, the treated unit is again about 5 above the controls, in expectation. Ten periods later, still about 5. The two lines may climb, fall, and zig-zag with the business cycle however they like — but the <em>distance between them</em> stays parked at 5, period after period, for as long as no treatment intervenes.</p>
+<p>Sit with what that does and does not allow. It does not ask the treated and control groups to be at the same level — they are 5 apart the entire time, and that is fine. It asks only that the 5 never moves. So the treatment, when it finally arrives, is whatever makes the gap <em>depart</em> from 5. If the gap opens up to 32 after the policy, the treatment did the extra 27; the 5 was always going to be there. That one sticky number is the whole ballgame — and, as we are about to see, it is exactly the number the optimization solves for.</p>
+<p><a href="#fig-pta-cartoon" class="quarto-xref">Figure&nbsp;1</a> draws both worlds. On the left, the two lines wander all over — up, down, with the cycle — but the distance between them never leaves 5. That is parallel trends. On the right, the two start 5 apart and then drift; the gap grows to 15 for reasons that have nothing to do with any treatment. Both panels are the untreated world, before anyone has been treated. DID is only trustworthy in the world on the left.</p>
+<div id="cell-fig-pta-cartoon" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="scmo_files/figure-html/cell-3-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<div id="fig-pta-cartoon" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pta-cartoon-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="didexcp_files/figure-html/fig-pta-cartoon-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pta-cartoon-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: What parallel trends assumes, absent treatment: the gap between treated and control is a single sticky number. Left, it stays at 5 (parallel trends holds); right, it drifts off 5 (parallel trends fails).
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Using the model averaging estimator, our pre-treatment Root Mean Squared Error is 0.276. The ATT is 5.046. The weights are also a sparse vector. The model averaged estimator returns Arequipa (0.237), Bogotá (0.232), San Salvador (0.218), Santiago de Chile (0.174), San Luis Potosí (0.081), Montevidio (0.032), and Manzanillo (0.026), as the contributing units or only 7 of the 98 donor units. The optimal mixing between the models is 0.538 for the intercept-shifted estimator and 0.461 for the concatenated method. For DID, the RMSE is 0.878 and the ATT is 5.2, meaning that the intercept adjusted average of all donor units is clearly a biased estimator.</p>
-<p>Compare to Forward DID, this is NOT true: we have an ATT of 5.063 and a pre-intervention RMSE of 0.289, selecting Antofagasta, Bocas del Toro, Punta del Este, San Pedro Sula, and Santiago as the optimal donor pool (this method uses no additional outcomes, only the GBV metric). When I compare to the clustered PCR method, the positively weighted donors are San Pedro Sula (0.296), Punta del Este (0.255), Santiago (0.199), Antofagasta (0.190), and La Plata (0.060).</p>
+<p>Write it for a single treated unit and a donor pool <span class="math inline">\(\mathcal{N}_0\)</span> of <span class="math inline">\(N_0\)</span> never-treated units. Let <span class="math inline">\(y_{1t}\)</span> be the treated unit and <span class="math inline">\(\bar{y}_{0t}\)</span> the control-group average at time <span class="math inline">\(t\)</span>. Parallel trends says the expected gap between them is one and the same constant over time, treatment aside:</p>
+<p><span class="math display">\[
+\mathbb{E}\!\left[\, y_{1t}(0) - \bar{y}_{0t}(0) \,\right] = \beta, \qquad \forall \, t,
+\]</span></p>
+<p>the same <span class="math inline">\(\beta\)</span> before <em>and</em> after the intervention. This is the assumption that the average untreated outcome evolves in parallel for the two groups; everything DID reports is downstream of it.</p>
+<p>Here is the thing I want to flag before we go further, because it is the crux of the question I was asked. In the way DID is almost always taught and applied, this is a <strong>large-<span class="math inline">\(N\)</span></strong> statement. You have many controls, and <span class="math inline">\(\bar{y}_{0t}\)</span> is not really “38 states averaged with weight <span class="math inline">\(1/38\)</span>” in anyone’s mind — it is a sample estimate of a population expectation, <span class="math inline">\(\mathbb{E}[y_t(0) \mid D = 0]\)</span>, the untreated mean in the control population. As the control group grows, the sample average converges to that expectation, and nobody stops to notice that an expectation is itself a weighting. In the <a href="https://doi.org/10.1257/jel.20251650">Baker, Callaway, Cunningham, Goodman-Bacon and Sant’Anna (2026)</a> practitioner’s guide the point is explicit from the first equations: the DID estimand is written with a <em>weighted</em> expectation <span class="math inline">\(\mathbb{E}_\omega[\cdot]\)</span>, and the weights, they note, enter “as part of the definition of the causal parameter” — before you have estimated anything. Large-<span class="math inline">\(N\)</span> asymptotics just let you fold them into the word “expectation” and stop looking. We do not usually need to treat the weights as objects. That does not mean they are not there.</p>
 </section>
+<section id="the-same-story-in-optimization-language" class="level2">
+<h2 class="anchored" data-anchor-id="the-same-story-in-optimization-language">The same story in optimization language</h2>
+<p>Now let me translate all of that into the language of the <a href="averagesexcp.html">last post</a>, where every summary statistic turned out to be an argmin. The bridge is a single identity, and we already proved it: <strong>a mean is the solution to a least-squares problem.</strong> Attaching weights changes only the bookkeeping,</p>
+<p><span class="math display">\[
+\mathbb{E}_\omega[X] = \operatorname*{argmin}_{c \in \mathbb{R}} \; \mathbb{E}_\omega\!\big[(X - c)^2\big],
+\qquad\text{and in a sample,}\qquad
+\sum_i \omega_i x_i = \operatorname*{argmin}_{c \in \mathbb{R}} \sum_i \omega_i (x_i - c)^2.
+\]</span></p>
+<p>So the weighted expectation that the practitioner’s guide puts at the center of DID <em>is</em> an argmin, and the <span class="math inline">\(\omega\)</span> riding on the expectation is the very same <span class="math inline">\(\omega\)</span> that weights the squared errors. Quote-unquote translating the notation, the control-group counterfactual is nothing but the expectation-side name for a one-parameter least-squares fit:</p>
+<p><span class="math display">\[
+\underbrace{\mathbb{E}_\omega[\,y_t(0) \mid D = 0\,]}_{\text{expectation notation}}
+\;=\;
+\underbrace{\operatorname*{argmin}_{c \in \mathbb{R}} \sum_{j \in \mathcal{N}_0} \omega_j \, (y_{jt} - c)^2}_{\text{optimization notation}}
+\;\overset{\omega \,=\, 1/N_0}{=}\;
+\bar{y}_{0t}.
+\]</span></p>
+<p>Read left to right it is a population expectation; read right to left it is a weighted mean, which is a weighted argmin, which — at uniform weights — is the plain control average <span class="math inline">\(\bar{y}_{0t}\)</span>. Nothing is lost in the translation. The expectation was an optimization problem wearing different clothes, and the weights that were hidden inside it are now sitting in the open as the coefficients <span class="math inline">\(\omega_j\)</span>.</p>
+<p><strong>Parallel trends, translated.</strong> Write the per-period gap as</p>
+<p><span class="math display">\[
+g_t \defeq y_{1t} - \bar{y}_{0t}.
+\]</span></p>
+<p>DID’s intercept is what you get by fitting a <em>single constant</em> to the pre-treatment gaps by least squares — the exact problem from the mean post, with the “data points” now the gaps <span class="math inline">\(g_t\)</span>:</p>
+<p><span class="math display">\[
+\beta^\ast = \operatorname*{argmin}_{\beta \in \mathbb{R}} \sum_{t \in \mathcal{T}_1} (g_t - \beta)^2.
+\]</span></p>
+<p>The minimizer is the mean derivation all over again. With <span class="math inline">\(u_t(\beta) = g_t - \beta\)</span>, the chain rule gives each term’s derivative as <span class="math inline">\(2 u_t(\beta) \cdot (-1) = -2(g_t - \beta)\)</span>; summing and setting to zero,</p>
+<p><span class="math display">\[
+-2 \sum_{t \in \mathcal{T}_1} (g_t - \beta) = 0
+\;\;\Longrightarrow\;\;
+\sum_{t \in \mathcal{T}_1} g_t - T_0 \beta = 0
+\;\;\Longrightarrow\;\;
+\beta^\ast = \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} g_t,
+\]</span></p>
+<p>and the second derivative <span class="math inline">\(2 T_0 &gt; 0\)</span> confirms it is a minimum. So <span class="math inline">\(\beta^\ast\)</span> is just the average pre-treatment gap — the sticky “5” from the top of the post, now estimated from the data — and the counterfactual is the control mean shifted by this one number, <span class="math inline">\(\hat{y}_{1t}(0) = \bar{y}_{0t} + \beta^\ast\)</span>.</p>
+<p>That least-squares fit is a <em>model</em> of the gap: it says the gap is one constant plus noise. And this is where parallel trends drops into the same lens. In expectation notation it reads <span class="math inline">\(\mathbb{E}[g_t] = \beta\)</span> for all <span class="math inline">\(t\)</span>; translated, that is the statement that the intercept is stable across the treatment date — the constant that best fits the pre-period gap is the same constant that best fits the post-period gap:</p>
+<p><span class="math display">\[
+\underbrace{\mathbb{E}[g_t] = \beta \;\; \forall \, t}_{\text{expectation notation}}
+\qquad\Longrightarrow\qquad
+\underbrace{\operatorname*{argmin}_{\beta} \, \mathbb{E}\!\!\sum_{t \in \mathcal{T}_1} (g_t - \beta)^2
+\;=\;
+\operatorname*{argmin}_{\beta} \, \mathbb{E}\!\!\sum_{t \in \mathcal{T}_2} (g_t - \beta)^2}_{\text{optimization notation}} .
+\]</span></p>
+<p>We only ever get to <em>solve</em> the left-hand problem — the post-period gaps <span class="math inline">\(g_t\)</span> for <span class="math inline">\(t \in \mathcal{T}_2\)</span> are unobserved, since they contain the counterfactual we are after. Parallel trends is precisely the license to carry the pre-period solution across the treatment date and use it on the right. This is the “5 never moves” claim written as an optimization: the single constant that minimizes the pre-period squared gap is the same constant that minimizes it afterward. Equivalently, the residual <span class="math inline">\(r_t = g_t - \beta^\ast\)</span> is mean-zero with no time structure — the gap is a flat line at <span class="math inline">\(\beta^\ast\)</span> in expectation, that same sticky number, pre and post alike.</p>
 </section>
-<section id="caveats" class="level1">
-<h1>Caveats</h1>
-<p>So, a few comments are in order. One, this method is preciated on the selection of the right covariates to use. In testing on other empirical datasets, I got different results depending on the outcomes I employed. It would be cool to have a method to select the relevant ones. There are also <a href="https://arxiv.org/pdf/1905.06400">other methods</a> of combining multiple outcomes together, such as the PCR version of this (the multi-dimensional Robust SCM/PCR). This method uses a diagonal matrix to weight the most relevant additional outcomes in a quadratic-programming style estimator. I will program this in the future, maybe even comparing it to the current method. Anyways, this is the first method in <code>mlsynth</code> which directly incorporates addtional predictors/outcomes that may be similar to the latent factor structure. Please, do email me or comment on the LinkedIn post if you have any questions.</p>
+<section id="where-synthetic-control-comes-in" class="level2">
+<h2 class="anchored" data-anchor-id="where-synthetic-control-comes-in">Where synthetic control comes in</h2>
+<p>Step back and write what both DID and SCM are doing in a single line. Each builds the treated unit’s counterfactual from a weighted average of the controls, plus a level, chosen to fit the pre-treatment window:</p>
+<p><span class="math display">\[
+\min_{\mathbf{w}, \, \beta}
+\sum_{t \in \mathcal{T}_1}
+\Big( y_{1t} - \beta - \sum_{j \in \mathcal{N}_0} w_j \, y_{jt} \Big)^2
+\qquad \text{subject to} \qquad
+w_j \ge 0, \quad \sum_{j \in \mathcal{N}_0} w_j = 1.
+\]</span></p>
+<p>The constraint set — non-negative weights that sum to one — is the same simplex the arithmetic mean lives on. Recall from the <a href="averagesexcp.html">last post</a> that the mean’s weights <span class="math inline">\(w_j = 1/n\)</span> are non-negative and sum to one, which is exactly the classic synthetic-control constraint. Synthetic control searches over <span class="math inline">\(\mathbf{w}\)</span> on that simplex, letting the data decide which donors count. Difference-in-differences refuses to search: it plants <span class="math inline">\(\mathbf{w}\)</span> at the dead center of the simplex, <span class="math inline">\(w_j = 1/N_0\)</span> for every donor — the centroid — and solves only for <span class="math inline">\(\beta\)</span>. With the weights pinned, <span class="math inline">\(\sum_j w_j y_{jt}\)</span> collapses to <span class="math inline">\(\bar{y}_{0t}\)</span> and we are back to the one-parameter problem we just solved. That is the entire difference between the two methods: whether <span class="math inline">\(\mathbf{w}\)</span> is free or frozen.</p>
+<p>And now parallel trends and the weights are visibly the same conversation. The gap <span class="math inline">\(g_t = y_{1t} - \sum_j w_j y_{jt}\)</span> carries the weights inside it, so whether <span class="math inline">\(\mathbb{E}[g_t]\)</span> is flat is a fact about <span class="math inline">\(\mathbf{w}\)</span>, not about “California and the controls” in the abstract. Change <span class="math inline">\(\mathbf{w}\)</span> and you change the gap, and you change whether its expectation is a constant. The two methods make opposite bets with that lever:</p>
+<ul>
+<li><strong>DID</strong> fixes <span class="math inline">\(\mathbf{w} = 1/N_0\)</span> and then <em>assumes</em> the resulting gap is flat in expectation. Parallel trends is a hope about a gap you never got to shape.</li>
+<li><strong>SCM</strong> <em>chooses</em> <span class="math inline">\(\mathbf{w}\)</span> on the simplex to make the pre-period gap as flat as it can. It buys parallel pre-trends in-sample, by construction, instead of assuming it.</li>
+</ul>
+<p>So the weights were never a side issue that large-<span class="math inline">\(N\)</span> was right to hide. They are the one lever that decides whether parallel trends is even plausible, and DID’s choice to leave that lever parked at the center of the simplex <em>is</em> its identifying content.</p>
+</section>
+<section id="proposition-99-with-uniform-weights-and-an-intercept" class="level2">
+<h2 class="anchored" data-anchor-id="proposition-99-with-uniform-weights-and-an-intercept">Proposition 99, with uniform weights and an intercept</h2>
+<p>Let me show the weights and the intercept in the flesh. I will use Abadie, Diamond and Hainmueller’s canonical Proposition 99 setup: California is treated by the 1989 anti-tobacco law, there are 38 control states, and we observe per-capita cigarette sales from 1970 to 2000. To follow along you’ll want the <code>dataprep</code> helper from my <code>mlsynth</code> package:</p>
+<pre class="{shell}"><code>pip install -U git+https://github.com/jgreathouse9/mlsynth.git</code></pre>
+<p>We load the panel and hand it to <code>dataprep</code>, which returns the treated vector <code>y</code>, the <code>donor_matrix</code> of the 38 controls, and the number of pre-treatment periods.</p>
+<div id="0a441301" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.datautils <span class="im">import</span> dataprep</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>base_url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> base_url <span class="op">+</span> <span class="st">"basedata/smoking_data.csv"</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>prepped <span class="op">=</span> dataprep(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    data.columns[<span class="dv">0</span>],   <span class="co"># unit   : state</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    data.columns[<span class="dv">1</span>],   <span class="co"># time   : year</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    data.columns[<span class="dv">2</span>],   <span class="co"># outcome: cigsale</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    data.columns[<span class="op">-</span><span class="dv">1</span>],  <span class="co"># treat  : Proposition 99</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now the estimator, exactly as the algebra prescribes. The uniform weights <span class="math inline">\(1/N_0\)</span> are applied by averaging the donor matrix across its columns; the intercept <span class="math inline">\(\beta^\ast\)</span> is the mean pre-treatment gap; the counterfactual is the shifted donor mean; and the ATT is the average post-treatment gap between California and that counterfactual.</p>
+<div id="6f6634bb" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y      <span class="op">=</span> prepped[<span class="st">"y"</span>]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>T0     <span class="op">=</span> prepped[<span class="st">"pre_periods"</span>]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>donors <span class="op">=</span> prepped[<span class="st">"donor_matrix"</span>]</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>N0     <span class="op">=</span> donors.shape[<span class="dv">1</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Uniform weights: every donor gets 1/N0. These are the SCM simplex weights,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># planted at the centroid.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> np.full(N0, <span class="fl">1.0</span> <span class="op">/</span> N0)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>donor_mean <span class="op">=</span> donors <span class="op">@</span> w                       <span class="co"># equivalently donors.mean(axis=1)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The one free parameter: the intercept beta*.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>beta <span class="op">=</span> np.mean(y[:T0] <span class="op">-</span> donor_mean[:T0])</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>yhat <span class="op">=</span> donor_mean <span class="op">+</span> beta                       <span class="co"># the DID counterfactual</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>ATT  <span class="op">=</span> np.mean(y[T0:] <span class="op">-</span> yhat[T0:])</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"weights sum to      </span><span class="sc">{</span>w<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.4f}</span><span class="ss">, min weight </span><span class="sc">{</span>w<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.4f}</span><span class="ss">  (on the simplex)"</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"intercept  beta*  =  </span><span class="sc">{</span>beta<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"ATT              =  </span><span class="sc">{</span>ATT<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>weights sum to      1.0000, min weight 0.0263  (on the simplex)
+intercept  beta*  =  -14.3590
+ATT              =  -27.3491</code></pre>
+</div>
+</div>
+<p>The weights sum to one and are all positive, the intercept comes out to <span class="math inline">\(\beta^\ast \approx -14.36\)</span> — California smoked about 14 fewer packs per capita than the average control state before the law — and the ATT is about <span class="math inline">\(-27.35\)</span> packs per capita. Here is the picture.</p>
+<div id="cell-fig-did-cali" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div id="fig-did-cali" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-did-cali-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="didexcp_files/figure-html/fig-did-cali-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-did-cali-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Difference-in-Differences on Proposition 99: uniform donor weights plus an intercept.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The counterfactual does not hug California especially well before 1989 — it undershoots for the first few years and overshoots later. That misfit is the whole reason SCM exists, and it is parallel trends failing in front of you. The uniform weights force the counterfactual to be the <em>average</em> control state, shifted to California’s level; the intercept can only slide that line up and down, it cannot bend it. If California’s pre-period gap is not flat, no choice of <span class="math inline">\(\beta\)</span> will make it flat, and the gap you see before 1989 is a preview of the bias you cannot see after it.</p>
+</section>
+<section id="so-what" class="level2">
+<h2 class="anchored" data-anchor-id="so-what">So what?</h2>
+<p>Now, you may be saying, “Hey Jared, this is a lot of algebra to conclude that a mean is a mean.” But the payoff is a clean way to see what you are actually assuming when you reach for DID, and why the choice between DID and SCM is a choice about weights and nothing else.</p>
+<p>Both estimators answer the same question — what would California have done without Prop 99? — by averaging control states. DID commits to equal weights before it looks at the data; SCM lets the pre-treatment fit choose the weights. Neither fabricates a “fake” California or grafts together a “Frankenstein” unit, any more than the national average income fabricates a fake person. They both summarize real control units with weights that live on the same simplex. The difference is only whether those weights are handed to you as an axiom or estimated as a decision.</p>
+<p>And the reason that decision matters shows up the moment you write untreated outcomes as a factor model, <span class="math inline">\(y_{jt}(0) = a_j + \mathbf{b}_j^\top \mathbf{f}_t + u_{jt}\)</span>. Averaging the donor pool averages its factor loadings <span class="math inline">\(\bar{\mathbf{b}}_0\)</span>, and — as I show in the book — the DID counterfactual is unbiased exactly when the treated unit’s loading equals that average, <span class="math inline">\(\mathbf{b}_1 = \bar{\mathbf{b}}_0\)</span>. That is parallel trends restated one more time: the leftover gap is <span class="math inline">\((\mathbf{b}_1 - \bar{\mathbf{b}}_0)^\top (\mathbf{f}_t - \bar{\mathbf{f}})\)</span>, a term that <em>moves with <span class="math inline">\(t\)</span></em> whenever the treated loading differs from the donor average — a gap no intercept can flatten. Uniform weights only reach California’s factor exposure if California happens to sit at the donor pool’s center of gravity. When it does not — and a state with California’s tobacco culture usually does not — you want the freedom to move the weights off the centroid, toward the donors that actually share its exposure. That freedom <em>is</em> synthetic control, and DID is the center of it you get by refusing to use it.</p>
+<p>So the answer to the question I was asked is: DID is a synthetic control whose weight vector you filled in yourself, with <span class="math inline">\(1/N_0\)</span> in every slot, before the data had a chance to weigh in. Everything else — the loss, the simplex, the intercept, the counterfactual, and parallel trends itself — is shared. You are, as ever, never <em>not</em> averaging. The only question is who gets to pick the weights.</p>
 
 
 
@@ -484,31 +480,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1789171200000" data-listing-file-modified-sort="1789261079766" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3102">
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./didexcp.html" class="no-external">Difference-in-Differences Is a Synthetic Control With Uniform Weights</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWMlMjBUaGVvcnk='); return false;">Econometric Theory</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
-
-</div>
-</div>
-<div class="metadata">
-<a href="./didexcp.html" class="no-external">
-<div class="listing-date">
-Sep 12, 2026
-</div>
-<div class="listing-author">
-Jared Greathouse
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789261079770" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="quarto-post image-right" data-index="3" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1789261079770" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
@@ -532,7 +504,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
+<div class="quarto-post image-right" data-index="4" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -556,7 +528,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789261079766" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="5" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1789261079766" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -580,7 +552,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789261079774" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="6" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1789261079774" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -597,7 +569,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789261079772" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
+<div class="quarto-post image-right" data-index="7" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1789261079772" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -621,7 +593,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="8" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -638,7 +610,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="9" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -662,7 +634,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -684,7 +656,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1789261079773" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -706,7 +678,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="12" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -730,7 +702,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="13" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1789261079769" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -752,7 +724,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789261079774" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="14" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1789261079774" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -769,6 +741,30 @@ Jared Greathouse
 <a href="./synthinter.html" class="no-external">
 <div class="listing-date">
 Apr 29, 2025
+</div>
+<div class="listing-author">
+Jared Greathouse
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1789261079772" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
+</h3>
+<div class="listing-categories">
+
+<div class="listing-category" onclick="window.quartoListingCategory('Q2F1c2FsJTIwSW5mZXJlbmNl'); return false;">Causal Inference</div>
+
+<div class="listing-category" onclick="window.quartoListingCategory('RWNvbm9tZXRyaWNz'); return false;">Econometrics</div>
+
+</div>
+</div>
+<div class="metadata">
+<a href="./scmo.html" class="no-external">
+<div class="listing-date">
+Apr 16, 2025
 </div>
 <div class="listing-author">
 Jared Greathouse

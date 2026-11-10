@@ -303,32 +303,117 @@ $$
 
 with equality whenever the minimizer of the loosened problem happens to satisfy the dropped sign conditions. One matrix inverse up front, then one quadratic form per candidate. This also shows where the NP-hardness went. Finding the set with the smallest floor means finding the sign vector with exactly $K$ plus signs that makes $\boldsymbol{\sigma}^\top \mathbf{R} \boldsymbol{\sigma}$ as large as possible, which is a max-cut problem with a size constraint. I did not make the problem easy; I made each candidate cheap and the bounds tight.
 
-Back to the six cities, to see what this floor buys. One matrix inverse, then one quadratic form for each of the 15 designs:
+Where does that formula come from? Once the sign conditions are dropped, what is left is a quadratic minimized subject to two linear equalities, and that has a textbook answer. Write $\mathbf{M} \coloneqq \mathbf{G} + \lambda \mathbf{I}$, so $\mathbf{H} = \mathbf{M}^{-1}$, and stack the two constraints as $\mathbf{A}\mathbf{u} = \mathbf{b}$ with
+
+$$
+\mathbf{A} = \begin{bmatrix} \mathbf{1}^\top \\ \boldsymbol{\sigma}^\top \end{bmatrix}, \qquad \mathbf{b} = \begin{bmatrix} 0 \\ 2 \end{bmatrix}.
+$$
+
+The first row says the treated weights and the control weights cancel ($\mathbf{1}^\top \mathbf{u} = 1 - 1 = 0$); the second says the treated weights minus the control weights total $1 - (-1) = 2$. Setting the gradient of the Lagrangian to zero gives the minimizer and its value,
+
+$$
+\mathbf{u}^\ast = \mathbf{H} \mathbf{A}^\top \left( \mathbf{A} \mathbf{H} \mathbf{A}^\top \right)^{-1} \mathbf{b},
+\qquad
+\mathbf{u}^{\ast\top} \mathbf{M}\, \mathbf{u}^\ast = \mathbf{b}^\top \left( \mathbf{A} \mathbf{H} \mathbf{A}^\top \right)^{-1} \mathbf{b},
+$$
+
+and $\mathbf{A}\mathbf{H}\mathbf{A}^\top$ is only $2 \times 2$:
+
+$$
+\mathbf{A} \mathbf{H} \mathbf{A}^\top =
+\begin{bmatrix} \mathbf{1}^\top \mathbf{H} \mathbf{1} & \mathbf{1}^\top \mathbf{H} \boldsymbol{\sigma} \\ \boldsymbol{\sigma}^\top \mathbf{H} \mathbf{1} & \boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} \end{bmatrix}
+=
+\begin{bmatrix} \alpha & \mathbf{p}^\top \boldsymbol{\sigma} \\ \mathbf{p}^\top \boldsymbol{\sigma} & \boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} \end{bmatrix}.
+$$
+
+Because $\mathbf{b}$ is zero in its first entry, only the bottom-right entry of the inverse matters, which is $\alpha$ over the determinant. So
+
+$$
+\mathrm{lb}(\mathcal{S}) = \frac{4\alpha}{\alpha\, \boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} - (\mathbf{p}^\top \boldsymbol{\sigma})^2} = \frac{4\alpha}{\boldsymbol{\sigma}^\top \left( \alpha \mathbf{H} - \mathbf{p}\mathbf{p}^\top \right) \boldsymbol{\sigma}} = \frac{4\alpha}{\boldsymbol{\sigma}^\top \mathbf{R}\, \boldsymbol{\sigma}}.
+$$
+
+Now the six cities, by hand. First center each day, subtracting the day's average across the six cities. A level shared by every city cancels from any contrast (the weights in $\mathbf{u}$ sum to zero), so this changes nothing, and it makes $\mathbf{G}$ easier to read:
 
 ```{python}
-#| code-fold: true
-#| code-summary: "The closed-form floor on the toy"
+#| echo: false
 
-Yc = Ym - Ym.mean(axis=1, keepdims=True)           # center each day; a common level cancels anyway
+Yc = Ym - Ym.mean(axis=1, keepdims=True)
 G = Yc.T @ Yc / T0_toy
-H = np.linalg.inv(G + toy_lam * np.eye(N_toy))
+M_toy = G + toy_lam * np.eye(N_toy)
+H = np.linalg.inv(M_toy)
 p_vec = H @ np.ones(N_toy)
-alpha = np.ones(N_toy) @ p_vec
+alpha = float(np.ones(N_toy) @ p_vec)
 R = alpha * H - np.outer(p_vec, p_vec)
+cities = list(toy.columns)
+
+def sigma_of(pair):
+    return np.array([1.0 if c in pair else -1.0 for c in cities])
 
 def floor(pair):
-    sigma = np.array([1.0 if c in pair else -1.0 for c in toy.columns])
-    return 4 * alpha / (sigma @ R @ sigma)
+    s = sigma_of(pair)
+    return 4 * alpha / (s @ R @ s)
+
+def loosened_minimizer(pair):
+    s = sigma_of(pair)
+    A = np.vstack([np.ones(N_toy), s])
+    return H @ A.T @ np.linalg.solve(A @ H @ A.T, np.array([0.0, 2.0]))
+
+display(Markdown("$\\mathbf{G}$, the centered data's cross-products over the four days:\n\n"
+                 + pd.DataFrame(G, index=cities, columns=cities).to_markdown(floatfmt=".2f")))
+display(Markdown("$\\mathbf{H} = (\\mathbf{G} + 1.25\\,\\mathbf{I})^{-1}$:\n\n"
+                 + pd.DataFrame(H, index=cities, columns=cities).to_markdown(floatfmt=".3f")))
+
+s_cd = sigma_of(["C", "D"])
+pS_cd, sHs_cd, sRs_cd = float(p_vec @ s_cd), float(s_cd @ H @ s_cd), float(s_cd @ R @ s_cd)
+u_cd = loosened_minimizer(["C", "D"])
+u_df = loosened_minimizer(["D", "F"])
+true_df = float(toy_designs.loc[toy_designs["Treated"] == "D + F", "Objective"].iloc[0])
+```
+
+```{python}
+#| echo: false
+
+display(Markdown(
+    "Centering has one more effect: every column of $\\mathbf{G}$ now sums to zero, so "
+    "$\\mathbf{G}\\mathbf{1} = \\mathbf{0}$ and $\\mathbf{H}\\mathbf{1} = \\mathbf{1}/\\lambda$. "
+    "That makes the two scalars trivial: every entry of $\\mathbf{p}$ is "
+    f"$1/\\lambda = {p_vec[0]:.1f}$, and $\\alpha = N/\\lambda = 6/1.25 = {alpha:.1f}$.\n\n"
+    "Take the design that treats C and D, so $\\boldsymbol{\\sigma} = (-1, -1, +1, +1, -1, -1)$ "
+    "in the order A through F. Then "
+    f"$\\mathbf{{p}}^\\top \\boldsymbol{{\\sigma}} = {p_vec[0]:.1f} \\times (2 - 4) = {pS_cd:.1f}$, "
+    "and adding up the entries of $\\mathbf{H}$ with the signs in $\\boldsymbol{\\sigma}$ gives "
+    f"$\\boldsymbol{{\\sigma}}^\\top \\mathbf{{H}} \\boldsymbol{{\\sigma}} = {sHs_cd:.3f}$. So\n\n"
+    "$$\n"
+    f"\\boldsymbol{{\\sigma}}^\\top \\mathbf{{R}}\\, \\boldsymbol{{\\sigma}} = {alpha:.1f} \\times {sHs_cd:.3f} - ({pS_cd:.1f})^2 = {sRs_cd:.3f},"
+    "\\qquad "
+    f"\\mathrm{{lb}} = \\frac{{4 \\times {alpha:.1f}}}{{{sRs_cd:.3f}}} = {4 * alpha / sRs_cd:.3f}.\n"
+    "$$"
+))
+```
+
+Is that floor the true score? Look at the minimizer it came from. Its entries are `{python} ", ".join(f"{c} {v:+.3f}" for c, v in zip(cities, u_cd))`. The two treated cities get positive entries that add to one, and the four controls get negative entries that add to minus one: exactly the sign conditions we dropped. So the loosened problem's answer is a legitimate design, the floor equals the true score, and the entries are the design's weights. C and D are treated with weights `{python} f"{u_cd[2]:.3f}"` and `{python} f"{u_cd[3]:.3f}"`, and the control is built from A, B, E and F.
+
+It does not always work out that way. For the design that treats D and F, the floor is `{python} f"{floor(['D', 'F']):.3f}"`, but the minimizer gives city C an entry of `{python} f"{u_df[2]:+.3f}"`. C is a control in that design, so its entry should be negative; a positive one means the loosened problem moved C to the treated side. The floor is still a valid lower bound, it is just a loose one: the true score of D + F is `{python} f"{true_df:.3f}"`.
+
+Here is the floor for all 15 designs, next to their true scores:
+
+```{python}
+#| echo: false
 
 floors = toy_designs.assign(Floor=[floor(t.split(" + ")) for t in toy_designs["Treated"]])
 floors["Floor equals the score?"] = np.where(np.isclose(floors["Floor"], floors["Objective"], rtol=1e-6), "yes", "no")
-display(Markdown(floors[["Treated", "Floor", "Objective", "Floor equals the score?"]]
-                 .sort_values("Floor").to_markdown(index=False, floatfmt=".3f")))
-lowest = floors.sort_values("Floor").iloc[0]
+floors = floors.sort_values("Floor").reset_index(drop=True)
+display(Markdown(floors[["Treated", "Floor", "Objective", "Floor equals the score?"]].to_markdown(index=False, floatfmt=".3f")))
+lowest, runner_up = floors.iloc[0], floors.iloc[1]
 n_exact = int((floors["Floor equals the score?"] == "yes").sum())
 ```
 
-Three things are visible. The floor is never above a design's true score, which is what makes it safe to prune with. It equals the true score exactly for `{python} n_exact` of the 15 designs, the ones whose loosened minimizer happens to respect the sign conditions. And the smallest floor in the whole table belongs to `{python} lowest["Treated"]`, at `{python} f"{lowest['Floor']:.3f}"`, which is also its exact score. So `{python} lowest["Treated"]` is optimal, and every other design is ruled out because its floor alone is already higher. No branching, no quadratic program solved, just arithmetic. Compare that with the tree above, where the solver's bound sat at `{python} f"{relaxed:.3f}"` for nearly every branch and could rule out nothing.
+The floor is never above a design's true score, which is what makes it safe to prune with, and it equals the true score for `{python} n_exact` of the 15 designs. Now watch the search use it. Sort the designs by floor and work down the list:
+
+1. The smallest floor belongs to `{python} lowest["Treated"]`, at `{python} f"{lowest['Floor']:.3f}"`. Check its minimizer's signs: they are right, so its floor is its exact score. It becomes the incumbent at `{python} f"{lowest['Objective']:.3f}"`.
+2. The next floor is `{python} runner_up["Treated"]`'s, at `{python} f"{runner_up['Floor']:.3f}"`. That is already above the incumbent, and every floor below it in the sorted list is higher still. No design further down can beat the incumbent, so the search stops.
+
+One design priced, fourteen ruled out by arithmetic, and the answer is certified optimal. No branching, and no quadratic program solved beyond a $2 \times 2$ inverse per design. Compare that with the tree above, where the solver's bound sat at `{python} f"{relaxed:.3f}"` for nearly every branch and could rule out nothing. The real search works the same way, except that a design whose floor is not exact (like D + F) gets its true score from a small convex solve before it can become the incumbent.
 
 ## When There Are Few Enough Sets, Price Them All
 

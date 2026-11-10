@@ -223,7 +223,7 @@ window.Quarto = {
   <li><a href="#what-are-we-minimizing" id="toc-what-are-we-minimizing" class="nav-link" data-scroll-target="#what-are-we-minimizing">What Are We Minimizing?</a></li>
   <li><a href="#which-effect-marex-targets-the-ate-syndes-the-att" id="toc-which-effect-marex-targets-the-ate-syndes-the-att" class="nav-link" data-scroll-target="#which-effect-marex-targets-the-ate-syndes-the-att">Which Effect? <code>MAREX</code> Targets the ATE, <code>SYNDES</code> the ATT</a></li>
   </ul></li>
-  <li><a href="#how-the-paper-solves-it" id="toc-how-the-paper-solves-it" class="nav-link" data-scroll-target="#how-the-paper-solves-it">How the Paper Solves It</a></li>
+  <li><a href="#how-the-google-paper-solves-it" id="toc-how-the-google-paper-solves-it" class="nav-link" data-scroll-target="#how-the-google-paper-solves-it">How the Google Paper Solves It</a></li>
   <li><a href="#how-i-solve-it" id="toc-how-i-solve-it" class="nav-link" data-scroll-target="#how-i-solve-it">How I Solve It</a>
   <ul class="collapse">
   <li><a href="#name-the-treated-set-and-the-hard-part-disappears" id="toc-name-the-treated-set-and-the-hard-part-disappears" class="nav-link" data-scroll-target="#name-the-treated-set-and-the-hard-part-disappears">Name the Treated Set, and the Hard Part Disappears</a></li>
@@ -295,11 +295,11 @@ window.Quarto = {
 <p>The paper gives three versions of this problem. The one I use here is the two-way global design, where one weight vector <span class="math inline">\(\mathbf{w}\)</span> covers both sides of the comparison:</p>
 <p><span class="math display">\[
 \begin{aligned}
-(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad &amp; \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2 + \lambda \sum_{j \in \mathcal{N}} w_j^2 \\
+(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad &amp; \underbrace{\frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2}_{\text{bias}} + \underbrace{\lambda \sum_{j \in \mathcal{N}} w_j^2}_{\text{variance}} \\
 \text{s.t.} \quad &amp; w_j \geq 0, \quad \sum_{j \in \mathcal{N}} D_j = K, \quad \sum_{j \in \mathcal{N}} w_j D_j = 1, \quad \sum_{j \in \mathcal{N}} w_j (1 - D_j) = 1.
 \end{aligned}
 \]</span></p>
-<p>In English: choose which <span class="math inline">\(K\)</span> cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the <span class="math inline">\(\lambda\)</span> term is the stand-in for <span class="math inline">\(\sigma^2 \sum_j w_j^2\)</span>, the variance. By default <code>mlsynth</code> sets <span class="math inline">\(\lambda\)</span> to the pre-period sample variance, which is the paper’s suggestion.</p>
+<p>In English: choose which <span class="math inline">\(K\)</span> cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the <span class="math inline">\(\lambda\)</span> term is the stand-in for the variance, <span class="math inline">\(\sigma^2 \sum_j w_j^2\)</span>. By default <code>mlsynth</code> sets <span class="math inline">\(\lambda\)</span> to the pre-period sample variance, which is the paper’s suggestion.</p>
 <p>Because <span class="math inline">\(\mathbf{D}\)</span> is binary, we are choosing among <span class="math inline">\(\binom{N}{K}\)</span> possible treated sets, which is where the computational trouble starts. Before getting to that, though: the effect this design estimates is not the one <code>MAREX</code> estimates.</p>
 </section>
 <section id="which-effect-marex-targets-the-ate-syndes-the-att" class="level2">
@@ -313,23 +313,229 @@ window.Quarto = {
 <p><span class="math display">\[
 \tau_t^{T} = \sum_{j \in \mathcal{N}} w_j D_j \left( y_{jt}^{I} - y_{jt}^{N} \right),
 \]</span></p>
-<p>the average treatment effect on the treated, weighted by the design’s own treated weights. Abadie and Zhao make the same point about Doudchenko et al.: their target “is the treatment effect for a weighted average of treated units that can be closely matched in their pre-treatment outcomes by a weighted average of untreated units.” Read that phrase carefully, because it is the whole trade-off. <code>SYNDES</code> picks the treated cities precisely because they are easy to match. That buys precision, and we will see how much below. But it means the effect is the effect for those cities, and the cities that are easiest to match need not look anything like the country.</p>
+<p>the average treatment effect on the treated, weighted by the design’s own treated weights. Abadie and Zhao make the same point about Doudchenko et al.: their target “is the treatment effect for a weighted average of treated units that can be closely matched in their pre-treatment outcomes by a weighted average of untreated units.” This is the whole trade-off between the methods. <code>SYNDES</code> picks the treated cities precisely because they are easy to match. That buys precision, and we will see how much below. But it means the effect is the effect for those cities, and the cities that are easiest to match need not look anything like the country.</p>
 <p>If the campaign does roughly the same thing everywhere, the two estimands coincide and nothing is lost. If it does not (it works better in big markets, or in markets with more young customers), a <code>SYNDES</code> estimate tells you about the cities it chose, and you need a separate argument for carrying it to the rest. <code>MAREX</code> makes the opposite trade: it accepts a noisier comparison in exchange for an estimand about the whole population. Abadie and Zhao’s weakly targeted design sits between the two, with a parameter <span class="math inline">\(\beta\)</span> that moves the target from the ATE toward the ATT as it grows. So the right tool depends on the question. “Did the campaign work where we ran it?” is an ATT question. “What happens if we roll it out nationally?” is an ATE question.</p>
 </section>
 </section>
-<section id="how-the-paper-solves-it" class="level1">
-<h1>How the Paper Solves It</h1>
+<section id="how-the-google-paper-solves-it" class="level1">
+<h1>How the Google Paper Solves It</h1>
 <p>The two-way problem multiplies a continuous weight <span class="math inline">\(w_j\)</span> by a binary <span class="math inline">\(D_j\)</span>, so it is not convex. Doudchenko et al.&nbsp;handle the product the textbook way. They introduce an auxiliary variable <span class="math inline">\(q_j \coloneqq w_j D_j\)</span> and replace the product with linear constraints,</p>
 <p><span class="math display">\[
 q_j \leq D_j, \qquad q_j \leq w_j, \qquad q_j \geq w_j - (1 - D_j), \qquad q_j \geq 0,
 \]</span></p>
-<p>which are exact whenever <span class="math inline">\(D_j\)</span> is 0 or 1. What is left is a mixed-integer program with a convex quadratic objective and linear constraints, and they hand it to <a href="https://www.scipopt.org/">SCIP</a>, a general-purpose solver. They also prove the design problem is NP-hard, by a reduction from the partition problem, so no algorithm is going to solve every instance quickly. Their own assessment of the computation (Section 6) is frank: “In our simulations we were able to solve problems for N = 50 units … on a single machine within hours.” Their Monte Carlo study runs on 10-unit panels.</p>
-<p>So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound. It splits the problem on one binary at a time (<span class="math inline">\(D_j = 0\)</span> in one branch, <span class="math inline">\(D_j = 1\)</span> in the other), and it can only throw a branch away once it has a lower bound for that branch that already beats the best design found so far. Those lower bounds come from relaxing every <span class="math inline">\(D_j\)</span> from <span class="math inline">\(\{0, 1\}\)</span> to the interval <span class="math inline">\([0, 1]\)</span>. The relaxation is where the trouble is, and it is easy to see exactly how bad it is. Set every <span class="math inline">\(D_j = K/N\)</span>, every weight <span class="math inline">\(w_j = 2/N\)</span>, and split each weight evenly between the two sides, <span class="math inline">\(q_j = 1/N\)</span>. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast <span class="math inline">\(\sum_j (2 q_j - w_j) y_{jt}\)</span> is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest <span class="math inline">\(\lambda \sum_j w_j^2\)</span> can be when the weights sum to two is <span class="math inline">\(4\lambda / N\)</span>. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is</p>
+<p>which are exact whenever <span class="math inline">\(D_j\)</span> is 0 or 1. I had no idea what the heck an auxiliary variable was, so I <a href="https://medium.com/data-science/linear-programming-auxiliary-variables-c66bb66c6aee">looked it up</a> and found out that it pretty much was just a way to make linear, in an optimization problem, that which could not be linear without them. What is left is a mixed-integer program with a convex quadratic objective and linear constraints, and they hand it to <a href="https://www.scipopt.org/">SCIP</a>, a general-purpose solver. They also prove the design problem is NP-hard, by a reduction from the partition problem, so no algorithm is going to solve every instance quickly. Their own assessment of the computation says that: “In our simulations we were able to solve problems for N = 50 units … on a single machine within hours.” Their Monte Carlo study runs on 10-unit panels.</p>
+<p>So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound, so it helps to say what the two words mean.</p>
+<ul>
+<li>A branch is a split of the problem into smaller ones. Pick one undecided binary, say <span class="math inline">\(D_3\)</span>, and make two subproblems: one where city 3 is treated (<span class="math inline">\(D_3 = 1\)</span>) and one where it is not (<span class="math inline">\(D_3 = 0\)</span>). Every design lives in exactly one of the two. Keep splitting and you get a tree, whose leaves are fully decided designs.</li>
+<li>A bound is a number that no design inside a branch can beat: a lower bound on the objective of every design below that node of the tree. The solver gets it by solving an easier version of the subproblem, a relaxation, in which the undecided <span class="math inline">\(D_j\)</span> may take any value between 0 and 1.</li>
+</ul>
+<p>The two work together. The solver keeps the best design it has found so far, the incumbent. Whenever a branch’s bound is already worse than the incumbent, nothing below that branch can win, so the whole branch is thrown away without looking at its designs. That pruning is the only thing that makes branch and bound faster than checking every design, and it is only as good as the bounds. The relaxation is where the trouble is, and it is easy to see exactly how bad it is.</p>
+<p>Here is a toy version: six cities, four pre-period days, two to be treated, so 15 possible designs.</p>
+<div id="bfd382ba" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-display cell-output-markdown">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">day</th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+<th style="text-align: right;">C</th>
+<th style="text-align: right;">D</th>
+<th style="text-align: right;">E</th>
+<th style="text-align: right;">F</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">10</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The penalty is the paper’s default, the average of the six cities’ pre-period variances. Cities A, B and C each have variance <span class="math inline">\(5/3\)</span>, D and F have <span class="math inline">\(11/12\)</span>, and E has <span class="math inline">\(2/3\)</span>, so</p>
+<p><span class="math display">\[
+\lambda = \frac{1}{6}\left(\frac{5}{3} + \frac{5}{3} + \frac{5}{3} + \frac{11}{12} + \frac{2}{3} + \frac{11}{12}\right) = \frac{7.5}{6} = 1.25.
+\]</span></p>
+<p>Now relax. Set every <span class="math inline">\(D_j = K/N = 1/3\)</span>, every weight <span class="math inline">\(w_j = 2/N = 1/3\)</span>, and split each weight in half, <span class="math inline">\(q_j = 1/6\)</span>. Check the four constraints for any city: <span class="math inline">\(q_j = 1/6 \leq D_j = 1/3\)</span>, <span class="math inline">\(q_j = 1/6 \leq w_j = 1/3\)</span>, <span class="math inline">\(q_j = 1/6 \geq w_j - (1 - D_j) = 1/3 - 2/3 = -1/3\)</span>, and <span class="math inline">\(q_j \geq 0\)</span>. The sums work too: the <span class="math inline">\(D_j\)</span> add to 2, the <span class="math inline">\(q_j\)</span> (the treated weights) add to 1, and the <span class="math inline">\(w_j\)</span> add to 2, so the control weights add to 1. Every city now counts <span class="math inline">\(1/6\)</span> on the treated side and <span class="math inline">\(1/6\)</span> on the control side, so in every period the treated and control composites are identical, and the bias term is exactly zero. What is left is the variance term,</p>
+<p><span class="math display">\[
+\lambda \sum_{j} w_j^2 = 1.25 \times 6 \times \left(\frac{1}{3}\right)^2 = 1.25 \times \frac{2}{3} = \frac{5}{6} \approx 0.833.
+\]</span></p>
+<p>A convex solver run on the relaxed problem returns 0.833, the same number. Here are all 15 real designs, each with its best weights:</p>
+<div id="927c9d4f" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display cell-output-markdown">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Treated</th>
+<th style="text-align: right;">Objective</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">C + D</td>
+<td style="text-align: right;">1.056</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + F</td>
+<td style="text-align: right;">1.062</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">B + F</td>
+<td style="text-align: right;">1.116</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + B</td>
+<td style="text-align: right;">1.142</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">B + E</td>
+<td style="text-align: right;">1.174</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + E</td>
+<td style="text-align: right;">1.184</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C + F</td>
+<td style="text-align: right;">1.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + D</td>
+<td style="text-align: right;">1.316</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">E + F</td>
+<td style="text-align: right;">1.363</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">D + E</td>
+<td style="text-align: right;">1.559</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">B + D</td>
+<td style="text-align: right;">1.595</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B + C</td>
+<td style="text-align: right;">1.668</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A + C</td>
+<td style="text-align: right;">1.964</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">D + F</td>
+<td style="text-align: right;">5.75</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C + E</td>
+<td style="text-align: right;">17</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The best real design, C + D, scores 1.056. The relaxation says 0.833, 21 percent lower, and it would say that no matter what the six series looked like, because it never had to match anything: it split every city down the middle.</p>
+<p>Now let’s run branch and bound on the toy and watch it fail to prune. Give the solver every advantage: suppose it finds the best design, C + D, at the very start, so the incumbent is 1.056 from the first moment. To throw a branch away, the solver needs that branch’s bound to come out at 1.056 or higher. Here is the first level of the tree, branching on each city in turn:</p>
+<div id="c452529b" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-display cell-output-markdown">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 22%">
+<col style="width: 27%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Branch on</th>
+<th style="text-align: right;">Bound if treated</th>
+<th style="text-align: right;">Bound if not treated</th>
+<th style="text-align: left;">Can either side be pruned?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C</td>
+<td style="text-align: right;">0.868</td>
+<td style="text-align: right;">0.868</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">D</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">E</td>
+<td style="text-align: right;">0.917</td>
+<td style="text-align: right;">0.917</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: left;">no</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Every child bound sits between 0.833 and 0.917, nowhere near 1.056. So whichever city the solver branches on first, neither child can be pruned. Going deeper does not help much. Fix C treated and D not treated, two decisions out of six, and the bound is 1.004, still below the incumbent. The bound only climbs to the truth once a branch has pinned down a whole design: fix C treated and A, B, D and E untreated, which forces F to be the second treated city, and the bound becomes 1.280, exactly the score of C + F in the table above. That is the pattern. Because the even split stays available as long as a few cities are undecided, the bound keeps telling the solver that something in this branch might score as low as 0.833, and the solver has to keep splitting until there is nothing left to split. On six cities that means visiting most of the 15 designs anyway, which takes no time at all; the toy finishes instantly. The problem is what the same behavior costs at scale. On 40 cities with ten treated, “most of the designs” means hundreds of millions of them, and that is where the hours come from.</p>
+<p>Nothing in this toy is special. The same construction works on any panel. Set every <span class="math inline">\(D_j = K/N\)</span>, every weight <span class="math inline">\(w_j = 2/N\)</span>, and split each weight evenly between the two sides, <span class="math inline">\(q_j = 1/N\)</span>. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast <span class="math inline">\(\sum_j (2 q_j - w_j) y_{jt}\)</span> is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest <span class="math inline">\(\lambda \sum_j w_j^2\)</span> can be when the weights sum to two is <span class="math inline">\(4\lambda / N\)</span>. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is</p>
 <p><span class="math display">\[
 p_{\text{relaxed}} = \frac{4\lambda}{N},
 \]</span></p>
 <p>on every panel and for every <span class="math inline">\(K\)</span>. It never looks at how well any design fits the data, and it does not know how many cities are treated. Here is that bound against the true optimum on three panels: GeoLift’s pre-test, Walmart’s weekly sales (45 stores, 128 weeks), and the state unemployment data the paper itself uses. The relaxed problem is written out exactly as the paper writes it, solved with a convex solver, and compared with the optimum that <code>SYNDES</code> proves.</p>
-<div id="60c58a7f" class="cell" data-execution_count="1">
+<div id="3aca6fe4" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -425,20 +631,28 @@ p_{\text{relaxed}} = \frac{4\lambda}{N},
 </div>
 <p>The middle column is 1 in every row, as the argument says it must be. The last column is the problem. With two or three treated units, the relaxation’s bound sits 73 to 86 percent below the optimum; with ten, 26 to 39 percent. It gets better as <span class="math inline">\(K\)</span> grows only because the optimum falls toward it, not because the bound learns anything.</p>
 <p>Branching does not rescue it either. Take GeoLift with ten treated cities and follow the optimal design down the tree, fixing its first eight treated cities to 1 and eight other cities to 0. That is 16 of 40 decisions made, and every one of them right. The bound moves from 73.9 percent of the optimum to 74.3 percent. It reaches 100 percent only once all ten treated cities are fixed, because only then is there nothing left to split evenly. So the solver gets no help from its bound until a branch has already pinned down an entire treated set, which is enumeration with extra steps. A bound that weak rules out almost nothing, so the solver keeps splitting.</p>
-<p>Here is what that costs on a real problem. I took Walmart’s weekly sales for 45 stores, used the first 128 weeks as the pre-period, and asked for three treated stores. That is only 14,190 possible designs. The exact search in <code>SYNDES</code> returns stores 29, 31 and 40 and proves them optimal in 0.08 seconds. I then gave SCIP the paper’s mixed-integer program, asked it to prove optimality, and stopped it after 20 minutes (1,233 seconds of solving time). In that time it explored 74 nodes of its search tree and did not find a single feasible design, not even a bad one. Its lower bound had reached <span class="math inline">\(8.5 \times 10^{7}\)</span>, against an optimum of <span class="math inline">\(1.04 \times 10^{10}\)</span>: less than one percent of the way. That bound is even weaker than the <span class="math inline">\(4\lambda/N\)</span> bound above (<span class="math inline">\(2.5 \times 10^{9}\)</span> here), because SCIP builds its relaxation of the squared objective up from linear pieces as it goes. This is the run, if you want to reproduce it (it takes the full 20 minutes):</p>
-<div id="e5e836d2" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.syndes_helpers.optimization <span class="im">import</span> estimate_lambda, solve_synthetic_design</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.syndes_helpers.exact <span class="im">import</span> solve_synthetic_design_exact</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/walmart_weekly_sales.csv"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>Y <span class="op">=</span> pd.read_csv(url).pivot(index<span class="op">=</span><span class="st">"week"</span>, columns<span class="op">=</span><span class="st">"store"</span>, values<span class="op">=</span><span class="st">"sales"</span>).loc[<span class="dv">1</span>:<span class="dv">128</span>].to_numpy(<span class="bu">float</span>)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>lam <span class="op">=</span> estimate_lambda(Y)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>exact <span class="op">=</span> solve_synthetic_design_exact(Y, <span class="dv">3</span>, lam<span class="op">=</span>lam)                 <span class="co"># 0.08 seconds, proven optimal</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>scip <span class="op">=</span> solve_synthetic_design(Y, <span class="dv">3</span>, mode<span class="op">=</span><span class="st">"global_2way"</span>, lam<span class="op">=</span>lam,    <span class="co"># the paper's MIP on SCIP</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>                              solver<span class="op">=</span><span class="st">"SCIP"</span>, verbose<span class="op">=</span><span class="va">True</span>, gap_limit<span class="op">=</span><span class="fl">0.0</span>, time_limit<span class="op">=</span><span class="fl">1200.0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Here is what that costs on a real problem. I took Walmart’s weekly sales for 45 stores, used the first 128 weeks as the pre-period, and asked for three treated stores. That is only 14,190 possible designs. The exact search in <code>SYNDES</code> returns stores 29, 31 and 40 and proves them optimal in a fraction of a second (0.08 seconds for the search itself). I then gave SCIP the paper’s mixed-integer program, asked it to prove optimality, and stopped it after 20 minutes (1,233 seconds of solving time). In that time it explored 74 nodes of its search tree and did not find a single feasible design, not even a bad one. Its lower bound had reached <span class="math inline">\(8.5 \times 10^{7}\)</span>, against an optimum of <span class="math inline">\(1.04 \times 10^{10}\)</span>: less than one percent of the way. That bound is even weaker than the <span class="math inline">\(4\lambda/N\)</span> bound above (<span class="math inline">\(2.5 \times 10^{9}\)</span> here), because SCIP builds its relaxation of the squared objective up from linear pieces as it goes. This is the run, if you want to reproduce it (it takes the full 20 minutes):</p>
+<div id="67e3633a" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SYNDES</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/walmart_weekly_sales.csv"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>walmart <span class="op">=</span> pd.read_csv(url)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>walmart[<span class="st">"post"</span>] <span class="op">=</span> (walmart[<span class="st">"week"</span>] <span class="op">&gt;</span> <span class="dv">128</span>).astype(<span class="bu">int</span>)      <span class="co"># weeks 1 to 128 are the pre-period</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>walmart_config <span class="op">=</span> {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: walmart, <span class="st">"outcome"</span>: <span class="st">"sales"</span>, <span class="st">"unitid"</span>: <span class="st">"store"</span>, <span class="st">"time"</span>: <span class="st">"week"</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"post_col"</span>: <span class="st">"post"</span>, <span class="st">"K"</span>: <span class="dv">3</span>, <span class="st">"mode"</span>: <span class="st">"two_way_global"</span>, <span class="st">"run_inference"</span>: <span class="va">False</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># The exact search: stores 29, 31 and 40, proven optimal in a fraction of a second.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>exact <span class="op">=</span> SYNDES(walmart_config).fit()</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># The paper's mixed-integer program on SCIP, asked to prove optimality, with 20 minutes.</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># verbose=True prints SCIP's own log, where the node count and the lower bound come from.</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># SCIP finds no feasible design in that time, so this raises MlsynthEstimationError.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>scip <span class="op">=</span> SYNDES({<span class="op">**</span>walmart_config, <span class="st">"backend"</span>: <span class="st">"mip"</span>, <span class="st">"gap_limit"</span>: <span class="fl">0.0</span>,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>               <span class="st">"time_limit"</span>: <span class="fl">1200.0</span>, <span class="st">"verbose"</span>: <span class="va">True</span>}).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>So the paper’s route does not just struggle to prove its answer here. On a 45-unit panel with three treated, it never produces one. In a study in the <code>mlsynth</code> repository (<a href="https://github.com/jgreathouse9/mlsynth/tree/main/benchmarks/studies/bnb_external"><code>bnb_external</code></a>), SCIP was given 20 minutes on nine two-way designs, including GeoLift with 6, 8 and 10 treated markets. It stopped at the time limit every time, between 5.3 and 29.4 percent away from closing its own gap, and its design was optimal on two of the nine.</p>
 <p>I had the same experience with <code>MAREX</code>, the estimator from that marketing-experiments post. There the linear part of the problem is already as tight as a linear description can be (its constraint matrix is totally unimodular), so the cutting planes a mixed-integer solver relies on have nothing to cut, and the entire gap sits in the quadratic objective.</p>
@@ -464,6 +678,298 @@ f(\mathcal{S}) = \min_{\mathbf{u}} \; \mathbf{u}^\top (\mathbf{G} + \lambda \mat
 f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbol{\sigma}^\top \mathbf{R}\, \boldsymbol{\sigma}},
 \]</span></p>
 <p>with equality whenever the minimizer of the loosened problem happens to satisfy the dropped sign conditions. One matrix inverse up front, then one quadratic form per candidate. This also shows where the NP-hardness went. Finding the set with the smallest floor means finding the sign vector with exactly <span class="math inline">\(K\)</span> plus signs that makes <span class="math inline">\(\boldsymbol{\sigma}^\top \mathbf{R} \boldsymbol{\sigma}\)</span> as large as possible, which is a max-cut problem with a size constraint. I did not make the problem easy; I made each candidate cheap and the bounds tight.</p>
+<p>Where does that formula come from? Once the sign conditions are dropped, what is left is a quadratic minimized subject to two linear equalities, and that has a textbook answer. Write <span class="math inline">\(\mathbf{M} \coloneqq \mathbf{G} + \lambda \mathbf{I}\)</span>, so <span class="math inline">\(\mathbf{H} = \mathbf{M}^{-1}\)</span>, and stack the two constraints as <span class="math inline">\(\mathbf{A}\mathbf{u} = \mathbf{b}\)</span> with</p>
+<p><span class="math display">\[
+\mathbf{A} = \begin{bmatrix} \mathbf{1}^\top \\ \boldsymbol{\sigma}^\top \end{bmatrix}, \qquad \mathbf{b} = \begin{bmatrix} 0 \\ 2 \end{bmatrix}.
+\]</span></p>
+<p>The first row says the treated weights and the control weights cancel (<span class="math inline">\(\mathbf{1}^\top \mathbf{u} = 1 - 1 = 0\)</span>); the second says the treated weights minus the control weights total <span class="math inline">\(1 - (-1) = 2\)</span>. Setting the gradient of the Lagrangian to zero gives the minimizer and its value,</p>
+<p><span class="math display">\[
+\mathbf{u}^\ast = \mathbf{H} \mathbf{A}^\top \left( \mathbf{A} \mathbf{H} \mathbf{A}^\top \right)^{-1} \mathbf{b},
+\qquad
+\mathbf{u}^{\ast\top} \mathbf{M}\, \mathbf{u}^\ast = \mathbf{b}^\top \left( \mathbf{A} \mathbf{H} \mathbf{A}^\top \right)^{-1} \mathbf{b},
+\]</span></p>
+<p>and <span class="math inline">\(\mathbf{A}\mathbf{H}\mathbf{A}^\top\)</span> is only <span class="math inline">\(2 \times 2\)</span>:</p>
+<p><span class="math display">\[
+\mathbf{A} \mathbf{H} \mathbf{A}^\top =
+\begin{bmatrix} \mathbf{1}^\top \mathbf{H} \mathbf{1} &amp; \mathbf{1}^\top \mathbf{H} \boldsymbol{\sigma} \\ \boldsymbol{\sigma}^\top \mathbf{H} \mathbf{1} &amp; \boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} \end{bmatrix}
+=
+\begin{bmatrix} \alpha &amp; \mathbf{p}^\top \boldsymbol{\sigma} \\ \mathbf{p}^\top \boldsymbol{\sigma} &amp; \boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} \end{bmatrix}.
+\]</span></p>
+<p>Because <span class="math inline">\(\mathbf{b}\)</span> is zero in its first entry, only the bottom-right entry of the inverse matters, which is <span class="math inline">\(\alpha\)</span> over the determinant. So</p>
+<p><span class="math display">\[
+\mathrm{lb}(\mathcal{S}) = \frac{4\alpha}{\alpha\, \boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} - (\mathbf{p}^\top \boldsymbol{\sigma})^2} = \frac{4\alpha}{\boldsymbol{\sigma}^\top \left( \alpha \mathbf{H} - \mathbf{p}\mathbf{p}^\top \right) \boldsymbol{\sigma}} = \frac{4\alpha}{\boldsymbol{\sigma}^\top \mathbf{R}\, \boldsymbol{\sigma}}.
+\]</span></p>
+<p>Now the six cities, by hand. First center each day, subtracting the day’s average across the six cities. A level shared by every city cancels from any contrast (the weights in <span class="math inline">\(\mathbf{u}\)</span> sum to zero), so this changes nothing, and it makes <span class="math inline">\(\mathbf{G}\)</span> easier to read:</p>
+<div id="542103b4" class="cell" data-execution_count="6">
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\mathbf{G}\)</span>, the centered data’s cross-products over the four days:</p>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+<th style="text-align: right;">C</th>
+<th style="text-align: right;">D</th>
+<th style="text-align: right;">E</th>
+<th style="text-align: right;">F</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">1.24</td>
+<td style="text-align: right;">-6.10</td>
+<td style="text-align: right;">4.28</td>
+<td style="text-align: right;">-2.26</td>
+<td style="text-align: right;">2.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">1.24</td>
+<td style="text-align: right;">2.90</td>
+<td style="text-align: right;">-15.43</td>
+<td style="text-align: right;">10.69</td>
+<td style="text-align: right;">-5.10</td>
+<td style="text-align: right;">5.69</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C</td>
+<td style="text-align: right;">-6.10</td>
+<td style="text-align: right;">-15.43</td>
+<td style="text-align: right;">87.24</td>
+<td style="text-align: right;">-59.89</td>
+<td style="text-align: right;">26.07</td>
+<td style="text-align: right;">-31.89</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">D</td>
+<td style="text-align: right;">4.28</td>
+<td style="text-align: right;">10.69</td>
+<td style="text-align: right;">-59.89</td>
+<td style="text-align: right;">41.24</td>
+<td style="text-align: right;">-18.31</td>
+<td style="text-align: right;">21.99</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">E</td>
+<td style="text-align: right;">-2.26</td>
+<td style="text-align: right;">-5.10</td>
+<td style="text-align: right;">26.07</td>
+<td style="text-align: right;">-18.31</td>
+<td style="text-align: right;">9.40</td>
+<td style="text-align: right;">-9.81</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">2.28</td>
+<td style="text-align: right;">5.69</td>
+<td style="text-align: right;">-31.89</td>
+<td style="text-align: right;">21.99</td>
+<td style="text-align: right;">-9.81</td>
+<td style="text-align: right;">11.74</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\mathbf{H} = (\mathbf{G} + 1.25\,\mathbf{I})^{-1}\)</span>:</p>
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+<th style="text-align: right;">C</th>
+<th style="text-align: right;">D</th>
+<th style="text-align: right;">E</th>
+<th style="text-align: right;">F</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">0.758</td>
+<td style="text-align: right;">-0.046</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-0.016</td>
+<td style="text-align: right;">0.107</td>
+<td style="text-align: right;">-0.003</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">-0.046</td>
+<td style="text-align: right;">0.744</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">-0.048</td>
+<td style="text-align: right;">0.117</td>
+<td style="text-align: right;">-0.019</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.284</td>
+<td style="text-align: right;">0.308</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.153</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">D</td>
+<td style="text-align: right;">-0.016</td>
+<td style="text-align: right;">-0.048</td>
+<td style="text-align: right;">0.308</td>
+<td style="text-align: right;">0.579</td>
+<td style="text-align: right;">0.100</td>
+<td style="text-align: right;">-0.124</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">E</td>
+<td style="text-align: right;">0.107</td>
+<td style="text-align: right;">0.117</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.100</td>
+<td style="text-align: right;">0.407</td>
+<td style="text-align: right;">0.068</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">-0.003</td>
+<td style="text-align: right;">-0.019</td>
+<td style="text-align: right;">0.153</td>
+<td style="text-align: right;">-0.124</td>
+<td style="text-align: right;">0.068</td>
+<td style="text-align: right;">0.723</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="7f4dfe9a" class="cell" data-execution_count="7">
+<div class="cell-output cell-output-display cell-output-markdown">
+<p>Centering has one more effect: every column of <span class="math inline">\(\mathbf{G}\)</span> now sums to zero, so <span class="math inline">\(\mathbf{G}\mathbf{1} = \mathbf{0}\)</span> and <span class="math inline">\(\mathbf{H}\mathbf{1} = \mathbf{1}/\lambda\)</span>. That makes the two scalars trivial: every entry of <span class="math inline">\(\mathbf{p}\)</span> is <span class="math inline">\(1/\lambda = 0.8\)</span>, and <span class="math inline">\(\alpha = N/\lambda = 6/1.25 = 4.8\)</span>.</p>
+<p>Take the design that treats C and D, so <span class="math inline">\(\boldsymbol{\sigma} = (-1, -1, +1, +1, -1, -1)\)</span> in the order A through F. Then <span class="math inline">\(\mathbf{p}^\top \boldsymbol{\sigma} = 0.8 \times (2 - 4) = -1.6\)</span>, and adding up the entries of <span class="math inline">\(\mathbf{H}\)</span> with the signs in <span class="math inline">\(\boldsymbol{\sigma}\)</span> gives <span class="math inline">\(\boldsymbol{\sigma}^\top \mathbf{H} \boldsymbol{\sigma} = 4.321\)</span>. So</p>
+<p><span class="math display">\[
+\boldsymbol{\sigma}^\top \mathbf{R}\, \boldsymbol{\sigma} = 4.8 \times 4.321 - (-1.6)^2 = 18.181,\qquad \mathrm{lb} = \frac{4 \times 4.8}{18.181} = 1.056.
+\]</span></p>
+</div>
+</div>
+<p>Is that floor the true score? Look at the minimizer it came from. Its entries are A -0.298, B -0.277, C +0.344, D +0.656, E -0.175, F -0.250. The two treated cities get positive entries that add to one, and the four controls get negative entries that add to minus one: exactly the sign conditions we dropped. So the loosened problem’s answer is a legitimate design, the floor equals the true score, and the entries are the design’s weights. C and D are treated with weights 0.344 and 0.656, and the control is built from A, B, E and F.</p>
+<p>It does not always work out that way. For the design that treats D and F, the floor is 1.915, but the minimizer gives city C an entry of +0.374. C is a control in that design, so its entry should be negative; a positive one means the loosened problem moved C to the treated side. The floor is still a valid lower bound, it is just a loose one: the true score of D + F is 5.750.</p>
+<p>Here is the floor for all 15 designs, next to their true scores:</p>
+<div id="6414e1b4" class="cell" data-execution_count="8">
+<div class="cell-output cell-output-display cell-output-markdown">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Treated</th>
+<th style="text-align: right;">Floor</th>
+<th style="text-align: right;">Objective</th>
+<th style="text-align: left;">Floor equals the score?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">C + D</td>
+<td style="text-align: right;">1.056</td>
+<td style="text-align: right;">1.056</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + F</td>
+<td style="text-align: right;">1.062</td>
+<td style="text-align: right;">1.062</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">B + F</td>
+<td style="text-align: right;">1.116</td>
+<td style="text-align: right;">1.116</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + B</td>
+<td style="text-align: right;">1.142</td>
+<td style="text-align: right;">1.142</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">B + E</td>
+<td style="text-align: right;">1.174</td>
+<td style="text-align: right;">1.174</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + E</td>
+<td style="text-align: right;">1.184</td>
+<td style="text-align: right;">1.184</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C + F</td>
+<td style="text-align: right;">1.280</td>
+<td style="text-align: right;">1.280</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + D</td>
+<td style="text-align: right;">1.296</td>
+<td style="text-align: right;">1.316</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">E + F</td>
+<td style="text-align: right;">1.363</td>
+<td style="text-align: right;">1.363</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B + D</td>
+<td style="text-align: right;">1.443</td>
+<td style="text-align: right;">1.595</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">D + E</td>
+<td style="text-align: right;">1.531</td>
+<td style="text-align: right;">1.559</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B + C</td>
+<td style="text-align: right;">1.668</td>
+<td style="text-align: right;">1.668</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">D + F</td>
+<td style="text-align: right;">1.915</td>
+<td style="text-align: right;">5.750</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A + C</td>
+<td style="text-align: right;">1.959</td>
+<td style="text-align: right;">1.964</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C + E</td>
+<td style="text-align: right;">6.295</td>
+<td style="text-align: right;">17.000</td>
+<td style="text-align: left;">no</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The floor is never above a design’s true score, which is what makes it safe to prune with, and it equals the true score for 9 of the 15 designs. Now watch the search use it. Sort the designs by floor and work down the list:</p>
+<ol type="1">
+<li>The smallest floor belongs to C + D, at 1.056. Check its minimizer’s signs: they are right, so its floor is its exact score. It becomes the incumbent at 1.056.</li>
+<li>The next floor is A + F’s, at 1.062. That is already above the incumbent, and every floor below it in the sorted list is higher still. No design further down can beat the incumbent, so the search stops.</li>
+</ol>
+<p>One design priced, fourteen ruled out by arithmetic, and the answer is certified optimal. No branching, and no quadratic program solved beyond a <span class="math inline">\(2 \times 2\)</span> inverse per design. Compare that with the tree above, where the solver’s bound sat at 0.833 for nearly every branch and could rule out nothing. The real search works the same way, except that a design whose floor is not exact (like D + F) gets its true score from a small convex solve before it can become the incumbent.</p>
 </section>
 <section id="when-there-are-few-enough-sets-price-them-all" class="level2">
 <h2 class="anchored" data-anchor-id="when-there-are-few-enough-sets-price-them-all">When There Are Few Enough Sets, Price Them All</h2>
@@ -487,11 +993,11 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <h1>The GeoLift Data</h1>
 <p>The data are a daily outcome, which the walkthrough calls <code>Y</code> and treats like sales, for 40 US cities from January 1 through April 15, 2021. The first 90 days are a pre-test period. In the walkthrough, Chicago and Portland were then treated for the last 15 days. So we can do two things with one dataset: design an experiment on the first 90 days as if we had never seen the rest, and then analyze the experiment that was actually run.</p>
 <p>Let’s plot the data first.</p>
-<div id="0a02ab7a" class="cell" data-execution_count="3">
+<div id="fe1ed3e7" class="cell" data-execution_count="9">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="syndes_files/figure-html/cell-4-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="syndes_files/figure-html/cell-10-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
@@ -503,7 +1009,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <p>Enough talk. Let’s run both on the GeoLift pre-period. First, install the latest version of <code>mlsynth</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>I run each problem twice: once with the exact search (<code>backend="exact"</code>, the default) with <code>certify=True</code>, which attaches the search’s lower bound, and once with the paper’s mixed-integer program solved by SCIP (<code>backend="mip"</code>). For two treated cities, SCIP gets <code>mlsynth</code>’s defaults: stop at a 5 percent gap or after 60 seconds. For ten, I ask it to prove optimality (<code>gap_limit=0</code>) and give it five minutes.</p>
-<div id="2dcf979c" class="cell" data-execution_count="4">
+<div id="6589ac65" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SYNDES, power_analysis</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -525,7 +1031,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">10</span>, <span class="st">"SCIP, prove it, 5 min"</span>): timed(K<span class="op">=</span><span class="dv">10</span>, backend<span class="op">=</span><span class="st">"mip"</span>, gap_limit<span class="op">=</span><span class="fl">0.0</span>, time_limit<span class="op">=</span><span class="fl">300.0</span>),</span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="d245a70a" class="cell" data-execution_count="5">
+<div id="a28164da" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -575,7 +1081,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">635,745,396</td>
 <td style="text-align: left;">Exact search</td>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">5.2</td>
 <td style="text-align: left;">+0.00%</td>
 <td style="text-align: left;">yes</td>
 <td style="text-align: left;">0.0%</td>
@@ -585,7 +1091,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">635,745,396</td>
 <td style="text-align: left;">SCIP, prove it, 5 min</td>
-<td style="text-align: right;">300.1</td>
+<td style="text-align: right;">300.6</td>
 <td style="text-align: left;">+3.80%</td>
 <td style="text-align: left;">no</td>
 <td style="text-align: left;">28.2%</td>
@@ -596,7 +1102,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 </div>
 </div>
 <p>The two-city problem is the telling one, because it is tiny. There are 741 possible designs, and the exact search priced every one of them in 0.2 seconds. SCIP, on the same problem, stopped at its time limit with Atlanta and Austin, a design 1.5 percent worse than the optimum, and with its own lower bound 60 percent below its answer. That is the weak relaxation from above, in one line of a table: a solver that cannot prove anything about a problem you could solve with a for loop. (The exact search’s own row shows a 2.4 percent gap because, when it enumerates, <code>certify</code> quotes the one-formula Rayleigh bound from above as an independent check. The proof of optimality is the enumeration itself, which priced or ruled out every one of the 741 sets.)</p>
-<p>With ten treated cities, the exact search ran its branch and bound and proved its design optimal: the search closed, so its certified gap is zero, in 6 seconds. SCIP did not finish within five minutes: it stopped at its time limit with its own gap at 28 percent. Its design shares 4 of its 10 cities with the exact one and is +3.80 percent away from it in objective. And this is the point of the certificate: we do not need SCIP to finish. The exact search’s certificate already says no design beats the one it returned, and that is all the proof a design needs.</p>
+<p>With ten treated cities, the exact search ran its branch and bound and proved its design optimal: the search closed, so its certified gap is zero, in 5 seconds. SCIP did not finish within five minutes: it stopped at its time limit with its own gap at 28 percent. Its design shares 4 of its 10 cities with the exact one and is +3.80 percent away from it in objective. And this is the point of the certificate: we do not need SCIP to finish. The exact search’s certificate already says no design beats the one it returned, and that is all the proof a design needs.</p>
 </section>
 <section id="what-about-geolift" class="level1">
 <h1>What About GeoLift?</h1>
@@ -610,7 +1116,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <p>So GeoLift scores each candidate on something close to what you actually care about, simulated power, but each score costs a grid of synthetic control fits, so it can only afford a handful of candidates, and it picks them by a correlation rule with no claim to optimality. <code>SYNDES</code> and <code>MAREX</code> make the other bet: a cheap score, a search over every admissible set, and a proof. Like <code>SYNDES</code>, GeoLift estimates the effect on the markets it tests (with uniform weights, the plain average of their effects), not <code>MAREX</code>’s population ATE.</p>
 <p>That uniform treated side is exactly <code>SYNDES</code>’s one-way design from earlier: treated weights pinned at <span class="math inline">\(1/K\)</span>, a free synthetic control on the other side. So the like-for-like comparison is GeoLift’s shortlists against the one-way optimum, not the two-way one. To make it, I ported GeoLift’s candidate generation to Python, both setups, along with R’s random number generator, so the stochastic shortlist for a given seed is the one R produces for <code>set.seed()</code> with that seed. The port is in the folded cell below. I checked it against GeoLift’s own R functions, run in R on this panel: the deterministic shortlists and the stochastic ones for five seeds, at all four treatment sizes, came out identical, all 884 candidates. That check needs R, so it is not rerun when this page renders. One caveat on the seeds: inside <code>GeoLiftMarketSelection()</code>, the simulations for one treatment size draw from the same random stream before the next size’s coin flips, so a seed here reproduces what R gives when the selector is called once per treatment size with <code>set.seed()</code> before each call.</p>
 <p>For each treatment size I compare the deterministic shortlist, and the stochastic shortlists for seeds 1 to 20, with the one-way design <code>SYNDES</code> proves optimal. Every design, shortlisted or optimal, gets uniform treated weights and the best synthetic control <code>SYNDES</code> can build for it. Then I score it two ways. The first is the one every synthetic control design has to pass before anything else: how alike are the treated markets and their synthetic control before the test? That is the pre-period objective the one-way design minimizes, the average squared gap between the treated average and its control plus the variance penalty, reported relative to the optimum. The second is the 15-day minimum detectable effect, which is GeoLift’s own currency, computed with <code>mlsynth</code>’s detectable-effect formula from below. These are not GeoLift’s own simulated power numbers; they answer what each set of markets can deliver under the same analysis.</p>
-<div id="4b798312" class="cell" data-execution_count="6">
+<div id="99b71950" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>GeoLift’s candidate generation and R’s random number generator, ported to Python</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -692,7 +1198,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> shortlist</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="4d59e858" class="cell" data-execution_count="7">
+<div id="db408873" class="cell" data-execution_count="13">
 <div class="cell-output cell-output-display cell-output-markdown">
 <p>Pre-period objective, relative to the one-way optimum:</p>
 <table class="caption-top table table-sm table-striped small">
@@ -815,7 +1321,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <section id="syndes-in-mlsynth" class="level1">
 <h1>SYNDES in <code>mlsynth</code></h1>
 <p>The configuration follows the same dictionary pattern as every other <code>mlsynth</code> estimator. We tell it which column marks the test window, how many cities to treat, and which design to solve. Like the GeoLift walkthrough, I keep Honolulu out of the treated set; it stays available as a control.</p>
-<div id="43e3dbfa" class="cell" data-execution_count="8">
+<div id="49716981" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">"Y"</span>,</span>
@@ -832,11 +1338,11 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 </div>
 <p>SYNDES picks New York and Cleveland, with treated weights of 0.51 and 0.49. Their synthetic control spreads across 35 of the remaining cities, and no single control city gets more than 0.042 of the weight. That is about as far from a sparse synthetic control as you can get, which is the variance penalty doing its job: with 38 eligible controls that all share the same weekly cycle, there is no reason to lean on any one of them.</p>
 <p>Here is the design over the pre-period: the weighted treated cities against their synthetic control.</p>
-<div id="ef24b49a" class="cell" data-execution_count="10">
+<div id="96d06b96" class="cell" data-execution_count="16">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="syndes_files/figure-html/cell-11-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="syndes_files/figure-html/cell-17-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
@@ -846,14 +1352,14 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <h2 class="anchored" data-anchor-id="is-the-design-any-good">Is the Design Any Good?</h2>
 <p>A design is only as good as the effects it can detect. <code>mlsynth</code> answers that with a minimum detectable effect (MDE): the smallest true lift the design would detect 80 percent of the time with a two-sided test at the 5 percent level. It is computed from the pre-period gap between the two lines above, with a Newey-West correction for the fact that day-to-day errors are correlated (the weekly cycle never cancels perfectly).</p>
 <p>The natural comparison is the design GeoLift actually used. I can force SYNDES to treat Chicago and Portland with <code>to_be_treated</code>, and it will still choose the best synthetic control for that pair.</p>
-<div id="cd79d9d0" class="cell" data-execution_count="11">
+<div id="c555a575" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>geolift <span class="op">=</span> SYNDES({<span class="op">**</span>config, <span class="st">"to_be_treated"</span>: [<span class="st">"chicago"</span>, <span class="st">"portland"</span>]}).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="596aac04" class="cell" data-execution_count="12">
+<div id="90137197" class="cell" data-execution_count="18">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="syndes_files/figure-html/cell-13-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="syndes_files/figure-html/cell-19-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
@@ -865,14 +1371,14 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <section id="analyzing-the-test-that-was-run" class="level1">
 <h1>Analyzing the Test That Was Run</h1>
 <p>Now let’s pretend the test is over. The Chicago-Portland design from above is the one GeoLift ran, so I refit it with inference turned on. <code>SYNDES</code> tests the sharp null of no effect with the <a href="https://doi.org/10.1080/01621459.2021.1920957">moving-block permutation test</a> of Chernozhukov, Wüthrich, and Zhu: it slides a 15-day window around the whole series of daily treated-minus-synthetic gaps and asks how unusual the test window’s average gap is.</p>
-<div id="9babf217" class="cell" data-execution_count="13">
+<div id="5cddc019" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SYNDES({<span class="op">**</span>config, <span class="st">"to_be_treated"</span>: [<span class="st">"chicago"</span>, <span class="st">"portland"</span>], <span class="st">"run_inference"</span>: <span class="va">True</span>}).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="eaf32f9e" class="cell" data-execution_count="14">
+<div id="7c2c95ab" class="cell" data-execution_count="20">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="syndes_files/figure-html/cell-15-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
+<p><img src="syndes_files/figure-html/cell-21-output-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
 </figure>
 </div>
 </div>
@@ -898,7 +1404,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1794324846647" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1794328690076" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -909,7 +1415,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1794324846653" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1794328690083" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -923,7 +1429,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1794324846648" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1794328690077" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>
@@ -937,7 +1443,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1789171200000" data-listing-file-modified-sort="1794324846647" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4822">
+<div class="quarto-post image-right" data-index="3" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1789171200000" data-listing-file-modified-sort="1794328690076" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4822">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./didexcp.html" class="no-external">Difference-in-Differences Is a Synthetic Control With Uniform Weights</a>
@@ -961,7 +1467,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1794328690079" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
@@ -985,7 +1491,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
+<div class="quarto-post image-right" data-index="5" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1794328690082" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -1009,7 +1515,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1794324846647" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1794328690076" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -1033,7 +1539,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1794328690082" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -1050,7 +1556,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1794324846651" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
+<div class="quarto-post image-right" data-index="8" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1794328690081" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -1074,7 +1580,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="9" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1794328690079" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -1091,7 +1597,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1794328690082" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1115,7 +1621,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1794328690082" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1137,7 +1643,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
+<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1794328690082" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1159,7 +1665,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1794328690079" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1183,7 +1689,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="14" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1794328690079" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -1205,7 +1711,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1794324846653" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1794328690083" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -1229,7 +1735,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1794324846651" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="16" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1794328690081" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -1253,7 +1759,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1794324846648" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="17" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1794328690077" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1277,7 +1783,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="18" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1794324846648" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="18" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1794328690077" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -1301,7 +1807,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="19" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1794324846646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="19" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1794328690076" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -1325,7 +1831,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="20" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="quarto-post image-right" data-index="20" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1794328690079" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>

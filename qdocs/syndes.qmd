@@ -41,9 +41,106 @@ $$
 
 which are exact whenever $D_j$ is 0 or 1. What is left is a mixed-integer program with a convex quadratic objective and linear constraints, and they hand it to [SCIP](https://www.scipopt.org/), a general-purpose solver. They also prove the design problem is NP-hard, by a reduction from the partition problem, so no algorithm is going to solve every instance quickly. Their own assessment of the computation (Section 6) is frank: "In our simulations we were able to solve problems for N = 50 units ... on a single machine within hours." Their Monte Carlo study runs on 10-unit panels.
 
-So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound. It splits the problem on one binary at a time ($D_j = 0$ in one branch, $D_j = 1$ in the other), and it can only throw a branch away once it has a lower bound for that branch that already beats the best design found so far. Those lower bounds come from relaxing every $D_j$ from $\{0, 1\}$ to the interval $[0, 1]$. The relaxation is where the trouble is. The four constraints above are the tightest linear description of a single product, but the objective squares a sum of those products, and once the $D_j$ are allowed to be fractional, the relaxed problem can make the treated and control sides look far more alike than any real design can. The [mlsynth documentation](https://mlsynth.readthedocs.io/en/latest/syndes.html) records that this bound sits about 80 percent below the true optimum. A bound that weak rules out almost nothing, so the solver keeps splitting.
+So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound. It splits the problem on one binary at a time ($D_j = 0$ in one branch, $D_j = 1$ in the other), and it can only throw a branch away once it has a lower bound for that branch that already beats the best design found so far. Those lower bounds come from relaxing every $D_j$ from $\{0, 1\}$ to the interval $[0, 1]$. The relaxation is where the trouble is, and it is easy to see exactly how bad it is. Set every $D_j = K/N$, every weight $w_j = 2/N$, and split each weight evenly between the two sides, $q_j = 1/N$. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast $\sum_j (2 q_j - w_j) y_{jt}$ is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest $\lambda \sum_j w_j^2$ can be when the weights sum to two is $4\lambda / N$. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is
 
-The result is a solver that usually finds a good design early and then spends nearly all of its time failing to prove it. The documentation gives a Walmart example (45 stores, 128 weeks, 3 treated) where SCIP finds the optimal treated set within a minute and then spends more than 30 more minutes proving it. In a study in the ```mlsynth``` repository ([`bnb_external`](https://github.com/jgreathouse9/mlsynth/tree/main/benchmarks/studies/bnb_external)), SCIP was given 20 minutes on nine two-way designs, including GeoLift with 6, 8 and 10 treated markets. It stopped at the time limit every time, between 5.3 and 29.4 percent away from closing its own gap, and its design was optimal on two of the nine.
+$$
+p_{\text{relaxed}} = \frac{4\lambda}{N},
+$$
+
+on every panel and for every $K$. It never looks at how well any design fits the data, and it does not know how many cities are treated. Here is that bound against the true optimum on three panels: GeoLift's pre-test, Walmart's weekly sales (45 stores, 128 weeks), and the state unemployment data the paper itself uses. The relaxed problem is written out exactly as the paper writes it, solved with a convex solver, and compared with the optimum that ```SYNDES``` proves.
+
+```{python}
+#| echo: false
+
+import warnings
+import numpy as np
+import pandas as pd
+import cvxpy as cp
+from IPython.display import display, Markdown
+from mlsynth import SYNDES
+
+warnings.filterwarnings("ignore")
+base_url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/"
+
+def long_panel(wide):
+    """Long panel of the pre-period, plus one placeholder post period that is never fitted."""
+    wide = pd.concat([wide, wide.iloc[[-1]]], ignore_index=True)
+    out = wide.stack().rename("Y").rename_axis(["time", "unit"]).reset_index()
+    out["post"] = (out["time"] == out["time"].max()).astype(int)
+    return out
+
+def relaxed_bound(Y, K, lam, ones=(), zeros=()):
+    """The paper's two-way MIP with every D_j relaxed from {0, 1} to [0, 1], some optionally fixed."""
+    N = Y.shape[1]
+    w, q, D = cp.Variable(N), cp.Variable(N), cp.Variable(N)
+    constraints = [w >= 0, q >= 0, q <= D, q <= w, q >= w - (1 - D), D >= 0, D <= 1,
+                   cp.sum(D) == K, cp.sum(q) == 1, cp.sum(w) == 2]
+    constraints += [D[j] == 1 for j in ones] + [D[j] == 0 for j in zeros]
+    objective = cp.sum_squares(Y @ (2 * q - w)) / Y.shape[0] + lam * cp.sum_squares(w)
+    return cp.Problem(cp.Minimize(objective), constraints).solve(solver=cp.CLARABEL)
+
+panels = {
+    "GeoLift": pd.read_csv(base_url + "geolift_market_data.csv").pivot(index="date", columns="location", values="Y"),
+    "Walmart": pd.read_csv(base_url + "walmart_weekly_sales.csv").pivot(index="week", columns="store", values="sales").loc[1:128],
+    "BLS unemployment": pd.read_csv(base_url + "urate_cps.csv", header=None),
+}
+
+rows = []
+for name, wide in panels.items():
+    Y = wide.to_numpy(float)
+    T0, N = Y.shape
+    lam = float(np.mean(np.var(Y, axis=0, ddof=1)))    # the paper's penalty: mean within-unit variance
+    panel = long_panel(wide)
+    for K in [2, 3, 5, 10]:
+        optimum = SYNDES({"df": panel, "outcome": "Y", "unitid": "unit", "time": "time",
+                          "post_col": "post", "K": K, "mode": "two_way_global",
+                          "run_inference": False}).fit().design.objective_value
+        bound = relaxed_bound(Y, K, lam)
+        rows.append({"Panel": f"{name} ({N} units, {T0} periods)", "Treated": K,
+                     "Relaxed bound / (4 lambda / N)": f"{bound / (4 * lam / N):.4f}",
+                     "Bound below the optimum": f"{100 * (1 - bound / optimum):.0f}%"})
+relax = pd.DataFrame(rows)
+gaps = relax["Bound below the optimum"].str.rstrip("%").astype(float)
+display(Markdown(relax.to_markdown(index=False)))
+
+# Branching along the optimal GeoLift design with ten treated: fix half its treated
+# cities and as many controls, and see how far the bound moves.
+Y = panels["GeoLift"].to_numpy(float)
+lam_geo = float(np.mean(np.var(Y, axis=0, ddof=1)))
+fit10 = SYNDES({"df": long_panel(panels["GeoLift"]), "outcome": "Y", "unitid": "unit", "time": "time",
+                "post_col": "post", "K": 10, "mode": "two_way_global", "run_inference": False}).fit()
+treated10 = list(np.asarray(fit10.design.selected_unit_indices))
+controls10 = [j for j in range(Y.shape[1]) if j not in treated10]
+p10 = fit10.design.objective_value
+root_share = relaxed_bound(Y, 10, lam_geo) / p10
+deep_share = relaxed_bound(Y, 10, lam_geo, ones=treated10[:8], zeros=controls10[:8]) / p10
+full_share = relaxed_bound(Y, 10, lam_geo, ones=treated10, zeros=()) / p10
+```
+
+The middle column is 1 in every row, as the argument says it must be. The last column is the problem. With two or three treated units, the relaxation's bound sits `{python} f"{gaps[relax['Treated'] <= 3].min():.0f}"` to `{python} f"{gaps[relax['Treated'] <= 3].max():.0f}"` percent below the optimum; with ten, `{python} f"{gaps[relax['Treated'] == 10].min():.0f}"` to `{python} f"{gaps[relax['Treated'] == 10].max():.0f}"` percent. It gets better as $K$ grows only because the optimum falls toward it, not because the bound learns anything.
+
+Branching does not rescue it either. Take GeoLift with ten treated cities and follow the optimal design down the tree, fixing its first eight treated cities to 1 and eight other cities to 0. That is 16 of 40 decisions made, and every one of them right. The bound moves from `{python} f"{100 * root_share:.1f}"` percent of the optimum to `{python} f"{100 * deep_share:.1f}"` percent. It reaches `{python} f"{100 * full_share:.0f}"` percent only once all ten treated cities are fixed, because only then is there nothing left to split evenly. So the solver gets no help from its bound until a branch has already pinned down an entire treated set, which is enumeration with extra steps. A bound that weak rules out almost nothing, so the solver keeps splitting.
+
+Here is what that costs on a real problem. I took Walmart's weekly sales for 45 stores, used the first 128 weeks as the pre-period, and asked for three treated stores. That is only 14,190 possible designs. The exact search in ```SYNDES``` returns stores 29, 31 and 40 and proves them optimal in 0.08 seconds. I then gave SCIP the paper's mixed-integer program, asked it to prove optimality, and stopped it after 20 minutes (1,233 seconds of solving time). In that time it explored 74 nodes of its search tree and did not find a single feasible design, not even a bad one. Its lower bound had reached $8.5 \times 10^{7}$, against an optimum of $1.04 \times 10^{10}$: less than one percent of the way. That bound is even weaker than the $4\lambda/N$ bound above ($2.5 \times 10^{9}$ here), because SCIP builds its relaxation of the squared objective up from linear pieces as it goes. This is the run, if you want to reproduce it (it takes the full 20 minutes):
+
+```{python}
+#| eval: false
+
+import numpy as np
+import pandas as pd
+from mlsynth.utils.syndes_helpers.optimization import estimate_lambda, solve_synthetic_design
+from mlsynth.utils.syndes_helpers.exact import solve_synthetic_design_exact
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/walmart_weekly_sales.csv"
+Y = pd.read_csv(url).pivot(index="week", columns="store", values="sales").loc[1:128].to_numpy(float)
+lam = estimate_lambda(Y)
+
+exact = solve_synthetic_design_exact(Y, 3, lam=lam)                 # 0.08 seconds, proven optimal
+scip = solve_synthetic_design(Y, 3, mode="global_2way", lam=lam,    # the paper's MIP on SCIP
+                              solver="SCIP", verbose=True, gap_limit=0.0, time_limit=1200.0)
+```
+
+So the paper's route does not just struggle to prove its answer here. On a 45-unit panel with three treated, it never produces one. In a study in the ```mlsynth``` repository ([`bnb_external`](https://github.com/jgreathouse9/mlsynth/tree/main/benchmarks/studies/bnb_external)), SCIP was given 20 minutes on nine two-way designs, including GeoLift with 6, 8 and 10 treated markets. It stopped at the time limit every time, between 5.3 and 29.4 percent away from closing its own gap, and its design was optimal on two of the nine.
 
 I had the same experience with ```MAREX```, the experimental design estimator I wrote about in [an earlier post](scexp.html). There the linear part of the problem is already as tight as a linear description can be (its constraint matrix is totally unimodular), so the cutting planes a mixed-integer solver relies on have nothing to cut, and the entire gap sits in the quadratic objective.
 

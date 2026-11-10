@@ -24,12 +24,12 @@ The paper gives three versions of this problem. The one I use here is the two-wa
 
 $$
 \begin{aligned}
-(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad & \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2 + \lambda \sum_{j \in \mathcal{N}} w_j^2 \\
+(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad & \underbrace{\frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2}_{\text{bias}} + \underbrace{\lambda \sum_{j \in \mathcal{N}} w_j^2}_{\text{variance}} \\
 \text{s.t.} \quad & w_j \geq 0, \quad \sum_{j \in \mathcal{N}} D_j = K, \quad \sum_{j \in \mathcal{N}} w_j D_j = 1, \quad \sum_{j \in \mathcal{N}} w_j (1 - D_j) = 1.
 \end{aligned}
 $$
 
-In English: choose which $K$ cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the $\lambda$ term is the stand-in for $\sigma^2 \sum_j w_j^2$, the variance. By default ```mlsynth``` sets $\lambda$ to the pre-period sample variance, which is the paper's suggestion.
+In English: choose which $K$ cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the $\lambda$ term is the stand-in for the variance, $\sigma^2 \sum_j w_j^2$. By default ```mlsynth``` sets $\lambda$ to the pre-period sample variance, which is the paper's suggestion.
 
 Because $\mathbf{D}$ is binary, we are choosing among $\binom{N}{K}$ possible treated sets, which is where the computational trouble starts. Before getting to that, though: the effect this design estimates is not the one ```MAREX``` estimates.
 
@@ -49,11 +49,11 @@ $$
 \tau_t^{T} = \sum_{j \in \mathcal{N}} w_j D_j \left( y_{jt}^{I} - y_{jt}^{N} \right),
 $$
 
-the average treatment effect on the treated, weighted by the design's own treated weights. Abadie and Zhao make the same point about Doudchenko et al.: their target "is the treatment effect for a weighted average of treated units that can be closely matched in their pre-treatment outcomes by a weighted average of untreated units." Read that phrase carefully, because it is the whole trade-off. ```SYNDES``` picks the treated cities precisely because they are easy to match. That buys precision, and we will see how much below. But it means the effect is the effect for those cities, and the cities that are easiest to match need not look anything like the country.
+the average treatment effect on the treated, weighted by the design's own treated weights. Abadie and Zhao make the same point about Doudchenko et al.: their target "is the treatment effect for a weighted average of treated units that can be closely matched in their pre-treatment outcomes by a weighted average of untreated units." This is the whole trade-off between the methods. ```SYNDES``` picks the treated cities precisely because they are easy to match. That buys precision, and we will see how much below. But it means the effect is the effect for those cities, and the cities that are easiest to match need not look anything like the country.
 
 If the campaign does roughly the same thing everywhere, the two estimands coincide and nothing is lost. If it does not (it works better in big markets, or in markets with more young customers), a ```SYNDES``` estimate tells you about the cities it chose, and you need a separate argument for carrying it to the rest. ```MAREX``` makes the opposite trade: it accepts a noisier comparison in exchange for an estimand about the whole population. Abadie and Zhao's weakly targeted design sits between the two, with a parameter $\beta$ that moves the target from the ATE toward the ATT as it grows. So the right tool depends on the question. "Did the campaign work where we ran it?" is an ATT question. "What happens if we roll it out nationally?" is an ATE question.
 
-# How the Paper Solves It
+# How the Google Paper Solves It
 
 The two-way problem multiplies a continuous weight $w_j$ by a binary $D_j$, so it is not convex. Doudchenko et al. handle the product the textbook way. They introduce an auxiliary variable $q_j \coloneqq w_j D_j$ and replace the product with linear constraints,
 
@@ -61,9 +61,79 @@ $$
 q_j \leq D_j, \qquad q_j \leq w_j, \qquad q_j \geq w_j - (1 - D_j), \qquad q_j \geq 0,
 $$
 
-which are exact whenever $D_j$ is 0 or 1. What is left is a mixed-integer program with a convex quadratic objective and linear constraints, and they hand it to [SCIP](https://www.scipopt.org/), a general-purpose solver. They also prove the design problem is NP-hard, by a reduction from the partition problem, so no algorithm is going to solve every instance quickly. Their own assessment of the computation (Section 6) is frank: "In our simulations we were able to solve problems for N = 50 units ... on a single machine within hours." Their Monte Carlo study runs on 10-unit panels.
+which are exact whenever $D_j$ is 0 or 1. I had no idea what the heck an auxiliary variable was, so I [looked it up](https://medium.com/data-science/linear-programming-auxiliary-variables-c66bb66c6aee) and found out that it pretty much was just a way to make linear, in an optimization problem, that which could not be linear without them. What is left is a mixed-integer program with a convex quadratic objective and linear constraints, and they hand it to [SCIP](https://www.scipopt.org/), a general-purpose solver. They also prove the design problem is NP-hard, by a reduction from the partition problem, so no algorithm is going to solve every instance quickly. Their own assessment of the computation says that: "In our simulations we were able to solve problems for N = 50 units ... on a single machine within hours." Their Monte Carlo study runs on 10-unit panels.
 
-So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound. It splits the problem on one binary at a time ($D_j = 0$ in one branch, $D_j = 1$ in the other), and it can only throw a branch away once it has a lower bound for that branch that already beats the best design found so far. Those lower bounds come from relaxing every $D_j$ from $\{0, 1\}$ to the interval $[0, 1]$. The relaxation is where the trouble is, and it is easy to see exactly how bad it is. Set every $D_j = K/N$, every weight $w_j = 2/N$, and split each weight evenly between the two sides, $q_j = 1/N$. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast $\sum_j (2 q_j - w_j) y_{jt}$ is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest $\lambda \sum_j w_j^2$ can be when the weights sum to two is $4\lambda / N$. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is
+So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound, so it helps to say what the two words mean.
+
+- A branch is a split of the problem into smaller ones. Pick one undecided binary, say $D_3$, and make two subproblems: one where city 3 is treated ($D_3 = 1$) and one where it is not ($D_3 = 0$). Every design lives in exactly one of the two. Keep splitting and you get a tree, whose leaves are fully decided designs.
+- A bound is a number that no design inside a branch can beat: a lower bound on the objective of every design below that node of the tree. The solver gets it by solving an easier version of the subproblem, a relaxation, in which the undecided $D_j$ may take any value between 0 and 1.
+
+The two work together. The solver keeps the best design it has found so far, the incumbent. Whenever a branch's bound is already worse than the incumbent, nothing below that branch can win, so the whole branch is thrown away without looking at its designs. That pruning is the only thing that makes branch and bound faster than checking every design, and it is only as good as the bounds. The relaxation is where the trouble is, and it is easy to see exactly how bad it is.
+
+Here is a toy version: six cities, four pre-period days, two to be treated, so 15 possible designs.
+
+```{python}
+#| echo: false
+
+import itertools
+import warnings
+import numpy as np
+import pandas as pd
+import cvxpy as cp
+from IPython.display import display, Markdown
+from mlsynth import SYNDES
+
+warnings.filterwarnings("ignore")
+
+toy = pd.DataFrame({"A": [10, 12, 11, 13], "B": [9, 11, 10, 12], "C": [20, 22, 21, 23],
+                    "D": [5, 6, 5, 7], "E": [15, 14, 16, 15], "F": [8, 9, 8, 10]},
+                   index=pd.Index([1, 2, 3, 4], name="day"))
+display(Markdown(toy.to_markdown()))
+
+toy_lam = float(toy.var(ddof=1).mean())          # the paper's penalty: mean within-city variance
+
+# The relaxed problem, written out exactly as the paper writes the MIP, with D_j in [0, 1].
+Ym, (T0_toy, N_toy) = toy.to_numpy(float), toy.shape
+w, q, D = cp.Variable(N_toy), cp.Variable(N_toy), cp.Variable(N_toy)
+relaxed = cp.Problem(
+    cp.Minimize(cp.sum_squares(Ym @ (2 * q - w)) / T0_toy + toy_lam * cp.sum_squares(w)),
+    [w >= 0, q >= 0, q <= D, q <= w, q >= w - (1 - D), D >= 0, D <= 1,
+     cp.sum(D) == 2, cp.sum(q) == 1, cp.sum(w) == 2],
+).solve(solver=cp.CLARABEL)
+
+# Every one of the 15 real designs, each with its best weights.
+toy_long = pd.concat([toy, toy.iloc[[-1]].set_axis([5])]).stack().rename("Y").rename_axis(["day", "city"]).reset_index()
+toy_long["post"] = (toy_long["day"] == 5).astype(int)        # a placeholder test day, never fitted
+toy_designs = pd.DataFrame(
+    [{"Treated": " + ".join(pair),
+      "Objective": SYNDES({"df": toy_long, "outcome": "Y", "unitid": "city", "time": "day",
+                           "post_col": "post", "K": 2, "mode": "two_way_global",
+                           "to_be_treated": list(pair), "run_inference": False}).fit().design.objective_value}
+     for pair in itertools.combinations(toy.columns, 2)]
+).sort_values("Objective").reset_index(drop=True)
+toy_best = toy_designs["Objective"].iloc[0]
+```
+
+The penalty is the paper's default, the average of the six cities' pre-period variances. Cities A, B and C each have variance $5/3$, D and F have $11/12$, and E has $2/3$, so
+
+$$
+\lambda = \frac{1}{6}\left(\frac{5}{3} + \frac{5}{3} + \frac{5}{3} + \frac{11}{12} + \frac{2}{3} + \frac{11}{12}\right) = \frac{7.5}{6} = 1.25.
+$$
+
+Now relax. Set every $D_j = K/N = 1/3$, every weight $w_j = 2/N = 1/3$, and split each weight in half, $q_j = 1/6$. Check the four constraints for any city: $q_j = 1/6 \leq D_j = 1/3$, $q_j = 1/6 \leq w_j = 1/3$, $q_j = 1/6 \geq w_j - (1 - D_j) = 1/3 - 2/3 = -1/3$, and $q_j \geq 0$. The sums work too: the $D_j$ add to 2, the $q_j$ (the treated weights) add to 1, and the $w_j$ add to 2, so the control weights add to 1. Every city now counts $1/6$ on the treated side and $1/6$ on the control side, so in every period the treated and control composites are identical, and the bias term is exactly zero. What is left is the variance term,
+
+$$
+\lambda \sum_{j} w_j^2 = 1.25 \times 6 \times \left(\frac{1}{3}\right)^2 = 1.25 \times \frac{2}{3} = \frac{5}{6} \approx 0.833.
+$$
+
+A convex solver run on the relaxed problem returns `{python} f"{relaxed:.3f}"`, the same number. Here are all 15 real designs, each with its best weights:
+
+```{python}
+#| echo: false
+display(Markdown(toy_designs.assign(Objective=toy_designs["Objective"].map("{:.3f}".format)).to_markdown(index=False)))
+```
+
+The best real design, `{python} toy_designs["Treated"].iloc[0]`, scores `{python} f"{toy_best:.3f}"`. The relaxation says `{python} f"{relaxed:.3f}"`, `{python} f"{100 * (1 - relaxed / toy_best):.0f}"` percent lower, and it would say that no matter what the six series looked like, because it never had to match anything: it split every city down the middle. Nothing in this toy is special. The same construction works on any panel. Set every $D_j = K/N$, every weight $w_j = 2/N$, and split each weight evenly between the two sides, $q_j = 1/N$. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast $\sum_j (2 q_j - w_j) y_{jt}$ is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest $\lambda \sum_j w_j^2$ can be when the weights sum to two is $4\lambda / N$. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is
 
 $$
 p_{\text{relaxed}} = \frac{4\lambda}{N},
@@ -143,23 +213,31 @@ The middle column is 1 in every row, as the argument says it must be. The last c
 
 Branching does not rescue it either. Take GeoLift with ten treated cities and follow the optimal design down the tree, fixing its first eight treated cities to 1 and eight other cities to 0. That is 16 of 40 decisions made, and every one of them right. The bound moves from `{python} f"{100 * root_share:.1f}"` percent of the optimum to `{python} f"{100 * deep_share:.1f}"` percent. It reaches `{python} f"{100 * full_share:.0f}"` percent only once all ten treated cities are fixed, because only then is there nothing left to split evenly. So the solver gets no help from its bound until a branch has already pinned down an entire treated set, which is enumeration with extra steps. A bound that weak rules out almost nothing, so the solver keeps splitting.
 
-Here is what that costs on a real problem. I took Walmart's weekly sales for 45 stores, used the first 128 weeks as the pre-period, and asked for three treated stores. That is only 14,190 possible designs. The exact search in ```SYNDES``` returns stores 29, 31 and 40 and proves them optimal in 0.08 seconds. I then gave SCIP the paper's mixed-integer program, asked it to prove optimality, and stopped it after 20 minutes (1,233 seconds of solving time). In that time it explored 74 nodes of its search tree and did not find a single feasible design, not even a bad one. Its lower bound had reached $8.5 \times 10^{7}$, against an optimum of $1.04 \times 10^{10}$: less than one percent of the way. That bound is even weaker than the $4\lambda/N$ bound above ($2.5 \times 10^{9}$ here), because SCIP builds its relaxation of the squared objective up from linear pieces as it goes. This is the run, if you want to reproduce it (it takes the full 20 minutes):
+Here is what that costs on a real problem. I took Walmart's weekly sales for 45 stores, used the first 128 weeks as the pre-period, and asked for three treated stores. That is only 14,190 possible designs. The exact search in ```SYNDES``` returns stores 29, 31 and 40 and proves them optimal in a fraction of a second (0.08 seconds for the search itself). I then gave SCIP the paper's mixed-integer program, asked it to prove optimality, and stopped it after 20 minutes (1,233 seconds of solving time). In that time it explored 74 nodes of its search tree and did not find a single feasible design, not even a bad one. Its lower bound had reached $8.5 \times 10^{7}$, against an optimum of $1.04 \times 10^{10}$: less than one percent of the way. That bound is even weaker than the $4\lambda/N$ bound above ($2.5 \times 10^{9}$ here), because SCIP builds its relaxation of the squared objective up from linear pieces as it goes. This is the run, if you want to reproduce it (it takes the full 20 minutes):
 
 ```{python}
 #| eval: false
 
-import numpy as np
 import pandas as pd
-from mlsynth.utils.syndes_helpers.optimization import estimate_lambda, solve_synthetic_design
-from mlsynth.utils.syndes_helpers.exact import solve_synthetic_design_exact
+from mlsynth import SYNDES
 
 url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/walmart_weekly_sales.csv"
-Y = pd.read_csv(url).pivot(index="week", columns="store", values="sales").loc[1:128].to_numpy(float)
-lam = estimate_lambda(Y)
+walmart = pd.read_csv(url)
+walmart["post"] = (walmart["week"] > 128).astype(int)      # weeks 1 to 128 are the pre-period
 
-exact = solve_synthetic_design_exact(Y, 3, lam=lam)                 # 0.08 seconds, proven optimal
-scip = solve_synthetic_design(Y, 3, mode="global_2way", lam=lam,    # the paper's MIP on SCIP
-                              solver="SCIP", verbose=True, gap_limit=0.0, time_limit=1200.0)
+walmart_config = {
+    "df": walmart, "outcome": "sales", "unitid": "store", "time": "week",
+    "post_col": "post", "K": 3, "mode": "two_way_global", "run_inference": False,
+}
+
+# The exact search: stores 29, 31 and 40, proven optimal in a fraction of a second.
+exact = SYNDES(walmart_config).fit()
+
+# The paper's mixed-integer program on SCIP, asked to prove optimality, with 20 minutes.
+# verbose=True prints SCIP's own log, where the node count and the lower bound come from.
+# SCIP finds no feasible design in that time, so this raises MlsynthEstimationError.
+scip = SYNDES({**walmart_config, "backend": "mip", "gap_limit": 0.0,
+               "time_limit": 1200.0, "verbose": True}).fit()
 ```
 
 So the paper's route does not just struggle to prove its answer here. On a 45-unit panel with three treated, it never produces one. In a study in the ```mlsynth``` repository ([`bnb_external`](https://github.com/jgreathouse9/mlsynth/tree/main/benchmarks/studies/bnb_external)), SCIP was given 20 minutes on nine two-way designs, including GeoLift with 6, 8 and 10 treated markets. It stopped at the time limit every time, between 5.3 and 29.4 percent away from closing its own gap, and its design was optimal on two of the nine.

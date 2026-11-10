@@ -2,6 +2,8 @@ name: Quarto Blog
 
 on:
   push:
+    branches:
+      - master          # feature branches no longer trigger a site build
     paths:
       - 'qdocs/**'
   workflow_dispatch:
@@ -94,7 +96,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-          git add docs/
+          git add docs/ qdocs/_freeze/   # keep the freeze cache so the next run reuses it
 
           if git diff --cached --quiet; then
             echo "No changes to commit."

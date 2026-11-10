@@ -29,7 +29,27 @@ $$
 
 In English: choose which $K$ cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the $\lambda$ term is the stand-in for $\sigma^2 \sum_j w_j^2$, the variance. By default ```mlsynth``` sets $\lambda$ to the pre-period sample variance, which is the paper's suggestion.
 
-Two features separate this from regular synthetic control. The treated side is weighted too, so the estimand is a weighted average treatment effect on the treated: if one treated city gets weight 0.7 and the other 0.3, the effect we report is that weighted average of their effects. That is fine if you believe the campaign does roughly the same thing everywhere, and something to think about if you do not. And because $\mathbf{D}$ is binary, we are choosing among $\binom{N}{K}$ possible treated sets, which is where the computational trouble starts.
+Because $\mathbf{D}$ is binary, we are choosing among $\binom{N}{K}$ possible treated sets, which is where the computational trouble starts. Before getting to that, though: the effect this design estimates is not the one ```MAREX``` estimates.
+
+## Which Effect? ```MAREX``` Targets the ATE, ```SYNDES``` the ATT
+
+[Abadie and Zhao](https://economics.mit.edu/sites/default/files/2026-02/Synthetic%20Controls%20for%20Experimental%20Design%20Feb%202026.pdf), the paper behind ```MAREX```, start from the population. Each unit gets a known weight $f_j$ (a market's share of national sales, say, or $1/N$), and the target is the average treatment effect over everyone,
+
+$$
+\tau_t = \sum_{j \in \mathcal{N}} f_j \left( y_{jt}^{I} - y_{jt}^{N} \right),
+$$
+
+where $y_{jt}^{I}$ and $y_{jt}^{N}$ are city $j$'s outcomes with and without treatment. Their base design picks treated weights $\mathbf{w}$ and control weights $\mathbf{v}$ so that both synthetic units reproduce the population's average predictors, $\sum_j w_j \mathbf{x}_j \approx \sum_j f_j \mathbf{x}_j$ and $\sum_j v_j \mathbf{x}_j \approx \sum_j f_j \mathbf{x}_j$. The treated group is chosen to look like the country, so the gap between the two synthetic units estimates what the campaign would do if everyone got it. That is the ATE, and it is what ```MAREX```'s default `design="standard"` solves for.
+
+```SYNDES``` never mentions the population. Its objective only asks the weighted treated cities and the weighted control cities to look like each other, so the effect it estimates is
+
+$$
+\tau_t^{T} = \sum_{j \in \mathcal{N}} w_j D_j \left( y_{jt}^{I} - y_{jt}^{N} \right),
+$$
+
+the average treatment effect on the treated, weighted by the design's own treated weights. Abadie and Zhao make the same point about Doudchenko et al.: their target "is the treatment effect for a weighted average of treated units that can be closely matched in their pre-treatment outcomes by a weighted average of untreated units." Read that phrase carefully, because it is the whole trade-off. ```SYNDES``` picks the treated cities precisely because they are easy to match. That buys precision, and we will see how much below. But it means the effect is the effect for those cities, and the cities that are easiest to match need not look anything like the country.
+
+If the campaign does roughly the same thing everywhere, the two estimands coincide and nothing is lost. If it does not (it works better in big markets, or in markets with more young customers), a ```SYNDES``` estimate tells you about the cities it chose, and you need a separate argument for carrying it to the rest. ```MAREX``` makes the opposite trade: it accepts a noisier comparison in exchange for an estimand about the whole population. Abadie and Zhao's weakly targeted design sits between the two, with a parameter $\beta$ that moves the target from the ATE toward the ATT as it grows. So the right tool depends on the question. "Did the campaign work where we ran it?" is an ATT question. "What happens if we roll it out nationally?" is an ATE question.
 
 # How the Paper Solves It
 
@@ -459,7 +479,7 @@ fig.tight_layout()
 plt.show()
 ```
 
-The treated weights are `{python} f"{geo_w['Chicago']:.2f}"` on Chicago and `{python} f"{geo_w['Portland']:.2f}"` on Portland, so the effect below is close to a plain average of the two. Over the 15 test days, the treated cities sold about `{python} f"{att:.0f}"` more per day than their synthetic control, a lift of `{python} f"{att_pct:.1f}"` percent, or about `{python} f"{total:,.0f}"` extra sales in total. The permutation p-value is `{python} f"{p_value:.3f}"`.
+The treated weights are `{python} f"{geo_w['Chicago']:.2f}"` on Chicago and `{python} f"{geo_w['Portland']:.2f}"` on Portland, so the effect below is close to a plain average of the two. Keep the estimand in mind: this is the effect of the campaign in Chicago and Portland, not a national number, and no amount of significance below changes that. Over the 15 test days, the treated cities sold about `{python} f"{att:.0f}"` more per day than their synthetic control, a lift of `{python} f"{att_pct:.1f}"` percent, or about `{python} f"{total:,.0f}"` extra sales in total. The permutation p-value is `{python} f"{p_value:.3f}"`.
 
 So, did the campaign work? The point estimate says yes, and by a lift above the `{python} f"{geo_mde:.1f}"` percent this design could reliably detect. But the p-value sits between the usual cutoffs: you would reject the null at the 10 percent level and not at the 5 percent level. The right panel shows why. The gap hovers around zero and mostly below it for the first six days of the test, then jumps to between 200 and 700 a day for most of the rest. A campaign that takes a week to build is common, but averaged over the whole window, the slow start pulls the estimate toward zero and the evidence toward the edge.
 
@@ -469,7 +489,7 @@ I would not read much into the exact cutoff, but I would not hide it either. Thi
 
 - The SYNDES pair is optimal for the objective above, not for every goal you might have. It does not know about media costs, how big each market is, or which cities your sales team cares about. ```SYNDES``` takes budgets, forced and forbidden markets, regional quotas, and spillover restrictions as constraints, all documented [here](https://mlsynth.readthedocs.io/en/latest/syndes.html).
 - New York shows up in the SYNDES design. In these data it is a mid-sized market, but buying media in the real New York is expensive, and a real team might forbid it with `not_to_be_treated` and rerun. The design machinery makes that a one-line change.
-- The weighted estimand matters when effects differ across cities. With weights near one half, the two-way design reports almost a simple average here, but that is a property of this solution, not a guarantee. If you want equal weights on the treated side by construction, use `mode="one_way_global"`.
+- ```SYNDES``` estimates an effect on the treated, weighted by the design, for cities chosen because they are easy to match. If you need a population effect (what a national rollout would do), that is ```MAREX```'s question, not this one. Within the ATT, the treated weights matter when effects differ across cities. With weights near one half, the two-way design reports almost a simple average here, but that is a property of this solution, not a guarantee. If you want equal weights on the treated side by construction, use `mode="one_way_global"`.
 - The MDE comes from pre-period noise, so it is only as good as the assumption that the test window looks like the pre-period, apart from the treatment. Holidays, a competitor's launch, or a stockout during the test all break that.
 - The permutation test is exact only under the exchangeability the sliding window assumes. With a strong weekly cycle, that is plausible but not free.
 

@@ -1,0 +1,246 @@
+---
+title: 'Which Markets Should You Treat? Synthetic Design in mlsynth'
+date: 2026-11-10
+categories: [Experiments, Causal Inference, Econometrics]
+---
+
+Every synthetic control post on this blog so far has taken the treated unit as given. California passed Proposition 99, the Basque Country had terrorism, Barcelona banned new hotels. The policy already happened, somebody else picked where, and our job was to build a counterfactual after the fact.
+
+In marketing, that is often backwards. If you are about to run a geo test (turn on a TV campaign in a few cities, hold the rest out, measure the lift), you get to choose the cities. And the choice matters a lot more than people tend to think. Pick two markets that nothing else in your data looks like, and no amount of clever weighting afterward will give you a good counterfactual. Pick two markets that the rest of the country tracks closely, and a modest lift becomes detectable.
+
+[Doudchenko, Khosravi, Pouget-Abadie, Lahaie, Lubin, Mirrokni, Spiess, and Imbens (2021)](https://arxiv.org/abs/2112.00278) turn that choice into an optimization problem. Their synthetic design picks the treated markets and the synthetic control weights at the same time, before the experiment runs. ```mlsynth``` implements it as the ```SYNDES``` class, and this post shows it in action on the data from Meta's [GeoLift](https://facebookincubator.github.io/GeoLift/) walkthrough.
+
+# The GeoLift Data
+
+The data are a daily outcome, which the walkthrough calls `Y` and treats like sales, for 40 US cities from January 1 through April 15, 2021. The first 90 days are a pre-test period. In the walkthrough, Chicago and Portland were then treated for the last 15 days. So we can do two things with one dataset: design an experiment on the first 90 days as if we had never seen the rest, and then analyze the experiment that was actually run.
+
+Let's plot the data first.
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+import warnings
+import numpy as np
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+from IPython.display import display, Markdown
+
+warnings.filterwarnings("ignore")
+
+jared_theme = {
+    "axes.grid": False,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "legend.framealpha": 1,
+    "legend.facecolor": "white",
+    "legend.fontsize": 12,
+    "axes.titlesize": 16,
+    "axes.labelsize": 13,
+    "figure.dpi": 110,
+    "figure.figsize": (11, 5),
+}
+matplotlib.rcParams.update(jared_theme)
+
+url = "https://raw.githubusercontent.com/jgreathouse9/mlsynth/refs/heads/main/basedata/geolift_test_data.csv"
+df = pd.read_csv(url)
+df["date"] = pd.to_datetime(df["date"])
+df["post"] = (df["date"] >= "2021-04-01").astype(int)
+
+wide = df.pivot(index="date", columns="location", values="Y")
+test_start = pd.Timestamp("2021-04-01")
+
+for city in wide.columns:
+    plt.plot(wide.index, wide[city], color="gray", linewidth=0.5, alpha=0.6)
+plt.plot(wide.index, wide.mean(axis=1), color="red", linewidth=2, label="Average of all 40 cities")
+plt.axvline(test_start, color="blue", linestyle="--", label="Test begins")
+plt.ylabel("Daily sales")
+plt.title("GeoLift Data: 40 Cities, 105 Days")
+plt.legend()
+plt.show()
+```
+
+Two things jump out. First, there is a strong weekly cycle, which every city shares to some degree. Second, the cities sit at very different levels: over the pre-period, Oakland averages about 13,500 a day and Dallas about 2,300. Neither is a problem for synthetic control, but both are exactly what a good design has to deal with: we want treated markets whose weekly ups and downs the remaining markets can reproduce.
+
+# Synthetic Design
+
+As usual, I begin with notation. Let $j$ index the 40 cities, collected in $\mathcal{N} \coloneqq \{1, \dots, N\}$, and let $t$ index days. The pre-period is $\mathcal{T}_1 \coloneqq \{1, \dots, T_0\}$ with $T_0 = 90$, and the test window is $\mathcal{T}_2 \coloneqq \{T_0 + 1, \dots, T\}$. We observe sales $y_{jt}$. The new piece is that treatment is now a decision variable: $D_j \in \{0, 1\}$ says whether we treat city $j$, and we treat exactly $K$ of them, $\sum_{j \in \mathcal{N}} D_j = K$.
+
+## What Are We Minimizing?
+
+Suppose sales without treatment are $y_{jt} = \mu_{jt} + \varepsilon_{jt}$, a signal plus noise with variance $\sigma^2$. If we compare a weighted average of treated cities to a weighted average of untreated cities, the mean squared error of that comparison splits into two pieces. One is bias: how far apart the two weighted signals $\mu_{jt}$ are. The other is variance: $\sigma^2$ times the sum of squared weights, which blows up when a few cities carry all the weight. A good design keeps both small.
+
+The paper gives three versions of this problem. The one I use here is the two-way global design, where one weight vector $\mathbf{w}$ covers both sides of the comparison:
+
+$$
+\begin{aligned}
+(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad & \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2 + \lambda \sum_{j \in \mathcal{N}} w_j^2 \\
+\text{s.t.} \quad & w_j \geq 0, \quad \sum_{j \in \mathcal{N}} D_j = K, \quad \sum_{j \in \mathcal{N}} w_j D_j = 1, \quad \sum_{j \in \mathcal{N}} w_j (1 - D_j) = 1.
+\end{aligned}
+$$
+
+In English: choose which $K$ cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the $\lambda$ term is the stand-in for $\sigma^2 \sum_j w_j^2$, the variance. By default ```mlsynth``` sets $\lambda$ to the pre-period sample variance, which is the paper's suggestion.
+
+Two features separate this from regular synthetic control. The treated side is weighted too, so the estimand is a weighted average treatment effect on the treated: if one treated city gets weight 0.7 and the other 0.3, the effect we report is that weighted average of their effects. That is fine if you believe the campaign does roughly the same thing everywhere, and something to think about if you do not. And because $\mathbf{D}$ is binary, this is a mixed-integer program, which is NP-hard in general. For the two-way global design, ```mlsynth``` searches over treated sets directly (once you fix $\mathbf{D}$, what is left is a convex program), which on 40 cities finishes in about a second.
+
+Okay hard part done. Let's design an experiment.
+
+# SYNDES in ```mlsynth```
+
+First, install the latest version of ```mlsynth```.
+
+```bash
+pip install -U git+https://github.com/jgreathouse9/mlsynth.git
+```
+
+The configuration follows the same dictionary pattern as every other ```mlsynth``` estimator. We tell it which column marks the test window, how many cities to treat, and which design to solve. Like the GeoLift walkthrough, I keep Honolulu out of the treated set; it stays available as a control.
+
+```{python}
+from mlsynth import SYNDES, power_analysis
+
+config = {
+    "df": df,
+    "outcome": "Y",
+    "unitid": "location",
+    "time": "date",
+    "post_col": "post",                    # 1 for the last 15 days
+    "K": 2,                                # treat two cities
+    "mode": "two_way_global",
+    "not_to_be_treated": ["honolulu"],
+    "run_inference": False,                # we are designing, not analyzing
+}
+
+design = SYNDES(config).fit()
+```
+
+```{python}
+#| echo: false
+
+labels = list(design.inputs.unit_index)
+
+def weights_table(fit):
+    """Treated and control weights for a fitted design, largest first."""
+    d = fit.design
+    tw = pd.Series(np.asarray(d.treated_weights), index=labels)
+    cw = pd.Series(np.asarray(d.control_weights), index=labels)
+    return tw[tw > 1e-6].sort_values(ascending=False), cw[cw > 1e-6].sort_values(ascending=False)
+
+free_tw, free_cw = weights_table(design)
+free_markets = [m.title() for m in free_tw.index]
+free_rmse = design.design.pre_fit_rmse
+free_mde = power_analysis(design, n_post_periods=[15], power=0.8).to_dataframe()["mde_percent"].iloc[0]
+```
+
+SYNDES picks `{python} free_markets[0]` and `{python} free_markets[1]`, with treated weights of `{python} f"{free_tw.iloc[0]:.2f}"` and `{python} f"{free_tw.iloc[1]:.2f}"`. Their synthetic control spreads across `{python} len(free_cw)` of the remaining cities, and no single control city gets more than `{python} f"{free_cw.iloc[0]:.3f}"` of the weight. That is about as far from a sparse synthetic control as you can get, which is the variance penalty doing its job: with 38 eligible controls that all share the same weekly cycle, there is no reason to lean on any one of them.
+
+Here is the design over the pre-period: the weighted treated cities against their synthetic control.
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+def sides(fit, frame):
+    """Weighted treated and weighted control series over every day in `frame`."""
+    d = fit.design
+    Y = frame[labels].to_numpy(float)
+    return Y @ np.asarray(d.treated_weights), Y @ np.asarray(d.control_weights)
+
+pre = wide[wide.index < test_start]
+trt, ctl = sides(design, pre)
+plt.plot(pre.index, trt, color="black", linewidth=2, label=f"Treated: {' + '.join(free_markets)}")
+plt.plot(pre.index, ctl, color="red", linewidth=2, linestyle="--", label="Synthetic control")
+plt.ylabel("Daily sales (weighted)")
+plt.title("The SYNDES Design Over the Pre-Period")
+plt.legend()
+plt.show()
+```
+
+The two lines move together almost day for day, weekly cycle included. That is the whole point: if these two series track each other this closely for 90 days with no treatment, then a gap that opens up during the test is hard to explain any other way.
+
+## Is the Design Any Good?
+
+A design is only as good as the effects it can detect. ```mlsynth``` answers that with a minimum detectable effect (MDE): the smallest true lift the design would detect 80 percent of the time with a two-sided test at the 5 percent level. It is computed from the pre-period gap between the two lines above, with a Newey-West correction for the fact that day-to-day errors are correlated (the weekly cycle never cancels perfectly).
+
+The natural comparison is the design GeoLift actually used. I can force SYNDES to treat Chicago and Portland with `to_be_treated`, and it will still choose the best synthetic control for that pair.
+
+```{python}
+geolift = SYNDES({**config, "to_be_treated": ["chicago", "portland"]}).fit()
+```
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+horizons = list(range(1, 22))
+curves = {
+    f"SYNDES: {' + '.join(free_markets)}": power_analysis(design, n_post_periods=horizons, power=0.8).to_dataframe(),
+    "GeoLift: Chicago + Portland": power_analysis(geolift, n_post_periods=horizons, power=0.8).to_dataframe(),
+}
+geo_tw, geo_cw = weights_table(geolift)
+geo_rmse = geolift.design.pre_fit_rmse
+geo_mde = curves["GeoLift: Chicago + Portland"].set_index("n_post").loc[15, "mde_percent"]
+
+for (name, curve), color in zip(curves.items(), ["red", "blue"]):
+    plt.plot(curve["n_post"], curve["mde_percent"], color=color, linewidth=2, marker="o", label=name)
+plt.axvline(15, color="gray", linestyle=":", label="15-day test")
+plt.xlabel("Test length (days)")
+plt.ylabel("MDE (% of treated baseline)")
+plt.title("Minimum Detectable Effect by Test Length")
+plt.legend()
+plt.show()
+```
+
+For a 15-day test, the SYNDES design can detect a lift of about `{python} f"{free_mde:.1f}"` percent, and the Chicago-Portland design needs about `{python} f"{geo_mde:.1f}"` percent. Put differently, the Chicago-Portland design needs a lift roughly `{python} f"{geo_mde / free_mde:.1f}"` times larger to have the same shot at detecting it. The pre-period fit tells the same story: the root mean squared gap between treated and synthetic is `{python} f"{free_rmse:.0f}"` for the SYNDES pair and `{python} f"{geo_rmse:.0f}"` for Chicago and Portland.
+
+None of this means GeoLift picked badly. Its market selection optimizes a different target (a scored mix of simulated power, fit, and budget), and in the walkthrough Chicago was required to be in the test. But it shows how much the choice of markets is worth, and that we can read it off before spending a dollar.
+
+# Analyzing the Test That Was Run
+
+Now let's pretend the test is over. The Chicago-Portland design from above is the one GeoLift ran, so I refit it with inference turned on. ```SYNDES``` tests the sharp null of no effect with the [moving-block permutation test](https://doi.org/10.1080/01621459.2021.1920957) of Chernozhukov, Wüthrich, and Zhu: it slides a 15-day window around the whole series of daily treated-minus-synthetic gaps and asks how unusual the test window's average gap is.
+
+```{python}
+result = SYNDES({**config, "to_be_treated": ["chicago", "portland"], "run_inference": True}).fit()
+```
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+post_fit = result.post_fit
+att, att_pct, p_value = post_fit.ate, post_fit.ate_percent, result.inference.p_value
+total = post_fit.total_effect
+geo_w = {m.title(): w for m, w in geo_tw.items()}
+
+trt, ctl = sides(result, wide)
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
+axes[0].plot(wide.index, trt, color="black", linewidth=2, label="Chicago + Portland (weighted)")
+axes[0].plot(wide.index, ctl, color="red", linewidth=2, linestyle="--", label="Synthetic control")
+axes[0].axvline(test_start, color="blue", linestyle="--")
+axes[0].set_title("Treated vs. Synthetic")
+axes[0].legend(loc="upper left")
+axes[1].plot(wide.index, trt - ctl, color="black", linewidth=1.5)
+axes[1].axhline(0, color="gray", linewidth=1)
+axes[1].axvline(test_start, color="blue", linestyle="--")
+axes[1].set_title("Treated - Synthetic")
+for ax in axes:
+    ax.tick_params(axis="x", rotation=45)
+fig.tight_layout()
+plt.show()
+```
+
+The treated weights are `{python} f"{geo_w['Chicago']:.2f}"` on Chicago and `{python} f"{geo_w['Portland']:.2f}"` on Portland, so the effect below is close to a plain average of the two. Over the 15 test days, the treated cities sold about `{python} f"{att:.0f}"` more per day than their synthetic control, a lift of `{python} f"{att_pct:.1f}"` percent, or about `{python} f"{total:,.0f}"` extra sales in total. The permutation p-value is `{python} f"{p_value:.3f}"`.
+
+So, did the campaign work? The point estimate says yes, and by a lift above the `{python} f"{geo_mde:.1f}"` percent this design could reliably detect. But the p-value sits between the usual cutoffs: you would reject the null at the 10 percent level and not at the 5 percent level. The right panel shows why. The gap hovers around zero and mostly below it for the first six days of the test, then jumps to between 200 and 700 a day for most of the rest. A campaign that takes a week to build is common, but averaged over the whole window, the slow start pulls the estimate toward zero and the evidence toward the edge.
+
+I would not read much into the exact cutoff, but I would not hide it either. This is also where the design section pays off. With the SYNDES pair, the same lift would have sat well above the design's MDE, and it is reasonable to expect that test would have come back clearer. That is the argument for designing before you test: power is decided before the first ad runs.
+
+# Caveats
+
+- The SYNDES pair is optimal for the objective above, not for every goal you might have. It does not know about media costs, how big each market is, or which cities your sales team cares about. ```SYNDES``` takes budgets, forced and forbidden markets, regional quotas, and spillover restrictions as constraints, all documented [here](https://mlsynth.readthedocs.io/en/latest/syndes.html).
+- New York shows up in the SYNDES design. In these data it is a mid-sized market, but buying media in the real New York is expensive, and a real team might forbid it with `not_to_be_treated` and rerun. The design machinery makes that a one-line change.
+- The weighted estimand matters when effects differ across cities. With weights near one half, the two-way design reports almost a simple average here, but that is a property of this solution, not a guarantee. If you want equal weights on the treated side by construction, use `mode="one_way_global"`.
+- The MDE comes from pre-period noise, so it is only as good as the assumption that the test window looks like the pre-period, apart from the treatment. Holidays, a competitor's launch, or a stockout during the test all break that.
+- The permutation test is exact only under the exchangeability the sliding window assumes. With a strong weekly cycle, that is plausible but not free.
+
+Either way, this is how to use ```SYNDES``` to design a geo experiment and then analyze it. The paper has the theory, the [documentation](https://mlsynth.readthedocs.io/en/latest/syndes.html) has every option, and as usual, you know [where to find me](https://jgreathouse9.github.io/) should you have questions.

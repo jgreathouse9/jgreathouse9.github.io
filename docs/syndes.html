@@ -282,9 +282,10 @@ window.Quarto = {
 </header>
 
 
-<p>Most synthetic control posts on this blog take the treated unit as given. California passed Proposition 99, the Basque Country had terrorism, Barcelona banned new hotels. The policy already happened, somebody else picked where, and our job was to build a counterfactual after the fact. The exception is <a href="scexp.html">my post on synthetic controls for marketing experiments</a>, where <code>MAREX</code> decides which Curaçao towns get a green-hotel program before it starts.</p>
-<p>This post is about another way to make that choice. In marketing, the after-the-fact framing is often backwards. If you are about to run a geo test (turn on a TV campaign in a few cities, hold the rest out, measure the lift), you get to choose the cities. And the choice matters a lot more than people tend to think. Pick two markets that nothing else in your data looks like, and no amount of clever weighting afterward will give you a good counterfactual. Pick two markets that the rest of the country tracks closely, and a modest lift becomes detectable.</p>
-<p><a href="https://arxiv.org/abs/2112.00278">Doudchenko, Khosravi, Pouget-Abadie, Lahaie, Lubin, Mirrokni, Spiess, and Imbens (2021)</a> turn that choice into an optimization problem. Their synthetic design picks the treated markets and the synthetic control weights at the same time, before the experiment runs. <code>mlsynth</code> implements it as the <code>SYNDES</code> class. The catch is computational: the paper solves the design with a general mixed-integer solver, and the authors report that 50 units took hours. I took a different route in <code>mlsynth</code>, and most of this post is about why. I start with the paper’s approach and where it gets stuck, then explain how I chose to solve the problem instead, and then put both to work on the data from Meta’s <a href="https://facebookincubator.github.io/GeoLift/">GeoLift</a> walkthrough.</p>
+<p>Much is made in the econometrics of marketing about having a good control group for your test group. The good people at Haus write “The first rule of good incrementality test design: Make sure your control group is <em>very similar</em> to your treatment group” (<a href="https://www.haus.io/blog/matched-market-tests-dont-cut-it-why-haus-uses-synthetic-control-in-incrementality-experiments">here</a>). And of course, I do not object to this. However, it is also true that <a href="https://www.measured.com/blog/synthetic-controls-arent-enough-why-geo-testing-requires-representative-market-selection/">synthetic controls are not enough</a>. The reason for this, as Measured explains in their blog post, is that there is also a test group selection problem at hand.</p>
+<p>This post is about another way to make that choice. In marketing, the after-the-fact framing is often backwards. If you are about to run a geo test (say, turning on a TV campaign in a few cities, holding the rest out, and measuring the lift), you in fact get to choose the cities! The choice matters a lot more than people tend to think, even for proofs of concept that are not yet ready to be extrapolated to entire regions or nationally. The key aspect of this is that we need a test and control group that are sufficiently similar to one another such that a lift can be detected if one in fact exists, and part and parcel of that is being able to know who is similar enough to whom.</p>
+<p>That makes this, unlike a normal synthetic control, a combinatorial optimization problem. In the usual setup the treated unit is fixed and we only choose weights, which is a small convex problem. Here we also choose which units are treated, and the number of ways to do that explodes: 10 treated markets out of 40 is already hundreds of millions of possible test groups. The industry answers are heuristics. Google proposes <a href="https://research.google/pubs/a-time-based-regression-matched-markets-approach-for-designing-geo-experiments/">a greedy method</a> for building matched markets, and Meta’s GeoLift builds a short list of candidate test groups from market correlations and scores those by simulation (more on that below). My <a href="scexp.html"><code>MAREX</code> post</a> took up a related version of the problem. But as of recently, I have become more interested in combinatorial optimization problems themselves, and in how we can actually solve them for stuff like this.</p>
+<p><a href="https://arxiv.org/abs/2112.00278">Doudchenko, Khosravi, Pouget-Abadie, Lahaie, Lubin, Mirrokni, Spiess, and Imbens (2021)</a> turn this choice into an optimization problem. Their synthetic design picks the treated markets and the synthetic control weights at the same time, before the experiment runs. <code>mlsynth</code> implements it as the <code>SYNDES</code> class. The paper, in contrast to GeoLift and Google’s matched markets, solves the design with a general mixed-integer solver, and the authors report that 50 units took hours. I understand the importance of greedy solutions, and how they can be used to do things quickly that would take us longer to do if we wanted an exact solution. But because I am hardheaded, as I kept reading, I wanted to understand why it failed at 50 units, and whether we could make it go quicker. This post is the answer. I start with the design problem and the paper’s approach, show where it gets stuck and how I chose to solve it instead, compare the result with GeoLift’s own market selection, and then put it to work on the data from Meta’s <a href="https://facebookincubator.github.io/GeoLift/">GeoLift</a> walkthrough.</p>
 <section id="the-design-problem" class="level1">
 <h1>The Design Problem</h1>
 <p>As usual, I begin with notation. Let <span class="math inline">\(j\)</span> index the 40 cities, collected in <span class="math inline">\(\mathcal{N} \coloneqq \{1, \dots, N\}\)</span>, and let <span class="math inline">\(t\)</span> index days. The pre-period is <span class="math inline">\(\mathcal{T}_1 \coloneqq \{1, \dots, T_0\}\)</span> (for us, <span class="math inline">\(T_0 = 90\)</span>), and the test window is <span class="math inline">\(\mathcal{T}_2 \coloneqq \{T_0 + 1, \dots, T\}\)</span>. We observe sales <span class="math inline">\(y_{jt}\)</span>. The new piece is that treatment is now a decision variable: <span class="math inline">\(D_j \in \{0, 1\}\)</span> says whether we treat city <span class="math inline">\(j\)</span>, and we treat exactly <span class="math inline">\(K\)</span> of them, <span class="math inline">\(\sum_{j \in \mathcal{N}} D_j = K\)</span>.</p>
@@ -328,7 +329,7 @@ q_j \leq D_j, \qquad q_j \leq w_j, \qquad q_j \geq w_j - (1 - D_j), \qquad q_j \
 p_{\text{relaxed}} = \frac{4\lambda}{N},
 \]</span></p>
 <p>on every panel and for every <span class="math inline">\(K\)</span>. It never looks at how well any design fits the data, and it does not know how many cities are treated. Here is that bound against the true optimum on three panels: GeoLift’s pre-test, Walmart’s weekly sales (45 stores, 128 weeks), and the state unemployment data the paper itself uses. The relaxed problem is written out exactly as the paper writes it, solved with a convex solver, and compared with the optimum that <code>SYNDES</code> proves.</p>
-<div id="f0238add" class="cell" data-execution_count="1">
+<div id="60c58a7f" class="cell" data-execution_count="1">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -425,7 +426,7 @@ p_{\text{relaxed}} = \frac{4\lambda}{N},
 <p>The middle column is 1 in every row, as the argument says it must be. The last column is the problem. With two or three treated units, the relaxation’s bound sits 73 to 86 percent below the optimum; with ten, 26 to 39 percent. It gets better as <span class="math inline">\(K\)</span> grows only because the optimum falls toward it, not because the bound learns anything.</p>
 <p>Branching does not rescue it either. Take GeoLift with ten treated cities and follow the optimal design down the tree, fixing its first eight treated cities to 1 and eight other cities to 0. That is 16 of 40 decisions made, and every one of them right. The bound moves from 73.9 percent of the optimum to 74.3 percent. It reaches 100 percent only once all ten treated cities are fixed, because only then is there nothing left to split evenly. So the solver gets no help from its bound until a branch has already pinned down an entire treated set, which is enumeration with extra steps. A bound that weak rules out almost nothing, so the solver keeps splitting.</p>
 <p>Here is what that costs on a real problem. I took Walmart’s weekly sales for 45 stores, used the first 128 weeks as the pre-period, and asked for three treated stores. That is only 14,190 possible designs. The exact search in <code>SYNDES</code> returns stores 29, 31 and 40 and proves them optimal in 0.08 seconds. I then gave SCIP the paper’s mixed-integer program, asked it to prove optimality, and stopped it after 20 minutes (1,233 seconds of solving time). In that time it explored 74 nodes of its search tree and did not find a single feasible design, not even a bad one. Its lower bound had reached <span class="math inline">\(8.5 \times 10^{7}\)</span>, against an optimum of <span class="math inline">\(1.04 \times 10^{10}\)</span>: less than one percent of the way. That bound is even weaker than the <span class="math inline">\(4\lambda/N\)</span> bound above (<span class="math inline">\(2.5 \times 10^{9}\)</span> here), because SCIP builds its relaxation of the squared objective up from linear pieces as it goes. This is the run, if you want to reproduce it (it takes the full 20 minutes):</p>
-<div id="48cc0f12" class="cell" data-execution_count="2">
+<div id="e5e836d2" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth.utils.syndes_helpers.optimization <span class="im">import</span> estimate_lambda, solve_synthetic_design</span>
@@ -486,7 +487,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <h1>The GeoLift Data</h1>
 <p>The data are a daily outcome, which the walkthrough calls <code>Y</code> and treats like sales, for 40 US cities from January 1 through April 15, 2021. The first 90 days are a pre-test period. In the walkthrough, Chicago and Portland were then treated for the last 15 days. So we can do two things with one dataset: design an experiment on the first 90 days as if we had never seen the rest, and then analyze the experiment that was actually run.</p>
 <p>Let’s plot the data first.</p>
-<div id="8642ca8e" class="cell" data-execution_count="3">
+<div id="0a02ab7a" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -502,7 +503,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <p>Enough talk. Let’s run both on the GeoLift pre-period. First, install the latest version of <code>mlsynth</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> git+https://github.com/jgreathouse9/mlsynth.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>I run each problem twice: once with the exact search (<code>backend="exact"</code>, the default) with <code>certify=True</code>, which attaches the search’s lower bound, and once with the paper’s mixed-integer program solved by SCIP (<code>backend="mip"</code>). For two treated cities, SCIP gets <code>mlsynth</code>’s defaults: stop at a 5 percent gap or after 60 seconds. For ten, I ask it to prove optimality (<code>gap_limit=0</code>) and give it five minutes.</p>
-<div id="e3c7dc70" class="cell" data-execution_count="4">
+<div id="2dcf979c" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mlsynth <span class="im">import</span> SYNDES, power_analysis</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -524,7 +525,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">10</span>, <span class="st">"SCIP, prove it, 5 min"</span>): timed(K<span class="op">=</span><span class="dv">10</span>, backend<span class="op">=</span><span class="st">"mip"</span>, gap_limit<span class="op">=</span><span class="fl">0.0</span>, time_limit<span class="op">=</span><span class="fl">300.0</span>),</span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="8ef0c4f6" class="cell" data-execution_count="5">
+<div id="d245a70a" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -554,7 +555,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">741</td>
 <td style="text-align: left;">Exact search</td>
-<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">0.2</td>
 <td style="text-align: left;">+0.00%</td>
 <td style="text-align: left;">yes</td>
 <td style="text-align: left;">2.4%</td>
@@ -574,7 +575,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <td style="text-align: right;">10</td>
 <td style="text-align: right;">635,745,396</td>
 <td style="text-align: left;">Exact search</td>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">6</td>
 <td style="text-align: left;">+0.00%</td>
 <td style="text-align: left;">yes</td>
 <td style="text-align: left;">0.0%</td>
@@ -587,15 +588,15 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <td style="text-align: right;">300.1</td>
 <td style="text-align: left;">+3.80%</td>
 <td style="text-align: left;">no</td>
-<td style="text-align: left;">28.5%</td>
+<td style="text-align: left;">28.2%</td>
 <td style="text-align: left;">timelimit</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>The two-city problem is the telling one, because it is tiny. There are 741 possible designs, and the exact search priced every one of them in 0.5 seconds. SCIP, on the same problem, stopped at its time limit with Atlanta and Austin, a design 1.5 percent worse than the optimum, and with its own lower bound 60 percent below its answer. That is the weak relaxation from above, in one line of a table: a solver that cannot prove anything about a problem you could solve with a for loop. (The exact search’s own row shows a 2.4 percent gap because, when it enumerates, <code>certify</code> quotes the one-formula Rayleigh bound from above as an independent check. The proof of optimality is the enumeration itself, which priced or ruled out every one of the 741 sets.)</p>
-<p>With ten treated cities, the exact search ran its branch and bound and proved its design optimal: the search closed, so its certified gap is zero, in 11 seconds. SCIP did not finish within five minutes: it stopped at its time limit with its own gap at 29 percent. Its design shares 4 of its 10 cities with the exact one and is +3.80 percent away from it in objective. And this is the point of the certificate: we do not need SCIP to finish. The exact search’s certificate already says no design beats the one it returned, and that is all the proof a design needs.</p>
+<p>The two-city problem is the telling one, because it is tiny. There are 741 possible designs, and the exact search priced every one of them in 0.2 seconds. SCIP, on the same problem, stopped at its time limit with Atlanta and Austin, a design 1.5 percent worse than the optimum, and with its own lower bound 60 percent below its answer. That is the weak relaxation from above, in one line of a table: a solver that cannot prove anything about a problem you could solve with a for loop. (The exact search’s own row shows a 2.4 percent gap because, when it enumerates, <code>certify</code> quotes the one-formula Rayleigh bound from above as an independent check. The proof of optimality is the enumeration itself, which priced or ruled out every one of the 741 sets.)</p>
+<p>With ten treated cities, the exact search ran its branch and bound and proved its design optimal: the search closed, so its certified gap is zero, in 6 seconds. SCIP did not finish within five minutes: it stopped at its time limit with its own gap at 28 percent. Its design shares 4 of its 10 cities with the exact one and is +3.80 percent away from it in objective. And this is the point of the certificate: we do not need SCIP to finish. The exact search’s certificate already says no design beats the one it returned, and that is all the proof a design needs.</p>
 </section>
 <section id="what-about-geolift" class="level1">
 <h1>What About GeoLift?</h1>
@@ -609,7 +610,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <p>So GeoLift scores each candidate on something close to what you actually care about, simulated power, but each score costs a grid of synthetic control fits, so it can only afford a handful of candidates, and it picks them by a correlation rule with no claim to optimality. <code>SYNDES</code> and <code>MAREX</code> make the other bet: a cheap score, a search over every admissible set, and a proof. Like <code>SYNDES</code>, GeoLift estimates the effect on the markets it tests (with uniform weights, the plain average of their effects), not <code>MAREX</code>’s population ATE.</p>
 <p>That uniform treated side is exactly <code>SYNDES</code>’s one-way design from earlier: treated weights pinned at <span class="math inline">\(1/K\)</span>, a free synthetic control on the other side. So the like-for-like comparison is GeoLift’s shortlists against the one-way optimum, not the two-way one. To make it, I ported GeoLift’s candidate generation to Python, both setups, along with R’s random number generator, so the stochastic shortlist for a given seed is the one R produces for <code>set.seed()</code> with that seed. The port is in the folded cell below. I checked it against GeoLift’s own R functions, run in R on this panel: the deterministic shortlists and the stochastic ones for five seeds, at all four treatment sizes, came out identical, all 884 candidates. That check needs R, so it is not rerun when this page renders. One caveat on the seeds: inside <code>GeoLiftMarketSelection()</code>, the simulations for one treatment size draw from the same random stream before the next size’s coin flips, so a seed here reproduces what R gives when the selector is called once per treatment size with <code>set.seed()</code> before each call.</p>
 <p>For each treatment size I compare the deterministic shortlist, and the stochastic shortlists for seeds 1 to 20, with the one-way design <code>SYNDES</code> proves optimal. Every design, shortlisted or optimal, gets uniform treated weights and the best synthetic control <code>SYNDES</code> can build for it. Then I score it two ways. The first is the one every synthetic control design has to pass before anything else: how alike are the treated markets and their synthetic control before the test? That is the pre-period objective the one-way design minimizes, the average squared gap between the treated average and its control plus the variance penalty, reported relative to the optimum. The second is the 15-day minimum detectable effect, which is GeoLift’s own currency, computed with <code>mlsynth</code>’s detectable-effect formula from below. These are not GeoLift’s own simulated power numbers; they answer what each set of markets can deliver under the same analysis.</p>
-<div id="b3886ca6" class="cell" data-execution_count="6">
+<div id="4b798312" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>GeoLift’s candidate generation and R’s random number generator, ported to Python</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -691,7 +692,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> shortlist</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="770635cf" class="cell" data-execution_count="7">
+<div id="4d59e858" class="cell" data-execution_count="7">
 <div class="cell-output cell-output-display cell-output-markdown">
 <p>Pre-period objective, relative to the one-way optimum:</p>
 <table class="caption-top table table-sm table-striped small">
@@ -814,7 +815,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <section id="syndes-in-mlsynth" class="level1">
 <h1>SYNDES in <code>mlsynth</code></h1>
 <p>The configuration follows the same dictionary pattern as every other <code>mlsynth</code> estimator. We tell it which column marks the test window, how many cities to treat, and which design to solve. Like the GeoLift walkthrough, I keep Honolulu out of the treated set; it stays available as a control.</p>
-<div id="dd2018eb" class="cell" data-execution_count="8">
+<div id="43e3dbfa" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"df"</span>: df,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"outcome"</span>: <span class="st">"Y"</span>,</span>
@@ -831,7 +832,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 </div>
 <p>SYNDES picks New York and Cleveland, with treated weights of 0.51 and 0.49. Their synthetic control spreads across 35 of the remaining cities, and no single control city gets more than 0.042 of the weight. That is about as far from a sparse synthetic control as you can get, which is the variance penalty doing its job: with 38 eligible controls that all share the same weekly cycle, there is no reason to lean on any one of them.</p>
 <p>Here is the design over the pre-period: the weighted treated cities against their synthetic control.</p>
-<div id="873ce5be" class="cell" data-execution_count="10">
+<div id="ef24b49a" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -845,10 +846,10 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <h2 class="anchored" data-anchor-id="is-the-design-any-good">Is the Design Any Good?</h2>
 <p>A design is only as good as the effects it can detect. <code>mlsynth</code> answers that with a minimum detectable effect (MDE): the smallest true lift the design would detect 80 percent of the time with a two-sided test at the 5 percent level. It is computed from the pre-period gap between the two lines above, with a Newey-West correction for the fact that day-to-day errors are correlated (the weekly cycle never cancels perfectly).</p>
 <p>The natural comparison is the design GeoLift actually used. I can force SYNDES to treat Chicago and Portland with <code>to_be_treated</code>, and it will still choose the best synthetic control for that pair.</p>
-<div id="6da8296c" class="cell" data-execution_count="11">
+<div id="cd79d9d0" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>geolift <span class="op">=</span> SYNDES({<span class="op">**</span>config, <span class="st">"to_be_treated"</span>: [<span class="st">"chicago"</span>, <span class="st">"portland"</span>]}).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="0ca46249" class="cell" data-execution_count="12">
+<div id="596aac04" class="cell" data-execution_count="12">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -864,10 +865,10 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 <section id="analyzing-the-test-that-was-run" class="level1">
 <h1>Analyzing the Test That Was Run</h1>
 <p>Now let’s pretend the test is over. The Chicago-Portland design from above is the one GeoLift ran, so I refit it with inference turned on. <code>SYNDES</code> tests the sharp null of no effect with the <a href="https://doi.org/10.1080/01621459.2021.1920957">moving-block permutation test</a> of Chernozhukov, Wüthrich, and Zhu: it slides a 15-day window around the whole series of daily treated-minus-synthetic gaps and asks how unusual the test window’s average gap is.</p>
-<div id="eba741e7" class="cell" data-execution_count="13">
+<div id="9babf217" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> SYNDES({<span class="op">**</span>config, <span class="st">"to_be_treated"</span>: [<span class="st">"chicago"</span>, <span class="st">"portland"</span>], <span class="st">"run_inference"</span>: <span class="va">True</span>}).fit()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="304c8471" class="cell" data-execution_count="14">
+<div id="eaf32f9e" class="cell" data-execution_count="14">
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -897,7 +898,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1794322467030" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1794324846647" data-listing-reading-time-sort="1" data-listing-word-count-sort="96">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./consulting.html" class="no-external">👋 Welcome</a>
@@ -908,7 +909,7 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1794322467039" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="quarto-post image-right" data-index="1" data-listing-file-modified-sort="1794324846653" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./testpost.html" class="no-external">A Test Post</a>
@@ -922,7 +923,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1794322467032" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
+<div class="quarto-post image-right" data-index="2" data-listing-file-modified-sort="1794324846648" data-listing-reading-time-sort="1" data-listing-word-count-sort="17">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./index.html" class="no-external">Posts</a>
@@ -936,7 +937,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="3" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1789171200000" data-listing-file-modified-sort="1794322467030" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4822">
+<div class="quarto-post image-right" data-index="3" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNDYXVzYWwlMjBJbmZlcmVuY2U=" data-listing-date-sort="1789171200000" data-listing-file-modified-sort="1794324846647" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="25" data-listing-word-count-sort="4822">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./didexcp.html" class="no-external">Difference-in-Differences Is a Synthetic Control With Uniform Weights</a>
@@ -960,7 +961,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1794322467034" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
+<div class="quarto-post image-right" data-index="4" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1786665600000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="27" data-listing-word-count-sort="5391">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense2.html" class="no-external">Artificial Counterfactuals in Dense Settings: now with prediction intervals</a>
@@ -984,7 +985,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="5" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1794322467038" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
+<div class="quarto-post image-right" data-index="5" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1770940800000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="15" data-listing-word-count-sort="2998">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shaemax.html" class="no-external">Shake it to the Max? Using the <span class="math inline">\(\ell_\infty\)</span> norm for Synthetic Control Methods</a>
@@ -1008,7 +1009,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1794322467030" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
+<div class="quarto-post image-right" data-index="6" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnklMkNTdGF0aXN0aWNz" data-listing-date-sort="1769644800000" data-listing-file-modified-sort="1794324846647" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2516">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./averagesexcp.html" class="no-external">What Is An Average?</a>
@@ -1032,7 +1033,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1794322467038" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
+<div class="quarto-post image-right" data-index="7" data-listing-date-sort="1758499200000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5656">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./stella1.html" class="no-external">A Practitioner’s Guide to Weighted Synthetic Control Methods for Incrementality Testing</a>
@@ -1049,7 +1050,7 @@ Sep 22, 2025
 
 </div>
 </div>
-<div class="quarto-post image-right" data-index="8" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1794322467036" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
+<div class="quarto-post image-right" data-index="8" data-categories="RXhwZXJpbWVudHMlMkNFY29ub21ldHJpY3M=" data-listing-date-sort="1758326400000" data-listing-file-modified-sort="1794324846651" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="18" data-listing-word-count-sort="3587">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scexp.html" class="no-external">Synthetic Controls for Marketing Experiments</a>
@@ -1073,7 +1074,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="9" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1794322467034" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
+<div class="quarto-post image-right" data-index="9" data-listing-date-sort="1757376000000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="29" data-listing-word-count-sort="5754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./lfe1.html" class="no-external">Lessons from Econometrics, Part 1: Synthetic Controls Aren’t Black Boxes</a>
@@ -1090,7 +1091,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1794322467038" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
+<div class="quarto-post image-right" data-index="10" data-categories="RWNvbm9tZXRyaWNzJTJDQ2F1c2FsJTIwSW5mZXJlbmNl" data-listing-date-sort="1754956800000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="14" data-listing-word-count-sort="2679">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sparsdens.html" class="no-external">What is a Synthetic Control?</a>
@@ -1114,7 +1115,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1794322467038" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
+<div class="quarto-post image-right" data-index="11" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752710400000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1836">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./shc.html" class="no-external">The Synthetic Historical Control Method</a>
@@ -1136,7 +1137,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1794322467038" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
+<div class="quarto-post image-right" data-index="12" data-categories="RWNvbm9tZXRyaWNz" data-listing-date-sort="1752019200000" data-listing-file-modified-sort="1794324846652" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1199">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./spillsynth.html" class="no-external">The Iterative Synthetic Control Method</a>
@@ -1158,7 +1159,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1794322467034" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
+<div class="quarto-post image-right" data-index="13" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1747612800000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="974">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./nsc.html" class="no-external">Synthetic Controls With Non-Linear Outcome Trends: A Principled Approach to Extrapolation</a>
@@ -1182,7 +1183,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="14" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1794322467034" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
+<div class="quarto-post image-right" data-index="14" data-categories="RWNvbm9tZXRyaWMlMjBUaGVvcnk=" data-listing-date-sort="1747008000000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1734">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./sccare.html" class="no-external">Synthetic Controls Do Not Care What Your Donors Are. So Why Do You?</a>
@@ -1204,7 +1205,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1794322467039" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
+<div class="quarto-post image-right" data-index="15" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1745884800000" data-listing-file-modified-sort="1794324846653" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="11" data-listing-word-count-sort="2178">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./synthinter.html" class="no-external">Synthetic Control Methods for Personalized Causal Inference</a>
@@ -1228,7 +1229,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="16" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1794322467036" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
+<div class="quarto-post image-right" data-index="16" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1744761600000" data-listing-file-modified-sort="1794324846651" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4204">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scmo.html" class="no-external">Synthetic Controls With More Than One Outcome</a>
@@ -1252,7 +1253,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="17" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1794322467032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
+<div class="quarto-post image-right" data-index="17" data-categories="TWFjaGluZSUyMExlYXJuaW5nJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1743552000000" data-listing-file-modified-sort="1794324846648" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1643">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./fscm.html" class="no-external">Forward Selected Synthetic Control</a>
@@ -1276,7 +1277,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="18" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1794322467032" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
+<div class="quarto-post image-right" data-index="18" data-categories="R2l0aHViJTJDQXV0b21hdGlvbg==" data-listing-date-sort="1738281600000" data-listing-file-modified-sort="1794324846648" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1754">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./gitact.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Github Actions</a>
@@ -1300,7 +1301,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="19" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1794322467030" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
+<div class="quarto-post image-right" data-index="19" data-categories="V2ViJTIwU2NyYXBpbmclMkNQeXRob24=" data-listing-date-sort="1738108800000" data-listing-file-modified-sort="1794324846646" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="13" data-listing-word-count-sort="2403">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./aaascrape.html" class="no-external">Data Science for Policy Analysts: A Simple Introduction to Web Scraping</a>
@@ -1324,7 +1325,7 @@ Jared Greathouse
 </a>
 </div>
 </div>
-<div class="quarto-post image-right" data-index="20" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1794322467034" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
+<div class="quarto-post image-right" data-index="20" data-categories="Q2F1c2FsJTIwSW5mZXJlbmNlJTJDRWNvbm9tZXRyaWNz" data-listing-date-sort="1737676800000" data-listing-file-modified-sort="1794324846649" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="19" data-listing-word-count-sort="3704">
 <div class="body">
 <h3 class="no-anchor listing-title">
 <a href="./scdense.html" class="no-external">Artificial Counterfactuals in Dense Settings: the <span class="math inline">\(\ell_2\)</span> relaxer</a>

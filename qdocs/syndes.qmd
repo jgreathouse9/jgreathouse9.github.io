@@ -8,7 +8,92 @@ Every synthetic control post on this blog so far has taken the treated unit as g
 
 In marketing, that is often backwards. If you are about to run a geo test (turn on a TV campaign in a few cities, hold the rest out, measure the lift), you get to choose the cities. And the choice matters a lot more than people tend to think. Pick two markets that nothing else in your data looks like, and no amount of clever weighting afterward will give you a good counterfactual. Pick two markets that the rest of the country tracks closely, and a modest lift becomes detectable.
 
-[Doudchenko, Khosravi, Pouget-Abadie, Lahaie, Lubin, Mirrokni, Spiess, and Imbens (2021)](https://arxiv.org/abs/2112.00278) turn that choice into an optimization problem. Their synthetic design picks the treated markets and the synthetic control weights at the same time, before the experiment runs. ```mlsynth``` implements it as the ```SYNDES``` class, and this post shows it in action on the data from Meta's [GeoLift](https://facebookincubator.github.io/GeoLift/) walkthrough.
+[Doudchenko, Khosravi, Pouget-Abadie, Lahaie, Lubin, Mirrokni, Spiess, and Imbens (2021)](https://arxiv.org/abs/2112.00278) turn that choice into an optimization problem. Their synthetic design picks the treated markets and the synthetic control weights at the same time, before the experiment runs. ```mlsynth``` implements it as the ```SYNDES``` class. The catch is computational: the paper solves the design with a general mixed-integer solver, and the authors report that 50 units took hours. I took a different route in ```mlsynth```, and most of this post is about why. I start with the paper's approach and where it gets stuck, then explain how I chose to solve the problem instead, and then put both to work on the data from Meta's [GeoLift](https://facebookincubator.github.io/GeoLift/) walkthrough.
+
+# The Design Problem
+
+As usual, I begin with notation. Let $j$ index the 40 cities, collected in $\mathcal{N} \coloneqq \{1, \dots, N\}$, and let $t$ index days. The pre-period is $\mathcal{T}_1 \coloneqq \{1, \dots, T_0\}$ (for us, $T_0 = 90$), and the test window is $\mathcal{T}_2 \coloneqq \{T_0 + 1, \dots, T\}$. We observe sales $y_{jt}$. The new piece is that treatment is now a decision variable: $D_j \in \{0, 1\}$ says whether we treat city $j$, and we treat exactly $K$ of them, $\sum_{j \in \mathcal{N}} D_j = K$.
+
+## What Are We Minimizing?
+
+Suppose sales without treatment are $y_{jt} = \mu_{jt} + \varepsilon_{jt}$, a signal plus noise with variance $\sigma^2$. If we compare a weighted average of treated cities to a weighted average of untreated cities, the mean squared error of that comparison splits into two pieces. One is bias: how far apart the two weighted signals $\mu_{jt}$ are. The other is variance: $\sigma^2$ times the sum of squared weights, which blows up when a few cities carry all the weight. A good design keeps both small.
+
+The paper gives three versions of this problem. The one I use here is the two-way global design, where one weight vector $\mathbf{w}$ covers both sides of the comparison:
+
+$$
+\begin{aligned}
+(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad & \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2 + \lambda \sum_{j \in \mathcal{N}} w_j^2 \\
+\text{s.t.} \quad & w_j \geq 0, \quad \sum_{j \in \mathcal{N}} D_j = K, \quad \sum_{j \in \mathcal{N}} w_j D_j = 1, \quad \sum_{j \in \mathcal{N}} w_j (1 - D_j) = 1.
+\end{aligned}
+$$
+
+In English: choose which $K$ cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the $\lambda$ term is the stand-in for $\sigma^2 \sum_j w_j^2$, the variance. By default ```mlsynth``` sets $\lambda$ to the pre-period sample variance, which is the paper's suggestion.
+
+Two features separate this from regular synthetic control. The treated side is weighted too, so the estimand is a weighted average treatment effect on the treated: if one treated city gets weight 0.7 and the other 0.3, the effect we report is that weighted average of their effects. That is fine if you believe the campaign does roughly the same thing everywhere, and something to think about if you do not. And because $\mathbf{D}$ is binary, we are choosing among $\binom{N}{K}$ possible treated sets, which is where the computational trouble starts.
+
+# How the Paper Solves It
+
+The two-way problem multiplies a continuous weight $w_j$ by a binary $D_j$, so it is not convex. Doudchenko et al. handle the product the textbook way. They introduce an auxiliary variable $q_j \coloneqq w_j D_j$ and replace the product with linear constraints,
+
+$$
+q_j \leq D_j, \qquad q_j \leq w_j, \qquad q_j \geq w_j - (1 - D_j), \qquad q_j \geq 0,
+$$
+
+which are exact whenever $D_j$ is 0 or 1. What is left is a mixed-integer program with a convex quadratic objective and linear constraints, and they hand it to [SCIP](https://www.scipopt.org/), a general-purpose solver. They also prove the design problem is NP-hard, by a reduction from the partition problem, so no algorithm is going to solve every instance quickly. Their own assessment of the computation (Section 6) is frank: "In our simulations we were able to solve problems for N = 50 units ... on a single machine within hours." Their Monte Carlo study runs on 10-unit panels.
+
+So why does a 50-unit problem take hours? A mixed-integer solver works by branch and bound. It splits the problem on one binary at a time ($D_j = 0$ in one branch, $D_j = 1$ in the other), and it can only throw a branch away once it has a lower bound for that branch that already beats the best design found so far. Those lower bounds come from relaxing every $D_j$ from $\{0, 1\}$ to the interval $[0, 1]$. The relaxation is where the trouble is. The four constraints above are the tightest linear description of a single product, but the objective squares a sum of those products, and once the $D_j$ are allowed to be fractional, the relaxed problem can make the treated and control sides look far more alike than any real design can. The [mlsynth documentation](https://mlsynth.readthedocs.io/en/latest/syndes.html) records that this bound sits about 80 percent below the true optimum. A bound that weak rules out almost nothing, so the solver keeps splitting.
+
+The result is a solver that usually finds a good design early and then spends nearly all of its time failing to prove it. The documentation gives a Walmart example (45 stores, 128 weeks, 3 treated) where SCIP finds the optimal treated set within a minute and then spends more than 30 more minutes proving it. In a study in the ```mlsynth``` repository ([`bnb_external`](https://github.com/jgreathouse9/mlsynth/tree/main/benchmarks/studies/bnb_external)), SCIP was given 20 minutes on nine two-way designs, including GeoLift with 6, 8 and 10 treated markets. It stopped at the time limit every time, between 5.3 and 29.4 percent away from closing its own gap, and its design was optimal on two of the nine.
+
+I had the same experience with ```MAREX```, the experimental design estimator I wrote about in [an earlier post](scexp.html). There the linear part of the problem is already as tight as a linear description can be (its constraint matrix is totally unimodular), so the cutting planes a mixed-integer solver relies on have nothing to cut, and the entire gap sits in the quadratic objective.
+
+# How I Solve It
+
+Once I saw where the time was going, the question became: what does this problem look like if I stop treating it as a generic mixed-integer program?
+
+## Name the Treated Set, and the Hard Part Disappears
+
+Suppose someone hands you the treated set $\mathcal{S}$. Then the binaries are known, the products $w_j D_j$ are just $w_j$ on $\mathcal{S}$ and zero elsewhere, and what remains is an ordinary convex problem. Write $\mathbf{a}$ for the treated weights, $\mathbf{b}$ for the control weights, and $\mathbf{u} \coloneqq \mathbf{a} - \mathbf{b}$ for the contrast. With $\mathbf{Y} \in \mathbb{R}^{T_0 \times N}$ the pre-period data and $\mathbf{G} \coloneqq \mathbf{Y}^\top \mathbf{Y} / T_0$, the score of a treated set is
+
+$$
+f(\mathcal{S}) = \min_{\mathbf{u}} \; \mathbf{u}^\top (\mathbf{G} + \lambda \mathbf{I}) \mathbf{u}
+\quad \text{s.t.} \quad
+\mathbf{u}_{\mathcal{S}} \geq \mathbf{0}, \;\; \sum_{j \in \mathcal{S}} u_j = 1, \;\;
+\mathbf{u}_{\mathcal{S}^c} \leq \mathbf{0}, \;\; \sum_{j \notin \mathcal{S}} u_j = -1.
+$$
+
+Geometrically, $f(\mathcal{S})$ is a penalized distance between the convex hull of the treated cities' pre-period paths and the convex hull of the control cities' paths. Two things fall out of writing it this way. First, the data only enter through $\mathbf{G}$, an $N \times N$ matrix, so once it is formed the length of the pre-period stops mattering: 90 days or 900 cost the same from then on. Second, nothing integer is left inside $f(\mathcal{S})$. All of the difficulty is in the outer choice of $\mathcal{S}$.
+
+## A Floor Under Every Set, in Closed Form
+
+Pricing a set exactly means solving that small quadratic program. But I can get a lower bound on $f(\mathcal{S})$ without solving anything. Drop the sign conditions on $\mathbf{u}$ and keep only the two sums. Let $\boldsymbol{\sigma} \in \{-1, +1\}^N$ mark the treated set ($+1$ for treated, $-1$ for control), and define $\mathbf{H} \coloneqq (\mathbf{G} + \lambda \mathbf{I})^{-1}$, $\mathbf{p} \coloneqq \mathbf{H}\mathbf{1}$, $\alpha \coloneqq \mathbf{1}^\top \mathbf{H} \mathbf{1}$ and $\mathbf{R} \coloneqq \alpha \mathbf{H} - \mathbf{p}\mathbf{p}^\top$. Then
+
+$$
+f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbol{\sigma}^\top \mathbf{R}\, \boldsymbol{\sigma}},
+$$
+
+with equality whenever the minimizer of the loosened problem happens to satisfy the dropped sign conditions. One matrix inverse up front, then one quadratic form per candidate. This also shows where the NP-hardness went. Finding the set with the smallest floor means finding the sign vector with exactly $K$ plus signs that makes $\boldsymbol{\sigma}^\top \mathbf{R} \boldsymbol{\sigma}$ as large as possible, which is a max-cut problem with a size constraint. I did not make the problem easy; I made each candidate cheap and the bounds tight.
+
+## When There Are Few Enough Sets, Price Them All
+
+If the number of admissible treated sets is below twenty million, ```mlsynth``` simply goes through them. Every set gets its floor from the formula above, at roughly a microsecond each. Sets whose floor is exact are priced on the spot, and the best of them becomes the incumbent. Any set whose floor is already above the incumbent cannot win and is skipped. Whatever survives gets the exact convex solve, with a duality gap attached so the answer certifies itself. Every set is either priced or ruled out by a bound, so the design returned is the optimum, and the search can prove it. With 2 treated cities out of 39 eligible, there are 741 sets, and this takes a fraction of a second.
+
+## When There Are Too Many, Branch and Bound With Better Floors
+
+With 10 treated cities there are 635,745,396 sets, and pricing them all, even at a microsecond each, takes minutes. Above the twenty-million mark, ```mlsynth``` runs its own branch and bound. It is the same idea SCIP uses, with two differences that decide everything: the bounds, and what the search is allowed to trust.
+
+A node of the search fixes some cities into the treated set, some out of it, and leaves the rest free. For each node I need a floor under every design below it, which means an upper bound on $\boldsymbol{\sigma}^\top \mathbf{R} \boldsymbol{\sigma}$ over the free part of $\boldsymbol{\sigma}$. Two relaxations supply it:
+
+- A cheap one first: replace the free sign vector by the sphere it lies on, cut by the plane that fixes how many more cities get treated. That is a trust-region problem ([Moré and Sorensen 1983](https://doi.org/10.1137/0904038)), solved in well under a millisecond.
+- A strong one only when the cheap one fails and the node is big enough to be worth it: a semidefinite relaxation with triangle inequalities, the kind used for max-cut, whose bound I compute the way the BiqCrunch solver does ([Krislock, Malick and Roupin 2017](https://doi.org/10.1145/3005345)): a quasi-Newton method (L-BFGS-B) on a regularized dual, with violated triangle inequalities added as cuts and no interior-point solver involved. Every iteration of that procedure yields a valid bound, so the search stops working on a node the moment its bound is good enough to rule the node out. (BiqCrunch's C source also ships in [this Python wrapper](https://github.com/sami-b95/pybiqcrunch).)
+
+The search splits on the city whose past splits raised the bound the most (reliability branching), and it always works next on the open node with the smallest bound, so a search that is stopped early has pushed its weakest bound as high as it could.
+
+Then there is trust. Floating-point solvers round, and a bound that is a hair too high can throw away the optimum. So the search only discards a node when the bound has been checked in exact rational arithmetic, with the largest eigenvalue bounded through a Cholesky factor whose residual is computed exactly ([Jansson, Chaykin and Keil 2007](https://doi.org/10.1137/050622870)). Floating point decides where the search spends its time, never what it throws away. The search also counts its work in modeled seconds instead of reading a clock, with a default budget of 120, so the same data take the same path and stop at the same node on any machine. If the budget runs out, ```mlsynth``` returns the best design found together with a certified bound, so you know exactly how far from optimal it can be.
+
+One more piece of structure does real work. Treating $\mathcal{S}$ and treating everything else fit the pre-period equally well: the weights swap sides and the contrast flips sign. When no restriction names a side, the search keeps only one of each pair, which halves the work. (Our Honolulu restriction names a side, so here it stays off.)
+
+None of this changes the complexity class. On panels built from a few strong common factors, the bounds prune little, and certifying the optimum can take about as long as enumerating every design. What it changes is that every design comes with a certificate, and that on panels like GeoLift the certificate is cheap.
 
 # The GeoLift Data
 
@@ -63,42 +148,90 @@ plt.show()
 
 Two things jump out. First, there is a strong weekly cycle, which every city shares to some degree. Second, the cities sit at very different levels: over the pre-period, Oakland averages about 13,500 a day and Dallas about 2,300. Neither is a problem for synthetic control, but both are exactly what a good design has to deal with: we want treated markets whose weekly ups and downs the remaining markets can reproduce.
 
-# Synthetic Design
+# Head to Head on GeoLift
 
-As usual, I begin with notation. Let $j$ index the 40 cities, collected in $\mathcal{N} \coloneqq \{1, \dots, N\}$, and let $t$ index days. The pre-period is $\mathcal{T}_1 \coloneqq \{1, \dots, T_0\}$ with $T_0 = 90$, and the test window is $\mathcal{T}_2 \coloneqq \{T_0 + 1, \dots, T\}$. We observe sales $y_{jt}$. The new piece is that treatment is now a decision variable: $D_j \in \{0, 1\}$ says whether we treat city $j$, and we treat exactly $K$ of them, $\sum_{j \in \mathcal{N}} D_j = K$.
-
-## What Are We Minimizing?
-
-Suppose sales without treatment are $y_{jt} = \mu_{jt} + \varepsilon_{jt}$, a signal plus noise with variance $\sigma^2$. If we compare a weighted average of treated cities to a weighted average of untreated cities, the mean squared error of that comparison splits into two pieces. One is bias: how far apart the two weighted signals $\mu_{jt}$ are. The other is variance: $\sigma^2$ times the sum of squared weights, which blows up when a few cities carry all the weight. A good design keeps both small.
-
-The paper gives three versions of this problem. The one I use here is the two-way global design, where one weight vector $\mathbf{w}$ covers both sides of the comparison:
-
-$$
-\begin{aligned}
-(\mathbf{D}^\ast, \mathbf{w}^\ast) \in \operatorname*{argmin}_{\mathbf{D}, \, \mathbf{w}} \quad & \frac{1}{T_0} \sum_{t \in \mathcal{T}_1} \left( \sum_{j \in \mathcal{N}} w_j D_j y_{jt} - \sum_{j \in \mathcal{N}} w_j (1 - D_j) y_{jt} \right)^2 + \lambda \sum_{j \in \mathcal{N}} w_j^2 \\
-\text{s.t.} \quad & w_j \geq 0, \quad \sum_{j \in \mathcal{N}} D_j = K, \quad \sum_{j \in \mathcal{N}} w_j D_j = 1, \quad \sum_{j \in \mathcal{N}} w_j (1 - D_j) = 1.
-\end{aligned}
-$$
-
-In English: choose which $K$ cities to treat, and put simplex weights on the treated side and the untreated side, so that the weighted treated cities and the weighted untreated cities look as alike as possible over the pre-period. The first term is the pre-period stand-in for the bias, and the $\lambda$ term is the stand-in for $\sigma^2 \sum_j w_j^2$, the variance. By default ```mlsynth``` sets $\lambda$ to the pre-period sample variance, which is the paper's suggestion.
-
-Two features separate this from regular synthetic control. The treated side is weighted too, so the estimand is a weighted average treatment effect on the treated: if one treated city gets weight 0.7 and the other 0.3, the effect we report is that weighted average of their effects. That is fine if you believe the campaign does roughly the same thing everywhere, and something to think about if you do not. And because $\mathbf{D}$ is binary, this is a mixed-integer program, which is NP-hard in general. For the two-way global design, ```mlsynth``` searches over treated sets directly (once you fix $\mathbf{D}$, what is left is a convex program), which on 40 cities finishes in about a second.
-
-Okay hard part done. Let's design an experiment.
-
-# SYNDES in ```mlsynth```
-
-First, install the latest version of ```mlsynth```.
+Enough talk. Let's run both on the GeoLift pre-period. First, install the latest version of ```mlsynth```.
 
 ```bash
 pip install -U git+https://github.com/jgreathouse9/mlsynth.git
 ```
 
+I run each problem twice: once with the exact search (`backend="exact"`, the default) with `certify=True`, which attaches the search's lower bound, and once with the paper's mixed-integer program solved by SCIP (`backend="mip"`). For two treated cities, SCIP gets ```mlsynth```'s defaults: stop at a 5 percent gap or after 60 seconds. For ten, I ask it to prove optimality (`gap_limit=0`) and give it five minutes.
+
+```{python}
+import time
+from mlsynth import SYNDES, power_analysis
+
+race = {
+    "df": df, "outcome": "Y", "unitid": "location", "time": "date",
+    "post_col": "post", "mode": "two_way_global",
+    "not_to_be_treated": ["honolulu"], "run_inference": False,
+}
+
+def timed(**options):
+    start = time.perf_counter()
+    fit = SYNDES({**race, **options}).fit()
+    return fit, time.perf_counter() - start
+
+runs = {
+    (2, "Exact search"): timed(K=2, certify=True),
+    (2, "SCIP, defaults"): timed(K=2, backend="mip"),
+    (10, "Exact search"): timed(K=10, certify=True),
+    (10, "SCIP, prove it, 5 min"): timed(K=10, backend="mip", gap_limit=0.0, time_limit=300.0),
+}
+```
+
+```{python}
+#| echo: false
+
+from math import comb
+
+def describe(fit):
+    """Objective, gap to the run's own lower bound, whether it proved optimality, how it stopped."""
+    d = fit.design
+    if fit.certificate is not None:
+        gap = fit.certificate.optimality_gap
+        proved = bool(d.raw_results.get("certified"))
+        stop = d.raw_results.get("search", "search").replace("_", " ")
+    else:
+        gap, proved, stop = d.solve_outcome.gap, d.solve_outcome.status == "optimal", d.solve_outcome.status
+    return d.objective_value, gap, proved, stop, sorted(m.title() for m in d.selected_unit_labels)
+
+rows = []
+for (k, method), (fit, seconds) in runs.items():
+    obj, gap, proved, stop, markets = describe(fit)
+    best = runs[(k, "Exact search")][0].design.objective_value
+    rows.append({
+        "Treated": k,
+        "Candidate sets": f"{comb(39, k):,}",
+        "Method": method,
+        "Seconds": f"{seconds:,.1f}",
+        "Objective vs. exact": f"{100 * (obj / best - 1):+.2f}%",
+        "Proved optimal": "yes" if proved else "no",
+        "Gap to its lower bound": f"{100 * gap:.1f}%",
+        "How it ended": stop,
+    })
+display(Markdown(pd.DataFrame(rows).to_markdown(index=False)))
+
+exact2, scip2 = runs[(2, "Exact search")][0], runs[(2, "SCIP, defaults")][0]
+exact10, scip10 = runs[(10, "Exact search")][0], runs[(10, "SCIP, prove it, 5 min")][0]
+scip2_markets = describe(scip2)[4]
+exact2_proved, exact10_proved = describe(exact2)[2], describe(exact10)[2]
+scip10_finished = scip10.design.solve_outcome.status == "optimal"
+overlap10 = len(set(exact10.design.selected_unit_labels) & set(scip10.design.selected_unit_labels))
+```
+
+The two-city problem is the telling one, because it is tiny. There are 741 possible designs, and the exact search priced every one of them in `{python} f"{runs[(2, 'Exact search')][1]:.1f}"` seconds. SCIP, on the same problem, stopped at `{python} scip2.design.solve_outcome.status.replace("timelimit", "its time limit").replace("gaplimit", "its gap limit")` with `{python} " and ".join(scip2_markets)`, a design `{python} f"{100 * (describe(scip2)[0] / exact2.design.objective_value - 1):.1f}"` percent worse than the optimum, and with its own lower bound `{python} f"{100 * scip2.design.solve_outcome.gap:.0f}"` percent below its answer. That is the weak relaxation from above, in one line of a table: a solver that cannot prove anything about a problem you could solve with a for loop. (The exact search's own row shows a `{python} f"{100 * exact2.certificate.optimality_gap:.1f}"` percent gap because, when it enumerates, `certify` quotes the one-formula Rayleigh bound from above as an independent check. The proof of optimality is the enumeration itself, which priced or ruled out every one of the 741 sets.)
+
+With ten treated cities, the exact search ran its branch and bound and `{python} ("proved its design optimal: the search closed, so its certified gap is zero" if exact10_proved else "stopped at its work limit with a certified gap of " + f"{100 * exact10.certificate.optimality_gap:.2f}" + " percent")`, in `{python} f"{runs[(10, 'Exact search')][1]:.0f}"` seconds. `{python} ("SCIP proved optimality within five minutes." if scip10_finished else "SCIP did not finish within five minutes: it stopped at its time limit with its own gap at " + f"{100 * scip10.design.solve_outcome.gap:.0f}" + " percent.")` Its design shares `{python} overlap10` of its 10 cities with the exact one and is `{python} f"{100 * (scip10.design.objective_value / exact10.design.objective_value - 1):+.2f}"` percent away from it in objective. And this is the point of the certificate: we do not need SCIP to finish. The exact search's certificate already says no design beats the one it returned, and that is all the proof a design needs.
+
+Okay, enough about solvers. Let's design an experiment.
+
+# SYNDES in ```mlsynth```
+
 The configuration follows the same dictionary pattern as every other ```mlsynth``` estimator. We tell it which column marks the test window, how many cities to treat, and which design to solve. Like the GeoLift walkthrough, I keep Honolulu out of the treated set; it stays available as a control.
 
 ```{python}
-from mlsynth import SYNDES, power_analysis
-
 config = {
     "df": df,
     "outcome": "Y",

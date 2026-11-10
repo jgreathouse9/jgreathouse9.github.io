@@ -342,6 +342,147 @@ The two-city problem is the telling one, because it is tiny. There are 741 possi
 
 With ten treated cities, the exact search ran its branch and bound and `{python} ("proved its design optimal: the search closed, so its certified gap is zero" if exact10_proved else "stopped at its work limit with a certified gap of " + f"{100 * exact10.certificate.optimality_gap:.2f}" + " percent")`, in `{python} f"{runs[(10, 'Exact search')][1]:.0f}"` seconds. `{python} ("SCIP proved optimality within five minutes." if scip10_finished else "SCIP did not finish within five minutes: it stopped at its time limit with its own gap at " + f"{100 * scip10.design.solve_outcome.gap:.0f}" + " percent.")` Its design shares `{python} overlap10` of its 10 cities with the exact one and is `{python} f"{100 * (scip10.design.objective_value / exact10.design.objective_value - 1):+.2f}"` percent away from it in objective. And this is the point of the certificate: we do not need SCIP to finish. The exact search's certificate already says no design beats the one it returned, and that is all the proof a design needs.
 
+# What About GeoLift?
+
+The data in this post come from [GeoLift](https://github.com/facebookincubator/GeoLift), Meta's R package for geo experiments, and GeoLift has its own answer to the market-selection question, `GeoLiftMarketSelection()`. It makes the opposite bet from everything above.
+
+GeoLift does not search over treated sets at all. Reading the R source (`R/auxiliary.R` and `R/pre_test_power.R`), its shortlist comes from two small functions. First, `MarketCorrelations()` computes the correlation between every pair of markets' pre-period series and, for each market, lists the others from most to least correlated. Then `stochastic_market_selector()` turns those lists into candidates of size $N$, in one of two ways:
+
+- The default, deterministic setup takes each market plus its $N - 1$ most correlated markets, and drops duplicates. With 39 eligible markets that is at most 39 candidates per size.
+- With `run_stochastic_process = TRUE`, it walks down the correlation ranking in pairs of positions, (the market itself, its closest market), then (2nd, 3rd), then (4th, 5th), and so on, and flips a coin in each pair to decide which position to take. Two details matter. There is one coin flip per pair, shared by every market, so the whole shortlist is set by $N$ coin flips and there are at most $2^N$ different shortlists: with two treated markets, four. And a candidate can now reach down to its market's $2N$-th closest neighbour, which is the point of the randomness.
+
+Either way, the shortlist is still at most one candidate per market, out of anywhere from hundreds to hundreds of millions of possible sets. Each candidate is then scored by simulation: for every test length and effect size you ask for, GeoLift runs historical tests over backward-looking windows with an augmented synthetic control, injects the effect, and records how often it is detected. In each of those fits the test markets enter as one treated group whose outcome is their plain average (`pvalueCalc()` divides the treated total by the number of treated markets), so GeoLift's treated side carries uniform weights, $1/K$ each, and only the control side is a synthetic control. The minimum detectable effect is the smallest effect detected at least 80 percent of the time, and candidates are ranked on the average of their ranks in detectable effect, power, and how far the detected lift lands from the true one. The walkthrough's call adds a budget, forces Chicago in, and drops Honolulu, and its top two-market design is Chicago and Portland, the design we analyze below.
+
+So GeoLift scores each candidate on something close to what you actually care about, simulated power, but each score costs a grid of synthetic control fits, so it can only afford a handful of candidates, and it picks them by a correlation rule with no claim to optimality. ```SYNDES``` and ```MAREX``` make the other bet: a cheap score, a search over every admissible set, and a proof. Like ```SYNDES```, GeoLift estimates the effect on the markets it tests (with uniform weights, the plain average of their effects), not ```MAREX```'s population ATE.
+
+That uniform treated side is exactly ```SYNDES```'s one-way design from earlier: treated weights pinned at $1/K$, a free synthetic control on the other side. So the like-for-like comparison is GeoLift's shortlists against the one-way optimum, not the two-way one. To make it, I ported GeoLift's candidate generation to Python, both setups, along with R's random number generator, so the stochastic shortlist for a given seed is the one R produces for `set.seed()` with that seed. The port is in the folded cell below. I checked it against GeoLift's own R functions, run in R on this panel: the deterministic shortlists and the stochastic ones for five seeds, at all four treatment sizes, came out identical, all 884 candidates. That check needs R, so it is not rerun when this page renders. One caveat on the seeds: inside `GeoLiftMarketSelection()`, the simulations for one treatment size draw from the same random stream before the next size's coin flips, so a seed here reproduces what R gives when the selector is called once per treatment size with `set.seed()` before each call.
+
+For each treatment size I compare the deterministic shortlist, and the stochastic shortlists for seeds 1 to 20, with the one-way design ```SYNDES``` proves optimal. The yardstick is the 15-day minimum detectable effect, which is GeoLift's own currency. Every design, shortlisted or optimal, gets uniform treated weights and the best synthetic control ```SYNDES``` can build for it, and is scored by ```mlsynth```'s detectable-effect formula from below. These are not GeoLift's own simulated power numbers; they answer what each set of markets can deliver under the same analysis.
+
+```{python}
+#| code-fold: true
+#| code-summary: "GeoLift's candidate generation and R's random number generator, ported to Python"
+
+import math
+
+class RRandom:
+    """R's default generator: Mersenne-Twister seeded by set.seed(), sample() with "Rejection"."""
+    N, M = 624, 397
+
+    def __init__(self, seed):
+        s = seed & 0xFFFFFFFF
+        for _ in range(50):                          # set.seed's initial scrambling
+            s = (69069 * s + 1) & 0xFFFFFFFF
+        words = []
+        for _ in range(625):                         # mti slot plus the 624-word state
+            s = (69069 * s + 1) & 0xFFFFFFFF
+            words.append(s)
+        self.mt, self.mti = words[1:], self.N        # first draw regenerates the state
+
+    def _genrand(self):
+        N, M, mt = self.N, self.M, self.mt
+        if self.mti >= N:
+            for k in range(N):
+                y = (mt[k] & 0x80000000) | (mt[(k + 1) % N] & 0x7FFFFFFF)
+                mt[k] = mt[(k + M) % N] ^ (y >> 1) ^ (0x9908B0DF if y & 1 else 0)
+            self.mti = 0
+        y = mt[self.mti]
+        self.mti += 1
+        y ^= y >> 11
+        y ^= (y << 7) & 0x9D2C5680
+        y ^= (y << 15) & 0xEFC60000
+        y ^= y >> 18
+        return y * 2.3283064365386963e-10
+
+    def unif_rand(self):                             # kept strictly inside (0, 1)
+        u = self._genrand()
+        return min(max(u, 0.5 * 2.328306437080797e-10), 1.0 - 0.5 * 2.328306437080797e-10)
+
+    def _unif_index(self, n):                        # R_unif_index, rejection sampling
+        bits = int(math.ceil(math.log2(n)))
+        while True:
+            v = 0
+            for _ in range(0, bits + 1, 16):
+                v = 65536 * v + int(math.floor(self.unif_rand() * 65536))
+            v &= (1 << bits) - 1
+            if v < n:
+                return v
+
+    def sample(self, x, size):                       # sample(x, size), without replacement
+        pool, n, out = list(range(len(x))), len(x), []
+        for _ in range(size):
+            j = self._unif_index(n)
+            out.append(x[pool[j]])
+            pool[j] = pool[n - 1]
+            n -= 1
+        return out
+
+def market_correlations(pre_long, exclude=()):
+    """MarketCorrelations(): each market, then the others from most to least correlated."""
+    d = pre_long[~pre_long["location"].isin(exclude)]
+    wide = d.pivot_table(index="date", columns="location", values="Y", sort=False)
+    corr = wide[list(dict.fromkeys(d["location"]))].corr()
+    return [[m, *corr[m].drop(m).sort_values(ascending=False, kind="stable").index]
+            for m in sorted(corr.index)]
+
+def stochastic_market_selector(size, similarity, stochastic=False, seed=None):
+    """stochastic_market_selector(): one candidate per market, deduplicated."""
+    if stochastic:
+        rng, cols, i = RRandom(seed), [], 0
+        while i / 2 < size:                          # one coin flip per pair of positions
+            cols.append(rng.sample([1, 2], 1)[0] + i - 1)
+            i += 2
+    else:
+        cols = list(range(size))                     # the market and its size - 1 closest
+    shortlist = []
+    for row in similarity:
+        candidate = tuple(sorted(row[c] for c in cols))
+        if candidate not in shortlist:
+            shortlist.append(candidate)
+    return shortlist
+```
+
+```{python}
+#| echo: false
+
+similarity = market_correlations(df[df["post"] == 0], exclude=["honolulu"])
+one_way = {**race, "mode": "one_way_global"}     # uniform treated weights, as in GeoLift
+
+def mde15(fit):
+    return float(power_analysis(fit, n_post_periods=[15], power=0.8).to_dataframe()["mde_percent"].iloc[0])
+
+scores = {}
+def candidate_mde(candidate):
+    if candidate not in scores:
+        scores[candidate] = mde15(SYNDES({**one_way, "K": len(candidate), "to_be_treated": list(candidate)}).fit())
+    return scores[candidate]
+
+seeds = range(1, 21)
+shortlist_rows = []
+for k in [2, 3, 5, 10]:
+    best = SYNDES({**one_way, "K": k}).fit()
+    best_set, best_mde = tuple(sorted(best.design.selected_unit_labels)), mde15(best)
+    deterministic = stochastic_market_selector(k, similarity)
+    stochastic = {seed: stochastic_market_selector(k, similarity, True, seed) for seed in seeds}
+    det_mde = [candidate_mde(c) for c in deterministic]
+    sto_best = [min(candidate_mde(c) for c in sl) for sl in stochastic.values()]
+    shortlist_rows.append({
+        "Treated": k,
+        "Possible sets": f"{comb(39, k):,}",
+        "MDE, one-way optimum": f"{best_mde:.2f}%",
+        "Deterministic: best candidate": f"{min(det_mde):.2f}%",
+        "Deterministic: median candidate": f"{np.median(det_mde):.2f}%",
+        "Stochastic: best candidate, 20 seeds": f"{min(sto_best):.2f}% to {max(sto_best):.2f}%",
+        "Distinct stochastic shortlists": len({tuple(sl) for sl in stochastic.values()}),
+        "Optimum ever shortlisted": "yes" if (best_set in deterministic or any(best_set in sl for sl in stochastic.values())) else "no",
+    })
+shortlist = pd.DataFrame(shortlist_rows)
+display(Markdown(shortlist.to_markdown(index=False)))
+ratio = lambda col, row: float(shortlist[col].iloc[row].split("%")[0]) / float(shortlist["MDE, one-way optimum"].iloc[row].rstrip("%"))
+```
+
+Neither setup ever shortlists the optimal design, at any size or seed, and no shortlisted design detects a smaller effect than the optimum. With two treated markets the best deterministic candidate comes close, but the typical one needs a lift about `{python} f"{ratio('Deterministic: median candidate', 0):.1f}"` times larger to detect; with ten, the best deterministic candidate needs `{python} f"{ratio('Deterministic: best candidate', 3):.1f}"` times the lift the optimum does. The stochastic setup helps where it should: at larger sizes, letting candidates reach further down the correlation ranking finds better designs than the deterministic rule does. But it is still a reshuffle of one candidate per market, and the best stochastic candidate over twenty seeds still needs `{python} f"{ratio('Stochastic: best candidate, 20 seeds', 3):.1f}"` times the optimum's lift with ten treated markets. The randomness is also coarser than the name suggests: with two treated markets, twenty seeds produce `{python} shortlist['Distinct stochastic shortlists'].iloc[0]` different shortlists. Simulated power is a good thing to rank by. It just cannot rescue a shortlist that leaves the best designs out.
+
 Okay, enough about solvers. Let's design an experiment.
 
 # SYNDES in ```mlsynth```
@@ -443,7 +584,7 @@ plt.show()
 
 For a 15-day test, the SYNDES design can detect a lift of about `{python} f"{free_mde:.1f}"` percent, and the Chicago-Portland design needs about `{python} f"{geo_mde:.1f}"` percent. Put differently, the Chicago-Portland design needs a lift roughly `{python} f"{geo_mde / free_mde:.1f}"` times larger to have the same shot at detecting it. The pre-period fit tells the same story: the root mean squared gap between treated and synthetic is `{python} f"{free_rmse:.0f}"` for the SYNDES pair and `{python} f"{geo_rmse:.0f}"` for Chicago and Portland.
 
-None of this means GeoLift picked badly. Its market selection optimizes a different target (a scored mix of simulated power, fit, and budget), and in the walkthrough Chicago was required to be in the test. But it shows how much the choice of markets is worth, and that we can read it off before spending a dollar.
+Part of this gap is the walkthrough's setup, not GeoLift's judgment. Its ranking optimizes a different target (simulated power and bias, under a budget), and in the walkthrough Chicago was required to be in the test. But it shows how much the choice of markets is worth, and that we can read it off before spending a dollar.
 
 # Analyzing the Test That Was Run
 

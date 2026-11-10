@@ -357,7 +357,7 @@ So GeoLift scores each candidate on something close to what you actually care ab
 
 That uniform treated side is exactly ```SYNDES```'s one-way design from earlier: treated weights pinned at $1/K$, a free synthetic control on the other side. So the like-for-like comparison is GeoLift's shortlists against the one-way optimum, not the two-way one. To make it, I ported GeoLift's candidate generation to Python, both setups, along with R's random number generator, so the stochastic shortlist for a given seed is the one R produces for `set.seed()` with that seed. The port is in the folded cell below. I checked it against GeoLift's own R functions, run in R on this panel: the deterministic shortlists and the stochastic ones for five seeds, at all four treatment sizes, came out identical, all 884 candidates. That check needs R, so it is not rerun when this page renders. One caveat on the seeds: inside `GeoLiftMarketSelection()`, the simulations for one treatment size draw from the same random stream before the next size's coin flips, so a seed here reproduces what R gives when the selector is called once per treatment size with `set.seed()` before each call.
 
-For each treatment size I compare the deterministic shortlist, and the stochastic shortlists for seeds 1 to 20, with the one-way design ```SYNDES``` proves optimal. The yardstick is the 15-day minimum detectable effect, which is GeoLift's own currency. Every design, shortlisted or optimal, gets uniform treated weights and the best synthetic control ```SYNDES``` can build for it, and is scored by ```mlsynth```'s detectable-effect formula from below. These are not GeoLift's own simulated power numbers; they answer what each set of markets can deliver under the same analysis.
+For each treatment size I compare the deterministic shortlist, and the stochastic shortlists for seeds 1 to 20, with the one-way design ```SYNDES``` proves optimal. Every design, shortlisted or optimal, gets uniform treated weights and the best synthetic control ```SYNDES``` can build for it. Then I score it two ways. The first is the one every synthetic control design has to pass before anything else: how alike are the treated markets and their synthetic control before the test? That is the pre-period objective the one-way design minimizes, the average squared gap between the treated average and its control plus the variance penalty, reported relative to the optimum. The second is the 15-day minimum detectable effect, which is GeoLift's own currency, computed with ```mlsynth```'s detectable-effect formula from below. These are not GeoLift's own simulated power numbers; they answer what each set of markets can deliver under the same analysis.
 
 ```{python}
 #| code-fold: true
@@ -452,36 +452,55 @@ def mde15(fit):
     return float(power_analysis(fit, n_post_periods=[15], power=0.8).to_dataframe()["mde_percent"].iloc[0])
 
 scores = {}
-def candidate_mde(candidate):
+def candidate_score(candidate):
+    """(pre-period objective, 15-day MDE) for a treated set, with SYNDES's best one-way control."""
     if candidate not in scores:
-        scores[candidate] = mde15(SYNDES({**one_way, "K": len(candidate), "to_be_treated": list(candidate)}).fit())
+        fit = SYNDES({**one_way, "K": len(candidate), "to_be_treated": list(candidate)}).fit()
+        scores[candidate] = (fit.design.objective_value, mde15(fit))
     return scores[candidate]
 
 seeds = range(1, 21)
 shortlist_rows = []
 for k in [2, 3, 5, 10]:
     best = SYNDES({**one_way, "K": k}).fit()
-    best_set, best_mde = tuple(sorted(best.design.selected_unit_labels)), mde15(best)
+    best_set, best_obj, best_mde = tuple(sorted(best.design.selected_unit_labels)), best.design.objective_value, mde15(best)
     deterministic = stochastic_market_selector(k, similarity)
     stochastic = {seed: stochastic_market_selector(k, similarity, True, seed) for seed in seeds}
-    det_mde = [candidate_mde(c) for c in deterministic]
-    sto_best = [min(candidate_mde(c) for c in sl) for sl in stochastic.values()]
+    det = np.array([candidate_score(c) for c in deterministic])
+    sto_fit = [min(candidate_score(c)[0] for c in sl) / best_obj - 1 for sl in stochastic.values()]
+    sto_mde = [min(candidate_score(c)[1] for c in sl) for sl in stochastic.values()]
     shortlist_rows.append({
-        "Treated": k,
-        "Possible sets": f"{comb(39, k):,}",
-        "MDE, one-way optimum": f"{best_mde:.2f}%",
-        "Deterministic: best candidate": f"{min(det_mde):.2f}%",
-        "Deterministic: median candidate": f"{np.median(det_mde):.2f}%",
-        "Stochastic: best candidate, 20 seeds": f"{min(sto_best):.2f}% to {max(sto_best):.2f}%",
-        "Distinct stochastic shortlists": len({tuple(sl) for sl in stochastic.values()}),
-        "Optimum ever shortlisted": "yes" if (best_set in deterministic or any(best_set in sl for sl in stochastic.values())) else "no",
+        "k": k, "possible": comb(39, k),
+        "det_fit_best": det[:, 0].min() / best_obj - 1, "det_fit_median": np.median(det[:, 0]) / best_obj - 1,
+        "sto_fit_best_lo": min(sto_fit), "sto_fit_best_hi": max(sto_fit),
+        "mde_opt": best_mde, "det_mde_best": det[:, 1].min(), "det_mde_median": np.median(det[:, 1]),
+        "sto_mde_best_lo": min(sto_mde), "sto_mde_best_hi": max(sto_mde),
+        "distinct": len({tuple(sl) for sl in stochastic.values()}),
+        "ever": best_set in deterministic or any(best_set in sl for sl in stochastic.values()),
     })
-shortlist = pd.DataFrame(shortlist_rows)
-display(Markdown(shortlist.to_markdown(index=False)))
-ratio = lambda col, row: float(shortlist[col].iloc[row].split("%")[0]) / float(shortlist["MDE, one-way optimum"].iloc[row].rstrip("%"))
+sl = pd.DataFrame(shortlist_rows)
+
+fit_table = pd.DataFrame({
+    "Treated": sl["k"], "Possible sets": sl["possible"].map("{:,}".format),
+    "Deterministic: best candidate": sl["det_fit_best"].map("{:+.1%}".format),
+    "Deterministic: median candidate": sl["det_fit_median"].map("{:+.1%}".format),
+    "Stochastic: best candidate, 20 seeds": [f"{a:+.1%} to {b:+.1%}" for a, b in zip(sl["sto_fit_best_lo"], sl["sto_fit_best_hi"])],
+    "Optimum ever shortlisted": sl["ever"].map({True: "yes", False: "no"}),
+})
+mde_table = pd.DataFrame({
+    "Treated": sl["k"], "One-way optimum": sl["mde_opt"].map("{:.2f}%".format),
+    "Deterministic: best candidate": sl["det_mde_best"].map("{:.2f}%".format),
+    "Deterministic: median candidate": sl["det_mde_median"].map("{:.2f}%".format),
+    "Stochastic: best candidate, 20 seeds": [f"{a:.2f}% to {b:.2f}%" for a, b in zip(sl["sto_mde_best_lo"], sl["sto_mde_best_hi"])],
+    "Distinct stochastic shortlists": sl["distinct"].astype(int),
+})
+display(Markdown("Pre-period objective, relative to the one-way optimum:\n\n" + fit_table.to_markdown(index=False)))
+display(Markdown("15-day minimum detectable effect:\n\n" + mde_table.to_markdown(index=False)))
 ```
 
-Neither setup ever shortlists the optimal design, at any size or seed, and no shortlisted design detects a smaller effect than the optimum. With two treated markets the best deterministic candidate comes close, but the typical one needs a lift about `{python} f"{ratio('Deterministic: median candidate', 0):.1f}"` times larger to detect; with ten, the best deterministic candidate needs `{python} f"{ratio('Deterministic: best candidate', 3):.1f}"` times the lift the optimum does. The stochastic setup helps where it should: at larger sizes, letting candidates reach further down the correlation ranking finds better designs than the deterministic rule does. But it is still a reshuffle of one candidate per market, and the best stochastic candidate over twenty seeds still needs `{python} f"{ratio('Stochastic: best candidate, 20 seeds', 3):.1f}"` times the optimum's lift with ten treated markets. The randomness is also coarser than the name suggests: with two treated markets, twenty seeds produce `{python} int(shortlist['Distinct stochastic shortlists'].iloc[0])` different shortlists. Simulated power is a good thing to rank by. It just cannot rescue a shortlist that leaves the best designs out.
+Start with similarity, because it comes first. Neither setup ever shortlists the optimal design, at any size or seed, and on the objective that measures how alike the treated markets and their control are before the test, GeoLift's shortlists are a long way off. The typical deterministic candidate sits `{python} f"{sl['det_fit_median'].iloc[0]:.0%}"` above the optimum with two treated markets and `{python} f"{sl['det_fit_median'].iloc[-1]:.0%}"` above it with ten; even the best candidate on the list is `{python} f"{sl['det_fit_best'].iloc[-1]:.1%}"` above it with ten, and the stochastic setup's best over twenty seeds is no closer than `{python} f"{sl['sto_fit_best_lo'].iloc[-1]:.1%}"`. That is the whole problem with a correlation rule. Correlation is about co-movement with one anchor market. It ignores levels, and it never asks the question a synthetic control design actually depends on: how well can the markets left over reproduce the treated group as a whole? GeoLift's power simulation then ranks the candidates it was handed, but it cannot add a better candidate to the list, so the search for similar groups is settled by the correlation rule before power is ever computed.
+
+Power follows similarity. With two treated markets the best deterministic candidate comes close to the optimum's detectable effect, but the typical one needs a lift about `{python} f"{sl['det_mde_median'].iloc[0] / sl['mde_opt'].iloc[0]:.1f}"` times larger; with ten, the best deterministic candidate needs `{python} f"{sl['det_mde_best'].iloc[-1] / sl['mde_opt'].iloc[-1]:.1f}"` times the lift the optimum does, and the best stochastic one `{python} f"{sl['sto_mde_best_lo'].iloc[-1] / sl['mde_opt'].iloc[-1]:.1f}"` times. The stochastic setup helps where it should, at larger sizes, by letting candidates reach further down the correlation ranking, but it is still a reshuffle of one candidate per market, and its randomness is coarser than the name suggests: with two treated markets, twenty seeds produce `{python} int(sl['distinct'].iloc[0])` different shortlists. Simulated power is a good thing to rank by. It just cannot rescue a shortlist that leaves the most similar groups out.
 
 Okay, enough about solvers. Let's design an experiment.
 

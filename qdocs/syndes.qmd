@@ -133,7 +133,39 @@ A convex solver run on the relaxed problem returns `{python} f"{relaxed:.3f}"`, 
 display(Markdown(toy_designs.assign(Objective=toy_designs["Objective"].map("{:.3f}".format)).to_markdown(index=False)))
 ```
 
-The best real design, `{python} toy_designs["Treated"].iloc[0]`, scores `{python} f"{toy_best:.3f}"`. The relaxation says `{python} f"{relaxed:.3f}"`, `{python} f"{100 * (1 - relaxed / toy_best):.0f}"` percent lower, and it would say that no matter what the six series looked like, because it never had to match anything: it split every city down the middle. Nothing in this toy is special. The same construction works on any panel. Set every $D_j = K/N$, every weight $w_j = 2/N$, and split each weight evenly between the two sides, $q_j = 1/N$. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast $\sum_j (2 q_j - w_j) y_{jt}$ is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest $\lambda \sum_j w_j^2$ can be when the weights sum to two is $4\lambda / N$. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is
+The best real design, `{python} toy_designs["Treated"].iloc[0]`, scores `{python} f"{toy_best:.3f}"`. The relaxation says `{python} f"{relaxed:.3f}"`, `{python} f"{100 * (1 - relaxed / toy_best):.0f}"` percent lower, and it would say that no matter what the six series looked like, because it never had to match anything: it split every city down the middle.
+
+Now let's run branch and bound on the toy and watch it fail to prune. Give the solver every advantage: suppose it finds the best design, `{python} toy_designs["Treated"].iloc[0]`, at the very start, so the incumbent is `{python} f"{toy_best:.3f}"` from the first moment. To throw a branch away, the solver needs that branch's bound to come out at `{python} f"{toy_best:.3f}"` or higher. Here is the first level of the tree, branching on each city in turn:
+
+```{python}
+#| echo: false
+
+def toy_bound(treated=(), untreated=()):
+    """The relaxed problem with some cities fixed in (D_j = 1) or out (D_j = 0)."""
+    w, q, D = cp.Variable(N_toy), cp.Variable(N_toy), cp.Variable(N_toy)
+    cons = [w >= 0, q >= 0, q <= D, q <= w, q >= w - (1 - D), D >= 0, D <= 1,
+            cp.sum(D) == 2, cp.sum(q) == 1, cp.sum(w) == 2]
+    cons += [D[list(toy.columns).index(c)] == 1 for c in treated]
+    cons += [D[list(toy.columns).index(c)] == 0 for c in untreated]
+    obj = cp.sum_squares(Ym @ (2 * q - w)) / T0_toy + toy_lam * cp.sum_squares(w)
+    return cp.Problem(cp.Minimize(obj), cons).solve(solver=cp.CLARABEL)
+
+level_one = pd.DataFrame([{
+    "Branch on": c,
+    "Bound if treated": toy_bound(treated=[c]),
+    "Bound if not treated": toy_bound(untreated=[c]),
+} for c in toy.columns])
+level_one["Can either side be pruned?"] = np.where(
+    level_one[["Bound if treated", "Bound if not treated"]].max(axis=1) >= toy_best - 1e-9, "yes", "no")
+display(Markdown(level_one.to_markdown(index=False, floatfmt=".3f")))
+
+c_in_d_out = toy_bound(treated=["C"], untreated=["D"])
+c_only = toy_bound(treated=["C"], untreated=["A", "B", "D", "E"])
+```
+
+Every child bound sits between `{python} f"{level_one[['Bound if treated', 'Bound if not treated']].min().min():.3f}"` and `{python} f"{level_one[['Bound if treated', 'Bound if not treated']].max().max():.3f}"`, nowhere near `{python} f"{toy_best:.3f}"`. So whichever city the solver branches on first, neither child can be pruned. Going deeper does not help much. Fix C treated and D not treated, two decisions out of six, and the bound is `{python} f"{c_in_d_out:.3f}"`, still below the incumbent. The bound only climbs to the truth once a branch has pinned down a whole design: fix C treated and A, B, D and E untreated, which forces F to be the second treated city, and the bound becomes `{python} f"{c_only:.3f}"`, exactly the score of C + F in the table above. That is the pattern. Because the even split stays available as long as a few cities are undecided, the bound keeps telling the solver that something in this branch might score as low as `{python} f"{relaxed:.3f}"`, and the solver has to keep splitting until there is nothing left to split. On six cities that means visiting most of the 15 designs anyway. On 40 cities with ten treated, it means hundreds of millions.
+
+Nothing in this toy is special. The same construction works on any panel. Set every $D_j = K/N$, every weight $w_j = 2/N$, and split each weight evenly between the two sides, $q_j = 1/N$. All four constraints above hold, the treated weights sum to one, the control weights sum to one, and every city contributes exactly as much to the treated side as to the control side. So the contrast $\sum_j (2 q_j - w_j) y_{jt}$ is zero in every period, and the fit term vanishes. All that is left is the penalty, and the smallest $\lambda \sum_j w_j^2$ can be when the weights sum to two is $4\lambda / N$. The relaxed problem cannot do better than that either, since the fit term is never negative. So the root bound is
 
 $$
 p_{\text{relaxed}} = \frac{4\lambda}{N},
@@ -270,6 +302,33 @@ f(\mathcal{S}) \;\geq\; \mathrm{lb}(\mathcal{S}) \;=\; \frac{4\alpha}{\boldsymbo
 $$
 
 with equality whenever the minimizer of the loosened problem happens to satisfy the dropped sign conditions. One matrix inverse up front, then one quadratic form per candidate. This also shows where the NP-hardness went. Finding the set with the smallest floor means finding the sign vector with exactly $K$ plus signs that makes $\boldsymbol{\sigma}^\top \mathbf{R} \boldsymbol{\sigma}$ as large as possible, which is a max-cut problem with a size constraint. I did not make the problem easy; I made each candidate cheap and the bounds tight.
+
+Back to the six cities, to see what this floor buys. One matrix inverse, then one quadratic form for each of the 15 designs:
+
+```{python}
+#| code-fold: true
+#| code-summary: "The closed-form floor on the toy"
+
+Yc = Ym - Ym.mean(axis=1, keepdims=True)           # center each day; a common level cancels anyway
+G = Yc.T @ Yc / T0_toy
+H = np.linalg.inv(G + toy_lam * np.eye(N_toy))
+p_vec = H @ np.ones(N_toy)
+alpha = np.ones(N_toy) @ p_vec
+R = alpha * H - np.outer(p_vec, p_vec)
+
+def floor(pair):
+    sigma = np.array([1.0 if c in pair else -1.0 for c in toy.columns])
+    return 4 * alpha / (sigma @ R @ sigma)
+
+floors = toy_designs.assign(Floor=[floor(t.split(" + ")) for t in toy_designs["Treated"]])
+floors["Floor equals the score?"] = np.where(np.isclose(floors["Floor"], floors["Objective"], rtol=1e-6), "yes", "no")
+display(Markdown(floors[["Treated", "Floor", "Objective", "Floor equals the score?"]]
+                 .sort_values("Floor").to_markdown(index=False, floatfmt=".3f")))
+lowest = floors.sort_values("Floor").iloc[0]
+n_exact = int((floors["Floor equals the score?"] == "yes").sum())
+```
+
+Three things are visible. The floor is never above a design's true score, which is what makes it safe to prune with. It equals the true score exactly for `{python} n_exact` of the 15 designs, the ones whose loosened minimizer happens to respect the sign conditions. And the smallest floor in the whole table belongs to `{python} lowest["Treated"]`, at `{python} f"{lowest['Floor']:.3f}"`, which is also its exact score. So `{python} lowest["Treated"]` is optimal, and every other design is ruled out because its floor alone is already higher. No branching, no quadratic program solved, just arithmetic. Compare that with the tree above, where the solver's bound sat at `{python} f"{relaxed:.3f}"` for nearly every branch and could rule out nothing.
 
 ## When There Are Few Enough Sets, Price Them All
 
